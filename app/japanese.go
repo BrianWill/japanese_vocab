@@ -61,6 +61,7 @@ type Person struct {
 type Story struct {
 	ID      primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Content string             `json:"content,omitempty" bson:"content,omitempty"`
+	Title   string             `json:"title,omitempty" bson:"title,omitempty"`
 }
 
 func main() {
@@ -94,8 +95,9 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/story", CreateStoryEndpoint).Methods("POST")
+	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
+	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/person", CreatePersonEndpoint).Methods("POST")
-	router.HandleFunc("/person/{id}", GetPersonEndpoint).Methods("GET")
 	router.HandleFunc("/people", GetPeopleEndpoint).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
@@ -124,6 +126,31 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(result)
 }
 
+func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	var stories []Story
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	opts := options.Find().SetProjection(bson.D{{"title", 1}, {"_id", 1}})
+	cursor, err := storiesCollection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer cursor.Close(ctx)
+	for cursor.Next(ctx) {
+		var story Story
+		cursor.Decode(&story)
+		stories = append(stories, story)
+	}
+	if err := cursor.Err(); err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	json.NewEncoder(response).Encode(stories)
+}
+
 func CreatePersonEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	var person Person
@@ -134,20 +161,19 @@ func CreatePersonEndpoint(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(result)
 }
 
-func GetPersonEndpoint(response http.ResponseWriter, request *http.Request) {
+func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	params := mux.Vars(request)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
-	var person Person
-	collection := client.Database("test").Collection("people")
+	var story Story
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err := collection.FindOne(ctx, Person{ID: id}).Decode(&person)
+	err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-	json.NewEncoder(response).Encode(person)
+	json.NewEncoder(response).Encode(story)
 }
 
 func GetPeopleEndpoint(response http.ResponseWriter, request *http.Request) {
