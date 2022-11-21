@@ -17,16 +17,21 @@ body {
     font-size: 170%;
 }
 
-span.pad_left {
+#tokenized_story span {
+    white-space: nowrap;
+}
+
+span.pad_left:not(:first-child) {
     padding-left: 0.5em;
 }
 
-span.case_particle, span.binding_particle, span.auxiliary_particle, span.conjunction {
+span.particle,
+span.conjunction {
     color: #e69138;
 }
 
 span.connecting_particle {
-    color: #b0b0b0;
+    color: #c2b5aa;
 }
 
 span.verb_auxiliary {
@@ -41,13 +46,14 @@ span.i_adjective {
     color: #8e7cc3;
 }
 
-span.pronoun {
+span.pronoun,
+span.admoninal_adjective {
     color: #c27ba0;
 }
 
 
 span.pad_left:hover,
-span.case_particle:hover,
+span.particle:hover,
 span.verb_auxiliary:hover,
 span.verb:hover {
     text-decoration: underline;

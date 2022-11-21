@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"time"
 
-	"github.com/ikawaha/kagome-dict/ipa"
+	//"github.com/ikawaha/kagome-dict/ipa"
 	"github.com/ikawaha/kagome/v2/tokenizer"
 
 	//"io/ioutil"
@@ -25,27 +25,12 @@ import (
 var client *mongo.Client
 var db *mongo.Database
 var wiktionaryCollection *mongo.Collection
+var dictCollection *mongo.Collection
 
 var tok *tokenizer.Tokenizer
 
 func main() {
 	var err error
-	tok, err = tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
-	if err != nil {
-		panic(err)
-	}
-	// wakati
-	fmt.Println("---wakati---")
-	seg := tok.Wakati("すもももももももものうち")
-	fmt.Println(seg)
-
-	// tokenize
-	fmt.Println("---tokenize---")
-	tokens := tok.Analyze("すもももももももものうち", tokenizer.Search)
-	for _, token := range tokens {
-		features := strings.Join(token.Features(), ",")
-		fmt.Printf("%s\t%v\n", token.Surface, features)
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -59,12 +44,81 @@ func main() {
 	}()
 
 	db = client.Database("JapaneseEnglish")
+
+	parseJmdict()
+}
+
+func parseJmdict() {
+	dictCollection = db.Collection("jmdict")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	err := client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		panic(err)
+	}
+
+	xmlFile, err := os.Open("../JMdict_e_examp.xml")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Successfully Opened xml")
+	// defer the closing of our xmlFile so that we can parse it later on
+	defer xmlFile.Close()
+
+	entries := make([]Entry, 0)
+
+	decoder := xml.NewDecoder(xmlFile)
+
+	// re, err := regexp.Compile(`^[\w\s]+$`)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	for {
+		// Read tokens from the XML document in a stream.
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+		// Inspect the type of the token just read.
+		switch se := t.(type) {
+		case xml.StartElement:
+			if se.Name.Local == "entry" {
+				var entry Entry
+				err = decoder.DecodeElement(&entry, &se)
+				if err != nil {
+					panic(err)
+				}
+
+				entries = append(entries, entry)
+
+				// if !re.MatchString(word.Text) {
+				// 	words = append(words, word)
+				// 	//fmt.Println(word.Text)
+				// } else {
+				// 	//fmt.Println(word.Text)
+				// }
+			}
+		default:
+		}
+	}
+
+	fmt.Println("done decoding. Number of entries:", len(entries))
+}
+
+func parseWiktionary() {
+
 	wiktionaryCollection = db.Collection("wiktionary")
 
-	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	err = client.Ping(ctx, readpref.Primary())
+	err := client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		panic(err)
+	}
 	//makeCollection()
+
 	words := processCollection()
 
 	for _, w := range words {
@@ -200,6 +254,37 @@ type Word struct {
 	Text       string `xml:"text"`
 	Definition string `xml:"definition"`
 }
+
+type Entry struct {
+	R_ele R_ele `xml:"r_ele"`
+	Sense Sense `xml:"sense"`
+}
+
+type R_ele struct {
+	Reb string `xml:"reb"`
+}
+
+type Sense struct {
+}
+
+// 	<ent_seq>1073210</ent_seq>
+// <r_ele>
+// <reb>スポーツ</reb>
+// <re_pri>gai1</re_pri>
+// <re_pri>ichi1</re_pri>
+// </r_ele>
+// <sense>
+// <pos>noun</pos>
+// <pos>adjective-no</pos>
+// <gloss>sport</gloss>
+// <gloss>sports</gloss>
+// <example>
+// <ex_srce exsrc_type="tat">200846</ex_srce>
+// <ex_text>スポーツ</ex_text>
+// <ex_sent xml:lang="jpn">ところであなたはどんなスポーツが好きですか。</ex_sent>
+// <ex_sent xml:lang="eng">Well, what sports do you like?</ex_sent>
+// </example>
+// </sense>
 
 type Revision struct {
 	/*
