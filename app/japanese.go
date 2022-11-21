@@ -21,6 +21,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	//"strconv"
+
+	//"strings"
 
 	"log"
 	"net/http"
@@ -28,6 +31,9 @@ import (
 
 	"context"
 	"time"
+
+	"github.com/ikawaha/kagome-dict/ipa"
+	"github.com/ikawaha/kagome/v2/tokenizer"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -52,6 +58,8 @@ var client *mongo.Client
 var db *mongo.Database
 var storiesCollection *mongo.Collection
 
+var tok *tokenizer.Tokenizer
+
 type Person struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	FirstName string             `json:"firstname,omitempty" bson:"firstname,omitempty"`
@@ -62,12 +70,32 @@ type Story struct {
 	ID      primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Content string             `json:"content,omitempty" bson:"content,omitempty"`
 	Title   string             `json:"title,omitempty" bson:"title,omitempty"`
+	Tokens  []JpToken          `json:"tokens,omitempty" bson:"tokens,omitempty"`
+}
+
+type JpToken struct {
+	Surface          string `json:"surface,omitempty" bson:"surface,omitempty"`
+	POS              string `json:"pos,omitempty" bson:"pos"`
+	POS_1            string `json:"pos1,omitempty" bson:"pos1"`
+	POS_2            string `json:"pos2,omitempty" bson:"pos2"`
+	POS_3            string `json:"pos3,omitempty" bson:"pos3"`
+	InflectionalType string `json:"inflectionalType,omitempty" bson:"inflectionalType"`
+	InflectionalForm string `json:"inflectionalForm,omitempty" bson:"inflectionalForm"`
+	BaseForm         string `json:"baseForm,omitempty" bson:"baseForm"`
+	Reading          string `json:"reading,omitempty" bson:"reading"`
+	Pronunciation    string `json:"pronunciation,omitempty" bson:"pronunciation"`
 }
 
 func main() {
+	var err error
+	tok, err = tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
+	if err != nil {
+		panic(err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	var err error
+
 	client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 
 	defer func() {
@@ -97,8 +125,6 @@ func main() {
 	router.HandleFunc("/story", CreateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
-	router.HandleFunc("/person", CreatePersonEndpoint).Methods("POST")
-	router.HandleFunc("/people", GetPeopleEndpoint).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
 	log.Printf("Listening on port %s", port)
@@ -151,16 +177,6 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	json.NewEncoder(response).Encode(stories)
 }
 
-func CreatePersonEndpoint(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
-	var person Person
-	json.NewDecoder(request.Body).Decode(&person)
-	collection := client.Database("test").Collection("people")
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	result, _ := collection.InsertOne(ctx, person)
-	json.NewEncoder(response).Encode(result)
-}
-
 func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	params := mux.Vars(request)
@@ -173,32 +189,45 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-	json.NewEncoder(response).Encode(story)
-}
 
-func GetPeopleEndpoint(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
-	var people []Person
-	collection := client.Database("test").Collection("people")
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	cursor, err := collection.Find(ctx, bson.M{})
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
+	tokens := tok.Analyze(story.Content, tokenizer.Search)
+	story.Tokens = make([]JpToken, len(tokens))
+
+	for i, r := range tokens {
+		features := r.Features()
+		if len(features) < 9 {
+
+			story.Tokens[i] = JpToken{
+				Surface: r.Surface,
+				POS:     features[0],
+				POS_1:   features[1],
+			}
+
+			//fmt.Println(strconv.Itoa(len(features)), features[0], r.Surface, "features: ", strings.Join(features, ","))
+		} else {
+			story.Tokens[i] = JpToken{
+				Surface:          r.Surface,
+				POS:              features[0],
+				POS_1:            features[1],
+				POS_2:            features[2],
+				POS_3:            features[3],
+				InflectionalType: features[4],
+				InflectionalForm: features[5],
+				BaseForm:         features[6],
+				Reading:          features[7],
+				Pronunciation:    features[8],
+			}
+		}
+
+		// if len(features) < 9 {
+
+		// } else {
+		// 	fmt.Println("features: ", strings.Join(features, ","))
+		// }
+
 	}
-	defer cursor.Close(ctx)
-	for cursor.Next(ctx) {
-		var person Person
-		cursor.Decode(&person)
-		people = append(people, person)
-	}
-	if err := cursor.Err(); err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	json.NewEncoder(response).Encode(people)
+
+	json.NewEncoder(response).Encode(story)
 }
 
 // connectUnixSocket initializes a Unix socket connection pool for

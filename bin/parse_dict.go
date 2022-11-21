@@ -5,18 +5,84 @@ import (
 	"fmt"
 	"regexp"
 
+	"context"
+	// "go.mongodb.org/mongo-driver/bson"
+	//"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"time"
+
+	"github.com/ikawaha/kagome-dict/ipa"
+	"github.com/ikawaha/kagome/v2/tokenizer"
+
 	//"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 )
 
+var client *mongo.Client
+var db *mongo.Database
+var wiktionaryCollection *mongo.Collection
+
+var tok *tokenizer.Tokenizer
+
 func main() {
+	var err error
+	tok, err = tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
+	if err != nil {
+		panic(err)
+	}
+	// wakati
+	fmt.Println("---wakati---")
+	seg := tok.Wakati("すもももももももものうち")
+	fmt.Println(seg)
+
+	// tokenize
+	fmt.Println("---tokenize---")
+	tokens := tok.Analyze("すもももももももものうち", tokenizer.Search)
+	for _, token := range tokens {
+		features := strings.Join(token.Features(), ",")
+		fmt.Printf("%s\t%v\n", token.Surface, features)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+
+	defer func() {
+		if err = client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
+
+	db = client.Database("JapaneseEnglish")
+	wiktionaryCollection = db.Collection("wiktionary")
+
+	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	err = client.Ping(ctx, readpref.Primary())
 	//makeCollection()
-	processCollection()
+	words := processCollection()
+
+	for _, w := range words {
+		err := createWord(w)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+	}
 }
 
-func processCollection() {
+func createWord(word Word) error {
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	_, err := wiktionaryCollection.InsertOne(ctx, word)
+	return err
+}
+
+func processCollection() []Word {
 	// Open our xmlFile
 	xmlFile, err := os.Open("../../enwiktionary-collection.xml")
 	if err != nil {
@@ -31,7 +97,7 @@ func processCollection() {
 
 	decoder := xml.NewDecoder(xmlFile)
 
-	re, err := regexp.Compile(`^\w+$`)
+	re, err := regexp.Compile(`^[\w\s]+$`)
 	if err != nil {
 		panic(err)
 	}
@@ -51,8 +117,9 @@ func processCollection() {
 
 				if !re.MatchString(word.Text) {
 					words = append(words, word)
+					//fmt.Println(word.Text)
 				} else {
-					fmt.Println(word.Text)
+					//fmt.Println(word.Text)
 				}
 			}
 		default:
@@ -60,6 +127,8 @@ func processCollection() {
 	}
 
 	fmt.Println("done decoding. Number of words:", len(words))
+
+	return words
 }
 
 func makeCollection() {

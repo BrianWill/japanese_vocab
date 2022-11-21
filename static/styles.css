@@ -1,9 +1,54 @@
 body {
     /*font-family: Arial, Helvetica, sans-serif;*/
     font-family: Arial, Helvetica, sans-serif;
+    background-color: #d8d8d8;
 }
 
 #story {
-    font-family: "Noto Sans JP",TakaoPGothic,sans-serif;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
     letter-spacing: 0.02em;
+    font-size: 130%;
+}
+
+#tokenized_story {
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    letter-spacing: 0.02em;
+    line-height: 2.5;
+    font-size: 170%;
+}
+
+span.pad_left {
+    padding-left: 0.5em;
+}
+
+span.case_particle, span.binding_particle, span.auxiliary_particle, span.conjunction {
+    color: #e69138;
+}
+
+span.connecting_particle {
+    color: #b0b0b0;
+}
+
+span.verb_auxiliary {
+    color: #9fc5e8;
+}
+
+span.verb {
+    color: #3d85c6;
+}
+
+span.i_adjective {
+    color: #8e7cc3;
+}
+
+span.pronoun {
+    color: #c27ba0;
+}
+
+
+span.pad_left:hover,
+span.case_particle:hover,
+span.verb_auxiliary:hover,
+span.verb:hover {
+    text-decoration: underline;
 }
