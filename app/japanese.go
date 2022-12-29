@@ -60,32 +60,6 @@ var storiesCollection *mongo.Collection
 
 var tok *tokenizer.Tokenizer
 
-type Person struct {
-	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	FirstName string             `json:"firstname,omitempty" bson:"firstname,omitempty"`
-	Lastname  string             `json:"lastname,omitempty" bson:"lastname,omitempty"`
-}
-
-type Story struct {
-	ID      primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Content string             `json:"content,omitempty" bson:"content,omitempty"`
-	Title   string             `json:"title,omitempty" bson:"title,omitempty"`
-	Tokens  []JpToken          `json:"tokens,omitempty" bson:"tokens,omitempty"`
-}
-
-type JpToken struct {
-	Surface          string `json:"surface,omitempty" bson:"surface,omitempty"`
-	POS              string `json:"pos,omitempty" bson:"pos"`
-	POS_1            string `json:"pos1,omitempty" bson:"pos1"`
-	POS_2            string `json:"pos2,omitempty" bson:"pos2"`
-	POS_3            string `json:"pos3,omitempty" bson:"pos3"`
-	InflectionalType string `json:"inflectionalType,omitempty" bson:"inflectionalType"`
-	InflectionalForm string `json:"inflectionalForm,omitempty" bson:"inflectionalForm"`
-	BaseForm         string `json:"baseForm,omitempty" bson:"baseForm"`
-	Reading          string `json:"reading,omitempty" bson:"reading"`
-	Pronunciation    string `json:"pronunciation,omitempty" bson:"pronunciation"`
-}
-
 func main() {
 	var err error
 	tok, err = tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
@@ -124,6 +98,7 @@ func main() {
 
 	router.HandleFunc("/story", CreateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
+	router.HandleFunc("/story_retokenize/{id}", RetokenizeStoryEndpoint).Methods("POST")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
@@ -142,6 +117,37 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	var story Story
 	json.NewDecoder(request.Body).Decode(&story)
+
+	tokens := tok.Analyze(story.Content, tokenizer.Normal)
+	story.Tokens = make([]JpToken, len(tokens))
+
+	for i, r := range tokens {
+		features := r.Features()
+		if len(features) < 9 {
+
+			story.Tokens[i] = JpToken{
+				Surface: r.Surface,
+				POS:     features[0],
+				POS_1:   features[1],
+			}
+
+			//fmt.Println(strconv.Itoa(len(features)), features[0], r.Surface, "features: ", strings.Join(features, ","))
+		} else {
+			story.Tokens[i] = JpToken{
+				Surface:          r.Surface,
+				POS:              features[0],
+				POS_1:            features[1],
+				POS_2:            features[2],
+				POS_3:            features[3],
+				InflectionalType: features[4],
+				InflectionalForm: features[5],
+				BaseForm:         features[6],
+				Reading:          features[7],
+				Pronunciation:    features[8],
+			}
+		}
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	result, err := storiesCollection.InsertOne(ctx, story)
 	if err != nil {
@@ -190,41 +196,21 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	tokens := tok.Analyze(story.Content, tokenizer.Search)
-	story.Tokens = make([]JpToken, len(tokens))
+	json.NewEncoder(response).Encode(story)
+}
 
-	for i, r := range tokens {
-		features := r.Features()
-		if len(features) < 9 {
+func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	params := mux.Vars(request)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
 
-			story.Tokens[i] = JpToken{
-				Surface: r.Surface,
-				POS:     features[0],
-				POS_1:   features[1],
-			}
-
-			//fmt.Println(strconv.Itoa(len(features)), features[0], r.Surface, "features: ", strings.Join(features, ","))
-		} else {
-			story.Tokens[i] = JpToken{
-				Surface:          r.Surface,
-				POS:              features[0],
-				POS_1:            features[1],
-				POS_2:            features[2],
-				POS_3:            features[3],
-				InflectionalType: features[4],
-				InflectionalForm: features[5],
-				BaseForm:         features[6],
-				Reading:          features[7],
-				Pronunciation:    features[8],
-			}
-		}
-
-		// if len(features) < 9 {
-
-		// } else {
-		// 	fmt.Println("features: ", strings.Join(features, ","))
-		// }
-
+	var story Story
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
 	}
 
 	json.NewEncoder(response).Encode(story)

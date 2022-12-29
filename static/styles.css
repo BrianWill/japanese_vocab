@@ -1,7 +1,7 @@
 body {
     /*font-family: Arial, Helvetica, sans-serif;*/
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #d8d8d8;
+    background-color: #a2a2a2;
 }
 
 #story {
@@ -21,34 +21,71 @@ body {
     white-space: nowrap;
 }
 
+#word_list_container {
+    
+}
+
+#word_list {
+    font-size: 160%;
+    border-spacing: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#word_list td {
+    padding: 10px 50px 10px 10px;
+    border-left: solid rgb(138, 32, 32) 1px;
+    white-space: nowrap;
+}
+
 span.pad_left:not(:first-child) {
-    padding-left: 0.5em;
+    padding-left: 0.0em;
+}
+
+span.noun,
+tr.noun {
+    color: #e69138;
+    color: #0063bb;
 }
 
 span.particle,
-span.conjunction {
-    color: #e69138;
+span.conjunction,
+tr.particle,
+tr.conjunction {
+    color: rgb(206, 203, 0);
 }
 
-span.connecting_particle {
-    color: #c2b5aa;
+span.connecting_particle,
+tr.connecting_particle {
+    color: rgb(132, 130, 27);
 }
 
-span.verb_auxiliary {
-    color: #9fc5e8;
+span.verb_auxiliary,
+tr.verb_auxiliary {
+    color: #aa6868;
 }
 
-span.verb {
-    color: #3d85c6;
+span.adverb,
+tr.adverb {
+    color: #2b8248;
 }
 
-span.i_adjective {
-    color: #8e7cc3;
+span.verb,
+tr.verb {
+    
+    color: #9d1919;
+}
+
+span.i_adjective,
+tr.i_adjective {
+    color: #82009d;
 }
 
 span.pronoun,
-span.admoninal_adjective {
-    color: #c27ba0;
+span.admoninal_adjective,
+tr.pronoun,
+tr.admoninal_adjective {
+    color: #23527b;
 }
 
 
