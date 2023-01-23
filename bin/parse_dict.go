@@ -16,6 +16,8 @@ import (
 	//"github.com/ikawaha/kagome-dict/ipa"
 	"github.com/ikawaha/kagome/v2/tokenizer"
 
+	//"github.com/go-xmlfmt/xmlfmt"
+
 	//"io/ioutil"
 	"os"
 	"strconv"
@@ -45,20 +47,13 @@ func main() {
 
 	db = client.Database("JapaneseEnglish")
 
-	parseJmdict()
+	//parseJmdict()
 }
 
 func parseJmdict() {
 	dictCollection = db.Collection("jmdict")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	err := client.Ping(ctx, readpref.Primary())
-	if err != nil {
-		panic(err)
-	}
-
-	xmlFile, err := os.Open("../JMdict_e_examp.xml")
+	xmlFile, err := os.Open("./JMdict_test.xml")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -66,7 +61,7 @@ func parseJmdict() {
 	// defer the closing of our xmlFile so that we can parse it later on
 	defer xmlFile.Close()
 
-	entries := make([]Entry, 0)
+	entries := make([]JMDictEntry, 0)
 
 	decoder := xml.NewDecoder(xmlFile)
 
@@ -82,11 +77,11 @@ func parseJmdict() {
 			break
 		}
 		// Inspect the type of the token just read.
-		switch se := t.(type) {
+		switch ele := t.(type) {
 		case xml.StartElement:
-			if se.Name.Local == "entry" {
-				var entry Entry
-				err = decoder.DecodeElement(&entry, &se)
+			if ele.Name.Local == "entry" {
+				var entry JMDictEntry
+				err = decoder.DecodeElement(&entry, &ele)
 				if err != nil {
 					panic(err)
 				}
@@ -105,6 +100,55 @@ func parseJmdict() {
 	}
 
 	fmt.Println("done decoding. Number of entries:", len(entries))
+
+	// outputFile, err := os.Create("./JMdict_test_output.xml")
+	// if err != nil {
+	// 	fmt.Printf("opening output file error: %v\n", err)
+	// }
+	// fmt.Println("Successfully Opened output xml")
+	// // defer the closing of our xmlFile so that we can parse it later on
+	// defer outputFile.Close()
+
+	// for _, e := range entries {
+
+	// 	output, err := xml.MarshalIndent(e, "", "    ")
+	// 	if err != nil {
+	// 		fmt.Printf("marshall error: %v\n", err)
+	// 	}
+
+	// 	_, err = outputFile.Write(output)
+	// 	if err != nil {
+	// 		fmt.Printf("write file error: %v\n", err)
+	// 	}
+	// 	_, err = outputFile.Write([]byte{'\n'})
+	// 	if err != nil {
+	// 		fmt.Printf("write file error: %v\n", err)
+	// 	}
+	// }
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		panic(err)
+	}
+
+	//entries = entries[:100000]
+	entries_ := make([]interface{}, len(entries))
+
+	for i, entry := range entries {
+		//entry.Sense = nil
+		entry.XMLName = nil
+		entries_[i] = entries[i]
+	}
+
+	//_, err := dictCollection.InsertOne(ctx, entry)
+	_, err = dictCollection.InsertMany(ctx, entries_)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 }
 
 func parseWiktionary() {
@@ -315,4 +359,82 @@ type Page struct {
 type MediaWiki struct {
 	Siteinfo string `xml:"siteinfo"`
 	Pages    []Page `xml:"page"`
+}
+
+// JMDict xml format
+
+type JMDict struct {
+	XMLName xml.Name      `xml:"JMDict"`
+	Entry   []JMDictEntry `xml:"entry"`
+}
+
+type JMDictEntry struct {
+	XMLName *xml.Name     `xml:"entry" bson:"xmlname,omitempty"`
+	Ent_seq string        `xml:"ent_seq" bson:"sequence_number,omitempty"`
+	Sense   []JMDictSense `xml:"sense" bson:"senses,omitempty"`
+	R_ele   []JMDictR_ele `xml:"r_ele" bson:"readings,omitempty"`
+	K_ele   []JMDictK_ele `xml:"k_ele" bson:"kanji_spellings,omitempty"`
+}
+
+type JMDictSense struct {
+	Stagk   []string        `xml:"stagk" bson:"restricted_to_kanji_spellings,omitempty"` //  indicate that the sense is restricted to the lexeme represented by the keb
+	Stagr   []string        `xml:"stagr" bson:"restricted_to_readings,omitempty"`        //  indicate that the sense is restricted to the lexeme represented by the reb
+	Pos     []string        `xml:"pos" bson:"parts_of_speech,omitempty"`                 // part of speech
+	Ant     []string        `xml:"ant" bson:"antonyms,omitempty"`                        // ref to another entry which is an antonym of the current entry/sense
+	Gloss   []JMDictGloss   `xml:"gloss" bson:"glosses,omitempty"`
+	Misc    []string        `xml:"misc" bson:"misc,omitempty"`
+	Dial    []string        `xml:"dial" bson:"dialects,omitempty"` // associated with regional dialects in Japanese, the entity code for that dialect, e.g. ksb for Kansaiben.
+	Example []JMDictExample `xml:"example" bson:"examples,omitempty"`
+	Xref    []string        `xml:"xref" bson:"related_words,omitempty"`
+	Lsource []JMDictLsource `xml:"lsource" bson:"source_languages,omitempty"` // source language(s) of a loan-word/gairaigo
+	Field   []string        `xml:"field" bson:"applications,omitempty"`       // Information about the field of application of the entry/sense.
+	S_inf   []string        `xml:"s_inf" bson:"information,omitempty"`
+}
+
+type JMDictExample struct {
+	Ex_srce *JMDictEx_srce  `xml:"ex_srce" bson:"source,omitempty"`
+	Ex_text string          `xml:"ex_text" bson:"text,omitempty"`
+	Ex_sent []JMDictEx_sent `xml:"ex_sent" bson:"sentence,omitempty"`
+}
+
+// reading element
+type JMDictR_ele struct {
+	Reb        string `xml:"reb" bson:"reading,omitempty"`
+	Re_nokanji string `xml:"re_nokanji" bson:"no_kanji,omitempty"`
+	/* indicates that the reb, while associated with the keb,
+	cannot be regarded as a true reading of the kanji. It is
+	typically used for words such as foreign place names,
+	gairaigo which can be in kanji or katakana, etc. */
+	Re_restr []string `xml:"re_restr" bson:"restrictions,omitempty"` // reading only applies to a subset of the keb elements in the entry
+	Re_inf   []string `xml:"re_inf" bson:"information,omitempty"`    // denotes orthography, e.g. okurigana irregularity
+	Re_pri   []string `xml:"re_pri" bson:"priority,omitempty"`       // relative priority (see schema)
+}
+
+// kanji element
+type JMDictK_ele struct {
+	Keb    string   `xml:"keb" bson:"kanji_spelling,omitempty"`
+	Ke_inf []string `xml:"ke_inf" bson:"information,omitempty"` // denotes orthography, e.g. okurigana irregularity
+	Ke_pri []string `xml:"ke_pri" bson:"priority,omitempty"`    // relative priority (see schema)
+}
+
+type JMDictEx_srce struct {
+	Exsrc_type string `xml:"exsrc_type,attr,omitempty" bson:"source_type,omitempty"`
+	Value      string `xml:",chardata" bson:"value,omitempty"`
+}
+
+type JMDictEx_sent struct {
+	Lang  string `xml:"xml:lang,attr,omitempty" bson:"language,omitempty"`
+	Value string `xml:",chardata" bson:"value,omitempty"`
+}
+
+type JMDictLsource struct {
+	Lang  string `xml:"xml:lang,attr,omitempty" bson:"language,omitempty"`
+	Value string `xml:",chardata" bson:"value,omitempty"`
+}
+
+type JMDictGloss struct {
+	Lang   string `xml:"xml:lang,attr,omitempty" bson:"language,omitempty"`
+	G_type string `xml:"g_type,attr,omitempty" bson:"type,omitempty"`   // gloss is of a particular type, e.g. "lit" (literal), "fig" (figurative), "expl" (explanation).
+	G_gend string `xml:"g_gend,attr,omitempty" bson:"gender,omitempty"` //  gender of the gloss (typically a noun in the target language)
+	Value  string `xml:",chardata" bson:"value,omitempty"`
 }

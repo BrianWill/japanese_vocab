@@ -2,6 +2,8 @@ package main
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
+//import "encoding/xml"
+
 type Story struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Content   string             `json:"content,omitempty" bson:"content,omitempty"`
@@ -32,4 +34,8 @@ type Word struct {
 	Text       string             `json:"text,omitempty" bson:"text,omitempty"`
 	Definition primitive.ObjectID `json:"definition,omitempty" bson:"definition,omitempty"`
 	Form       string             `json:"form,omitempty" bson:"form,omitempty"` // e.g. 'ました' for a verb
+}
+
+type WordSearch struct {
+	Word string `json:"word,omitempty" bson:"word,omitempty"`
 }

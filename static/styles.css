@@ -1,7 +1,7 @@
 body {
     /*font-family: Arial, Helvetica, sans-serif;*/
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #a2a2a2;
+    background-color: #c1c1c1;
 }
 
 #story {
@@ -13,8 +13,13 @@ body {
 #tokenized_story {
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
     letter-spacing: 0.02em;
-    line-height: 2.5;
+    line-height: 1.6;
     font-size: 170%;
+}
+
+#tokenized_story p {
+    margin-top: 1.1em;
+    margin-bottom: 1.1em;
 }
 
 #tokenized_story span {
@@ -44,15 +49,14 @@ span.pad_left:not(:first-child) {
 
 span.noun,
 tr.noun {
-    color: #e69138;
-    color: #0063bb;
+    color: #003c71;
 }
 
 span.particle,
 span.conjunction,
 tr.particle,
 tr.conjunction {
-    color: rgb(206, 203, 0);
+    color: rgb(255, 252, 3);
 }
 
 span.connecting_particle,
@@ -85,7 +89,7 @@ span.pronoun,
 span.admoninal_adjective,
 tr.pronoun,
 tr.admoninal_adjective {
-    color: #23527b;
+    color: #0063bb;
 }
 
 

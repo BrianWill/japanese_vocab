@@ -21,6 +21,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
 	//"strconv"
 
 	//"strings"
@@ -41,7 +42,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
-	// github.com/hedhyw/rex   // regex builder
+	//"github.com/hedhyw/rex/pkg/rex"  // regex builder
 
 	"github.com/gorilla/mux"
 
@@ -66,6 +67,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// re := rex.New().MustCompile()
+	// fmt.Println(re)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -96,6 +100,7 @@ func main() {
 
 	router := mux.NewRouter()
 
+	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/story", CreateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/story_retokenize/{id}", RetokenizeStoryEndpoint).Methods("POST")
@@ -197,6 +202,28 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	json.NewEncoder(response).Encode(story)
+}
+
+func PostWordSearch(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	var wordSearch WordSearch
+	json.NewDecoder(request.Body).Decode(&wordSearch)
+
+	fmt.Println("word search: " + wordSearch.Word)
+
+	// params := mux.Vars(request)
+	// id, _ := primitive.ObjectIDFromHex(params["id"])
+	// var story Story
+	// ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	// err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
+	// if err != nil {
+	// 	response.WriteHeader(http.StatusInternalServerError)
+	// 	response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	// 	return
+	// }
+
+	json.NewEncoder(response).Encode(wordSearch)
 }
 
 func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request) {
