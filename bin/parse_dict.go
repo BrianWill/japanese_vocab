@@ -47,7 +47,95 @@ func main() {
 
 	db = client.Database("JapaneseEnglish")
 
-	//parseJmdict()
+	//parseKanjiDict()
+}
+
+func parseKanjiDict() {
+	dictCollection = db.Collection("kanjidict")
+
+	xmlFile, err := os.Open("./kanjidic2.xml")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Successfully Opened xml")
+	// defer the closing of our xmlFile so that we can parse it later on
+	defer xmlFile.Close()
+
+	characters := make([]KanjiCharacter, 0)
+
+	decoder := xml.NewDecoder(xmlFile)
+
+	for {
+		// Read tokens from the XML document in a stream.
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+		// Inspect the type of the token just read.
+		switch ele := t.(type) {
+		case xml.StartElement:
+			if ele.Name.Local == "character" {
+				var char KanjiCharacter
+				err = decoder.DecodeElement(&char, &ele)
+				if err != nil {
+					panic(err)
+				}
+				characters = append(characters, char)
+			}
+		default:
+		}
+	}
+
+	fmt.Println("num characters: ", len(characters))
+
+	// outputFile, err := os.Create("./kanjidict_output.xml")
+	// if err != nil {
+	// 	fmt.Printf("opening output file error: %v\n", err)
+	// }
+	// fmt.Println("Successfully Opened output xml")
+	// // defer the closing of our xmlFile so that we can parse it later on
+	// defer outputFile.Close()
+
+	// for _, ch := range characters {
+
+	// 	output, err := xml.MarshalIndent(ch, "", "    ")
+	// 	if err != nil {
+	// 		fmt.Printf("marshall error: %v\n", err)
+	// 	}
+
+	// 	_, err = outputFile.Write(output)
+	// 	if err != nil {
+	// 		fmt.Printf("write file error: %v\n", err)
+	// 	}
+	// 	_, err = outputFile.Write([]byte{'\n'})
+	// 	if err != nil {
+	// 		fmt.Printf("write file error: %v\n", err)
+	// 	}
+	// }
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		panic(err)
+	}
+
+	//entries = entries[:100000]
+	characters_ := make([]interface{}, len(characters))
+
+	for i, entry := range characters {
+		//entry.Sense = nil
+		entry.XMLName = nil
+		characters_[i] = characters[i]
+	}
+
+	//_, err := dictCollection.InsertOne(ctx, entry)
+	_, err = dictCollection.InsertMany(ctx, characters_)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 }
 
 func parseJmdict() {
@@ -87,13 +175,6 @@ func parseJmdict() {
 				}
 
 				entries = append(entries, entry)
-
-				// if !re.MatchString(word.Text) {
-				// 	words = append(words, word)
-				// 	//fmt.Println(word.Text)
-				// } else {
-				// 	//fmt.Println(word.Text)
-				// }
 			}
 		default:
 		}
@@ -150,7 +231,6 @@ func parseJmdict() {
 	}
 
 }
-
 func parseWiktionary() {
 
 	wiktionaryCollection = db.Collection("wiktionary")
@@ -437,4 +517,71 @@ type JMDictGloss struct {
 	G_type string `xml:"g_type,attr,omitempty" bson:"type,omitempty"`   // gloss is of a particular type, e.g. "lit" (literal), "fig" (figurative), "expl" (explanation).
 	G_gend string `xml:"g_gend,attr,omitempty" bson:"gender,omitempty"` //  gender of the gloss (typically a noun in the target language)
 	Value  string `xml:",chardata" bson:"value,omitempty"`
+}
+
+// Kanji dicttionary
+
+type KanjiDict struct {
+	XMLName    xml.Name         `xml:"kanjidic2"`
+	Characters []KanjiCharacter `xml:"character"`
+}
+
+type KanjiCharacter struct {
+	XMLName *xml.Name `xml:"character"`
+	Literal string    `xml:"literal"`
+	// Codepoint      []KanjiCodePoint      `xml:"cp_value"`
+	Radical        *KanjiRadical        `xml:"radical"`
+	Misc           *KanjiMisc           `xml:"misc"`
+	ReadingMeaning *KanjiReadingMeaning `xml:"reading_meaning,omitempty"`
+}
+
+// type KanjiCodePoint struct {
+// 	Type  string `xml:"cp_type,attr,omitempty"`
+// 	Value string `xml:",chardata"`
+// }
+
+type KanjiRadical struct {
+	Values []KanjiRadicalValue `xml:"rad_value"`
+}
+
+type KanjiRadicalValue struct {
+	Type  string `xml:"rad_type,attr,omitempty"`
+	Value string `xml:",chardata"`
+}
+
+type KanjiMisc struct {
+	Frequency   *int              `xml:"freq,omitempty"`
+	StrokeCount *int              `xml:"stroke_count,omitempty"`
+	Grade       *int              `xml:"grade,omitempty"`
+	JLPT        *int              `xml:"jlpt,omitempty"`
+	Variant     *KanjiMiscVariant `xml:"variant,omitempty"`
+}
+
+type KanjiFrequency struct {
+	Value string `xml:",chardata"`
+}
+
+type KanjiMiscVariant struct {
+	Type  string `xml:"var_type,attr,omitempty"`
+	Value string `xml:",chardata"`
+}
+
+type KanjiReadingMeaning struct {
+	Group  []KanjiRMGroup `xml:"rmgroup,omitempty"`
+	Nanori []string       `xml:"nanori.omitempty"`
+}
+
+type KanjiRMGroup struct {
+	Reading []KanjiReading `xml:"reading,omitempty"`
+	Meaning []KanjiMeaning `xml:"meaning,omitempty"`
+}
+
+type KanjiReading struct {
+	Value string `xml:",chardata"`
+	Type  string `xml:"r_type,attr,omitempty"`
+}
+
+type KanjiMeaning struct {
+	Value    string `xml:",chardata"`
+	Language string `xml:"m_lang,attr,omitempty"`
 }

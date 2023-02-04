@@ -18,9 +18,14 @@ package main
 
 // [START import]
 import (
-	"database/sql"
+	//"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
+	"regexp"
+	"sort"
+	"strings"
+	"unicode/utf8"
 
 	//"strconv"
 
@@ -58,6 +63,8 @@ import (
 var client *mongo.Client
 var db *mongo.Database
 var storiesCollection *mongo.Collection
+var jmdictCollection *mongo.Collection
+var kanjiCollection *mongo.Collection
 
 var tok *tokenizer.Tokenizer
 
@@ -84,6 +91,8 @@ func main() {
 
 	db = client.Database("JapaneseEnglish")
 	storiesCollection = db.Collection("stories")
+	jmdictCollection = db.Collection("jmdict")
+	kanjiCollection = db.Collection("kanjidict")
 
 	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -153,7 +162,8 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	result, err := storiesCollection.InsertOne(ctx, story)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -166,7 +176,8 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	var stories []Story
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	opts := options.Find().SetProjection(bson.D{{"title", 1}, {"_id", 1}})
 	cursor, err := storiesCollection.Find(ctx, bson.M{}, opts)
 	if err != nil {
@@ -193,7 +204,8 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	params := mux.Vars(request)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 	var story Story
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -210,20 +222,146 @@ func PostWordSearch(response http.ResponseWriter, request *http.Request) {
 	var wordSearch WordSearch
 	json.NewDecoder(request.Body).Decode(&wordSearch)
 
-	fmt.Println("word search: " + wordSearch.Word)
+	fmt.Printf("\nword search: %v\n", wordSearch.Word)
 
-	// params := mux.Vars(request)
-	// id, _ := primitive.ObjectIDFromHex(params["id"])
-	// var story Story
-	// ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	// err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
-	// if err != nil {
-	// 	response.WriteHeader(http.StatusInternalServerError)
-	// 	response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	// 	return
-	// }
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	json.NewEncoder(response).Encode(wordSearch)
+	var field string
+
+	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	kanji := re.FindAllString(wordSearch.Word, -1)
+	hasKanji := len(re.FindStringIndex(wordSearch.Word)) > 0
+	if hasKanji { // if has kanji
+		field = "kanji_spellings.kanji_spelling"
+	} else {
+		field = "readings.reading"
+	}
+
+	// only matches at start of string
+	startOnlyQuery := bson.D{{field, bson.D{{"$regex", "^" + wordSearch.Word}}}}
+
+	// only matches NOT at start of string
+	notStartQuery := bson.D{
+		{"$and",
+			bson.A{
+				bson.D{{field, bson.D{{"$not", bson.D{{"$regex", "^" + wordSearch.Word}}}}}},
+				bson.D{{field, bson.D{{"$regex", wordSearch.Word}}}},
+			},
+		},
+	}
+
+	arr := bson.A{}
+	for _, k := range kanji {
+		arr = append(arr, bson.D{{"literal", k}})
+	}
+	kanjiQuery := bson.D{{Key: "$or", Value: arr}}
+
+	cursor, err := jmdictCollection.Find(ctx, startOnlyQuery)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer cursor.Close(ctx)
+	entriesStart := make([]JMDictEntry, 0)
+	for cursor.Next(ctx) {
+		var entry JMDictEntry
+		cursor.Decode(&entry)
+		entriesStart = append(entriesStart, entry)
+	}
+
+	cursor, err = jmdictCollection.Find(ctx, notStartQuery)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer cursor.Close(ctx)
+	entriesMid := make([]JMDictEntry, 0)
+	for cursor.Next(ctx) {
+		var entry JMDictEntry
+		cursor.Decode(&entry)
+		entriesMid = append(entriesMid, entry)
+	}
+
+	kanjiCharacters := make([]KanjiCharacter, 0)
+	if hasKanji {
+		cursor, err = kanjiCollection.Find(ctx, kanjiQuery)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+			return
+		}
+		defer cursor.Close(ctx)
+
+		for cursor.Next(ctx) {
+			var ch KanjiCharacter
+			cursor.Decode(&ch)
+			kanjiCharacters = append(kanjiCharacters, ch)
+		}
+	}
+
+	sortResults(entriesStart, hasKanji, wordSearch.Word)
+	sortResults(entriesMid, hasKanji, wordSearch.Word)
+
+	nEntriesStart := len(entriesStart)
+	if len(entriesStart) > 50 {
+		entriesStart = entriesStart[:50]
+	}
+
+	nEntriesMid := len(entriesMid)
+	if len(entriesMid) > 50 {
+		entriesMid = entriesMid[:50]
+	}
+
+	for _, entry := range entriesStart {
+		fmt.Println(entry.ShortestKanjiSpelling, entry.ShortestReading)
+	}
+
+	//json.NewEncoder(response).Encode(entries)
+	//json.NewEncoder(response).Encode(bson.D{{"entries", entries}})
+	json.NewEncoder(response).Encode(bson.M{
+		"entries_start": entriesStart,
+		"count_start":   nEntriesStart,
+		"entries_mid":   entriesMid,
+		"count_mid":     nEntriesMid,
+		"kanji":         kanjiCharacters})
+}
+
+func sortResults(entries []JMDictEntry, hasKanji bool, word string) {
+	// compute shortest readings and kanji spellings
+	// TODO this could be stored in the DB
+	for i := range entries {
+		entries[i].ShortestKanjiSpelling = math.MaxInt32
+		entries[i].ShortestReading = math.MaxInt32
+		for _, ele := range entries[i].K_ele {
+			if strings.Contains(ele.Keb, word) {
+				count := utf8.RuneCountInString(ele.Keb)
+				if count < entries[i].ShortestKanjiSpelling {
+					entries[i].ShortestKanjiSpelling = count
+				}
+			}
+		}
+		for _, ele := range entries[i].R_ele {
+			if strings.Contains(ele.Reb, word) {
+				count := utf8.RuneCountInString(ele.Reb)
+				if count < entries[i].ShortestReading {
+					entries[i].ShortestReading = count
+				}
+			}
+		}
+	}
+
+	if hasKanji {
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].ShortestKanjiSpelling < entries[j].ShortestKanjiSpelling
+		})
+	} else {
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].ShortestReading < entries[j].ShortestReading
+		})
+	}
 }
 
 func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request) {
@@ -232,7 +370,8 @@ func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 
 	var story Story
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -241,41 +380,6 @@ func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request
 	}
 
 	json.NewEncoder(response).Encode(story)
-}
-
-// connectUnixSocket initializes a Unix socket connection pool for
-// a Cloud SQL instance of Postgres.
-func connectUnixSocket() (*sql.DB, error) {
-	mustGetenv := func(k string) string {
-		v := os.Getenv(k)
-		if v == "" {
-			log.Fatalf("Warning: %s environment variable not set.\n", k)
-		}
-		return v
-	}
-	// Note: Saving credentials in environment variables is convenient, but not
-	// secure - consider a more secure solution such as
-	// Cloud Secret Manager (https://cloud.google.com/secret-manager) to help
-	// keep secrets safe.
-	var (
-		dbUser         = mustGetenv("DB_USER")              // e.g. 'my-db-user'
-		dbPwd          = mustGetenv("DB_PASS")              // e.g. 'my-db-password'
-		unixSocketPath = mustGetenv("INSTANCE_UNIX_SOCKET") // e.g. '/cloudsql/project:region:instance'
-		dbName         = mustGetenv("DB_NAME")              // e.g. 'my-database'
-	)
-
-	dbURI := fmt.Sprintf("user=%s password=%s database=%s host=%s",
-		dbUser, dbPwd, dbName, unixSocketPath)
-
-	// dbPool is the pool of database connections.
-	dbPool, err := sql.Open("pgx", dbURI)
-	if err != nil {
-		return nil, fmt.Errorf("sql.Open: %v", err)
-	}
-
-	// ...
-
-	return dbPool, nil
 }
 
 // [END indexHandler]

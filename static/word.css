@@ -6,3 +6,125 @@
 #search_button {
     font-size: 120%;
 }
+
+.kanji_spelling {
+    font-size: 240%;
+    white-space: nowrap;
+    color: #520000;
+}
+
+.reading {
+    font-size: 180%;
+    color: #9f1919;
+    padding-left: 20px;
+    text-indent: -20px;
+    padding-right: 10px;
+}
+
+.entry {
+    /* margin-top: 3em;
+    margin-bottom: 2em; */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: min-content min-content;
+    gap: 0px 0px;
+}
+
+.word {
+    display: grid;
+    grid-template-columns: 30em 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+}
+
+.sense {
+    padding: 10px;
+    max-width: 40em;
+}
+
+.pos {
+    background-color: #aca8a3;
+    color: #e7e7e7;
+    margin-right: 20px;
+    padding: 5px 8px;
+    border-radius: 6px;
+}
+
+.glosses {
+    color: #646464;
+    font-size: 130%;
+    line-height: 180%;
+}
+
+body {
+    background-color: gainsboro;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+}
+
+#word_results {
+    margin-left: 2em;
+    margin-top: 3em;
+}
+
+#word_results hr { 
+    border: 1px solid #d2d2d2; 
+}
+
+#interior_link {
+    text-decoration: none;
+}
+
+#interior_results {
+    margin-top: 3em;
+}
+
+#results {
+    margin-top: 3em;
+    margin-bottom: 2em;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+}
+
+#kanji_results {
+    padding: 2em 3em;
+    margin-left: 2em;
+    background-color: rgb(201, 179, 163);
+    font-size: 130%;
+}
+
+#kanji_results .literal {
+    margin-right: 1em;
+    font-size: 300%;
+}
+
+#kanji_results .kanji_meanings {
+    color: #575757;
+    margin-top: 0.5em;
+}
+
+.kanji {
+    margin-bottom: 1em;
+}
+
+.onyomi_readings {
+    font-size: 145%;
+    color: #6a0000;
+}
+
+.kunyomi_readings {
+    font-size: 145%;
+    color: #005357;
+}
+
+.kanji_misc {
+    font-size: 70%;
+    margin-top: 0.6em;
+    color: #8a746a;
+}
+
+.kanji_reading {
+    margin-right: 1em;
+    white-space: nowrap;
+}

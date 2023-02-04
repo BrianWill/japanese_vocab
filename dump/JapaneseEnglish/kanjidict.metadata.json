@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"f8839d94ccd0461a84029a3181c08df1","collectionName":"kanjidict","type":"collection"}
