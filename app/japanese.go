@@ -112,8 +112,9 @@ func main() {
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/story", CreateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
-	router.HandleFunc("/story_retokenize/{id}", RetokenizeStoryEndpoint).Methods("POST")
+	router.HandleFunc("/story_retokenize/{id}", RetokenizeStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
+	router.HandleFunc("/kanji", PostKanjiEndPoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
 	log.Printf("Listening on port %s", port)
@@ -213,7 +214,64 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	json.NewEncoder(response).Encode(story)
+	tokenDefinitions := make([][]JMDictEntry, len(story.Tokens))
+
+	for i, token := range story.Tokens {
+		tokenDefinitions[i] = make([]JMDictEntry, len(token.Definitions))
+		for j, def := range token.Definitions {
+			var entry JMDictEntry
+			err := jmdictCollection.FindOne(ctx, bson.M{"_id": def}).Decode(&entry)
+			if err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+				return
+			}
+			tokenDefinitions[i][j] = entry
+		}
+	}
+
+	json.NewEncoder(response).Encode(bson.M{
+		"story":       story,
+		"definitions": tokenDefinitions,
+	})
+}
+
+func PostKanjiEndPoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var str string
+	json.NewDecoder(request.Body).Decode(&str)
+
+	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	kanji := re.FindAllString(str, -1)
+
+	arr := bson.A{}
+	for _, k := range kanji {
+		arr = append(arr, bson.D{{"literal", k}})
+	}
+	kanjiQuery := bson.D{{Key: "$or", Value: arr}}
+
+	kanjiCharacters := make([]KanjiCharacter, 0)
+
+	cursor, err := kanjiCollection.Find(ctx, kanjiQuery)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var ch KanjiCharacter
+		cursor.Decode(&ch)
+		kanjiCharacters = append(kanjiCharacters, ch)
+	}
+
+	json.NewEncoder(response).Encode(bson.M{
+		"kanji": kanjiCharacters})
 }
 
 func PostWordSearch(response http.ResponseWriter, request *http.Request) {
@@ -315,12 +373,6 @@ func PostWordSearch(response http.ResponseWriter, request *http.Request) {
 		entriesMid = entriesMid[:50]
 	}
 
-	for _, entry := range entriesStart {
-		fmt.Println(entry.ShortestKanjiSpelling, entry.ShortestReading)
-	}
-
-	//json.NewEncoder(response).Encode(entries)
-	//json.NewEncoder(response).Encode(bson.D{{"entries", entries}})
 	json.NewEncoder(response).Encode(bson.M{
 		"entries_start": entriesStart,
 		"count_start":   nEntriesStart,
@@ -370,9 +422,84 @@ func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 
 	var story Story
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	tokens := tok.Analyze(story.Content, tokenizer.Normal)
+	story.Tokens = make([]JpToken, len(tokens))
+
+	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+
+	for i, r := range tokens {
+		features := r.Features()
+		var searchTerm string
+		if len(features) < 9 {
+			searchTerm = r.Surface
+			story.Tokens[i] = JpToken{
+				Surface: r.Surface,
+				POS:     features[0],
+				POS_1:   features[1],
+			}
+
+			//fmt.Println(strconv.Itoa(len(features)), features[0], r.Surface, "features: ", strings.Join(features, ","))
+		} else {
+			searchTerm = features[6] // base form
+			story.Tokens[i] = JpToken{
+				Surface:          r.Surface,
+				POS:              features[0],
+				POS_1:            features[1],
+				POS_2:            features[2],
+				POS_3:            features[3],
+				InflectionalType: features[4],
+				InflectionalForm: features[5],
+				BaseForm:         features[6],
+				Reading:          features[7],
+				Pronunciation:    features[8],
+			}
+		}
+		var wordQuery primitive.D
+		if len(re.FindStringIndex(searchTerm)) > 0 { // has kanji
+			//kanji := re.FindAllString(searchTerm, -1)
+			wordQuery = bson.D{{"kanji_spellings.kanji_spelling", searchTerm}}
+		} else {
+			wordQuery = bson.D{{"readings.reading", searchTerm}}
+		}
+
+		start := time.Now()
+		// Code to measure
+
+		cursor, err := jmdictCollection.Find(ctx, wordQuery)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+			return
+		}
+		defer cursor.Close(ctx)
+
+		duration := time.Since(start)
+
+		wordIDs := make([]primitive.ObjectID, 0)
+		for cursor.Next(ctx) {
+			var entry JMDictEntry
+			cursor.Decode(&entry)
+			wordIDs = append(wordIDs, entry.ID)
+		}
+
+		// past certain point, too many matching words isn't useful (will require manual assignment of definition to the token)
+
+		fmt.Printf("\"%v\" \t matches: %v \t %v \n ", searchTerm, len(wordIDs), duration)
+		if len(wordIDs) < 8 {
+			story.Tokens[i].Definitions = wordIDs
+		}
+	}
+
+	_, err = storiesCollection.UpdateByID(ctx, id, bson.M{"$set": story})
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))

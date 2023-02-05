@@ -3,9 +3,13 @@ var newStoryButton = document.getElementById('new_story_button');
 var storyList = document.getElementById('story_list');
 var newStoryTitle = document.getElementById('new_story_title');
 var storyTitle = document.getElementById('story_title');
-var storyText = document.getElementById('story');
 var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
+var definitionsDiv = document.getElementById('definitions');
+var kanjiResultsDiv = document.getElementById('kanji_results');
+
+var story = null;
+var definitions = null;
 
 newStoryButton.onclick = function (evt) {
     let data = {
@@ -29,8 +33,6 @@ newStoryButton.onclick = function (evt) {
 };
 
 document.body.onload = function (evt) {
-    console.log('asdf');
-
     fetch('stories_list', {
         method: 'GET', // or 'PUT'
         headers: {
@@ -64,7 +66,7 @@ storyList.onclick = function (evt) {
             retokenize(storyId);
         } else {
             openStory(storyId);
-        }        
+        }
     }
 };
 
@@ -93,102 +95,147 @@ function openStory(id) {
         }
     }).then((response) => response.json())
         .then((data) => {
-            console.log('Success:', data.tokens);
-            storyTitle.innerText = data.title;
-            //storyText.innerText = data.content;
-
-            let words = '';
-            let punctuationTokens = [' ', '。', '、'];
-
-            let html = '<p>';
-            let prior = null;
-            for (let t of data.tokens) {
-                let posClass = '';
-                if (t.surface === "。") {
-                    html += '。</p><p>';
-                } else if (t.surface === " ") {
-                    if (prior && prior.surface !== "。") {
-                        html += '。</p><p>';
-                    }
-                } else {
-                    if ((t.pos === "動詞" && t.pos1 === "接尾") ||
-                        (t.pos === "助動詞") ||
-                        (t.surface === "で" && t.pos === "助詞" && t.pos1 === "接続助詞") ||
-                        (t.surface === "て" && t.pos === "助詞" && t.pos1 === "接続助詞") ||
-                        (t.surface === "じゃ" && t.pos === "助詞" && t.pos1 === "副助詞") ||
-                        (t.pos === "動詞" && t.pos1 === "非自立") ||
-                        (t.surface === "し" && t.pos === "動詞" && t.pos1 === "自立")) {  // auxilliary verb
-                        posClass = 'verb_auxiliary';
-                    } else if ((t.pos === "助詞" && t.pos1 === "格助詞") || // case particle
-                        (t.pos === "助詞" && t.pos1 === "接続助詞") ||   // conjunction particle
-                        (t.pos === "助詞" && t.pos1 === "係助詞") || // binding particle (も　は)
-                        (t.pos === "助詞" && t.pos1 === "副助詞")) {  // auxiliary particle
-                        posClass = 'particle';
-                    } else if (t.pos === '副詞') {
-                        posClass = 'adverb';
-                    } else if (t.pos === "接続詞" && t.pos1 === "*") { // conjunction
-                        posClass = 'conjunction';
-                    } else if ((t.pos === "助詞" && t.pos1 === "連体化") || // connecting particle　(の)
-                        (t.pos === "助詞" && t.pos1 === "並立助詞")) {  // connecting particle (や)
-                        posClass = 'connecting_particle';
-                    } else if (t.pos === "形容詞") { // i-adj
-                        posClass = 'i_adjective pad_left';
-                    } else if (t.pos === "名詞" && t.pos1 === "代名詞") { // pronoun
-                        posClass = 'pronoun pad_left';
-                    } else if (t.pos === "連体詞") { // adnominal adjective
-                        posClass = 'admoninal_adjective pad_left';
-                    } else if (t.pos === "動詞") { //　verb
-                        posClass = 'verb pad_left';
-                    } else if (t.pos === "名詞" && t.pos1 === "接尾") { // noun suffix
-                        posClass = 'noun';
-                    } else if ((prior && prior.pos === "助詞" && (prior.pos1 === "連体化" || prior.pos1 === '並立助詞')) ||  // preceded by connective particle
-                        (prior && prior.pos === "接頭詞" && prior.pos1 === "名詞接続")) {  // preceded by prefix
-                        posClass = 'noun';
-                    } else if (t.pos === "名詞") { // noun
-                        posClass = 'noun';
-                    } else {
-                        posClass = 'pad_left';
-                    }
-                    html += `<span class="${posClass}">${t.surface}</span>`;
-                }
-                
-                if (!punctuationTokens.includes(t.surface)) {
-                    let baseForm = t.baseForm !== t.surface ? t.baseForm : '';
-                    let pronunciation = t.pronunciation !== t.reading ? t.pronunciation : '';
-                    words += `<tr class="${posClass}">
-                        <td>${t.surface}</td>
-                        <td>${t.reading}</td>
-                        <td>${baseForm}</td>
-                        <td>${t.inflectionalForm}, ${t.inflectionalType}</td>
-                        <!--<td>${pronunciation}</td>-->
-                        <td>${t.pos}, ${t.pos1}, ${t.pos2}, ${t.pos3}</td>
-                        </tr>`;
-                }
-                if (t.pos4) {
-                    console.log(`pos4: ${t.pos4}`);
-                }
-                prior = t;
-            }
-            tokenizedText.innerHTML = html + '</p>';
-            wordList.innerHTML = words;
-
+            console.log('Success:', data);
+            story = data.story;
+            definitions = data.definitions;
+            storyTitle.innerText = data.story.title;
+            displayTokens(data.story, data.definitions);
         })
         .catch((error) => {
             console.error('Error:', error);
         });
 }
 
-storyText.onmousedown = function (evt) {
-    //console.log(document.getSelection().toString());
+function displayTokens(story, definitions) {
+    let words = '';
+    let punctuationTokens = [' ', '。', '、'];
+
+    let html = '<p>';
+    let prior = null;
+    for (let i = 0; i < story.tokens.length; i++) {
+        let t = story.tokens[i];
+        let posClass = '';
+        if (t.surface === "。") {
+            html += '。</p><p>';
+        } else if (t.surface === " ") {
+            if (prior && prior.surface !== "。") {
+                html += '。</p><p>';
+            }
+        } else {
+            if ((t.pos === "動詞" && t.pos1 === "接尾") ||
+                (t.pos === "助動詞") ||
+                (t.surface === "で" && t.pos === "助詞" && t.pos1 === "接続助詞") ||
+                (t.surface === "て" && t.pos === "助詞" && t.pos1 === "接続助詞") ||
+                (t.surface === "じゃ" && t.pos === "助詞" && t.pos1 === "副助詞") ||
+                (t.pos === "動詞" && t.pos1 === "非自立") ||
+                (t.surface === "し" && t.pos === "動詞" && t.pos1 === "自立")) {  // auxilliary verb
+                posClass = 'verb_auxiliary';
+            } else if ((t.pos === "助詞" && t.pos1 === "格助詞") || // case particle
+                (t.pos === "助詞" && t.pos1 === "接続助詞") ||   // conjunction particle
+                (t.pos === "助詞" && t.pos1 === "係助詞") || // binding particle (も　は)
+                (t.pos === "助詞" && t.pos1 === "副助詞")) {  // auxiliary particle
+                posClass = 'particle';
+            } else if (t.pos === '副詞') {
+                posClass = 'adverb';
+            } else if (t.pos === "接続詞" && t.pos1 === "*") { // conjunction
+                posClass = 'conjunction';
+            } else if ((t.pos === "助詞" && t.pos1 === "連体化") || // connecting particle　(の)
+                (t.pos === "助詞" && t.pos1 === "並立助詞")) {  // connecting particle (や)
+                posClass = 'connecting_particle';
+            } else if (t.pos === "形容詞") { // i-adj
+                posClass = 'i_adjective pad_left';
+            } else if (t.pos === "名詞" && t.pos1 === "代名詞") { // pronoun
+                posClass = 'pronoun pad_left';
+            } else if (t.pos === "連体詞") { // adnominal adjective
+                posClass = 'admoninal_adjective pad_left';
+            } else if (t.pos === "動詞") { //　verb
+                posClass = 'verb pad_left';
+            } else if (t.pos === "名詞" && t.pos1 === "接尾") { // noun suffix
+                posClass = 'noun';
+            } else if ((prior && prior.pos === "助詞" && (prior.pos1 === "連体化" || prior.pos1 === '並立助詞')) ||  // preceded by connective particle
+                (prior && prior.pos === "接頭詞" && prior.pos1 === "名詞接続")) {  // preceded by prefix
+                posClass = 'noun';
+            } else if (t.pos === "名詞") { // noun
+                posClass = 'noun';
+            } else {
+                posClass = 'pad_left';
+            }
+            html += `<span tokenIndex="${i}" class="${posClass}">${t.surface}</span>`;
+        }
+
+        if (!punctuationTokens.includes(t.surface)) {
+            let baseForm = t.baseForm !== t.surface ? t.baseForm : '';
+            let pronunciation = t.pronunciation !== t.reading ? t.pronunciation : '';
+            words += `<tr class="${posClass}">
+                <td>${t.surface}</td>
+                <td>${t.reading}</td>
+                <td>${baseForm}</td>
+                <td>${t.inflectionalForm}, ${t.inflectionalType}</td>
+                <!--<td>${pronunciation}</td>-->
+                <td>${t.pos}, ${t.pos1}, ${t.pos2}, ${t.pos3}</td>
+                </tr>`;
+        }
+        prior = t;
+    }
+    tokenizedText.innerHTML = html + '</p>';
+    wordList.innerHTML = words;
+}
+
+var selectedTokenIndex = null;
+
+// tokenizedText.onmouseover = function (evt) {
+//     var index = evt.target.getAttribute("tokenIndex");
+//     if (index) {
+//         displayDefinition(index);
+//     } else {
+//         if (selectedTokenIndex !== null) {
+//             displayDefinition(selectedTokenIndex);
+//         }
+//     }
+// };
+
+tokenizedText.onmousedown = function (evt) {
+    var index = evt.target.getAttribute("tokenIndex");
+    if (index) {
+        selectedTokenIndex = index;
+        displayDefinition(index);
+    }
 };
 
-storyText.onmouseup = function (evt) {
-    console.log(document.getSelection().toString());
-};
+function displayDefinition(index) {
+    var token = story.tokens[index];
+    getKanji(token.baseForm + token.surface);
+    if (definitions) {
+        html = '';
+        for (let def of definitions[index]) {
+            html += displayEntry(def);
+        }
+        definitionsDiv.innerHTML = html;
+    }
+}
 
-storyText.onmouseleave = function (evt) {
-    console.log(document.getSelection().toString());
-};
+function getKanji(str) {
+    fetch('kanji', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(str),
+    }).then((response) => response.json()
+    ).then((data) => {
+        displayKanji(data.kanji);
+    }).catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+// storyText.onmouseup = function (evt) {
+//     console.log(document.getSelection().toString());
+// };
+
+// storyText.onmouseleave = function (evt) {
+//     console.log(document.getSelection().toString());
+// };
 
 // document.body.addEventListener('selectionchange', (event) => {
 //     console.log('changed');

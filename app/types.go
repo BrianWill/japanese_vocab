@@ -5,8 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-//import "encoding/xml"
-
 type Story struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Content   string             `json:"content,omitempty" bson:"content,omitempty"`
@@ -16,16 +14,23 @@ type Story struct {
 }
 
 type JpToken struct {
-	Surface          string `json:"surface,omitempty" bson:"surface,omitempty"`
-	POS              string `json:"pos,omitempty" bson:"pos"`
-	POS_1            string `json:"pos1,omitempty" bson:"pos1"`
-	POS_2            string `json:"pos2,omitempty" bson:"pos2"`
-	POS_3            string `json:"pos3,omitempty" bson:"pos3"`
-	InflectionalType string `json:"inflectionalType,omitempty" bson:"inflectionalType"`
-	InflectionalForm string `json:"inflectionalForm,omitempty" bson:"inflectionalForm"`
-	BaseForm         string `json:"baseForm,omitempty" bson:"baseForm"`
-	Reading          string `json:"reading,omitempty" bson:"reading"`
-	Pronunciation    string `json:"pronunciation,omitempty" bson:"pronunciation"`
+	Surface          string               `json:"surface,omitempty" bson:"surface,omitempty"`
+	POS              string               `json:"pos,omitempty" bson:"pos"`
+	POS_1            string               `json:"pos1,omitempty" bson:"pos1"`
+	POS_2            string               `json:"pos2,omitempty" bson:"pos2"`
+	POS_3            string               `json:"pos3,omitempty" bson:"pos3"`
+	InflectionalType string               `json:"inflectionalType,omitempty" bson:"inflectionalType"`
+	InflectionalForm string               `json:"inflectionalForm,omitempty" bson:"inflectionalForm"`
+	BaseForm         string               `json:"baseForm,omitempty" bson:"baseForm"`
+	Reading          string               `json:"reading,omitempty" bson:"reading"`
+	Pronunciation    string               `json:"pronunciation,omitempty" bson:"pronunciation"`
+	Definitions      []primitive.ObjectID `json:"definition" bson:"definitions,omitempty"`
+	Kanji            []primitive.ObjectID `json:"kanji" bson:"kanji,omitempty"`
+	// actually, the related words (component words and homynms) should be stored in monogo with the definition
+	// also, should distinguish between words the user has encountered vs those related words which they haven't
+	// ComponentWords []primitive.ObjectID `json:"componentWords" bson:"componentWords,omitempty"`
+	// PitchHomonyms  []primitive.ObjectID `json:"pitchHomonyms" bson:"pitchHomonyms,omitempty"`
+	// MoraHomonyms   []primitive.ObjectID `json:"moraHomonyms" bson:"moraHomonyms,omitempty"`
 }
 
 type Sentence struct {
@@ -50,11 +55,12 @@ type JMDict struct {
 }
 
 type JMDictEntry struct {
-	XMLName               *xml.Name     `xml:"entry" bson:"xmlname,omitempty" json:"xmlname,omitempty"`
-	Ent_seq               string        `xml:"ent_seq" bson:"sequence_number,omitempty" json:"sequence_number,omitempty"`
-	Sense                 []JMDictSense `xml:"sense" bson:"senses,omitempty" json:"senses,omitempty"`
-	R_ele                 []JMDictR_ele `xml:"r_ele" bson:"readings,omitempty" json:"readings,omitempty"`
-	K_ele                 []JMDictK_ele `xml:"k_ele" bson:"kanji_spellings,omitempty" json:"kanji_spellings,omitempty"`
+	XMLName               *xml.Name          `xml:"entry" bson:"xmlname,omitempty" json:"xmlname,omitempty"`
+	ID                    primitive.ObjectID `bson:"_id, omitempty"`
+	Ent_seq               string             `xml:"ent_seq" bson:"sequence_number,omitempty" json:"sequence_number,omitempty"`
+	Sense                 []JMDictSense      `xml:"sense" bson:"senses,omitempty" json:"senses,omitempty"`
+	R_ele                 []JMDictR_ele      `xml:"r_ele" bson:"readings,omitempty" json:"readings,omitempty"`
+	K_ele                 []JMDictK_ele      `xml:"k_ele" bson:"kanji_spellings,omitempty" json:"kanji_spellings,omitempty"`
 	ShortestKanjiSpelling int
 	ShortestReading       int
 }

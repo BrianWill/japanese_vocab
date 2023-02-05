@@ -27,7 +27,7 @@ body {
 }
 
 #word_list_container {
-    
+    margin-top: 5em;
 }
 
 #word_list {
@@ -98,4 +98,20 @@ span.particle:hover,
 span.verb_auxiliary:hover,
 span.verb:hover {
     text-decoration: underline;
+}
+
+
+#story_container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+}
+
+#definitions {
+    padding: 2em 3em;
+    margin-right: 2em;
+    background-color: rgb(201, 179, 163);
+    font-size: 80%;
+    text-align: right;
 }

@@ -50,6 +50,14 @@ func main() {
 	//parseKanjiDict()
 }
 
+func updatePitch() {
+
+}
+
+func updateStoryTokens() {
+
+}
+
 func parseKanjiDict() {
 	dictCollection = db.Collection("kanjidict")
 

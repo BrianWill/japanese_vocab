@@ -1,3 +1,9 @@
+
+body {
+    background-color: gainsboro;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+}
+
 #word_search {
     font-size: 200%;
     width: 60%;
@@ -16,14 +22,11 @@
 .reading {
     font-size: 180%;
     color: #9f1919;
-    padding-left: 20px;
-    text-indent: -20px;
-    padding-right: 10px;
 }
 
 .entry {
-    /* margin-top: 3em;
-    margin-bottom: 2em; */
+    margin-top: 3em;
+    margin-bottom: 2em;
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: min-content min-content;
@@ -32,14 +35,13 @@
 
 .word {
     display: grid;
-    grid-template-columns: 30em 1fr;
-    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+    grid-template-rows: min-content min-content;
     gap: 0px 0px;
 }
 
 .sense {
     padding: 10px;
-    max-width: 40em;
 }
 
 .pos {
@@ -56,10 +58,6 @@
     line-height: 180%;
 }
 
-body {
-    background-color: gainsboro;
-    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
-}
 
 #word_results {
     margin-left: 2em;
@@ -127,4 +125,8 @@ body {
 .kanji_reading {
     margin-right: 1em;
     white-space: nowrap;
+}
+
+.frequency {
+    margin-left: 2em;
 }

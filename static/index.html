@@ -4,10 +4,17 @@
         <link rel="stylesheet"
           href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
 
+        <link rel="stylesheet" href="word.css">
         <link rel="stylesheet" href="styles.css">
         <title>Jpn Stories</title>
     </head>
     <body>
+        <h3 id="story_title">Story</h3>
+        <div id="story_container">
+            <div id="kanji_results"></div>
+            <div id="definitions"></div>
+            <div id="tokenized_story"></div>
+        </div>
         <h1>Stories</h1>
             <ul id="story_list">
                 <li><a story_id="" href="#">Story1</a></li>
@@ -18,10 +25,10 @@
         <input id="new_story_title" type="text" value="title"><br>
         <textarea id="new_story_text">asdf</textarea>
         <button id="new_story_button">ADD STORY</button>
-        <h3 id="story_title">Story</h3>
-        <div id="story"></div>
-        <div id="tokenized_story"></div>
+        
+        
         <div id="word_list_container"><table id="word_list"></table></div>        
     </body>
     <script src="main.js"></script>
+    <script src="util.js"></script>
 </html>
