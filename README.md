@@ -2,12 +2,17 @@
 
 ## TODO
 
-- Map each story token to a dictionary entry. (map to specific meaning?)
-X When clicking/hovering on each word in a story, display the definition and kanji.
+
 - When baking definitions and kanji in tokens, the spelling / reading that is used in the token should be top (display others in smaller text below).
     - distinguish between readings/spellings/definitions that user has encountered from others
+    - prioritize showing definition of word as used in context + "core" definition
 
-- When encountering a new compound word, should learn the parts as well.
+- When encountering a new compound word, should include parts as related words.
+- Audio / video sync with text. (time mark per token? If no time mark, then search back through tokens for nearest prior time mark.)
+- mousehover over word displays reading of word and its definition below the line (anything that doesn't fit in the line is cut off)
+
+- sort kanji results to order of kanji as they appear in the word
+- roman letters in word search to search by definition (might be very slow; would text indexing help?)
 
 - Track encountered words / kanji. (sqlite?)
 - Drilling for words / kanji. Filter drill sets for encountered, for specific stories, for common features (e.g. 'godan verbs ending in つ')
@@ -29,4 +34,6 @@ X When clicking/hovering on each word in a story, display the definition and kan
     - Find all homonyms from all possible verb forms
 
 
+x Map each story token to a dictionary entry. (map to specific meaning?)
+X When clicking/hovering on each word in a story, display the definition and kanji.
 x Result entries should be sorted on server in order of fewest characters in spelling and/or reading

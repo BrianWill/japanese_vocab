@@ -97,6 +97,7 @@ type JMDictR_ele struct {
 	Re_restr []string `xml:"re_restr" bson:"restrictions,omitempty" json:"restrictions,omitempty"` // reading only applies to a subset of the keb elements in the entry
 	Re_inf   []string `xml:"re_inf" bson:"information,omitempty" json:"information,omitempty"`     // denotes orthography, e.g. okurigana irregularity
 	Re_pri   []string `xml:"re_pri" bson:"priority,omitempty" json:"priority,omitempty"`           // relative priority (see schema)
+	Pitch    string   `bson:"pitch,omitempty" json:"pitch,omitempty"`
 }
 
 // kanji element

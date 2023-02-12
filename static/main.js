@@ -17,7 +17,7 @@ newStoryButton.onclick = function (evt) {
         title: newStoryTitle.value
     };
 
-    fetch('story', {
+    fetch('/story', {
         method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
@@ -32,8 +32,9 @@ newStoryButton.onclick = function (evt) {
         });
 };
 
+
 document.body.onload = function (evt) {
-    fetch('stories_list', {
+    fetch('/stories_list', {
         method: 'GET', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
@@ -46,37 +47,82 @@ document.body.onload = function (evt) {
         .catch((error) => {
             console.error('Error:', error);
         });
+
+
+    if (window.location.pathname.startsWith('/read/')) {
+        let storyId = window.location.pathname.substring(6);
+        console.log("opening story with id " + storyId);
+        openStory(storyId);        
+    }
 };
 
 function updateStoryList(stories) {
     let html = '';
-    for (let s of stories) {
-        html += `<li><a story_id="${s._id}" href="#">${s.title}</a>&nbsp;&nbsp;&nbsp;&nbsp;<a story_id="${s._id}" action="retokenize" href="#">retokenize</a></li>`;
+
+    html += `<h3>Active stories</h3>`
+    for (let s of stories.activeStories) {
+        html += `<li>
+            <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
+            <a story_id="${s._id}" action="mark_inactive" href="#">mark inactive</a>&nbsp;&nbsp;
+            <a story_id="${s._id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
+            <a story_id="${s._id}" href="#">${s.title}</a>
+            </li>`;
+    }
+
+    html += `<h3>Inactive stories</h3>`
+    for (let s of stories.inactiveStories) {
+        html += `<li>
+            <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
+            <a story_id="${s._id}" action="mark_active" href="#">make active</a>&nbsp;&nbsp;
+            <a story_id="${s._id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
+            <a story_id="${s._id}" href="#">${s.title}</a>
+            </li>`;
+    }
+
+    html += `<h3>Unread stories</h3>`
+    for (let s of stories.unreadStories) {
+        html += `<li>
+            <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
+            <a story_id="${s._id}" action="mark_active" href="#">mark active</a>&nbsp;&nbsp;
+            <a story_id="${s._id}" href="#">${s.title}</a>
+            </li>`;
     }
     storyList.innerHTML = html;
 };
 
 storyList.onclick = function (evt) {
     if (evt.target.tagName == 'A') {
+        evt.preventDefault();
         var storyId = evt.target.getAttribute('story_id');
 
         var action = evt.target.getAttribute('action');
-        if (action === 'retokenize') {
-            console.log('retokenizing');
-            retokenize(storyId);
-        } else {
-            openStory(storyId);
+        switch (action) {
+            case 'retokenize':
+                console.log('retokenizing');
+                retokenize(storyId);
+                break;
+            case 'mark_inactive':
+                markStory(storyId, 'inactive');
+                break;
+            case 'mark_unread':
+                markStory(storyId, 'unread');
+                break;
+            case 'mark_active':
+                markStory(storyId, 'active');
+                break;
+            default:
+                openStory(storyId);
+                break;
         }
     }
 };
 
 function retokenize(id) {
-    fetch('story_retokenize/' + id, {
-        method: 'POST', // or 'PUT'
+    fetch('/story_retokenize/' + id, {
+        method: 'GET', 
         headers: {
             'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
+        }
     }).then((response) => response.json())
         .then((data) => {
             console.log('Success retokenizing:', data);
@@ -87,8 +133,40 @@ function retokenize(id) {
         });
 }
 
+function getStoryList() {
+    fetch('/stories_list', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Success:', data);
+            updateStoryList(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function markStory(id, action) {
+    fetch(`/mark/${action}/${id}`, {
+        method: 'GET', 
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log(`Success ${action}:`, data);
+            getStoryList()
+        })
+        .catch((error) => {
+            console.error('Error marking story:', error);
+        });
+}
+
 function openStory(id) {
-    fetch('story/' + id, {
+    fetch('/story/' + id, {
         method: 'GET', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
@@ -204,10 +282,11 @@ tokenizedText.onmousedown = function (evt) {
 
 function displayDefinition(index) {
     var token = story.tokens[index];
-    getKanji(token.baseForm + token.surface);
+    getKanji(token.baseForm + token.surface); // might as well get all possibly relevant kanji
     if (definitions) {
         html = '';
         for (let def of definitions[index]) {
+            console.log(def);
             html += displayEntry(def);
         }
         definitionsDiv.innerHTML = html;
@@ -215,7 +294,7 @@ function displayDefinition(index) {
 }
 
 function getKanji(str) {
-    fetch('kanji', {
+    fetch('/kanji', {
         method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',

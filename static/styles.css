@@ -100,6 +100,9 @@ span.verb:hover {
     text-decoration: underline;
 }
 
+#story_list li {
+    margin-bottom: 0.4em;
+}
 
 #story_container {
     display: grid;
@@ -114,4 +117,12 @@ span.verb:hover {
     background-color: rgb(201, 179, 163);
     font-size: 80%;
     text-align: right;
+}
+
+.high_pitch {
+    font-weight: bold;
+}
+
+.unknown_pitch {
+    
 }

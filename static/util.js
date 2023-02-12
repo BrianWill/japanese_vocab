@@ -1,12 +1,39 @@
+function splitOnHighPitch(str, pitch) {
+    if (pitch === 0) {
+        return ['', '', str];
+    } 
+    let mora = [];
+    let s = new Set(['ゅ', 'ょ', 'ゃ', 'ャ', 'ュ', 'ョ']);
+    let chars = str.split('');
+    for (let i = 0; i < chars.length; i++) {
+        if (s.has(chars[i + 1])) {
+            mora.push(chars[i] + chars[i + 1]);
+            i++;
+        } else {
+            mora.push(chars[i]);
+        }
+    }
+    return [
+        mora.slice(0, pitch - 1).join(''),
+        mora.slice(pitch - 1, pitch).join(''),
+        mora.slice(pitch).join('')
+    ];    
+}
+
 function displayEntry(entry) {
     html = `<div class="entry"><div class="word">`;
 
-    html += '<div class="readings">'
+    html += '<div class="readings">';
     for (var reading of entry.readings || []) {
-        html += `<div class="reading">${reading.reading}</div>`;
+        if (reading.pitch) {
+            let parts = splitOnHighPitch(reading.reading, parseInt(reading.pitch));
+            html += `<div class="reading">${parts[0]}<span class="high_pitch">${parts[1]}</span>${parts[2]}</div>`;
+        } else {
+            html += `<div class="reading unknown_pitch">${reading.reading}﹖</div>`;
+        }
     }
 
-    html += '</div><div class="kanji_spellings">'
+    html += '</div><div class="kanji_spellings">';
     for (var kanji of entry.kanji_spellings || []) {
         html += `<div class="kanji_spelling">${kanji.kanji_spelling}</div>`;
     }

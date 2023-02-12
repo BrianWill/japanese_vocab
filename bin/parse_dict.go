@@ -1,17 +1,21 @@
 package main
 
 import (
+	"bufio"
 	"encoding/xml"
 	"fmt"
 	"regexp"
 
 	"context"
-	// "go.mongodb.org/mongo-driver/bson"
-	//"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"time"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"time"
 
 	//"github.com/ikawaha/kagome-dict/ipa"
 	"github.com/ikawaha/kagome/v2/tokenizer"
@@ -47,15 +51,125 @@ func main() {
 
 	db = client.Database("JapaneseEnglish")
 
-	//parseKanjiDict()
+	updatePitch()
 }
 
 func updatePitch() {
+	fmt.Println("updating pitch")
 
+	jmdictCollection := db.Collection("jmdict")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	err := client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		panic(err)
+	}
+
+	lines := LinesInFile(`./accents.txt`)
+	nKanjiWords := 0
+	nNoKanjiWords := 0
+	updatedDocs := make(map[primitive.ObjectID]map[int]int)
+	nNoMatch := 0
+	nCollisions := 0
+
+	for _, line := range lines[117000:] {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		words := strings.Fields(line)
+
+		var query primitive.D
+		var kanji string
+		var reading string
+		var pitch string
+
+		if len(words) == 3 {
+			kanji = words[0]
+			reading = words[1]
+			pitch = words[2]
+			query = bson.D{
+				{"kanji_spellings.kanji_spelling", kanji},
+				{"readings.reading", reading}}
+			nKanjiWords++
+		} else {
+			reading = words[0]
+			pitch = words[1]
+			query = bson.D{
+				{"kanji_spellings", bson.D{{"$exists", false}}},
+				{"readings.reading", reading}}
+			nNoKanjiWords++
+		}
+
+		cursor, err := jmdictCollection.Find(ctx, query)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer cursor.Close(ctx)
+
+		entries := make([]JMDictEntry, 0)
+		for cursor.Next(ctx) {
+			var entry JMDictEntry
+			cursor.Decode(&entry)
+			entries = append(entries, entry)
+		}
+
+		if len(entries) == 0 {
+			nNoMatch++
+			fmt.Println("no match: ", kanji, reading, pitch)
+			continue
+		}
+
+		for _, entry := range entries {
+			for idx, ele := range entry.R_ele {
+				if ele.Reb == reading {
+					//fmt.Println(entry.ID, kanji, reading, pitch)
+					_, err := jmdictCollection.UpdateByID(ctx, entry.ID,
+						bson.D{{"$set", bson.D{{"readings." + strconv.Itoa(idx) + ".pitch", pitch}}}})
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+
+					if obj, ok := updatedDocs[entry.ID]; ok {
+						if val, ok := obj[idx]; ok {
+							obj[idx] = val + 1
+							fmt.Println("collision: ", kanji, reading)
+							if val == 1 {
+								nCollisions++
+							}
+						}
+					} else {
+						updatedDocs[entry.ID] = make(map[int]int)
+						updatedDocs[entry.ID][idx] = 1
+					}
+					break
+				}
+			}
+		}
+	}
+	fmt.Println(nKanjiWords, nNoKanjiWords)
+	fmt.Printf("no matches: %v, collisions: %v", nNoMatch, nCollisions)
 }
 
-func updateStoryTokens() {
-
+func LinesInFile(fileName string) []string {
+	f, err := os.Open(fileName)
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+	defer f.Close()
+	// Create new Scanner.
+	scanner := bufio.NewScanner(f)
+	result := []string{}
+	// Use Scan.
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Append line to result.
+		result = append(result, line)
+	}
+	return result
 }
 
 func parseKanjiDict() {
@@ -457,11 +571,12 @@ type JMDict struct {
 }
 
 type JMDictEntry struct {
-	XMLName *xml.Name     `xml:"entry" bson:"xmlname,omitempty"`
-	Ent_seq string        `xml:"ent_seq" bson:"sequence_number,omitempty"`
-	Sense   []JMDictSense `xml:"sense" bson:"senses,omitempty"`
-	R_ele   []JMDictR_ele `xml:"r_ele" bson:"readings,omitempty"`
-	K_ele   []JMDictK_ele `xml:"k_ele" bson:"kanji_spellings,omitempty"`
+	XMLName *xml.Name          `xml:"entry" bson:"xmlname,omitempty"`
+	ID      primitive.ObjectID `bson:"_id, omitempty"`
+	Ent_seq string             `xml:"ent_seq" bson:"sequence_number,omitempty"`
+	Sense   []JMDictSense      `xml:"sense" bson:"senses,omitempty"`
+	R_ele   []JMDictR_ele      `xml:"r_ele" bson:"readings,omitempty"`
+	K_ele   []JMDictK_ele      `xml:"k_ele" bson:"kanji_spellings,omitempty"`
 }
 
 type JMDictSense struct {
@@ -496,6 +611,7 @@ type JMDictR_ele struct {
 	Re_restr []string `xml:"re_restr" bson:"restrictions,omitempty"` // reading only applies to a subset of the keb elements in the entry
 	Re_inf   []string `xml:"re_inf" bson:"information,omitempty"`    // denotes orthography, e.g. okurigana irregularity
 	Re_pri   []string `xml:"re_pri" bson:"priority,omitempty"`       // relative priority (see schema)
+	Pitch    string   `bson:"pitch,omitempty"`
 }
 
 // kanji element

@@ -24,6 +24,7 @@ import (
 	"math"
 	"regexp"
 	"sort"
+	//"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -47,6 +48,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
+	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
+
 	//"github.com/hedhyw/rex/pkg/rex"  // regex builder
 
 	"github.com/gorilla/mux"
@@ -68,6 +73,9 @@ var kanjiCollection *mongo.Collection
 
 var tok *tokenizer.Tokenizer
 
+const SQL_FILE = "../testsql.db"
+const USER_ID = 0 // TODO for now we hardcode for just one user
+
 func main() {
 	var err error
 	tok, err = tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
@@ -75,8 +83,7 @@ func main() {
 		panic(err)
 	}
 
-	// re := rex.New().MustCompile()
-	// fmt.Println(re)
+	makeSqlDB()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -109,12 +116,14 @@ func main() {
 
 	router := mux.NewRouter()
 
+	router.HandleFunc("/read/{id}", ReadEndpoint).Methods("GET")
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
+	router.HandleFunc("/mark/{action}/{id}", MarkStoryEndpoint).Methods("GET")
 	router.HandleFunc("/story", CreateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/story_retokenize/{id}", RetokenizeStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
-	router.HandleFunc("/kanji", PostKanjiEndPoint).Methods("POST")
+	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
 	log.Printf("Listening on port %s", port)
@@ -122,6 +131,51 @@ func main() {
 		log.Fatal(err)
 	}
 	// [END setting_port]
+}
+
+func makeSqlDB() {
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer sqldb.Close()
+
+	statement, err := sqldb.Prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	statement, err = sqldb.Prepare("CREATE TABLE IF NOT EXISTS known_words (id INTEGER PRIMARY KEY, user INTEGER NOT NULL, word INTEGER NOT NULL, FOREIGN KEY(user) REFERENCES users(id))")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	statement, err = sqldb.Prepare("CREATE TABLE IF NOT EXISTS stories (id INTEGER PRIMARY KEY, user INTEGER NOT NULL, story TEXT NOT NULL, state TEXT NOT NULL, FOREIGN KEY(user) REFERENCES users(id))")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	// statement, err = sqldb.Prepare("INSERT INTO users (name) VALUES (?)")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// statement.Exec("Mario Mario")
+	// rows, _ := sqldb.Query("SELECT id, name FROM users")
+	// var id int
+	// var name string
+	// for rows.Next() {
+	// 	rows.Scan(&id, &name)
+	// 	fmt.Println(strconv.Itoa(id) + ": " + name)
+	// }
 }
 
 // [END main_func]
@@ -197,17 +251,70 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-	json.NewEncoder(response).Encode(stories)
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT story, state FROM stories WHERE user = $1;`, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	states := make(map[string]string)
+	for rows.Next() {
+		var state string
+		var storyId string
+		if err := rows.Scan(&storyId, &state); err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to read story states: " + err.Error() + `"}`))
+			return
+		}
+		states[storyId] = state
+		fmt.Println("STATUS", storyId, state)
+	}
+
+	activeStories := make([]Story, 0)
+	inactiveStories := make([]Story, 0)
+	unreadStories := make([]Story, 0)
+	for _, story := range stories {
+		state, ok := states[story.ID.Hex()]
+		if !ok || state == "unread" {
+			unreadStories = append(unreadStories, story)
+		} else if state == "inactive" {
+			inactiveStories = append(inactiveStories, story)
+		} else if state == "active" {
+			activeStories = append(activeStories, story)
+		}
+	}
+
+	json.NewEncoder(response).Encode(bson.M{
+		"unreadStories":   unreadStories,
+		"inactiveStories": inactiveStories,
+		"activeStories":   activeStories})
+}
+
+func ReadEndpoint(response http.ResponseWriter, request *http.Request) {
+	fmt.Println(request.URL.Path)
+	http.ServeFile(response, request, "../static/index.html")
 }
 
 func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	params := mux.Vars(request)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
+	fmt.Println("story id: ", id)
 	var story Story
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
+	err := storiesCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&story)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -236,7 +343,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	})
 }
 
-func PostKanjiEndPoint(response http.ResponseWriter, request *http.Request) {
+func KanjiEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -248,13 +355,17 @@ func PostKanjiEndPoint(response http.ResponseWriter, request *http.Request) {
 	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	kanji := re.FindAllString(str, -1)
 
+	if len(kanji) == 0 {
+		json.NewEncoder(response).Encode(bson.M{
+			"kanji": bson.A{}})
+		return
+	}
+
 	arr := bson.A{}
 	for _, k := range kanji {
 		arr = append(arr, bson.D{{"literal", k}})
 	}
 	kanjiQuery := bson.D{{Key: "$or", Value: arr}}
-
-	kanjiCharacters := make([]KanjiCharacter, 0)
 
 	cursor, err := kanjiCollection.Find(ctx, kanjiQuery)
 	if err != nil {
@@ -263,6 +374,8 @@ func PostKanjiEndPoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	defer cursor.Close(ctx)
+
+	kanjiCharacters := make([]KanjiCharacter, 0)
 
 	for cursor.Next(ctx) {
 		var ch KanjiCharacter
@@ -416,15 +529,88 @@ func sortResults(entries []JMDictEntry, hasKanji bool, word string) {
 	}
 }
 
+func MarkStoryEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	params := mux.Vars(request)
+	id, err := primitive.ObjectIDFromHex(params["id"])
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	// make sure the story actually exists
+	var story Story
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	err = storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	action := params["action"]
+
+	if action != "inactive" && action != "unread" && action != "active" {
+		response.WriteHeader(400)
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	storyID := story.ID.Hex()
+
+	rows, err := sqldb.Query(`SELECT id FROM stories WHERE story = $1 AND user = $2;`, storyID, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return
+	}
+	exists := rows.Next()
+	rows.Close()
+
+	fmt.Println("query ", exists, storyID, USER_ID)
+
+	if exists {
+		_, err = sqldb.Exec(`UPDATE stories SET state = $1 WHERE story = $2 AND user = $3;`, action, storyID, USER_ID)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to update story state: " + err.Error() + `"}`))
+			return
+		}
+	} else {
+		_, err = sqldb.Exec(`INSERT INTO stories (story, state, user) VALUES($1, $2, $3);`, storyID, action, USER_ID)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to insert story state: " + err.Error() + `"}`))
+			return
+		}
+	}
+
+	json.NewEncoder(response).Encode(bson.M{"status": "success"})
+}
+
 func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	params := mux.Vars(request)
-	id, _ := primitive.ObjectIDFromHex(params["id"])
+	id, err := primitive.ObjectIDFromHex(params["id"])
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
 
 	var story Story
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	err := storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
+	err = storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
