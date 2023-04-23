@@ -24,13 +24,11 @@ import (
 	"math"
 	"regexp"
 	"sort"
-	//"strconv"
+
 	"strings"
 	"unicode/utf8"
 
 	//"strconv"
-
-	//"strings"
 
 	"log"
 	"net/http"
@@ -75,6 +73,7 @@ var tok *tokenizer.Tokenizer
 
 const SQL_FILE = "../testsql.db"
 const USER_ID = 0 // TODO for now we hardcode for just one user
+const INITIAL_COUNTDOWN = 8
 
 func main() {
 	var err error
@@ -124,6 +123,8 @@ func main() {
 	router.HandleFunc("/story_retokenize/{id}", RetokenizeStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
+	router.HandleFunc("/add_word", AddWordEndpoint).Methods("POST")
+	router.HandleFunc("/drill", DrillEndpoint).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
 	log.Printf("Listening on port %s", port)
@@ -148,7 +149,25 @@ func makeSqlDB() {
 		log.Fatal(err)
 	}
 
-	statement, err = sqldb.Prepare("CREATE TABLE IF NOT EXISTS known_words (id INTEGER PRIMARY KEY, user INTEGER NOT NULL, word INTEGER NOT NULL, FOREIGN KEY(user) REFERENCES users(id))")
+	// statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS known_words
+	// 	(id INTEGER PRIMARY KEY, user INTEGER NOT NULL, word INTEGER NOT NULL, FOREIGN KEY(user) REFERENCES users(id))`)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// if _, err := statement.Exec(); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS words 
+		(id INTEGER PRIMARY KEY, user INTEGER NOT NULL, 
+			base_form TEXT NOT NULL, 
+			countdown INTEGER NOT NULL,
+			drill_count INTEGER NOT NULL,
+			read_count INTEGER NOT NULL,
+			date_last_read INTEGER NOT NULL,
+			date_last_drill INTEGER NOT NULL,
+			definitions TEXT NOT NULL,
+			FOREIGN KEY(user) REFERENCES users(id))`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -385,6 +404,89 @@ func KanjiEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	json.NewEncoder(response).Encode(bson.M{
 		"kanji": kanjiCharacters})
+}
+
+func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT base_form, countdown, drill_count, read_count, 
+			date_last_read, date_last_drill, definitions FROM words WHERE user = $1;`, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	words := make([]DrillWord, 0)
+	for rows.Next() {
+		var word DrillWord
+		err = rows.Scan(&word.BaseForm, &word.Countdown,
+			&word.DrillCount, &word.ReadCount,
+			&word.DateLastRead, &word.DateLastDrill,
+			&word.Definitions)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
+			return
+		}
+		words = append(words, word)
+	}
+
+	json.NewEncoder(response).Encode(words)
+}
+
+func AddWordEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	var token JpToken
+	json.NewDecoder(request.Body).Decode(&token)
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1 AND user = $2;`, token.BaseForm, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+		return
+	}
+	exists := rows.Next()
+	rows.Close()
+
+	unixtime := time.Now().Unix()
+
+	defs := make([]string, len(token.Definitions))
+	for i, v := range token.Definitions {
+		defs[i] = v.Hex()
+	}
+
+	if !exists {
+		fmt.Printf("\nadding word: %s %s\n", token.BaseForm, strings.Join(defs, ","))
+
+		_, err = sqldb.Exec(`INSERT INTO words (base_form, user, countdown, drill_count, 
+				read_count, date_last_read, date_last_drill, definitions) VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+			token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, unixtime, strings.Join(defs, ","))
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
+			return
+		}
+	}
+
+	json.NewEncoder(response).Encode(token)
 }
 
 func PostWordSearch(response http.ResponseWriter, request *http.Request) {
@@ -658,7 +760,6 @@ func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request
 		}
 
 		start := time.Now()
-		// Code to measure
 
 		cursor, err := jmdictCollection.Find(ctx, wordQuery)
 		if err != nil {
@@ -677,7 +778,7 @@ func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request
 			wordIDs = append(wordIDs, entry.ID)
 		}
 
-		// past certain point, too many matching words isn't useful (will require manual assignment of definition to the token)
+		// todo past certain point, too many matching words isn't useful (will require manual assignment of definition to the token)
 
 		fmt.Printf("\"%v\" \t matches: %v \t %v \n ", searchTerm, len(wordIDs), duration)
 		if len(wordIDs) < 8 {

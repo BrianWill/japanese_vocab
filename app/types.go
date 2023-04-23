@@ -13,6 +13,16 @@ type Story struct {
 	Sentences []Sentence
 }
 
+type DrillWord struct {
+	BaseForm      string `json:"base_form"`
+	Countdown     int    `json:"countdown"`
+	DrillCount    int    `json:"drill_count"`
+	ReadCount     int    `json:"read_count"`
+	DateLastRead  int    `json:"date_last_read"`
+	DateLastDrill int    `json:"date_last_drill"`
+	Definitions   string `json:"definitions"`
+}
+
 type JpToken struct {
 	Surface          string               `json:"surface,omitempty" bson:"surface,omitempty"`
 	POS              string               `json:"pos,omitempty" bson:"pos"`

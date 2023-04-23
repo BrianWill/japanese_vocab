@@ -7,6 +7,7 @@ var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
+var addWordButton = document.getElementById('add_word');
 
 var story = null;
 var definitions = null;
@@ -52,7 +53,7 @@ document.body.onload = function (evt) {
     if (window.location.pathname.startsWith('/read/')) {
         let storyId = window.location.pathname.substring(6);
         console.log("opening story with id " + storyId);
-        openStory(storyId);        
+        openStory(storyId);
     }
 };
 
@@ -119,7 +120,7 @@ storyList.onclick = function (evt) {
 
 function retokenize(id) {
     fetch('/story_retokenize/' + id, {
-        method: 'GET', 
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         }
@@ -151,7 +152,7 @@ function getStoryList() {
 
 function markStory(id, action) {
     fetch(`/mark/${action}/${id}`, {
-        method: 'GET', 
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         }
@@ -278,6 +279,27 @@ tokenizedText.onmousedown = function (evt) {
         selectedTokenIndex = index;
         displayDefinition(index);
     }
+};
+
+addWordButton.onclick = function (evt) {
+    if (selectedTokenIndex === null) {
+        return;
+    }
+    var token = story.tokens[selectedTokenIndex];
+
+    fetch('/add_word', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(token),
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Success:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 };
 
 function displayDefinition(index) {

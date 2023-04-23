@@ -3,6 +3,16 @@
 ## TODO
 
 
+- word_drills
+    - baseForm
+    - countdown
+    - drill_count
+    - read_count
+    - date_last_read
+    - date_last_drilled   (do we need a separate cooldown?)
+    - definitions
+
+
 - When baking definitions and kanji in tokens, the spelling / reading that is used in the token should be top (display others in smaller text below).
     - distinguish between readings/spellings/definitions that user has encountered from others
     - prioritize showing definition of word as used in context + "core" definition

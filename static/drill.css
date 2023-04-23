@@ -1,0 +1,110 @@
+
+body {
+    background-color: rgb(23, 23, 23);
+    color: #dfdfdf;
+    font-size: 130%;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+}
+
+#drill_button {
+    font-size: 120%;
+}
+
+.kanji_spelling {
+    font-size: 240%;
+    white-space: nowrap;
+    color: #520000;
+}
+
+.reading {
+    font-size: 180%;
+    color: #9f1919;
+}
+
+.entry {
+    margin-top: 3em;
+    margin-bottom: 2em;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: min-content min-content;
+    gap: 0px 0px;
+}
+
+.word {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: min-content min-content;
+    gap: 0px 0px;
+}
+
+.sense {
+    padding: 10px;
+}
+
+.pos {
+    background-color: #aca8a3;
+    color: #e7e7e7;
+    margin-right: 20px;
+    padding: 5px 8px;
+    border-radius: 6px;
+}
+
+.glosses {
+    color: #646464;
+    font-size: 130%;
+    line-height: 180%;
+}
+
+
+#cards {
+    margin-left: 2em;
+    margin-top: 3em;
+}
+
+#cards hr { 
+    border: 1px solid #d2d2d2; 
+}
+
+#interior_link {
+    text-decoration: none;
+}
+
+#interior_results {
+    margin-top: 3em;
+}
+
+#results {
+    margin-top: 3em;
+    margin-bottom: 2em;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+}
+
+#answer {
+    padding: 2em 3em;
+    margin-left: 2em;
+    background-color: rgb(201, 179, 163);
+    font-size: 130%;
+}
+
+#answer .literal {
+    margin-right: 1em;
+    font-size: 300%;
+}
+
+#answer .kanji_meanings {
+    color: #575757;
+    margin-top: 0.5em;
+}
+
+.drill_word {
+    cursor: default;
+    padding: 12px 30px;
+    margin: 9px;
+    font-size: 340%;
+    color: #dfdfdf;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: black;
+}
