@@ -125,6 +125,7 @@ func main() {
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
 	router.HandleFunc("/add_word", AddWordEndpoint).Methods("POST")
 	router.HandleFunc("/drill", DrillEndpoint).Methods("GET")
+	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
 	log.Printf("Listening on port %s", port)
@@ -457,6 +458,10 @@ func AddWordEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
+	if token.BaseForm == "" {
+		token.BaseForm = token.Surface
+	}
+
 	rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1 AND user = $2;`, token.BaseForm, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -505,6 +510,43 @@ func AddWordEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	json.NewEncoder(response).Encode(token)
+}
+
+func UpdateWordEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	var word DrillWord
+	json.NewDecoder(request.Body).Decode(&word)
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1 AND user = $2;`, word.BaseForm, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+		return
+	}
+	exists := rows.Next()
+	rows.Close()
+
+	if !exists {
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE words SET countdown = $1, drill_count = $2, date_last_drill = $3  WHERE base_form = $4 AND user = $5;`,
+		word.Countdown, word.DrillCount, word.DateLastDrill, word.BaseForm, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to update drill word: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(response).Encode(word)
 }
 
 func PostWordSearch(response http.ResponseWriter, request *http.Request) {

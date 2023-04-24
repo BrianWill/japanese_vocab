@@ -277,11 +277,18 @@ tokenizedText.onmousedown = function (evt) {
     var index = evt.target.getAttribute("tokenIndex");
     if (index) {
         selectedTokenIndex = index;
-        displayDefinition(index);
+        displayDefinition(index);        
+        if (evt.ctrlKey) {
+            addWord();
+        }
     }
 };
 
 addWordButton.onclick = function (evt) {
+    addWord();
+};
+
+function addWord() {
     if (selectedTokenIndex === null) {
         return;
     }
@@ -300,7 +307,7 @@ addWordButton.onclick = function (evt) {
         .catch((error) => {
             console.error('Error:', error);
         });
-};
+}
 
 function displayDefinition(index) {
     var token = story.tokens[index];

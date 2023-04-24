@@ -73,6 +73,21 @@ function getKanji(str) {
     });
 }
 
+function updateWord(word) {
+    fetch('/update_word', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(word),
+    }).then((response) => response.json()
+    ).then((data) => {
+        //console.log(data);
+    }).catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
 
 function shuffle(array) {
     if (array.length < 2) {
@@ -113,10 +128,10 @@ function displayEntry(entry) {
 
     for (var sense of entry.senses || []) {
         html += `<div class="sense">
-            <span class="pos">${sense.parts_of_speech.join(', ')}</span>
-            <span class="glosses">${sense.glosses.map(x => x.value).join('; &nbsp;&nbsp;')}</span>
+            <div><span class="pos">${sense.parts_of_speech.join(', ')}</span></div>
+            <div class="glosses">${sense.glosses.map(x => x.value).join('; &nbsp;&nbsp;')}</div>
         </div>`;
     }
 
-    return html + `</div></div><hr>`;
+    return html + `</div></div>`;
 }

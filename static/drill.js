@@ -70,9 +70,9 @@ document.body.onkeydown = async function (evt) {
             let unixtime = Math.floor(Date.now() / 1000); // in seconds
             if ((unixtime - word.date_last_drill > COOLDOWN_TIME) && word.countdown > 0) {
                 word.date_last_drill = unixtime;
-                word.countdown--;
-                
-                // todo update word in decrement countdown (if cooldown expired)
+                word.countdown--;   
+                word.drill_count++;
+                updateWord(word);
             }
             drillSet.shift();
             answeredSet.unshift(word);
@@ -103,10 +103,6 @@ function nextRound() {
     }
 
     shuffle(drillSet);
-}
-
-function updateWord(word) {
-
 }
 
 function showWord(word) {

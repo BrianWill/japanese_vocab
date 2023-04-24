@@ -12,12 +12,12 @@ body {
 .kanji_spelling {
     font-size: 240%;
     white-space: nowrap;
-    color: #520000;
+    color: #daa506;
 }
 
 .reading {
     font-size: 180%;
-    color: #9f1919;
+    color: #dd3939;
 }
 
 .entry {
@@ -38,20 +38,42 @@ body {
 
 .sense {
     padding: 10px;
+    font-size: 120%;
+    margin-top: 9px;
 }
 
 .pos {
-    background-color: #aca8a3;
-    color: #e7e7e7;
-    margin-right: 20px;
+    background-color: #13110f;
+    color: #707070;
+    margin-right: 3px;
     padding: 5px 8px;
-    border-radius: 6px;
+    border-radius: 4px;
+    font-size: 50%;
 }
 
 .glosses {
-    color: #646464;
-    font-size: 130%;
+    color: #c3c3c3;
+    font-size: 80%;
     line-height: 180%;
+    margin-top: 9px;
+}
+
+.high_pitch {
+    font-weight: bold;
+    color: #ff8383;
+}
+
+.unknown_pitch {
+    
+}
+
+#word_results {
+    margin-left: 2em;
+    margin-top: 3em;
+}
+
+#word_results hr { 
+    border: 1px solid #d2d2d2; 
 }
 
 
@@ -78,11 +100,13 @@ body {
 }
 
 #answer {
-    padding: 2em 3em;
-    margin-left: 2em;
-    background-color: rgb(168, 146, 131);
-    border-top-left-radius: 8px;
+    background-color: rgb(36, 41, 55);
     font-size: 130%;
+    border-top-right-radius: 90px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
 }
 
 #answer .literal {
@@ -128,4 +152,54 @@ body {
     background-color: #33752a;
     text-align: center;
     padding: 0.4em;
+}
+
+#definitions {
+    padding: 2em 3em;
+    margin-right: 2em;
+    font-size: 80%;
+    text-align: right;
+}
+
+.kanji {
+    margin-bottom: 1em;
+}
+
+.onyomi_readings {
+    font-size: 145%;
+    color: #008188;
+}
+
+.kunyomi_readings {
+    font-size: 145%;
+    color: #dd3939;
+}
+
+.kanji_misc {
+    font-size: 70%;
+    margin-top: 0.6em;
+    color: #8a746a;
+}
+
+.kanji_reading {
+    margin-right: 1em;
+    white-space: nowrap;
+}
+
+.frequency {
+    margin-left: 2em;
+}
+
+#kanji_results {
+    padding: 1em 2em;
+    font-size: 100%;
+}
+
+#kanji_results .literal {
+    color: #daa506;
+}
+
+#kanji_results .kanji_meanings {
+    color: #c3c3c3;
+    margin-top: 0.5em;
 }
