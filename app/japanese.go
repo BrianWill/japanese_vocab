@@ -468,17 +468,35 @@ func AddWordEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	unixtime := time.Now().Unix()
 
-	defs := make([]string, len(token.Definitions))
-	for i, v := range token.Definitions {
-		defs[i] = v.Hex()
-	}
-
 	if !exists {
-		fmt.Printf("\nadding word: %s %s\n", token.BaseForm, strings.Join(defs, ","))
+		fmt.Printf("\nadding word: %s %d\n", token.BaseForm, len(token.Definitions))
+
+		defs := make([]JMDictEntry, len(token.Definitions))
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		for i, def := range token.Definitions {
+			var entry JMDictEntry
+			err := jmdictCollection.FindOne(ctx, bson.M{"_id": def}).Decode(&entry)
+			if err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+				return
+			}
+			defs[i] = entry
+		}
+
+		defsJson, err := json.Marshal(defs)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to encode json: " + err.Error() + `"}`))
+			return
+		}
 
 		_, err = sqldb.Exec(`INSERT INTO words (base_form, user, countdown, drill_count, 
 				read_count, date_last_read, date_last_drill, definitions) VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-			token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, unixtime, strings.Join(defs, ","))
+			token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, unixtime, defsJson)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))

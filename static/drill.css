@@ -1,6 +1,5 @@
-
 body {
-    background-color: rgb(23, 23, 23);
+    background-color: rgb(35, 35, 35);
     color: #dfdfdf;
     font-size: 130%;
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
@@ -61,10 +60,6 @@ body {
     margin-top: 3em;
 }
 
-#cards hr { 
-    border: 1px solid #d2d2d2; 
-}
-
 #interior_link {
     text-decoration: none;
 }
@@ -85,7 +80,8 @@ body {
 #answer {
     padding: 2em 3em;
     margin-left: 2em;
-    background-color: rgb(201, 179, 163);
+    background-color: rgb(168, 146, 131);
+    border-top-left-radius: 8px;
     font-size: 130%;
 }
 
@@ -101,10 +97,35 @@ body {
 
 .drill_word {
     cursor: default;
-    padding: 12px 30px;
-    margin: 9px;
+    padding: 2px 0px 13px 30px;
+    margin: 22px;
     font-size: 340%;
     color: #dfdfdf;
-    font-family: Arial, Helvetica, sans-serif;
     background-color: black;
+    border-radius: 8px;
+}
+
+.drill_word:not(.answered):first-child {
+    border: #dfdfdf solid 3px;
+}
+
+.drill_word.wrong {
+    background-color: rgb(120, 0, 0);
+}
+
+
+.drill_word.answered {
+    margin-left: 80px;
+    font-size: 170%;
+    opacity: 0.5;
+}
+
+#card_separator {
+    border: 10px solid #6a6a6a;
+}
+
+#drill_complete {
+    background-color: #33752a;
+    text-align: center;
+    padding: 0.4em;
 }

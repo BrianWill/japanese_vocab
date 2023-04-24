@@ -3,8 +3,6 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
-
-    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="drill.css">
     <title>Jpn Word Drill</title>
 </head>
@@ -13,9 +11,13 @@
     <h3>Drills</h3>
     <button id="drill_button">Get All Words</button>
     <br>
+    <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
     <div id="results">
-        <div id="cards"></div>
-        <div id="answer"></div>
+        <div id="answer">
+            <div id="kanji_results"></div>
+            <div id="definitions"></div>
+        </div>
+        <div id="cards"></div>        
     </div>
 </body>
 <script src="drill.js"></script>

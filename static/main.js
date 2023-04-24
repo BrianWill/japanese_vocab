@@ -315,21 +315,6 @@ function displayDefinition(index) {
     }
 }
 
-function getKanji(str) {
-    fetch('/kanji', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(str),
-    }).then((response) => response.json()
-    ).then((data) => {
-        displayKanji(data.kanji);
-    }).catch((error) => {
-        console.error('Error:', error);
-    });
-}
-
 // storyText.onmouseup = function (evt) {
 //     console.log(document.getSelection().toString());
 // };

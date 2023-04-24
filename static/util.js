@@ -1,7 +1,7 @@
 function splitOnHighPitch(str, pitch) {
     if (pitch === 0) {
         return ['', '', str];
-    } 
+    }
     let mora = [];
     let s = new Set(['ゅ', 'ょ', 'ゃ', 'ャ', 'ュ', 'ョ']);
     let chars = str.split('');
@@ -17,8 +17,79 @@ function splitOnHighPitch(str, pitch) {
         mora.slice(0, pitch - 1).join(''),
         mora.slice(pitch - 1, pitch).join(''),
         mora.slice(pitch).join('')
-    ];    
+    ];
 }
+
+function displayKanji(kanji) {
+    html = '';
+
+    if (!kanji || kanji.length === 0) {
+        kanjiResultsDiv.innerHTML = '';
+        return;
+    }
+
+    for (let k of kanji) {
+        for (let group of k.readingmeaning.group) {
+            onyomi = group.reading.filter(x => x.type === 'ja_on').map(x => `<span class="kanji_reading">${x.value}</span>`);
+            kunyomi = group.reading.filter(x => x.type === 'ja_kun').map(x => `<span class="kanji_reading">${x.value}</span>`);
+
+            var meanings = group.meaning.filter(x => !x.language).map(x => x.value);
+
+            var misc = '';
+            if (k.misc.stroke_count) {
+                misc += `<span class="strokes">strokes: ${k.misc.stroke_count}</span>`;
+            }
+            if (k.misc.frequency) {
+                misc += `<span class="frequency">frequency: ${k.misc.frequency}</span>`;
+            }
+
+            html += `<div class="kanji">
+                    <div>
+                    <span class="literal">${k.literal}</span>
+                    <span class="onyomi_readings">${onyomi.join('')}</span>
+                    <span class="kunyomi_readings">${kunyomi.join('')}</span>
+                    </div>
+                    <div class="kanji_meanings">${meanings.join(';  &nbsp;&nbsp;')}</div>
+                    <div class="kanji_misc">${misc}</div>
+                    </div>`;
+        }
+    }
+
+    kanjiResultsDiv.innerHTML = html;
+}
+
+function getKanji(str) {
+    fetch('/kanji', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(str),
+    }).then((response) => response.json()
+    ).then((data) => {
+        displayKanji(data.kanji);
+    }).catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+
+function shuffle(array) {
+    if (array.length < 2) {
+        return;
+    }
+
+    let idx = array.length;
+    while (idx != 0) {
+        // Pick a remaining element.
+        let randIdx = Math.floor(Math.random() * idx);
+        idx--;
+
+        // And swap it with the current element.
+        [array[idx], array[randIdx]] = [array[randIdx], array[idx]];
+    }
+}
+
 
 function displayEntry(entry) {
     html = `<div class="entry"><div class="word">`;
@@ -48,42 +119,4 @@ function displayEntry(entry) {
     }
 
     return html + `</div></div><hr>`;
-}
-
-function displayKanji(kanji) {
-    html = '';
-
-    if (!kanji || kanji.length === 0) {
-        kanjiResultsDiv.innerHTML = '';
-        return;
-    }
-
-    for (let k of kanji) {       
-        for (let group of k.readingmeaning.group) {
-            onyomi = group.reading.filter(x => x.type === 'ja_on').map(x => `<span class="kanji_reading">${x.value}</span>`);
-            kunyomi = group.reading.filter(x => x.type === 'ja_kun').map(x => `<span class="kanji_reading">${x.value}</span>`);
-
-            var meanings = group.meaning.filter(x => !x.language).map(x => x.value);
-
-            var misc = '';
-            if (k.misc.stroke_count) {
-                misc += `<span class="strokes">strokes: ${k.misc.stroke_count}</span>`;
-            }
-            if (k.misc.frequency) {
-                misc += `<span class="frequency">frequency: ${k.misc.frequency}</span>`;
-            }
-
-            html += `<div class="kanji">
-                    <div>
-                    <span class="literal">${k.literal}</span>
-                    <span class="onyomi_readings">${onyomi.join('')}</span>
-                    <span class="kunyomi_readings">${kunyomi.join('')}</span>
-                    </div>
-                    <div class="kanji_meanings">${meanings.join(';  &nbsp;&nbsp;')}</div>
-                    <div class="kanji_misc">${misc}</div>
-                    </div>`;
-        }
-    }
-
-    kanjiResultsDiv.innerHTML = html;
 }
