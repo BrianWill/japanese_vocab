@@ -3,6 +3,10 @@ var answerDiv = document.getElementById('answer');
 var drillButton = document.getElementById('drill_button');
 var drillInfoH = document.getElementById('drill_info');
 var drillCountInput = document.getElementById('drill_count');
+var drillCountInputText = document.getElementById('drill_count_text');
+var drillRecencySelect = document.getElementById('drill_recency');
+var drillTypeSelect = document.getElementById('drill_type');
+var drillWrongSelect = document.getElementById('drill_wrong');
 var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
@@ -19,7 +23,12 @@ drillButton.onclick = function (evt) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({count:  parseInt(drillCountInput.value)})
+        body: JSON.stringify({
+            count:  parseInt(drillCountInput.value),
+            recency: parseInt(drillRecencySelect.value),
+            drill_type: drillTypeSelect.value,
+            wrong: parseInt(drillWrongSelect.value)
+        })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Success:', data);
@@ -32,6 +41,10 @@ drillButton.onclick = function (evt) {
         .catch((error) => {
             console.error('Error:', error);
         });
+};
+
+drillCountInput.oninput = function (evt) {
+    drillCountInputText.innerHTML = drillCountInput.value;
 };
 
 function displayWords() {
@@ -59,7 +72,9 @@ function displayWords() {
     
     cardsDiv.innerHTML = html;
 
-    loadWordDisplay(drillSet[0])
+    if (drillSet[0]) {
+        loadWordDefinition(drillSet[0])
+    }    
 }
 
 document.body.onkeydown = async function (evt) {
@@ -100,6 +115,9 @@ document.body.onkeydown = async function (evt) {
             if (drillSet.length > 1) {
                 [drillSet[0], drillSet[1]] = [drillSet[1], drillSet[0]];
             }
+            let unixtime = Math.floor(Date.now() / 1000); // in seconds
+            word.date_last_wrong = unixtime;
+            updateWord(word);
             displayWords();
         } else if (evt.code === 'KeyD') {  // mark answered
             evt.preventDefault();            
@@ -142,7 +160,7 @@ function nextRound() {
     shuffle(drillSet);
 }
 
-function loadWordDisplay(word) {
+function loadWordDefinition(word) {
     //kanjiResultsDiv.style.visibility = 'hidden';
     //definitionsDiv.style.visibility = 'hidden';
     getKanji(word.base_form); // might as well get all possibly relevant kanji
@@ -164,5 +182,6 @@ function showWord() {
 
 document.body.onload = function (evt) {
     console.log('on page load');
+    drillCountInputText.innerHTML = drillCountInput.value;
     drillButton.onclick();
 };

@@ -14,7 +14,10 @@ type Story struct {
 }
 
 type DrillRequest struct {
-	Count int `json:"count,omitempty" bson:"count,omitempty"`
+	Count   int    `json:"count,omitempty"`
+	Recency int64  `json:"recency,omitempty"`
+	Wrong   int64  `json:"wrong,omitempty"`
+	Type    string `json:"drill_type,omitempty"`
 }
 
 type DrillWord struct {
@@ -25,6 +28,9 @@ type DrillWord struct {
 	DateLastRead  int64  `json:"date_last_read"`
 	DateLastDrill int64  `json:"date_last_drill"`
 	Definitions   string `json:"definitions"`
+	DrillType     int    `json:"drill_type"`
+	DateLastWrong int64  `json:"date_last_wrong"`
+	DateAdded     int64  `json:"date_added"`
 }
 
 type JpToken struct {

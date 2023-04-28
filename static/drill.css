@@ -221,7 +221,25 @@ body {
 #drill_count {
     font-size: 120%;
     margin: 5px;
-    width: 3.5em;
+    width: 9em;
+}
+
+#drill_recency {
+    font-size: 100%;
+    margin: 5px;
+    width: 12em;
+}
+
+#drill_type {
+    font-size: 100%;
+    margin: 5px;
+    width: 12em;
+}
+
+#drill_wrong {
+    font-size: 100%;
+    margin: 5px;
+    width: 12em;
 }
 
 #current_drill_count {

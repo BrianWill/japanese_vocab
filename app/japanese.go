@@ -73,8 +73,21 @@ var tok *tokenizer.Tokenizer
 
 const SQL_FILE = "../testsql.db"
 const USER_ID = 0 // TODO for now we hardcode for just one user
-const INITIAL_COUNTDOWN = 8
+const INITIAL_COUNTDOWN = 7
 const DRILL_COOLDOWN = 60 * 60 * 3 // in seconds
+const DRILL_TYPE_KATAKANA = 1
+const DRILL_TYPE_ICHIDAN = 2
+const DRILL_TYPE_GODAN_SU = 8
+const DRILL_TYPE_GODAN_RU = 16
+const DRILL_TYPE_GODAN_U = 32
+const DRILL_TYPE_GODAN_TSU = 64
+const DRILL_TYPE_GODAN_KU = 128
+const DRILL_TYPE_GODAN_GU = 256
+const DRILL_TYPE_GODAN_MU = 512
+const DRILL_TYPE_GODAN_BU = 1024
+const DRILL_TYPE_GODAN_NU = 2048
+const DRILL_TYPE_GODAN = DRILL_TYPE_GODAN_SU | DRILL_TYPE_GODAN_RU | DRILL_TYPE_GODAN_U | DRILL_TYPE_GODAN_TSU |
+	DRILL_TYPE_GODAN_KU | DRILL_TYPE_GODAN_GU | DRILL_TYPE_GODAN_MU | DRILL_TYPE_GODAN_BU | DRILL_TYPE_GODAN_NU
 
 func main() {
 	var err error
@@ -125,8 +138,9 @@ func main() {
 	router.HandleFunc("/story_retokenize/{id}", RetokenizeStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
-	router.HandleFunc("/add_word", AddWordEndpoint).Methods("POST")
+	//router.HandleFunc("/add_word", AddWordEndpoint).Methods("POST")
 	router.HandleFunc("/add_words", AddWordsEndpoint).Methods("POST")
+	router.HandleFunc("/identify_verbs", IdentifyVerbsEndpoint).Methods("GET")
 	router.HandleFunc("/drill", DrillEndpoint).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
@@ -415,6 +429,8 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	var drillRequest DrillRequest
 	json.NewDecoder(request.Body).Decode(&drillRequest)
+	drillRequest.Recency *= 60
+	drillRequest.Wrong *= 60
 
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
@@ -425,7 +441,7 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	rows, err := sqldb.Query(`SELECT base_form, countdown, drill_count, read_count, 
-			date_last_read, date_last_drill, definitions FROM words WHERE user = $1;`, USER_ID)
+			date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, date_added FROM words WHERE user = $1;`, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
@@ -439,7 +455,7 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		err = rows.Scan(&word.BaseForm, &word.Countdown,
 			&word.DrillCount, &word.ReadCount,
 			&word.DateLastRead, &word.DateLastDrill,
-			&word.Definitions)
+			&word.Definitions, &word.DrillType, &word.DateLastWrong, &word.DateAdded)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
@@ -450,17 +466,27 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	total := len(words)
 
-	// filter out words where Countdown = 0 and DateLastDrill is within DRILL_COOLDOWN period
 	activeCount := 0
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
-		if w.Countdown > 0 {
-			activeCount++
+		if (t - w.DateLastDrill) < DRILL_COOLDOWN {
+			continue
 		}
-		if w.Countdown > 0 && (t-w.DateLastDrill) > DRILL_COOLDOWN {
-			temp = append(temp, w)
+		if drillRequest.Recency > 0 && (t-w.DateAdded) > drillRequest.Recency {
+			continue
 		}
+		if drillRequest.Wrong > 0 && (t-w.DateLastWrong) > drillRequest.Wrong {
+			continue
+		}
+		if w.Countdown <= 0 {
+			continue
+		}
+		if !isDrillType(w.DrillType, drillRequest.Type) {
+			continue
+		}
+		temp = append(temp, w)
+		activeCount++
 	}
 	words = temp
 
@@ -476,72 +502,86 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		"words":           words})
 }
 
-func AddWordEndpoint(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
-	var token JpToken
-	json.NewDecoder(request.Body).Decode(&token)
-
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
+func isDrillType(drillType int, requestedType string) bool {
+	switch requestedType {
+	case "all":
+		return true
+	case "ichidan":
+		return (drillType & DRILL_TYPE_ICHIDAN) > 0
+	case "godan":
+		return (drillType & DRILL_TYPE_GODAN) > 0
+	case "katakana":
+		return (drillType & DRILL_TYPE_KATAKANA) > 0
 	}
-	defer sqldb.Close()
-
-	if token.BaseForm == "" {
-		token.BaseForm = token.Surface
-	}
-
-	rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1 AND user = $2;`, token.BaseForm, USER_ID)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
-		return
-	}
-	exists := rows.Next()
-	rows.Close()
-
-	unixtime := time.Now().Unix()
-
-	if !exists {
-		fmt.Printf("\nadding word: %s %d\n", token.BaseForm, len(token.Definitions))
-
-		defs := make([]JMDictEntry, len(token.Definitions))
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		for i, def := range token.Definitions {
-			var entry JMDictEntry
-			err := jmdictCollection.FindOne(ctx, bson.M{"_id": def}).Decode(&entry)
-			if err != nil {
-				response.WriteHeader(http.StatusInternalServerError)
-				response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-				return
-			}
-			defs[i] = entry
-		}
-
-		defsJson, err := json.Marshal(defs)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to encode json: " + err.Error() + `"}`))
-			return
-		}
-
-		_, err = sqldb.Exec(`INSERT INTO words (base_form, user, countdown, drill_count, 
-				read_count, date_last_read, date_last_drill, definitions) VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-			token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, unixtime, defsJson)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
-			return
-		}
-	}
-
-	json.NewEncoder(response).Encode(token)
+	return false
 }
+
+// func AddWordEndpoint(response http.ResponseWriter, request *http.Request) {
+// 	response.Header().Add("content-type", "application/json")
+// 	var token JpToken
+// 	json.NewDecoder(request.Body).Decode(&token)
+
+// 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+// 	if err != nil {
+// 		response.WriteHeader(http.StatusInternalServerError)
+// 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+// 		return
+// 	}
+// 	defer sqldb.Close()
+
+// 	if token.BaseForm == "" {
+// 		token.BaseForm = token.Surface
+// 	}
+
+// 	rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1 AND user = $2;`, token.BaseForm, USER_ID)
+// 	if err != nil {
+// 		response.WriteHeader(http.StatusInternalServerError)
+// 		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+// 		return
+// 	}
+// 	exists := rows.Next()
+// 	rows.Close()
+
+// 	unixtime := time.Now().Unix()
+
+// 	if !exists {
+// 		fmt.Printf("\nadding word: %s %d\n", token.BaseForm, len(token.Definitions))
+
+// 		defs := make([]JMDictEntry, len(token.Definitions))
+
+// 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+// 		defer cancel()
+
+// 		for i, def := range token.Definitions {
+// 			var entry JMDictEntry
+// 			err := jmdictCollection.FindOne(ctx, bson.M{"_id": def}).Decode(&entry)
+// 			if err != nil {
+// 				response.WriteHeader(http.StatusInternalServerError)
+// 				response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+// 				return
+// 			}
+// 			defs[i] = entry
+// 		}
+
+// 		defsJson, err := json.Marshal(defs)
+// 		if err != nil {
+// 			response.WriteHeader(http.StatusInternalServerError)
+// 			response.Write([]byte(`{ "message": "` + "failure to encode json: " + err.Error() + `"}`))
+// 			return
+// 		}
+
+// 		_, err = sqldb.Exec(`INSERT INTO words (base_form, user, countdown, drill_count,
+// 				read_count, date_last_read, date_last_drill, definitions) VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+// 			token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, unixtime, defsJson)
+// 		if err != nil {
+// 			response.WriteHeader(http.StatusInternalServerError)
+// 			response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
+// 			return
+// 		}
+// 	}
+
+// 	json.NewEncoder(response).Encode(token)
+// }
 
 func AddWordsEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
@@ -558,6 +598,7 @@ func AddWordsEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	var reHasKana = regexp.MustCompile(`[あ-んア-ン]`)
+	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
 
 	for _, token := range tokens {
 		hasKanji := len(reHasKanji.FindStringIndex(token.BaseForm)) > 0
@@ -585,6 +626,12 @@ func AddWordsEndpoint(response http.ResponseWriter, request *http.Request) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
+			drillType := 0
+			hasKatakana := len(reHasKatakana.FindStringIndex(token.BaseForm)) > 0
+			if hasKatakana {
+				drillType |= DRILL_TYPE_KATAKANA
+			}
+
 			for i, def := range token.Definitions {
 				var entry JMDictEntry
 				err := jmdictCollection.FindOne(ctx, bson.M{"_id": def}).Decode(&entry)
@@ -594,6 +641,9 @@ func AddWordsEndpoint(response http.ResponseWriter, request *http.Request) {
 					return
 				}
 				defs[i] = entry
+				for _, sense := range entry.Sense {
+					drillType |= getVerbDrillType(sense)
+				}
 			}
 
 			defsJson, err := json.Marshal(defs)
@@ -604,8 +654,8 @@ func AddWordsEndpoint(response http.ResponseWriter, request *http.Request) {
 			}
 
 			_, err = sqldb.Exec(`INSERT INTO words (base_form, user, countdown, drill_count, 
-					read_count, date_last_read, date_last_drill, definitions) VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-				token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, unixtime, defsJson)
+					read_count, date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
+				token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, 0, unixtime, 0, defsJson, drillType)
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
@@ -615,6 +665,101 @@ func AddWordsEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	json.NewEncoder(response).Encode(tokens)
+}
+
+func getVerbDrillType(sense JMDictSense) int {
+	drillType := 0
+	for _, pos := range sense.Pos {
+		switch pos {
+		case "verb-ichidan":
+			drillType |= DRILL_TYPE_ICHIDAN
+		case "verb-godan-su":
+			drillType |= DRILL_TYPE_GODAN_SU
+		case "verb-godan-ku":
+			drillType |= DRILL_TYPE_GODAN_KU
+		case "verb-godan-gu":
+			drillType |= DRILL_TYPE_GODAN_GU
+		case "verb-godan-ru":
+			drillType |= DRILL_TYPE_GODAN_RU
+		case "verb-godan-u":
+			drillType |= DRILL_TYPE_GODAN_U
+		case "verb-godan-tsu":
+			drillType |= DRILL_TYPE_GODAN_TSU
+		case "verb-godan-mu":
+			drillType |= DRILL_TYPE_GODAN_MU
+		case "verb-godan-nu":
+			drillType |= DRILL_TYPE_GODAN_NU
+		case "verb-godan-bu":
+			drillType |= DRILL_TYPE_GODAN_BU
+		}
+	}
+	return drillType
+}
+
+func IdentifyVerbsEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	// var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	// var reHasKana = regexp.MustCompile(`[あ-んア-ン]`)
+	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
+
+	rows, err := sqldb.Query(`SELECT base_form, definitions FROM words WHERE user = $1;`, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get words: " + err.Error() + `"}`))
+		return
+	}
+
+	words := make([]string, 0)
+	defs := make([]string, 0)
+	for rows.Next() {
+		var str string
+		var def string
+		rows.Scan(&str, &def)
+		words = append(words, str)
+		defs = append(defs, def)
+	}
+	rows.Close()
+
+	for i, word := range words {
+		fmt.Printf("\nidentifying drill type: %s %d\n", word)
+
+		drillType := 0
+		hasKatakana := len(reHasKatakana.FindStringIndex(word)) > 0
+		if hasKatakana {
+			drillType |= DRILL_TYPE_KATAKANA
+		}
+
+		var entry JMDictEntry
+		err := json.Unmarshal([]byte(defs[i]), &entry)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to unmarshal dict entry: " + err.Error() + `"}`))
+			return
+		}
+
+		for _, sense := range entry.Sense {
+			drillType |= getVerbDrillType(sense)
+		}
+
+		_, err = sqldb.Exec(`UPDATE words SET drill_type = $1, WHERE base_form = $2 AND user = $3;`,
+			drillType, word, USER_ID)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to update drill word: " + err.Error() + `"}`))
+			return
+		}
+	}
+
+	json.NewEncoder(response).Encode("done")
 }
 
 func UpdateWordEndpoint(response http.ResponseWriter, request *http.Request) {
@@ -643,8 +788,8 @@ func UpdateWordEndpoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE words SET countdown = $1, drill_count = $2, date_last_drill = $3  WHERE base_form = $4 AND user = $5;`,
-		word.Countdown, word.DrillCount, word.DateLastDrill, word.BaseForm, USER_ID)
+	_, err = sqldb.Exec(`UPDATE words SET countdown = $1, drill_count = $2, date_last_drill = $3, date_last_wrong = $4  WHERE base_form = $5 AND user = $6;`,
+		word.Countdown, word.DrillCount, word.DateLastDrill, word.DateLastWrong, word.BaseForm, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to update drill word: " + err.Error() + `"}`))

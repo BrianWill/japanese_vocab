@@ -133,8 +133,9 @@ function displayEntry(entry) {
     html += `</div></div><div class="senses">`;
 
     for (var sense of entry.senses || []) {
+        let pos = sense.parts_of_speech.map(x => `<span class="pos">${x}</span>`); 
         html += `<div class="sense">
-            <div><span class="pos">${sense.parts_of_speech.join(', ')}</span></div>
+            <div>${pos.join(' ')}</div>
             <div class="glosses">${sense.glosses.map(x => x.value).join('; &nbsp;&nbsp;')}</div>
         </div>`;
     }
