@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -9,15 +10,16 @@
 
 <body>
     <h3>Drills</h3>
-    <button id="drill_button">Get All Words</button>
+    <h3 id="drill_info"></h3>
+    <button id="drill_button">Drill</button><input id="drill_count" type="number" value="50" min="1" max="99">
     <br>
     <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
     <div id="results">
         <div id="answer">
-            <div id="kanji_results"></div>
             <div id="definitions"></div>
+            <div id="kanji_results"></div>
         </div>
-        <div id="cards"></div>        
+        <div id="cards"></div>
     </div>
 </body>
 <script src="drill.js"></script>

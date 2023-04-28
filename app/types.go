@@ -13,13 +13,17 @@ type Story struct {
 	Sentences []Sentence
 }
 
+type DrillRequest struct {
+	Count int `json:"count,omitempty" bson:"count,omitempty"`
+}
+
 type DrillWord struct {
 	BaseForm      string `json:"base_form"`
 	Countdown     int    `json:"countdown"`
 	DrillCount    int    `json:"drill_count"`
 	ReadCount     int    `json:"read_count"`
-	DateLastRead  int    `json:"date_last_read"`
-	DateLastDrill int    `json:"date_last_drill"`
+	DateLastRead  int64  `json:"date_last_read"`
+	DateLastDrill int64  `json:"date_last_drill"`
 	Definitions   string `json:"definitions"`
 }
 

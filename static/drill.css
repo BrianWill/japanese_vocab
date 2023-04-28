@@ -59,12 +59,9 @@ body {
 }
 
 .high_pitch {
-    font-weight: bold;
-    color: #ff8383;
-}
-
-.unknown_pitch {
-    
+    border-top: #63ab59 3px dotted;
+    /* font-weight: bold; */
+    /* color: #ff6a6a;;  */
 }
 
 #word_results {
@@ -127,9 +124,26 @@ body {
     color: #dfdfdf;
     background-color: black;
     border-radius: 8px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: baseline;
 }
 
-.drill_word:not(.answered):first-child {
+.countdown {
+    margin-left: auto;
+    margin-right: 20px;
+    font-size: 50%;
+    color: #3b3b3b;
+}
+
+.drill_count {
+    margin-right: 20px;
+    font-size: 30%;
+    color: #3b3b3b;
+}
+
+
+.drill_word:not(.answered):nth-child(2) {
     border: #dfdfdf solid 3px;
 }
 
@@ -158,7 +172,7 @@ body {
     padding: 2em 3em;
     margin-right: 2em;
     font-size: 80%;
-    text-align: right;
+    /* text-align: right; */
 }
 
 .kanji {
@@ -202,4 +216,15 @@ body {
 #kanji_results .kanji_meanings {
     color: #c3c3c3;
     margin-top: 0.5em;
+}
+
+#drill_count {
+    font-size: 120%;
+    margin: 5px;
+    width: 3.5em;
+}
+
+#current_drill_count {
+    text-align: right;
+    margin-right: 30px;
 }

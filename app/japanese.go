@@ -74,6 +74,7 @@ var tok *tokenizer.Tokenizer
 const SQL_FILE = "../testsql.db"
 const USER_ID = 0 // TODO for now we hardcode for just one user
 const INITIAL_COUNTDOWN = 8
+const DRILL_COOLDOWN = 60 * 60 * 3 // in seconds
 
 func main() {
 	var err error
@@ -117,6 +118,7 @@ func main() {
 
 	router.HandleFunc("/read/{id}", ReadEndpoint).Methods("GET")
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
+	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
 	router.HandleFunc("/mark/{action}/{id}", MarkStoryEndpoint).Methods("GET")
 	router.HandleFunc("/story", CreateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
@@ -124,7 +126,8 @@ func main() {
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
 	router.HandleFunc("/add_word", AddWordEndpoint).Methods("POST")
-	router.HandleFunc("/drill", DrillEndpoint).Methods("GET")
+	router.HandleFunc("/add_words", AddWordsEndpoint).Methods("POST")
+	router.HandleFunc("/drill", DrillEndpoint).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
@@ -410,6 +413,9 @@ func KanjiEndpoint(response http.ResponseWriter, request *http.Request) {
 func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
+	var drillRequest DrillRequest
+	json.NewDecoder(request.Body).Decode(&drillRequest)
+
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -442,7 +448,32 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		words = append(words, word)
 	}
 
-	json.NewEncoder(response).Encode(words)
+	total := len(words)
+
+	// filter out words where Countdown = 0 and DateLastDrill is within DRILL_COOLDOWN period
+	activeCount := 0
+	temp := make([]DrillWord, 0)
+	t := time.Now().Unix()
+	for _, w := range words {
+		if w.Countdown > 0 {
+			activeCount++
+		}
+		if w.Countdown > 0 && (t-w.DateLastDrill) > DRILL_COOLDOWN {
+			temp = append(temp, w)
+		}
+	}
+	words = temp
+
+	count := drillRequest.Count
+	if count > 0 && count < len(words) {
+		words = words[:count]
+	}
+
+	json.NewEncoder(response).Encode(bson.M{
+		"wordCount":       len(words),
+		"wordCountActive": activeCount,
+		"wordCountTotal":  total,
+		"words":           words})
 }
 
 func AddWordEndpoint(response http.ResponseWriter, request *http.Request) {
@@ -510,6 +541,80 @@ func AddWordEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	json.NewEncoder(response).Encode(token)
+}
+
+func AddWordsEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	var tokens []JpToken
+	json.NewDecoder(request.Body).Decode(&tokens)
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	var reHasKana = regexp.MustCompile(`[あ-んア-ン]`)
+
+	for _, token := range tokens {
+		hasKanji := len(reHasKanji.FindStringIndex(token.BaseForm)) > 0
+		hasKana := len(reHasKana.FindStringIndex(token.BaseForm)) > 0
+		if !hasKanji && !hasKana {
+			continue
+		}
+
+		rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1 AND user = $2;`, token.BaseForm, USER_ID)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+			return
+		}
+		exists := rows.Next()
+		rows.Close()
+
+		unixtime := time.Now().Unix()
+
+		if !exists {
+			fmt.Printf("\nadding word: %s %d\n", token.BaseForm, len(token.Definitions))
+
+			defs := make([]JMDictEntry, len(token.Definitions))
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			for i, def := range token.Definitions {
+				var entry JMDictEntry
+				err := jmdictCollection.FindOne(ctx, bson.M{"_id": def}).Decode(&entry)
+				if err != nil {
+					response.WriteHeader(http.StatusInternalServerError)
+					response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+					return
+				}
+				defs[i] = entry
+			}
+
+			defsJson, err := json.Marshal(defs)
+			if err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + "failure to encode json: " + err.Error() + `"}`))
+				return
+			}
+
+			_, err = sqldb.Exec(`INSERT INTO words (base_form, user, countdown, drill_count, 
+					read_count, date_last_read, date_last_drill, definitions) VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+				token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, unixtime, defsJson)
+			if err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
+				return
+			}
+		}
+	}
+
+	json.NewEncoder(response).Encode(tokens)
 }
 
 func UpdateWordEndpoint(response http.ResponseWriter, request *http.Request) {
@@ -654,6 +759,39 @@ func PostWordSearch(response http.ResponseWriter, request *http.Request) {
 		"entries_mid":   entriesMid,
 		"count_mid":     nEntriesMid,
 		"kanji":         kanjiCharacters})
+}
+
+func PostWordTypeSearch(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	var wordSearch WordSearch
+	json.NewDecoder(request.Body).Decode(&wordSearch)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// arr := bson.A{}
+	// for _, k := range kanji {
+	// 	arr = append(arr, bson.D{{"literal", k}})
+	// }
+	// kanjiQuery := bson.D{{Key: "$or", Value: arr}}
+
+	cursor, err := jmdictCollection.Find(ctx, bson.D{{Key: "senses.parts_of_speech", Value: wordSearch.Word}})
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer cursor.Close(ctx)
+
+	entries := make([]JMDictEntry, 0)
+	for cursor.Next(ctx) {
+		var entry JMDictEntry
+		cursor.Decode(&entry)
+		entries = append(entries, entry)
+	}
+
+	json.NewEncoder(response).Encode(bson.M{"entries": entries})
 }
 
 func sortResults(entries []JMDictEntry, hasKanji bool, word string) {

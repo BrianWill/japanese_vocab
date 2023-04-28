@@ -1,6 +1,8 @@
 var cardsDiv = document.getElementById('cards');
 var answerDiv = document.getElementById('answer');
 var drillButton = document.getElementById('drill_button');
+var drillInfoH = document.getElementById('drill_info');
+var drillCountInput = document.getElementById('drill_count');
 var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
@@ -13,16 +15,18 @@ var answeredSet = [];
 
 drillButton.onclick = function (evt) {
     fetch('drill', {
-        method: 'GET', // or 'PUT'
+        method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({count:  parseInt(drillCountInput.value)})
     }).then((response) => response.json())
         .then((data) => {
             console.log('Success:', data);
-            shuffle(data);
-            drillSet = data;
+            shuffle(data.words);
+            drillSet = data.words;
             answeredSet = [];
+            drillInfoH.innerHTML = `${data.wordCountTotal} words (${data.wordCountActive} active)`;
             displayWords();
         })
         .catch((error) => {
@@ -31,31 +35,64 @@ drillButton.onclick = function (evt) {
 };
 
 function displayWords() {
-    html = '';
+    function wordInfo(word, answered) {
+        return `<div class="drill_word ${word.wrong ? 'wrong': ''} ${word.answered ? 'answered': ''}">
+                    <div class="base_form">${word.base_form}</div>
+                    <div class="countdown">${word.countdown}</div>
+                    <div class="drill_count">${word.drill_count}</div>
+                </div>`;
+    }
+
+    html = `<h3 id="current_drill_count">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
 
     for (let word of drillSet) {
         if (!word.answered) {
-            html += `<div class="drill_word ${word.wrong ? 'wrong': ''}">${word.base_form}</div>`;
+            html += wordInfo(word, false);
         }        
     }
     
     for (let word of answeredSet) {
         if (word.answered) {
-            html += `<div class="drill_word ${word.wrong ? 'wrong': ''} answered">${word.base_form}</div>`;
+            html += wordInfo(word, true);
         }
     }
     
     cardsDiv.innerHTML = html;
-    kanjiResultsDiv.innerHTML = '';
-    definitionsDiv.innerHTML = '';
+
+    loadWordDisplay(drillSet[0])
 }
 
 document.body.onkeydown = async function (evt) {
     if (drillSet && drillSet.length > 0) {
         var word = drillSet[0];
+        console.log(evt.code);
         if (evt.code === 'KeyS') {
             evt.preventDefault();
-            showWord(word);
+            // showWord();
+        } else if (evt.code === 'Minus') {  // dec countdown
+            evt.preventDefault();
+            if (drillSet && drillSet[0]) {
+                var word = drillSet[0];
+                word.countdown--;
+                updateWord(word);
+                displayWords();
+            }
+        } else if (evt.code === 'Equal') {  // inc countdown
+            evt.preventDefault();
+            if (drillSet && drillSet[0]) {
+                var word = drillSet[0];
+                word.countdown++;
+                updateWord(word);
+                displayWords();
+            }
+        } else if (evt.code === 'Backspace') {  // set countdown to 0
+            evt.preventDefault();
+            if (drillSet && drillSet[0]) {
+                var word = drillSet[0];
+                word.countdown = 0;
+                updateWord(word);
+                displayWords();
+            }
         } else if ((evt.code === 'KeyR') && evt.altKey) {  // todo reset drill    
         } else if (evt.code === 'KeyA') {  // mark wrong and swap top two words
             evt.preventDefault();
@@ -105,17 +142,24 @@ function nextRound() {
     shuffle(drillSet);
 }
 
-function showWord(word) {
+function loadWordDisplay(word) {
+    //kanjiResultsDiv.style.visibility = 'hidden';
+    //definitionsDiv.style.visibility = 'hidden';
     getKanji(word.base_form); // might as well get all possibly relevant kanji
     let defs = JSON.parse(word.definitions);
     if (defs && typeof defs === 'object') {
         html = '';
         for (let def of defs) {
-            console.log(def);
+            //console.log(def);
             html += displayEntry(def);
         }
         definitionsDiv.innerHTML = html;
     }       
+}
+
+function showWord() {
+    kanjiResultsDiv.style.visibility = 'visible';
+    definitionsDiv.style.visibility = 'visible';
 }
 
 document.body.onload = function (evt) {

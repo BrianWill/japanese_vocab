@@ -7,7 +7,8 @@ var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
-var addWordButton = document.getElementById('add_word');
+//var addWordButton = document.getElementById('add_word');
+var addWordsButton = document.getElementById('add_words_button');
 
 var story = null;
 var definitions = null;
@@ -185,10 +186,13 @@ function openStory(id) {
         });
 }
 
-function displayTokens(story, definitions) {
+var wordSet = [];
+
+function displayTokens(story) {
     let words = '';
     let punctuationTokens = [' ', '。', '、'];
 
+    wordSet = [];
     let html = '<p>';
     let prior = null;
     for (let i = 0; i < story.tokens.length; i++) {
@@ -201,19 +205,23 @@ function displayTokens(story, definitions) {
                 html += '。</p><p>';
             }
         } else {
+            t.drillable = true;
             if ((t.pos === "動詞" && t.pos1 === "接尾") ||
                 (t.pos === "助動詞") ||
                 (t.surface === "で" && t.pos === "助詞" && t.pos1 === "接続助詞") ||
                 (t.surface === "て" && t.pos === "助詞" && t.pos1 === "接続助詞") ||
                 (t.surface === "じゃ" && t.pos === "助詞" && t.pos1 === "副助詞") ||
-                (t.pos === "動詞" && t.pos1 === "非自立") ||
                 (t.surface === "し" && t.pos === "動詞" && t.pos1 === "自立")) {  // auxilliary verb
+                posClass = 'verb_auxiliary';
+                t.drillable = false;
+            } else if (t.pos === "動詞" && t.pos1 === "非自立") { // auxilliary verb
                 posClass = 'verb_auxiliary';
             } else if ((t.pos === "助詞" && t.pos1 === "格助詞") || // case particle
                 (t.pos === "助詞" && t.pos1 === "接続助詞") ||   // conjunction particle
                 (t.pos === "助詞" && t.pos1 === "係助詞") || // binding particle (も　は)
                 (t.pos === "助詞" && t.pos1 === "副助詞")) {  // auxiliary particle
                 posClass = 'particle';
+                t.drillable = false;
             } else if (t.pos === '副詞') {
                 posClass = 'adverb';
             } else if (t.pos === "接続詞" && t.pos1 === "*") { // conjunction
@@ -221,6 +229,7 @@ function displayTokens(story, definitions) {
             } else if ((t.pos === "助詞" && t.pos1 === "連体化") || // connecting particle　(の)
                 (t.pos === "助詞" && t.pos1 === "並立助詞")) {  // connecting particle (や)
                 posClass = 'connecting_particle';
+                t.drillable = false;
             } else if (t.pos === "形容詞") { // i-adj
                 posClass = 'i_adjective pad_left';
             } else if (t.pos === "名詞" && t.pos1 === "代名詞") { // pronoun
@@ -236,28 +245,44 @@ function displayTokens(story, definitions) {
                 posClass = 'noun';
             } else if (t.pos === "名詞") { // noun
                 posClass = 'noun';
+            } else if (t.pos === "記号") { // symbol
+                t.drillable = false;
             } else {
                 posClass = 'pad_left';
             }
             html += `<span tokenIndex="${i}" class="${posClass}">${t.surface}</span>`;
         }
 
-        if (!punctuationTokens.includes(t.surface)) {
-            let baseForm = t.baseForm !== t.surface ? t.baseForm : '';
+        if (t.drillable && !punctuationTokens.includes(t.surface)) {
+            //let baseForm = t.baseForm !== t.surface ? t.baseForm : '';
+            wordSet.push(t);
             let pronunciation = t.pronunciation !== t.reading ? t.pronunciation : '';
             words += `<tr class="${posClass}">
-                <td>${t.surface}</td>
-                <td>${t.reading}</td>
-                <td>${baseForm}</td>
+                <td>${t.baseForm || t.surface}</td>
                 <td>${t.inflectionalForm}, ${t.inflectionalType}</td>
                 <!--<td>${pronunciation}</td>-->
                 <td>${t.pos}, ${t.pos1}, ${t.pos2}, ${t.pos3}</td>
                 </tr>`;
         }
+
+        // if (!t.drillable && !punctuationTokens.includes(t.surface)) {
+        //     //let baseForm = t.baseForm !== t.surface ? t.baseForm : '';
+        //     let pronunciation = t.pronunciation !== t.reading ? t.pronunciation : '';
+        //     words += `<tr style="color: white; background-color: black;" class="${posClass}">
+        //         <td>${t.surface}</td>
+        //         <td>${t.reading}</td>
+        //         <td>${t.baseForm}</td>
+        //         <td>${t.inflectionalForm}, ${t.inflectionalType}</td>
+        //         <!--<td>${pronunciation}</td>-->
+        //         <td>${t.pos}, ${t.pos1}, ${t.pos2}, ${t.pos3}</td>
+        //         </tr>`;
+        // }
         prior = t;
     }
     tokenizedText.innerHTML = html + '</p>';
     wordList.innerHTML = words;
+
+    console.log(wordSet);
 }
 
 var selectedTokenIndex = null;
@@ -284,8 +309,20 @@ tokenizedText.onmousedown = function (evt) {
     }
 };
 
-addWordButton.onclick = function (evt) {
-    addWord();
+addWordsButton.onclick = function (evt) {
+    fetch('/add_words', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(wordSet),
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Success:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 };
 
 function addWord() {

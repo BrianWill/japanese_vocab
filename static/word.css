@@ -87,7 +87,7 @@ body {
 
 #kanji_results {
     padding: 2em 3em;
-    margin-left: 2em;
+    margin-right: 2em;
     background-color: rgb(201, 179, 163);
     font-size: 130%;
 }

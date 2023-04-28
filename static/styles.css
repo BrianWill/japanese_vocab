@@ -113,10 +113,8 @@ span.verb:hover {
 
 #definitions {
     padding: 2em 3em;
-    margin-right: 2em;
     background-color: rgb(201, 179, 163);
     font-size: 80%;
-    text-align: right;
 }
 
 .high_pitch {
