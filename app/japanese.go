@@ -140,7 +140,7 @@ func main() {
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
 	//router.HandleFunc("/add_word", AddWordEndpoint).Methods("POST")
 	router.HandleFunc("/add_words", AddWordsEndpoint).Methods("POST")
-	router.HandleFunc("/identify_verbs", IdentifyVerbsEndpoint).Methods("GET")
+	router.HandleFunc("/identify_verbs", IdentifyDrillTypeEndpoint).Methods("GET")
 	router.HandleFunc("/drill", DrillEndpoint).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
@@ -696,7 +696,7 @@ func getVerbDrillType(sense JMDictSense) int {
 	return drillType
 }
 
-func IdentifyVerbsEndpoint(response http.ResponseWriter, request *http.Request) {
+func IdentifyDrillTypeEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
@@ -729,8 +729,10 @@ func IdentifyVerbsEndpoint(response http.ResponseWriter, request *http.Request) 
 	}
 	rows.Close()
 
+	fmt.Println("identifying drill type number words: ", len(words))
+
 	for i, word := range words {
-		fmt.Printf("\nidentifying drill type: %s %d\n", word)
+		fmt.Println("identifying drill type: ", word, defs[i])
 
 		drillType := 0
 		hasKatakana := len(reHasKatakana.FindStringIndex(word)) > 0
@@ -738,19 +740,21 @@ func IdentifyVerbsEndpoint(response http.ResponseWriter, request *http.Request) 
 			drillType |= DRILL_TYPE_KATAKANA
 		}
 
-		var entry JMDictEntry
-		err := json.Unmarshal([]byte(defs[i]), &entry)
+		var entries []JMDictEntry
+		err := json.Unmarshal([]byte(defs[i]), &entries)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to unmarshal dict entry: " + err.Error() + `"}`))
 			return
 		}
 
-		for _, sense := range entry.Sense {
-			drillType |= getVerbDrillType(sense)
+		for _, entry := range entries {
+			for _, sense := range entry.Sense {
+				drillType |= getVerbDrillType(sense)
+			}
 		}
 
-		_, err = sqldb.Exec(`UPDATE words SET drill_type = $1, WHERE base_form = $2 AND user = $3;`,
+		_, err = sqldb.Exec(`UPDATE words SET drill_type = $1 WHERE base_form = $2 AND user = $3;`,
 			drillType, word, USER_ID)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
