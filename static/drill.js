@@ -1,6 +1,5 @@
 var cardsDiv = document.getElementById('cards');
 var answerDiv = document.getElementById('answer');
-var drillButton = document.getElementById('drill_button');
 var drillInfoH = document.getElementById('drill_info');
 var drillCountInput = document.getElementById('drill_count');
 var drillCountInputText = document.getElementById('drill_count_text');
@@ -11,13 +10,14 @@ var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var definitionsDiv = document.getElementById('definitions');
+var ignoreCountdownCheckbox = document.getElementById('ignore_countdown_checkbox');
 
 const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
 
 var drillSet = null;
 var answeredSet = [];
 
-drillButton.onclick = function (evt) {
+function newDrill() {
     fetch('drill', {
         method: 'POST', // or 'PUT'
         headers: {
@@ -27,11 +27,13 @@ drillButton.onclick = function (evt) {
             count:  parseInt(drillCountInput.value),
             recency: parseInt(drillRecencySelect.value),
             drill_type: drillTypeSelect.value,
-            wrong: parseInt(drillWrongSelect.value)
+            wrong: parseInt(drillWrongSelect.value),
+            ignore_cooldown: ignoreCountdownCheckbox.checked
         })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Success:', data);
+            drillComlpeteDiv.style.display = 'none';
             shuffle(data.words);
             drillSet = data.words;
             answeredSet = [];
@@ -41,10 +43,30 @@ drillButton.onclick = function (evt) {
         .catch((error) => {
             console.error('Error:', error);
         });
-};
+}
 
 drillCountInput.oninput = function (evt) {
     drillCountInputText.innerHTML = drillCountInput.value;
+};
+
+drillCountInput.onchange = function (evt) {
+    newDrill();
+};
+
+drillRecencySelect.onchange = function (evt) {
+    newDrill();
+};
+
+drillTypeSelect.onchange = function (evt) {
+    newDrill();
+};
+
+drillWrongSelect.onchange = function (evt) {
+    newDrill();
+};
+
+ignoreCountdownCheckbox.onchange = function (evt) {
+    newDrill();
 };
 
 function displayWords() {
@@ -105,7 +127,13 @@ document.body.onkeydown = async function (evt) {
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
                 word.countdown = 0;
+                word.answered = true;
                 updateWord(word);
+                drillSet.shift();
+                answeredSet.unshift(word);
+                if (drillSet.length === 0) {
+                    nextRound();
+                }
                 displayWords();
             }
         } else if ((evt.code === 'KeyR') && evt.altKey) {  // todo reset drill    
@@ -183,5 +211,5 @@ function showWord() {
 document.body.onload = function (evt) {
     console.log('on page load');
     drillCountInputText.innerHTML = drillCountInput.value;
-    drillButton.onclick();
+    newDrill();
 };

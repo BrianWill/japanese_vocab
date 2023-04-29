@@ -9,15 +9,17 @@ type Story struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Content   string             `json:"content,omitempty" bson:"content,omitempty"`
 	Title     string             `json:"title,omitempty" bson:"title,omitempty"`
+	Link      string             `json:"link,omitempty" bson:"link,omitempty"`
 	Tokens    []JpToken          `json:"tokens,omitempty" bson:"tokens,omitempty"`
 	Sentences []Sentence
 }
 
 type DrillRequest struct {
-	Count   int    `json:"count,omitempty"`
-	Recency int64  `json:"recency,omitempty"`
-	Wrong   int64  `json:"wrong,omitempty"`
-	Type    string `json:"drill_type,omitempty"`
+	Count          int    `json:"count,omitempty"`
+	Recency        int64  `json:"recency,omitempty"`
+	Wrong          int64  `json:"wrong,omitempty"`
+	Type           string `json:"drill_type,omitempty"`
+	IgnoreCooldown bool   `json:"ignore_cooldown,omitempty"`
 }
 
 type DrillWord struct {
@@ -46,6 +48,7 @@ type JpToken struct {
 	Pronunciation    string               `json:"pronunciation,omitempty" bson:"pronunciation"`
 	Definitions      []primitive.ObjectID `json:"definition" bson:"definitions,omitempty"`
 	Kanji            []primitive.ObjectID `json:"kanji" bson:"kanji,omitempty"`
+	Entries          []JMDictEntry        `json:"entries" bson:"entries,omitempty"`
 	// actually, the related words (component words and homynms) should be stored in monogo with the definition
 	// also, should distinguish between words the user has encountered vs those related words which they haven't
 	// ComponentWords []primitive.ObjectID `json:"componentWords" bson:"componentWords,omitempty"`

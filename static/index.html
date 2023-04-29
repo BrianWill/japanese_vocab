@@ -5,7 +5,7 @@
         <link rel="stylesheet"
           href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
 
-        <link rel="stylesheet" href="../word.css">
+          <link rel="stylesheet" href="../drill.css">
         <link rel="stylesheet" href="../styles.css">
         <title>Jpn Stories</title>
     </head>
@@ -14,8 +14,10 @@
         
         <div><button id="add_word">Add Word to Drill Set</button></div>
         <div id="story_container">
-            <div id="definitions"></div>
-            <div id="kanji_results"></div>
+            <div id="answer">
+                <div id="definitions"></div>
+                <div id="kanji_results"></div>
+            </div>
             <div id="tokenized_story"></div>
         </div>
         <h1>Stories</h1>
@@ -26,6 +28,7 @@
         <hr>
         <h3>New story</h3>
         <input id="new_story_title" type="text" value="title"><br>
+        <input id="new_story_link" type="text" value="link"><br>
         <textarea id="new_story_text">asdf</textarea>
         <button id="new_story_button">ADD STORY</button>
         

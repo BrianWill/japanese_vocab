@@ -1,7 +1,6 @@
 body {
-    /*font-family: Arial, Helvetica, sans-serif;*/
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: #c1c1c1;
+    background-color: rgb(35, 35, 35);
+    color: #aabdcf;
 }
 
 #story {
@@ -15,6 +14,11 @@ body {
     letter-spacing: 0.02em;
     line-height: 1.6;
     font-size: 170%;
+    padding-left: 1.5em;
+    height: 29em;
+    overflow-y: scroll;
+    margin-right: 1em;
+    padding-right: 1em;
 }
 
 #tokenized_story p {
@@ -49,47 +53,47 @@ span.pad_left:not(:first-child) {
 
 span.noun,
 tr.noun {
-    color: #003c71;
+    color: #bac4cd;
 }
 
 span.particle,
 span.conjunction,
 tr.particle,
 tr.conjunction {
-    color: rgb(255, 252, 3);
+    color: rgb(192, 191, 33);
 }
 
 span.connecting_particle,
 tr.connecting_particle {
-    color: rgb(132, 130, 27);
+    color: rgb(127, 124, 4);
 }
 
 span.verb_auxiliary,
 tr.verb_auxiliary {
-    color: #aa6868;
+    color: #9a6565;;
 }
 
 span.adverb,
 tr.adverb {
-    color: #2b8248;
+    color: #458159;;
 }
 
 span.verb,
 tr.verb {
     
-    color: #9d1919;
+    color: #b64747;
 }
 
 span.i_adjective,
 tr.i_adjective {
-    color: #82009d;
+    color: #b170be;
 }
 
 span.pronoun,
 span.admoninal_adjective,
 tr.pronoun,
 tr.admoninal_adjective {
-    color: #0063bb;
+    color: #5782a9;
 }
 
 
@@ -106,21 +110,13 @@ span.verb:hover {
 
 #story_container {
     display: grid;
-    grid-template-columns: 1fr 1fr 2fr;
+    grid-template-columns: 2fr 3fr;
     grid-template-rows: 1fr;
     gap: 0px 0px;
-}
-
-#definitions {
-    padding: 2em 3em;
-    background-color: rgb(201, 179, 163);
-    font-size: 80%;
 }
 
 .high_pitch {
     font-weight: bold;
 }
 
-.unknown_pitch {
-    
-}
+

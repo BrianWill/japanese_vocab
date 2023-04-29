@@ -5,10 +5,6 @@ body {
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
 }
 
-#drill_button {
-    font-size: 120%;
-}
-
 .kanji_spelling {
     font-size: 240%;
     white-space: nowrap;
@@ -44,7 +40,7 @@ body {
 
 .pos {
     background-color: #13110f;
-    color: #707070;
+    color: #909090;
     margin-right: 3px;
     padding: 5px 8px;
     border-radius: 4px;
@@ -172,7 +168,6 @@ body {
     padding: 2em 3em;
     margin-right: 2em;
     font-size: 80%;
-    /* text-align: right; */
 }
 
 .kanji {

@@ -2,6 +2,7 @@ var newStoryText = document.getElementById('new_story_text');
 var newStoryButton = document.getElementById('new_story_button');
 var storyList = document.getElementById('story_list');
 var newStoryTitle = document.getElementById('new_story_title');
+var newStoryLink = document.getElementById('new_story_link');
 var storyTitle = document.getElementById('story_title');
 var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
@@ -16,10 +17,11 @@ var definitions = null;
 newStoryButton.onclick = function (evt) {
     let data = {
         content: newStoryText.value,
-        title: newStoryTitle.value
+        title: newStoryTitle.value,
+        link: newStoryLink.value
     };
 
-    fetch('/story', {
+    fetch('/create_story', {
         method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
@@ -57,6 +59,19 @@ document.body.onload = function (evt) {
         openStory(storyId);
     }
 };
+
+tokenizedText.onwheel = function (evt) {
+    if (evt.wheelDeltaY < 0) {
+        if (tokenizedText.scrollTop >= tokenizedText.scrollTopMax) {
+            evt.preventDefault();
+        }
+    } else {
+        if (tokenizedText.scrollTop <= 0) {
+            evt.preventDefault();
+        }
+    }
+};
+
 
 function updateStoryList(stories) {
     let html = '';
@@ -302,7 +317,7 @@ tokenizedText.onmousedown = function (evt) {
     var index = evt.target.getAttribute("tokenIndex");
     if (index) {
         selectedTokenIndex = index;
-        displayDefinition(index);        
+        displayDefinition(index);
         if (evt.ctrlKey) {
             addWord();
         }
@@ -352,7 +367,6 @@ function displayDefinition(index) {
     if (definitions) {
         html = '';
         for (let def of definitions[index]) {
-            console.log(def);
             html += displayEntry(def);
         }
         definitionsDiv.innerHTML = html;

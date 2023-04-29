@@ -3,6 +3,25 @@
 ## TODO
 
 
+- when adding story...
+    - do we need to store the story in mongo at all?
+    - field for web link
+    - tokenize story
+    - store list of words (indexes of words table)
+
+- on drill page, have filter by story
+    - when clicking "all story", javascript deselects all other stories? or separate checkbox to toggle the story filter on or off?
+    - need way to request all words from a story instead of all words
+
+- on story page, button to drill vocab of the story (multi select stories to drill all their vocab in one set?)
+    - maybe have option to mark words as mark words
+    - drill page has 'wordPool = []' which words are drawn from when it's non-null
+    - drill page has list of stories? checkbox next to each one
+
+- toucan-like stories:
+    - for English text story, identify the commonly reoccuring words and replace them with Japanese equivalents. (might be tricky to do accurate translation)
+        - generally stick to nouns, adjectives and verbs?
+
 - When baking definitions and kanji in tokens, the spelling / reading that is used in the token should be top (display others in smaller text below).
     - distinguish between readings/spellings/definitions that user has encountered from others
     - prioritize showing definition of word as used in context + "core" definition

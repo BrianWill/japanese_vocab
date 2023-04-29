@@ -1,5 +1,8 @@
 function splitOnHighPitch(str, pitch) {
-    if (pitch === 0) {
+    let [downPitch, upPitch] = pitch;
+    console.log(`downpitch ${downPitch}, up pitch ${upPitch}`);
+
+    if (downPitch === 0) {
         return ['', '', str];
     }
     let mora = [];
@@ -14,9 +17,9 @@ function splitOnHighPitch(str, pitch) {
         }
     }
     return [
-        mora.slice(0, pitch - 1).join(''),
-        mora.slice(pitch - 1, pitch).join(''),
-        mora.slice(pitch).join('')
+        mora.slice(0, downPitch - 1).join(''),
+        mora.slice(downPitch - 1, downPitch).join(''),
+        mora.slice(downPitch).join('')
     ];
 }
 
@@ -118,7 +121,8 @@ function displayEntry(entry) {
     html += '<div class="readings">';
     for (var reading of entry.readings || []) {
         if (reading.pitch) {
-            let parts = splitOnHighPitch(reading.reading, parseInt(reading.pitch));
+            let pitch = reading.pitch.split(',').map(x => parseInt(x));
+            let parts = splitOnHighPitch(reading.reading, pitch);
             html += `<div class="reading">${parts[0]}<span class="high_pitch">${parts[1]}</span>${parts[2]}</div>`;
         } else {
             html += `<div class="reading unknown_pitch">${reading.reading}﹖</div>`;

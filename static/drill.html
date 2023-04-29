@@ -11,7 +11,7 @@
 <body>
     <h3>Drills</h3>
     <h3 id="drill_info"></h3>
-    <button id="drill_button">Drill</button><input id="drill_count" type="range" step="10" value="50" min="10" max="90"><span id="drill_count_text"></span>
+    <input id="drill_count" type="range" step="10" value="50" min="10" max="90"><span id="drill_count_text"></span>
     &nbsp;&nbsp;
     <select id="drill_recency" name="drill_recency"> 
         <option value="0">added any time</option>
@@ -27,11 +27,22 @@
     </select>
     &nbsp;&nbsp;
     <select id="drill_type" name="drill_type"> 
-        <option value="all">all words</option>
+        <option value="all">words of all kinds</option>
         <option value="katakana">katakana words</option>
         <option value="ichidan">ichidan verbs</option>
         <option value="godan">godan verbs</option>
     </select>
+    &nbsp;&nbsp;
+    <select multiple id="drill_story" name="drill_story">
+        <option value="all">all stories</option>
+        <option value="story1">Story 1</option>
+        <option value="story2">Story 2</option>
+        <option value="story2">Story 3</option>
+        <option value="story2">Story 4</option>
+        <option value="story2">Story 5</option>
+        <option value="story2">Story 6</option>
+    </select>
+    <label>Ignore cooldown:</label><input id="ignore_countdown_checkbox" type="checkbox">
     <br>
     <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
     <div id="results">
