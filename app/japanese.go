@@ -133,7 +133,7 @@ func main() {
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
 	router.HandleFunc("/mark/{action}/{id}", MarkStoryEndpoint).Methods("GET")
-	router.HandleFunc("/story", CreateStoryEndpoint).Methods("POST")
+	router.HandleFunc("/create_story", CreateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/story_retokenize/{id}", RetokenizeStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
@@ -193,7 +193,15 @@ func makeSqlDB() {
 		log.Fatal(err)
 	}
 
-	statement, err = sqldb.Prepare("CREATE TABLE IF NOT EXISTS stories (id INTEGER PRIMARY KEY, user INTEGER NOT NULL, story TEXT NOT NULL, state TEXT NOT NULL, FOREIGN KEY(user) REFERENCES users(id))")
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS stories 
+		(id INTEGER PRIMARY KEY, user INTEGER NOT NULL,
+			state   TEXT NOT NULL,
+			words	TEXT NOT NULL,
+			content	TEXT,
+			title	TEXT,
+			link	TEXT,
+			tokens	TEXT,
+			FOREIGN KEY(user) REFERENCES users(id))`)
 	if err != nil {
 		log.Fatal(err)
 	}

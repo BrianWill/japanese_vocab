@@ -246,12 +246,12 @@ func AddWordsEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	// // add words to story
-	wordIdsJson, err := json.Marshal(wordIds)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to marshall word ids: " + err.Error() + `"}`))
-		return
-	}
+	// wordIdsJson, err := json.Marshal(wordIds)
+	// if err != nil {
+	// 	response.WriteHeader(http.StatusInternalServerError)
+	// 	response.Write([]byte(`{ "message": "` + "failure to marshall word ids: " + err.Error() + `"}`))
+	// 	return
+	// }
 	// _, err = sqldb.Exec(`UPDATE stories SET words = $1 WHERE base_form = $2 AND user = $3;`,
 	// 	wordIdsJson, storyId, USER_ID)
 

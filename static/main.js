@@ -38,20 +38,7 @@ newStoryButton.onclick = function (evt) {
 
 
 document.body.onload = function (evt) {
-    fetch('/stories_list', {
-        method: 'GET', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success:', data);
-            updateStoryList(data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-
+    getStoryList();
 
     if (window.location.pathname.startsWith('/read/')) {
         let storyId = window.location.pathname.substring(6);
@@ -77,7 +64,7 @@ function updateStoryList(stories) {
     let html = '';
 
     html += `<h3>Active stories</h3>`
-    for (let s of stories.activeStories) {
+    for (let s of stories.stories) {
         html += `<li>
             <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
             <a story_id="${s._id}" action="mark_inactive" href="#">mark inactive</a>&nbsp;&nbsp;
@@ -86,24 +73,24 @@ function updateStoryList(stories) {
             </li>`;
     }
 
-    html += `<h3>Inactive stories</h3>`
-    for (let s of stories.inactiveStories) {
-        html += `<li>
-            <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
-            <a story_id="${s._id}" action="mark_active" href="#">make active</a>&nbsp;&nbsp;
-            <a story_id="${s._id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
-            <a story_id="${s._id}" href="#">${s.title}</a>
-            </li>`;
-    }
+    // html += `<h3>Inactive stories</h3>`
+    // for (let s of stories.inactiveStories) {
+    //     html += `<li>
+    //         <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
+    //         <a story_id="${s._id}" action="mark_active" href="#">make active</a>&nbsp;&nbsp;
+    //         <a story_id="${s._id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
+    //         <a story_id="${s._id}" href="#">${s.title}</a>
+    //         </li>`;
+    // }
 
-    html += `<h3>Unread stories</h3>`
-    for (let s of stories.unreadStories) {
-        html += `<li>
-            <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
-            <a story_id="${s._id}" action="mark_active" href="#">mark active</a>&nbsp;&nbsp;
-            <a story_id="${s._id}" href="#">${s.title}</a>
-            </li>`;
-    }
+    // html += `<h3>Unread stories</h3>`
+    // for (let s of stories.unreadStories) {
+    //     html += `<li>
+    //         <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
+    //         <a story_id="${s._id}" action="mark_active" href="#">mark active</a>&nbsp;&nbsp;
+    //         <a story_id="${s._id}" href="#">${s.title}</a>
+    //         </li>`;
+    // }
     storyList.innerHTML = html;
 };
 

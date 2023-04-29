@@ -6,12 +6,24 @@ import (
 )
 
 type Story struct {
-	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Content   string             `json:"content,omitempty" bson:"content,omitempty"`
-	Title     string             `json:"title,omitempty" bson:"title,omitempty"`
-	Link      string             `json:"link,omitempty" bson:"link,omitempty"`
-	Tokens    []JpToken          `json:"tokens,omitempty" bson:"tokens,omitempty"`
-	Sentences []Sentence
+	ID      primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	State   string             `json:"state,omitempty" bson:"state,omitempty"`
+	Words   string             `json:"words,omitempty" bson:"words,omitempty"`
+	Content string             `json:"content,omitempty" bson:"content,omitempty"`
+	Title   string             `json:"title,omitempty" bson:"title,omitempty"`
+	Link    string             `json:"link,omitempty" bson:"link,omitempty"`
+	Tokens  []JpToken          `json:"tokens,omitempty" bson:"tokens,omitempty"`
+	//Sentences []Sentence
+}
+
+type StorySql struct {
+	ID      int64  `json:"id,omitempty"`
+	State   string `json:"state,omitempty"`
+	Words   string `json:"words,omitempty"`
+	Content string `json:"content,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Link    string `json:"link,omitempty"`
+	Tokens  string `json:"tokens,omitempty"`
 }
 
 type DrillRequest struct {
