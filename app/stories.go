@@ -85,20 +85,6 @@ func addStory(story Story, response http.ResponseWriter) error {
 		}
 	}
 
-	fmt.Println("prefiltered tokens: ", len(story.Tokens))
-	story.Tokens = filterPartsOfSpeech(story.Tokens)
-	fmt.Println("filtered tokens: ", len(story.Tokens))
-
-	// deduplicate
-	tokenSet := make(map[string]JpToken)
-	for _, token := range story.Tokens {
-		tokenSet[token.BaseForm] = token
-	}
-	story.Tokens = nil
-	for k := range tokenSet {
-		story.Tokens = append(story.Tokens, tokenSet[k])
-	}
-
 	err := getDefinitions(story.Tokens, response)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -197,6 +183,20 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	var reHasKana = regexp.MustCompile(`[あ-んア-ン]`)
 	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
+
+	fmt.Println("prefiltered tokens: ", len(tokens))
+	tokens = filterPartsOfSpeech(tokens)
+	fmt.Println("filtered tokens: ", len(tokens))
+
+	// deduplicate
+	tokenSet := make(map[string]JpToken)
+	for _, token := range tokens {
+		tokenSet[token.BaseForm] = token
+	}
+	tokens = nil
+	for k := range tokenSet {
+		tokens = append(tokens, tokenSet[k])
+	}
 
 	wordIds := make([]int64, 0)
 	for _, token := range tokens {

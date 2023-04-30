@@ -150,7 +150,7 @@ func main() {
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
 	router.HandleFunc("/mark/{action}/{id}", MarkStoryEndpoint).Methods("GET")
 	router.HandleFunc("/create_story", CreateStoryEndpoint).Methods("POST")
-	//router.HandleFunc("/load_stories", LoadStoriesEndpoint).Methods("GET")
+	router.HandleFunc("/load_stories", LoadStoriesEndpoint).Methods("GET")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
