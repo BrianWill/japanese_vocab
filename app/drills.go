@@ -55,6 +55,10 @@ import (
 	//_ "github.com/jackc/pgx/v4/stdlib"
 )
 
+func GetDrillEndpoint(response http.ResponseWriter, request *http.Request) {
+
+}
+
 func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 

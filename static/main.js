@@ -8,11 +8,9 @@ var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
-//var addWordButton = document.getElementById('add_word');
 var addWordsButton = document.getElementById('add_words_button');
 
 var story = null;
-var definitions = null;
 
 newStoryButton.onclick = function (evt) {
     let data = {
@@ -64,33 +62,42 @@ function updateStoryList(stories) {
     let html = '';
 
     html += `<h3>Active stories</h3>`
-    for (let s of stories.stories) {
+    for (let s of stories) {
+        if (s.state !== 'active') {
+            continue;
+        }
         html += `<li>
-            <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
-            <a story_id="${s._id}" action="mark_inactive" href="#">mark inactive</a>&nbsp;&nbsp;
-            <a story_id="${s._id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
-            <a story_id="${s._id}" href="#">${s.title}</a>
+            <a story_id="${s.id}" action="drill" href="#">drill</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" action="mark_inactive" href="#">mark inactive</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" href="#">${s.title}</a>
             </li>`;
     }
 
-    // html += `<h3>Inactive stories</h3>`
-    // for (let s of stories.inactiveStories) {
-    //     html += `<li>
-    //         <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
-    //         <a story_id="${s._id}" action="mark_active" href="#">make active</a>&nbsp;&nbsp;
-    //         <a story_id="${s._id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
-    //         <a story_id="${s._id}" href="#">${s.title}</a>
-    //         </li>`;
-    // }
+    html += `<h3>Inactive stories</h3>`
+    for (let s of stories) {
+        if (s.state !== 'inactive') {
+            continue;
+        }
+        html += `<li>
+            <a story_id="${s.id}" action="drill" href="#">drill</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" action="mark_active" href="#">make active</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" href="#">${s.title}</a>
+            </li>`;
+    }
 
-    // html += `<h3>Unread stories</h3>`
-    // for (let s of stories.unreadStories) {
-    //     html += `<li>
-    //         <a story_id="${s._id}" action="retokenize" href="#">retokenize</a>&nbsp;&nbsp;
-    //         <a story_id="${s._id}" action="mark_active" href="#">mark active</a>&nbsp;&nbsp;
-    //         <a story_id="${s._id}" href="#">${s.title}</a>
-    //         </li>`;
-    // }
+    html += `<h3>Unread stories</h3>`
+    for (let s of stories) {
+        if (s.state !== 'unread') {
+            continue;
+        }
+        html += `<li>
+            <a story_id="${s.id}" action="drill" href="#">drill</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" action="mark_active" href="#">mark active</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" href="#">${s.title}</a>
+            </li>`;
+    }
     storyList.innerHTML = html;
 };
 
@@ -101,9 +108,8 @@ storyList.onclick = function (evt) {
 
         var action = evt.target.getAttribute('action');
         switch (action) {
-            case 'retokenize':
-                console.log('retokenizing');
-                retokenize(storyId);
+            case 'drill':
+                window.location.href = `/drill/${storyId}`;
                 break;
             case 'mark_inactive':
                 markStory(storyId, 'inactive');
@@ -121,21 +127,6 @@ storyList.onclick = function (evt) {
     }
 };
 
-function retokenize(id) {
-    fetch('/story_retokenize/' + id, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success retokenizing:', data);
-            openStory(id);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
 
 function getStoryList() {
     fetch('/stories_list', {
@@ -162,7 +153,7 @@ function markStory(id, action) {
     }).then((response) => response.json())
         .then((data) => {
             console.log(`Success ${action}:`, data);
-            getStoryList()
+            getStoryList();
         })
         .catch((error) => {
             console.error('Error marking story:', error);
@@ -178,10 +169,11 @@ function openStory(id) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Success:', data);
-            story = data.story;
-            definitions = data.definitions;
-            storyTitle.innerText = data.story.title;
-            displayTokens(data.story, data.definitions);
+            story = data;
+            storyTitle.innerText = data.title;
+            story.tokens = JSON.parse(story.tokens);
+            story.words = JSON.parse(story.words);
+            displayStory(data);
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -190,7 +182,7 @@ function openStory(id) {
 
 var wordSet = [];
 
-function displayTokens(story) {
+function displayStory(story) {
     let words = '';
     let punctuationTokens = [' ', '。', '、'];
 
@@ -351,13 +343,11 @@ function addWord() {
 function displayDefinition(index) {
     var token = story.tokens[index];
     getKanji(token.baseForm + token.surface); // might as well get all possibly relevant kanji
-    if (definitions) {
-        html = '';
-        for (let def of definitions[index]) {
-            html += displayEntry(def);
-        }
-        definitionsDiv.innerHTML = html;
+    html = '';
+    for (let entry of token.entries) {
+        html += displayEntry(entry);
     }
+    definitionsDiv.innerHTML = html;
 }
 
 // storyText.onmouseup = function (evt) {

@@ -5,6 +5,8 @@ import (
 	//"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	// "math"
 	"regexp"
 	// "sort"
@@ -26,6 +28,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	// "go.mongodb.org/mongo-driver/mongo"
 	//"go.mongodb.org/mongo-driver/mongo/options"
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
@@ -288,19 +291,15 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	var stories []StorySql
 	for rows.Next() {
 		var story StorySql
-		var storyId int
-		if err := rows.Scan(&storyId, &story.State, &story.Words, &story.Title, &story.Link); err != nil {
+		if err := rows.Scan(&story.ID, &story.State, &story.Words, &story.Title, &story.Link); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story states: " + err.Error() + `"}`))
 			return
 		}
 		stories = append(stories, story)
-		fmt.Println("STATUS", storyId)
 	}
 
-	json.NewEncoder(response).Encode(bson.M{
-		"stories": stories,
-	})
+	json.NewEncoder(response).Encode(stories)
 }
 
 func ReadEndpoint(response http.ResponseWriter, request *http.Request) {
@@ -311,67 +310,13 @@ func ReadEndpoint(response http.ResponseWriter, request *http.Request) {
 func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	params := mux.Vars(request)
-	id, _ := primitive.ObjectIDFromHex(params["id"])
-	fmt.Println("story id: ", id)
-	var story Story
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err := storiesCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&story)
+	id, err := strconv.Atoi(params["id"])
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-
-	tokenDefinitions := make([][]JMDictEntry, len(story.Tokens))
-
-	for i, token := range story.Tokens {
-		tokenDefinitions[i] = make([]JMDictEntry, len(token.Definitions))
-		for j, def := range token.Definitions {
-			var entry JMDictEntry
-			err := jmdictCollection.FindOne(ctx, bson.M{"_id": def}).Decode(&entry)
-			if err != nil {
-				response.WriteHeader(http.StatusInternalServerError)
-				response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-				return
-			}
-			tokenDefinitions[i][j] = entry
-		}
-	}
-
-	json.NewEncoder(response).Encode(bson.M{
-		"story":       story,
-		"definitions": tokenDefinitions,
-	})
-}
-
-func MarkStoryEndpoint(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
-	params := mux.Vars(request)
-	id, err := primitive.ObjectIDFromHex(params["id"])
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	// make sure the story actually exists
-	var story Story
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-	err = storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	action := params["action"]
-
-	if action != "inactive" && action != "unread" && action != "active" {
-		response.WriteHeader(400)
-		return
-	}
+	fmt.Println("GET STORY id: ", id)
 
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
@@ -381,133 +326,76 @@ func MarkStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	storyID := story.ID.Hex()
-
-	rows, err := sqldb.Query(`SELECT id FROM stories WHERE story = $1 AND user = $2;`, storyID, USER_ID)
+	rows, err := sqldb.Query(`SELECT state, words, title, link, tokens, content FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
 		return
 	}
-	exists := rows.Next()
-	rows.Close()
+	defer rows.Close()
 
-	fmt.Println("query ", exists, storyID, USER_ID)
+	var story StorySql
+	for rows.Next() {
 
-	if exists {
-		_, err = sqldb.Exec(`UPDATE stories SET state = $1 WHERE story = $2 AND user = $3;`, action, storyID, USER_ID)
-		if err != nil {
+		if err := rows.Scan(&story.State, &story.Words, &story.Title, &story.Link, &story.Tokens, &story.Content); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to update story state: " + err.Error() + `"}`))
+			response.Write([]byte(`{ "message": "` + "failure to read story states: " + err.Error() + `"}`))
 			return
 		}
-	} else {
-		_, err = sqldb.Exec(`INSERT INTO stories (story, state, user) VALUES($1, $2, $3);`, storyID, action, USER_ID)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to insert story state: " + err.Error() + `"}`))
-			return
-		}
-	}
-
-	json.NewEncoder(response).Encode(bson.M{"status": "success"})
-}
-
-func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
-	params := mux.Vars(request)
-	id, err := primitive.ObjectIDFromHex(params["id"])
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	var story Story
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-	err = storiesCollection.FindOne(ctx, Story{ID: id}).Decode(&story)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	tokens := tok.Analyze(story.Content, tokenizer.Normal)
-	story.Tokens = make([]JpToken, len(tokens))
-
-	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-
-	for i, r := range tokens {
-		features := r.Features()
-		var searchTerm string
-		if len(features) < 9 {
-			searchTerm = r.Surface
-			story.Tokens[i] = JpToken{
-				Surface: r.Surface,
-				POS:     features[0],
-				POS_1:   features[1],
-			}
-
-			//fmt.Println(strconv.Itoa(len(features)), features[0], r.Surface, "features: ", strings.Join(features, ","))
-		} else {
-			searchTerm = features[6] // base form
-			story.Tokens[i] = JpToken{
-				Surface:          r.Surface,
-				POS:              features[0],
-				POS_1:            features[1],
-				POS_2:            features[2],
-				POS_3:            features[3],
-				InflectionalType: features[4],
-				InflectionalForm: features[5],
-				BaseForm:         features[6],
-				Reading:          features[7],
-				Pronunciation:    features[8],
-			}
-		}
-		var wordQuery primitive.D
-		if len(re.FindStringIndex(searchTerm)) > 0 { // has kanji
-			//kanji := re.FindAllString(searchTerm, -1)
-			wordQuery = bson.D{{"kanji_spellings.kanji_spelling", searchTerm}}
-		} else {
-			wordQuery = bson.D{{"readings.reading", searchTerm}}
-		}
-
-		start := time.Now()
-
-		cursor, err := jmdictCollection.Find(ctx, wordQuery)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-			return
-		}
-		defer cursor.Close(ctx)
-
-		duration := time.Since(start)
-
-		wordIDs := make([]primitive.ObjectID, 0)
-		for cursor.Next(ctx) {
-			var entry JMDictEntry
-			cursor.Decode(&entry)
-			wordIDs = append(wordIDs, entry.ID)
-		}
-
-		// todo past certain point, too many matching words isn't useful (will require manual assignment of definition to the token)
-
-		fmt.Printf("\"%v\" \t matches: %v \t %v \n ", searchTerm, len(wordIDs), duration)
-		if len(wordIDs) < 8 {
-			story.Tokens[i].Definitions = wordIDs
-		}
-	}
-
-	_, err = storiesCollection.UpdateByID(ctx, id, bson.M{"$set": story})
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
 	}
 
 	json.NewEncoder(response).Encode(story)
+}
+
+func MarkStoryEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+	params := mux.Vars(request)
+	storyId, err := strconv.Atoi(params["id"])
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	fmt.Println("MARK STORY id: ", storyId)
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	// make sure the story actually exists
+	rows, err := sqldb.Query(`SELECT state FROM stories WHERE user = $1 AND id = $2;`, USER_ID, storyId)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return
+	}
+
+	if !rows.Next() {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "story with ID does not exist: " + err.Error() + `"}`))
+		rows.Close()
+		return
+	}
+	rows.Close()
+
+	action := params["action"]
+	if action != "inactive" && action != "unread" && action != "active" {
+		response.WriteHeader(400)
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE stories SET state = $1 WHERE id = $2 AND user = $3;`, action, storyId, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to update story state: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(response).Encode(bson.M{"status": "success"})
 }
 
 // [END indexHandler]
