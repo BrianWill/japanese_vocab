@@ -1,7 +1,7 @@
 
 body {
-    background-color: gainsboro;
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    font-size: 130%;
 }
 
 #word_search {
@@ -45,7 +45,7 @@ body {
 }
 
 .pos {
-    background-color: #aca8a3;
+    background-color: #141414;
     color: #e7e7e7;
     margin-right: 20px;
     padding: 5px 8px;
@@ -88,7 +88,6 @@ body {
 #kanji_results {
     padding: 2em 3em;
     margin-right: 2em;
-    background-color: rgb(201, 179, 163);
     font-size: 130%;
 }
 

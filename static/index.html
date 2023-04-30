@@ -10,17 +10,17 @@
         <title>Jpn Stories</title>
     </head>
     <body>
-        <h3 id="story_title">Story</h3>
-        
-        <div><button id="add_word">Add Word to Drill Set</button></div>
+        <div id="top_link"><a href="/drill.html">go to drills</a><a href="/word.html">go to word search</a></div>
         <div id="story_container">
             <div id="answer">
                 <div id="definitions"></div>
                 <div id="kanji_results"></div>
             </div>
-            <div id="tokenized_story"></div>
+            <div>
+                <h3 id="story_title">Story</h3>
+                <div id="tokenized_story"></div>
+            </div>
         </div>
-        <h1>Stories</h1>
             <ul id="story_list">
                 <li><a story_id="" href="#">Story1</a></li>
                 <li><a story_id="" href="#">Story2</a></li>
@@ -32,8 +32,9 @@
         <textarea id="new_story_text">asdf</textarea>
         <button id="new_story_button">ADD STORY</button>
         
-        
-        <div id="word_list_container"><button id="add_words_button">ADD WORDS</button><table id="word_list"></table></div>        
+        <div id="word_list_container">
+            <table id="word_list"></table>
+        </div>
     </body>
     <script src="../main.js"></script>
     <script src="../util.js"></script>

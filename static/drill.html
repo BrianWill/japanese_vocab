@@ -9,24 +9,24 @@
 </head>
 
 <body>
-    <h3>Drills</h3>
+    <div id="top_link"><a href="/">go to stories</a><a href="/word.html">go to word search</a></div>
     <h3 id="drill_info"></h3>
     <input id="drill_count" type="range" step="10" value="50" min="10" max="90"><span id="drill_count_text"></span>
     &nbsp;&nbsp;
-    <select id="drill_recency" name="drill_recency"> 
+    <select id="drill_recency" name="drill_recency">
         <option value="0">added any time</option>
         <option value="60">added in last hour</option>
         <option value="360">added in last 6 hours</option>
         <option value="3600">added in last day</option>
     </select>
     &nbsp;&nbsp;
-    <select id="drill_wrong" name="drill_wrong"> 
+    <select id="drill_wrong" name="drill_wrong">
         <option value="0">wrong or right</option>
         <option value="180">wrong in last 3 hours</option>
         <option value="3600">wrong in last day</option>
     </select>
     &nbsp;&nbsp;
-    <select id="drill_type" name="drill_type"> 
+    <select id="drill_type" name="drill_type">
         <option value="all">words of all kinds</option>
         <option value="katakana">katakana words</option>
         <option value="ichidan">ichidan verbs</option>

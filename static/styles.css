@@ -56,6 +56,11 @@ tr.noun {
     color: #bac4cd;
 }
 
+span.counter,
+tr.counter {
+    color: #5798d0;
+}
+
 span.particle,
 span.conjunction,
 tr.particle,
@@ -106,6 +111,12 @@ span.verb:hover {
 
 #story_list li {
     margin-bottom: 0.4em;
+
+}
+
+#story_list a {
+    color: #838383;
+    
 }
 
 #story_container {
@@ -119,4 +130,16 @@ span.verb:hover {
     font-weight: bold;
 }
 
+#story_title {
+    text-align: center;
+}
+
+#top_link {
+    padding: 1em;
+}
+
+#top_link a {
+    color: rgb(117, 117, 117);
+    padding: 1em;
+}
 

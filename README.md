@@ -2,7 +2,14 @@
 
 ## TODO
 
+- move dictionaries from mongo to a custom serialized format? or JSON?
+    - reload entries only when request rather than keeping in memory?
+
+- test: when adding words, filter out some parts of speech (see displayStory())
+    - filter out parts of speech of existing word set
+
 - click word in drill list to sort it to top/active (sometimes curious and want to skip ahead to see def of word down the list)
+
 
 - toucan-like stories:
     - for English text story, identify the commonly reoccuring words and replace them with Japanese equivalents. (might be tricky to do accurate translation)

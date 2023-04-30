@@ -88,16 +88,16 @@ type WordSearch struct {
 // JMDict xml format
 type JMDict struct {
 	XMLName xml.Name      `xml:"JMDict"`
-	Entry   []JMDictEntry `xml:"entry"`
+	Entries []JMDictEntry `xml:"entry" json:"entries"`
 }
 
 type JMDictEntry struct {
 	XMLName               *xml.Name          `xml:"entry" bson:"xmlname,omitempty" json:"xmlname,omitempty"`
 	ID                    primitive.ObjectID `bson:"_id, omitempty"`
 	Ent_seq               string             `xml:"ent_seq" bson:"sequence_number,omitempty" json:"sequence_number,omitempty"`
-	Sense                 []JMDictSense      `xml:"sense" bson:"senses,omitempty" json:"senses,omitempty"`
-	R_ele                 []JMDictR_ele      `xml:"r_ele" bson:"readings,omitempty" json:"readings,omitempty"`
-	K_ele                 []JMDictK_ele      `xml:"k_ele" bson:"kanji_spellings,omitempty" json:"kanji_spellings,omitempty"`
+	Senses                []JMDictSense      `xml:"sense" bson:"senses,omitempty" json:"senses,omitempty"`
+	Readings              []JMDictR_ele      `xml:"r_ele" bson:"readings,omitempty" json:"readings,omitempty"`
+	KanjiSpellings        []JMDictK_ele      `xml:"k_ele" bson:"kanji_spellings,omitempty" json:"kanji_spellings,omitempty"`
 	ShortestKanjiSpelling int
 	ShortestReading       int
 }
@@ -125,7 +125,7 @@ type JMDictExample struct {
 
 // reading element
 type JMDictR_ele struct {
-	Reb        string `xml:"reb" bson:"reading,omitempty" json:"reading,omitempty"`
+	Reading    string `xml:"reb" bson:"reading,omitempty" json:"reading,omitempty"`
 	Re_nokanji string `xml:"re_nokanji" bson:"no_kanji,omitempty" json:"no_kanji,omitempty"`
 	/* indicates that the reb, while associated with the keb,
 	cannot be regarded as a true reading of the kanji. It is
@@ -139,9 +139,9 @@ type JMDictR_ele struct {
 
 // kanji element
 type JMDictK_ele struct {
-	Keb    string   `xml:"keb" bson:"kanji_spelling,omitempty" json:"kanji_spelling,omitempty"`
-	Ke_inf []string `xml:"ke_inf" bson:"information,omitempty" json:"information,omitempty"` // denotes orthography, e.g. okurigana irregularity
-	Ke_pri []string `xml:"ke_pri" bson:"priority,omitempty" json:"priority,omitempty"`       // relative priority (see schema)
+	KanjiSpelling string   `xml:"keb" bson:"kanji_spelling,omitempty" json:"kanji_spelling,omitempty"`
+	Ke_inf        []string `xml:"ke_inf" bson:"information,omitempty" json:"information,omitempty"` // denotes orthography, e.g. okurigana irregularity
+	Ke_pri        []string `xml:"ke_pri" bson:"priority,omitempty" json:"priority,omitempty"`       // relative priority (see schema)
 }
 
 type JMDictEx_srce struct {
@@ -170,7 +170,7 @@ type JMDictGloss struct {
 
 type KanjiDict struct {
 	XMLName    xml.Name         `xml:"kanjidic2"`
-	Characters []KanjiCharacter `xml:"character"`
+	Characters []KanjiCharacter `xml:"character" json:"characters,omitempty"`
 }
 
 type KanjiCharacter struct {

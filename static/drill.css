@@ -241,3 +241,12 @@ body {
     text-align: right;
     margin-right: 30px;
 }
+
+#top_link {
+    padding: 1em;
+}
+
+#top_link a {
+    color: rgb(117, 117, 117);
+    padding: 1em;
+}

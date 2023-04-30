@@ -8,7 +8,6 @@ var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
-var addWordsButton = document.getElementById('add_words_button');
 
 var story = null;
 
@@ -136,7 +135,7 @@ function getStoryList() {
         }
     }).then((response) => response.json())
         .then((data) => {
-            console.log('Success:', data);
+            console.log('Stories list success:', data);
             updateStoryList(data);
         })
         .catch((error) => {
@@ -168,11 +167,10 @@ function openStory(id) {
         }
     }).then((response) => response.json())
         .then((data) => {
-            console.log('Success:', data);
             story = data;
             storyTitle.innerText = data.title;
             story.tokens = JSON.parse(story.tokens);
-            story.words = JSON.parse(story.words);
+            console.log(`/story/${id} success:`, story);
             displayStory(data);
         })
         .catch((error) => {
@@ -180,13 +178,10 @@ function openStory(id) {
         });
 }
 
-var wordSet = [];
-
 function displayStory(story) {
     let words = '';
     let punctuationTokens = [' ', '。', '、'];
 
-    wordSet = [];
     let html = '<p>';
     let prior = null;
     for (let i = 0; i < story.tokens.length; i++) {
@@ -241,6 +236,8 @@ function displayStory(story) {
                 posClass = 'noun';
             } else if (t.pos === "記号") { // symbol
                 t.drillable = false;
+            } else if (t.pos == "号") { // counter
+                posClass = 'counter';
             } else {
                 posClass = 'pad_left';
             }
@@ -249,7 +246,6 @@ function displayStory(story) {
 
         if (t.drillable && !punctuationTokens.includes(t.surface)) {
             //let baseForm = t.baseForm !== t.surface ? t.baseForm : '';
-            wordSet.push(t);
             let pronunciation = t.pronunciation !== t.reading ? t.pronunciation : '';
             words += `<tr class="${posClass}">
                 <td>${t.baseForm || t.surface}</td>
@@ -259,24 +255,10 @@ function displayStory(story) {
                 </tr>`;
         }
 
-        // if (!t.drillable && !punctuationTokens.includes(t.surface)) {
-        //     //let baseForm = t.baseForm !== t.surface ? t.baseForm : '';
-        //     let pronunciation = t.pronunciation !== t.reading ? t.pronunciation : '';
-        //     words += `<tr style="color: white; background-color: black;" class="${posClass}">
-        //         <td>${t.surface}</td>
-        //         <td>${t.reading}</td>
-        //         <td>${t.baseForm}</td>
-        //         <td>${t.inflectionalForm}, ${t.inflectionalType}</td>
-        //         <!--<td>${pronunciation}</td>-->
-        //         <td>${t.pos}, ${t.pos1}, ${t.pos2}, ${t.pos3}</td>
-        //         </tr>`;
-        // }
         prior = t;
     }
     tokenizedText.innerHTML = html + '</p>';
     wordList.innerHTML = words;
-
-    console.log(wordSet);
 }
 
 var selectedTokenIndex = null;
@@ -297,48 +279,9 @@ tokenizedText.onmousedown = function (evt) {
     if (index) {
         selectedTokenIndex = index;
         displayDefinition(index);
-        if (evt.ctrlKey) {
-            addWord();
-        }
     }
 };
 
-addWordsButton.onclick = function (evt) {
-    fetch('/add_words', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(wordSet),
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success:', data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-};
-
-function addWord() {
-    if (selectedTokenIndex === null) {
-        return;
-    }
-    var token = story.tokens[selectedTokenIndex];
-
-    fetch('/add_word', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(token),
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success:', data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
 
 function displayDefinition(index) {
     var token = story.tokens[index];

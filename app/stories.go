@@ -2,44 +2,20 @@ package main
 
 // [START import]
 import (
-	//"database/sql"
+	// "context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strconv"
-
-	// "math"
-	"regexp"
-	// "sort"
-
-	// "strings"
-	// "unicode/utf8"
-
-	// //"strconv"
-
-	// "log"
 	"net/http"
-	// "os"
-
-	"context"
+	"regexp"
+	"strconv"
 	"time"
 
-	// "github.com/ikawaha/kagome-dict/ipa"
-	"github.com/ikawaha/kagome/v2/tokenizer"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
-	// "go.mongodb.org/mongo-driver/mongo"
-	//"go.mongodb.org/mongo-driver/mongo/options"
-	// "go.mongodb.org/mongo-driver/mongo/readpref"
-
-	"database/sql"
-
-	_ "github.com/mattn/go-sqlite3"
-
-	//"github.com/hedhyw/rex/pkg/rex"  // regex builder
-
 	"github.com/gorilla/mux"
+	"github.com/ikawaha/kagome/v2/tokenizer"
+	_ "github.com/mattn/go-sqlite3"
+	"go.mongodb.org/mongo-driver/bson"
+	//"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
@@ -76,6 +52,10 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 			}
 		}
 	}
+
+	fmt.Println("prefiltered tokens: ", len(story.Tokens))
+	story.Tokens = filterPartsOfSpeech(story.Tokens)
+	fmt.Println("filtered tokens: ", len(story.Tokens))
 
 	err := getDefinitions(story.Tokens, response)
 	if err != nil {
@@ -121,6 +101,45 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	json.NewEncoder(response).Encode("Success adding story")
+}
+
+func filterPartsOfSpeech(tokens []JpToken) []JpToken {
+	filteredTokens := make([]JpToken, 0)
+	var prior JpToken
+	for _, t := range tokens {
+		if t.Surface == "。" {
+			continue
+		} else if t.Surface == "、" {
+			continue
+		} else if t.Surface == " " {
+			continue
+		} else if t.POS == "動詞" && t.POS_1 == "非自立" { // auxilliary verb
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "副詞" { // adverb
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "接続詞" && t.POS_1 == "*" { // conjunction
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "形容詞" { // i-adj
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "名詞" && t.POS_1 == "代名詞" { // pronoun
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "連体詞" { // adnominal adjective
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "動詞" { //　verb
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "名詞" && t.POS_1 == "接尾" { // noun suffix
+			filteredTokens = append(filteredTokens, t)
+		} else if (prior.POS == "助詞" && (prior.POS_1 == "連体化" || prior.POS_1 == "並立助詞")) || // preceded by connective particle
+			(prior.POS == "接頭詞" && prior.POS_1 == "名詞接続") { // preceded by prefix
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "名詞" { // noun
+			filteredTokens = append(filteredTokens, t)
+		} else if t.POS == "号" { // counter
+			filteredTokens = append(filteredTokens, t)
+		}
+		prior = t
+	}
+	return filteredTokens
 }
 
 func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, error) {
@@ -178,7 +197,7 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 			}
 
 			for _, entry := range token.Entries {
-				for _, sense := range entry.Sense {
+				for _, sense := range entry.Senses {
 					drillType |= getVerbDrillType(sense)
 				}
 			}
@@ -221,42 +240,57 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 }
 
 func getDefinitions(tokens []JpToken, response http.ResponseWriter) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	// defer cancel()
 
-	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	start := time.Now()
+
+	reHasKanji := regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 
 	for i, token := range tokens {
-		searchTerm := token.Surface
-
-		var wordQuery primitive.D
-		if len(re.FindStringIndex(searchTerm)) > 0 { // has kanji
-			//kanji := re.FindAllString(searchTerm, -1)
-			wordQuery = bson.D{{"kanji_spellings.kanji_spelling", searchTerm}}
-		} else {
-			wordQuery = bson.D{{"readings.reading", searchTerm}}
-		}
-
-		//start := time.Now()
-
-		cursor, err := jmdictCollection.Find(ctx, wordQuery)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-			return err
-		}
-		defer cursor.Close(ctx)
-
-		//duration := time.Since(start)
+		surface := token.Surface
+		hasKanji := len(reHasKanji.FindStringIndex(surface)) > 0
 
 		entries := make([]JMDictEntry, 0)
-		for cursor.Next(ctx) {
-			var entry JMDictEntry
-			cursor.Decode(&entry)
-			entries = append(entries, entry)
+
+		if hasKanji {
+			//wordQuery = bson.D{{"kanji_spellings.kanji_spelling", searchTerm}}
+			for _, entry := range allEntries.Entries {
+				for _, k_ele := range entry.KanjiSpellings {
+					if k_ele.KanjiSpelling == surface {
+						entries = append(entries, entry)
+						break
+					}
+				}
+			}
+		} else {
+			//wordQuery = bson.D{{"readings.reading", searchTerm}}
+			for _, entry := range allEntries.Entries {
+				for _, r_ele := range entry.Readings {
+					if r_ele.Reading == surface {
+						entries = append(entries, entry)
+						break
+					}
+				}
+			}
+
 		}
 
-		fmt.Printf("\"%v\" \t\t\t matches: %v \n ", searchTerm, len(entries))
+		// cursor, err := jmdictCollection.Find(ctx, wordQuery)
+		// if err != nil {
+		// 	response.WriteHeader(http.StatusInternalServerError)
+		// 	response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		// 	return err
+		// }
+		// defer cursor.Close(ctx)
+
+		// for cursor.Next(ctx) {
+		// 	var entry JMDictEntry
+		// 	cursor.Decode(&entry)
+		// 	entries = append(entries, entry)
+		// }
+
+		//fmt.Printf("\"%v\" \t\t\t matches: %v \n ", surface, len(entries))
 
 		// past certain point, too many matching words isn't useful (will require manual assignment of definition to the token)
 		if len(entries) > 8 {
@@ -266,7 +300,40 @@ func getDefinitions(tokens []JpToken, response http.ResponseWriter) error {
 		tokens[i].Entries = entries
 	}
 
+	duration := time.Since(start)
+
+	fmt.Printf("time to get definitions of %d tokens: %s \n ", len(tokens), duration)
+
 	return nil
+}
+
+func getVerbDrillType(sense JMDictSense) int {
+	drillType := 0
+	for _, pos := range sense.Pos {
+		switch pos {
+		case "verb-ichidan":
+			drillType |= DRILL_TYPE_ICHIDAN
+		case "verb-godan-su":
+			drillType |= DRILL_TYPE_GODAN_SU
+		case "verb-godan-ku":
+			drillType |= DRILL_TYPE_GODAN_KU
+		case "verb-godan-gu":
+			drillType |= DRILL_TYPE_GODAN_GU
+		case "verb-godan-ru":
+			drillType |= DRILL_TYPE_GODAN_RU
+		case "verb-godan-u":
+			drillType |= DRILL_TYPE_GODAN_U
+		case "verb-godan-tsu":
+			drillType |= DRILL_TYPE_GODAN_TSU
+		case "verb-godan-mu":
+			drillType |= DRILL_TYPE_GODAN_MU
+		case "verb-godan-nu":
+			drillType |= DRILL_TYPE_GODAN_NU
+		case "verb-godan-bu":
+			drillType |= DRILL_TYPE_GODAN_BU
+		}
+	}
+	return drillType
 }
 
 func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request) {
@@ -280,7 +347,7 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, state, words, title, link FROM stories WHERE user = $1;`, USER_ID)
+	rows, err := sqldb.Query(`SELECT id, state, title, link FROM stories WHERE user = $1;`, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -291,7 +358,7 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	var stories []StorySql
 	for rows.Next() {
 		var story StorySql
-		if err := rows.Scan(&story.ID, &story.State, &story.Words, &story.Title, &story.Link); err != nil {
+		if err := rows.Scan(&story.ID, &story.State, &story.Title, &story.Link); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story states: " + err.Error() + `"}`))
 			return
@@ -326,7 +393,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT state, words, title, link, tokens, content FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
+	rows, err := sqldb.Query(`SELECT state, title, link, tokens, content FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -337,7 +404,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	var story StorySql
 	for rows.Next() {
 
-		if err := rows.Scan(&story.State, &story.Words, &story.Title, &story.Link, &story.Tokens, &story.Content); err != nil {
+		if err := rows.Scan(&story.State, &story.Title, &story.Link, &story.Tokens, &story.Content); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story states: " + err.Error() + `"}`))
 			return
