@@ -6,6 +6,7 @@ var drillCountInputText = document.getElementById('drill_count_text');
 var drillRecencySelect = document.getElementById('drill_recency');
 var drillTypeSelect = document.getElementById('drill_type');
 var drillWrongSelect = document.getElementById('drill_wrong');
+var drillStorySelect = document.getElementById('drill_story');
 var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
@@ -18,21 +19,30 @@ var drillSet = null;
 var answeredSet = [];
 
 function newDrill() {
+    var storyIds = [];
+    for (let option of drillStorySelect.options) {
+        if (option.selected) {
+            storyIds.push(parseInt(option.value))
+        }        
+    }
+    console.log('storyIds: ', storyIds);
+
     fetch('drill', {
         method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            count:  parseInt(drillCountInput.value),
+            count: parseInt(drillCountInput.value),
             recency: parseInt(drillRecencySelect.value),
             drill_type: drillTypeSelect.value,
             wrong: parseInt(drillWrongSelect.value),
-            ignore_cooldown: ignoreCountdownCheckbox.checked
+            ignore_cooldown: ignoreCountdownCheckbox.checked,
+            storyIds: storyIds
         })
     }).then((response) => response.json())
         .then((data) => {
-            console.log('Success:', data);
+            console.log('Drill success:', data);
             drillComlpeteDiv.style.display = 'none';
             shuffle(data.words);
             drillSet = data.words;
@@ -49,29 +59,16 @@ drillCountInput.oninput = function (evt) {
     drillCountInputText.innerHTML = drillCountInput.value;
 };
 
-drillCountInput.onchange = function (evt) {
-    newDrill();
-};
-
-drillRecencySelect.onchange = function (evt) {
-    newDrill();
-};
-
-drillTypeSelect.onchange = function (evt) {
-    newDrill();
-};
-
-drillWrongSelect.onchange = function (evt) {
-    newDrill();
-};
-
-ignoreCountdownCheckbox.onchange = function (evt) {
-    newDrill();
-};
+drillCountInput.onchange = newDrill;
+drillRecencySelect.onchange = newDrill;
+drillTypeSelect.onchange = newDrill;
+drillWrongSelect.onchange = newDrill;
+ignoreCountdownCheckbox.onchange = newDrill;
+drillStorySelect.onchange = newDrill;
 
 function displayWords() {
     function wordInfo(word, answered) {
-        return `<div class="drill_word ${word.wrong ? 'wrong': ''} ${word.answered ? 'answered': ''}">
+        return `<div class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
                     <div class="countdown">${word.countdown}</div>
                     <div class="drill_count">${word.drill_count}</div>
@@ -83,26 +80,26 @@ function displayWords() {
     for (let word of drillSet) {
         if (!word.answered) {
             html += wordInfo(word, false);
-        }        
+        }
     }
-    
+
     for (let word of answeredSet) {
         if (word.answered) {
             html += wordInfo(word, true);
         }
     }
-    
+
     cardsDiv.innerHTML = html;
 
     if (drillSet[0]) {
         loadWordDefinition(drillSet[0])
-    }    
+    }
 }
 
 document.body.onkeydown = async function (evt) {
     if (drillSet && drillSet.length > 0) {
         var word = drillSet[0];
-        console.log(evt.code);
+        //console.log(evt.code);
         if (evt.code === 'KeyS') {
             evt.preventDefault();
             // showWord();
@@ -148,12 +145,12 @@ document.body.onkeydown = async function (evt) {
             updateWord(word);
             displayWords();
         } else if (evt.code === 'KeyD') {  // mark answered
-            evt.preventDefault();            
+            evt.preventDefault();
             word.answered = true;
             let unixtime = Math.floor(Date.now() / 1000); // in seconds
             if ((unixtime - word.date_last_drill > COOLDOWN_TIME) && word.countdown > 0) {
                 word.date_last_drill = unixtime;
-                word.countdown--;   
+                word.countdown--;
                 word.drill_count++;
                 updateWord(word);
             }
@@ -179,7 +176,7 @@ function nextRound() {
         }
     }
     answeredSet = temp;
-    
+
     if (drillSet.length === 0) {
         drillComlpeteDiv.style.display = 'block';
         return;
@@ -189,18 +186,15 @@ function nextRound() {
 }
 
 function loadWordDefinition(word) {
-    //kanjiResultsDiv.style.visibility = 'hidden';
-    //definitionsDiv.style.visibility = 'hidden';
     getKanji(word.base_form); // might as well get all possibly relevant kanji
     let defs = JSON.parse(word.definitions);
     if (defs && typeof defs === 'object') {
         html = '';
         for (let def of defs) {
-            //console.log(def);
             html += displayEntry(def);
         }
         definitionsDiv.innerHTML = html;
-    }       
+    }
 }
 
 function showWord() {
@@ -208,8 +202,39 @@ function showWord() {
     definitionsDiv.style.visibility = 'visible';
 }
 
+function updateStoryDrillList(stories, storyId) {
+    html = `<option value="0">all stories</option>`;
+    for (let story of stories) {
+        if (storyId === story.id) {
+            html += `<option value="${story.id}" selected>${story.title}</option>`;
+        } else {
+            html += `<option value="${story.id}">${story.title}</option>`;
+        }
+    }
+    drillStorySelect.innerHTML = html; 
+}
+
+
 document.body.onload = function (evt) {
     console.log('on page load');
-    drillCountInputText.innerHTML = drillCountInput.value;
-    newDrill();
+
+    fetch('/stories_list', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Stories list success:', data);
+            
+            var url = new URL(window.location.href);
+            var storyId = parseInt(url.searchParams.get("storyId") || undefined);
+            updateStoryDrillList(data, storyId);
+            
+            drillCountInputText.innerHTML = drillCountInput.value;
+            newDrill();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 };

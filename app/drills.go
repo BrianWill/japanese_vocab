@@ -55,10 +55,6 @@ import (
 	//_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-func GetDrillEndpoint(response http.ResponseWriter, request *http.Request) {
-
-}
-
 func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
@@ -66,8 +62,6 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	json.NewDecoder(request.Body).Decode(&drillRequest)
 	drillRequest.Recency *= 60
 	drillRequest.Wrong *= 60
-
-	fmt.Println("ignore cooldown:", drillRequest.IgnoreCooldown)
 
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
@@ -77,7 +71,7 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT base_form, countdown, drill_count, read_count, 
+	rows, err := sqldb.Query(`SELECT id, base_form, countdown, drill_count, read_count, 
 			date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, date_added FROM words WHERE user = $1;`, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -89,7 +83,7 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	words := make([]DrillWord, 0)
 	for rows.Next() {
 		var word DrillWord
-		err = rows.Scan(&word.BaseForm, &word.Countdown,
+		err = rows.Scan(&word.ID, &word.BaseForm, &word.Countdown,
 			&word.DrillCount, &word.ReadCount,
 			&word.DateLastRead, &word.DateLastDrill,
 			&word.Definitions, &word.DrillType, &word.DateLastWrong, &word.DateAdded)
@@ -103,10 +97,18 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	total := len(words)
 
+	storyWords, err := getStoryWords(drillRequest.StoryIds, response, sqldb)
+	if err != nil {
+		return
+	}
+
 	activeCount := 0
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
+		if len(storyWords) > 0 && !storyWords[w.ID] {
+			continue
+		}
 		if !drillRequest.IgnoreCooldown && (t-w.DateLastDrill) < DRILL_COOLDOWN {
 			continue
 		}
@@ -137,6 +139,46 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		"wordCountActive": activeCount,
 		"wordCountTotal":  total,
 		"words":           words})
+}
+
+func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB) (map[int64]bool, error) {
+	storyWords := make(map[int64]bool)
+
+	for _, storyId := range storyIds {
+		if storyId == 0 {
+			continue
+		}
+
+		rows, err := sqldb.Query(`SELECT words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, storyId)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
+			return nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var wordStr string
+			err = rows.Scan(&wordStr)
+			if err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
+				return nil, err
+			}
+			var words []int64
+			err = json.Unmarshal([]byte(wordStr), &words)
+			if err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + "failure to unmarhsall story words: " + err.Error() + `"}`))
+				return nil, err
+			}
+
+			for _, word := range words {
+				storyWords[word] = true
+			}
+		}
+	}
+	return storyWords, nil
 }
 
 func isDrillType(drillType int, requestedType string) bool {

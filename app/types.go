@@ -27,14 +27,16 @@ type StorySql struct {
 }
 
 type DrillRequest struct {
-	Count          int    `json:"count,omitempty"`
-	Recency        int64  `json:"recency,omitempty"`
-	Wrong          int64  `json:"wrong,omitempty"`
-	Type           string `json:"drill_type,omitempty"`
-	IgnoreCooldown bool   `json:"ignore_cooldown,omitempty"`
+	Count          int     `json:"count,omitempty"`
+	Recency        int64   `json:"recency,omitempty"`
+	Wrong          int64   `json:"wrong,omitempty"`
+	Type           string  `json:"drill_type,omitempty"`
+	StoryIds       []int64 `json:"storyIds,omitempty"`
+	IgnoreCooldown bool    `json:"ignore_cooldown,omitempty"`
 }
 
 type DrillWord struct {
+	ID            int64  `json:"id,omitempty"`
 	BaseForm      string `json:"base_form"`
 	Countdown     int    `json:"countdown"`
 	DrillCount    int    `json:"drill_count"`

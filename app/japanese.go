@@ -140,7 +140,6 @@ func main() {
 	router.HandleFunc("/add_words", AddWordsEndpoint).Methods("POST")
 	router.HandleFunc("/identify_verbs", IdentifyDrillTypeEndpoint).Methods("GET")
 	router.HandleFunc("/drill", DrillEndpoint).Methods("POST")
-	router.HandleFunc("/drill/{id}", GetDrillEndpoint).Methods("GET")
 	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 

@@ -109,7 +109,7 @@ storyList.onclick = function (evt) {
         var action = evt.target.getAttribute('action');
         switch (action) {
             case 'drill':
-                window.location.href = `/drill/${storyId}`;
+                window.location.href = `/drill.html?storyId=${storyId}`;
                 break;
             case 'mark_inactive':
                 markStory(storyId, 'inactive');

@@ -1,6 +1,6 @@
 function splitOnHighPitch(str, pitch) {
     let [downPitch, upPitch] = pitch;
-    console.log(`downpitch ${downPitch}, up pitch ${upPitch}`);
+    //console.log(`downpitch ${downPitch}, up pitch ${upPitch}`);
 
     if (downPitch === 0) {
         return ['', '', str];

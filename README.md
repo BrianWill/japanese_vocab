@@ -2,21 +2,7 @@
 
 ## TODO
 
-
-- when adding story...
-    - do we need to store the story in mongo at all?
-    - field for web link
-    - tokenize story
-    - store list of words (indexes of words table)
-
-- on drill page, have filter by story
-    - when clicking "all story", javascript deselects all other stories? or separate checkbox to toggle the story filter on or off?
-    - need way to request all words from a story instead of all words
-
-- on story page, button to drill vocab of the story (multi select stories to drill all their vocab in one set?)
-    - maybe have option to mark words as mark words
-    - drill page has 'wordPool = []' which words are drawn from when it's non-null
-    - drill page has list of stories? checkbox next to each one
+- click word in drill list to sort it to top/active (sometimes curious and want to skip ahead to see def of word down the list)
 
 - toucan-like stories:
     - for English text story, identify the commonly reoccuring words and replace them with Japanese equivalents. (might be tricky to do accurate translation)
