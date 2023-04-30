@@ -1,41 +1,26 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
 
-          <link rel="stylesheet" href="../drill.css">
-        <link rel="stylesheet" href="../styles.css">
-        <title>Jpn Stories</title>
-    </head>
-    <body>
-        <div id="top_link"><a href="/drill.html">go to drills</a><a href="/word.html">go to word search</a></div>
-        <div id="story_container">
-            <div id="answer">
-                <div id="definitions"></div>
-                <div id="kanji_results"></div>
-            </div>
-            <div>
-                <h3 id="story_title">Story</h3>
-                <div id="tokenized_story"></div>
-            </div>
-        </div>
-            <ul id="story_list">
-                <li><a story_id="" href="#">Story1</a></li>
-                <li><a story_id="" href="#">Story2</a></li>
-            </ul>
-        <hr>
-        <h3>New story</h3>
-        <input id="new_story_title" type="text" value="title"><br>
-        <input id="new_story_link" type="text" value="link"><br>
-        <textarea id="new_story_text">asdf</textarea>
-        <button id="new_story_button">ADD STORY</button>
-        
-        <div id="word_list_container">
-            <table id="word_list"></table>
-        </div>
-    </body>
-    <script src="../main.js"></script>
-    <script src="../util.js"></script>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
+
+    <link rel="stylesheet" href="../drill.css">
+    <link rel="stylesheet" href="../styles.css">
+    <title>Jpn Stories</title>
+</head>
+
+<body>
+    <div id="top_link"><a href="/drill.html">go to drills</a><a href="/word.html">go to word search</a></div>
+    <h3>Create story</h3>
+    <input id="new_story_title" type="text" value="title"><br>
+    <input id="new_story_link" type="text" value="link"><br>
+    <textarea id="new_story_text">asdf</textarea>
+    <button id="new_story_button">ADD STORY</button>
+    <ul id="story_list">
+    </ul>
+</body>
+<script src="../main.js"></script>
+<script src="../util.js"></script>
+
 </html>

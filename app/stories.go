@@ -83,6 +83,9 @@ func addStory(story Story, response http.ResponseWriter) error {
 				Pronunciation:    features[8],
 			}
 		}
+		if story.Tokens[i].BaseForm == "" {
+			story.Tokens[i].BaseForm = story.Tokens[i].Surface
+		}
 	}
 
 	err := getDefinitions(story.Tokens, response)
@@ -273,20 +276,18 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 
 func getDefinitions(tokens []JpToken, response http.ResponseWriter) error {
 	start := time.Now()
-
 	reHasKanji := regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-
 	for i, token := range tokens {
-		surface := token.Surface
-		hasKanji := len(reHasKanji.FindStringIndex(surface)) > 0
-
 		entries := make([]JMDictEntry, 0)
+
+		searchTerm := token.BaseForm
+		hasKanji := len(reHasKanji.FindStringIndex(searchTerm)) > 0
 
 		if hasKanji {
 			//wordQuery = bson.D{{"kanji_spellings.kanji_spelling", searchTerm}}
 			for _, entry := range allEntries.Entries {
 				for _, k_ele := range entry.KanjiSpellings {
-					if k_ele.KanjiSpelling == surface {
+					if k_ele.KanjiSpelling == searchTerm {
 						entries = append(entries, entry)
 						break
 					}
@@ -296,7 +297,7 @@ func getDefinitions(tokens []JpToken, response http.ResponseWriter) error {
 			//wordQuery = bson.D{{"readings.reading", searchTerm}}
 			for _, entry := range allEntries.Entries {
 				for _, r_ele := range entry.Readings {
-					if r_ele.Reading == surface {
+					if r_ele.Reading == searchTerm {
 						entries = append(entries, entry)
 						break
 					}
@@ -305,18 +306,15 @@ func getDefinitions(tokens []JpToken, response http.ResponseWriter) error {
 
 		}
 
-		// past certain point, too many matching words isn't useful (will require manual assignment of definition to the token)
+		// too many matching words isn't useful (todo: let user pick best definition?)
 		if len(entries) > 8 {
 			entries = entries[:8]
 		}
 
 		tokens[i].Entries = entries
 	}
-
 	duration := time.Since(start)
-
 	fmt.Printf("time to get definitions of %d tokens: %s \n ", len(tokens), duration)
-
 	return nil
 }
 

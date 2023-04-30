@@ -3,9 +3,10 @@
 ## TODO
 
 - reload entries bson only when needed by request rather than keeping in memory?
-
+- separate story list and add story into separate page
+    - make "add story" look nicer
 - click word in drill list to sort it to top/active (sometimes curious and want to skip ahead to see def of word down the list)
-
+- better hotkeys for drilling (cursor keys?)
 
 - toucan-like stories:
     - for English text story, identify the commonly reoccuring words and replace them with Japanese equivalents. (might be tricky to do accurate translation)
