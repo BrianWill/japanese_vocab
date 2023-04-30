@@ -20,6 +20,8 @@ import (
 	//"github.com/ikawaha/kagome-dict/ipa"
 	"github.com/ikawaha/kagome/v2/tokenizer"
 
+	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 	//"github.com/go-xmlfmt/xmlfmt"
 
 	//"io/ioutil"
@@ -34,6 +36,8 @@ var wiktionaryCollection *mongo.Collection
 var dictCollection *mongo.Collection
 
 var tok *tokenizer.Tokenizer
+
+const SQL_FILE = "../testsql.db"
 
 func main() {
 	var err error
@@ -51,7 +55,55 @@ func main() {
 
 	db = client.Database("JapaneseEnglish")
 
-	updatePitch()
+	dumpStoriesEndpoint()
+	//updatePitch()
+}
+
+type StorySql struct {
+	ID      int64  `json:"id,omitempty"`
+	State   string `json:"state,omitempty"`
+	Words   string `json:"words,omitempty"`
+	Content string `json:"content,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Link    string `json:"link,omitempty"`
+	Tokens  string `json:"tokens,omitempty"`
+}
+
+type StoryList struct {
+	Stories []StorySql `json:"stories,omitempty"`
+}
+
+func dumpStoriesEndpoint() {
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		panic(err)
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT id, state, content, title, link FROM stories WHERE user = $1;`, 0)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	var stories []StorySql
+	for rows.Next() {
+		var story StorySql
+		if err := rows.Scan(&story.ID, &story.State, &story.Content, &story.Title, &story.Link); err != nil {
+			panic(err)
+		}
+		stories = append(stories, story)
+	}
+
+	bytes, err := bson.Marshal(StoryList{Stories: stories})
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile("../stories_temp.bson", bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func updatePitch() {

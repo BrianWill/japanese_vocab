@@ -150,6 +150,7 @@ func main() {
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
 	router.HandleFunc("/mark/{action}/{id}", MarkStoryEndpoint).Methods("GET")
 	router.HandleFunc("/create_story", CreateStoryEndpoint).Methods("POST")
+	//router.HandleFunc("/load_stories", LoadStoriesEndpoint).Methods("GET")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
@@ -180,15 +181,6 @@ func makeSqlDB() {
 	if _, err := statement.Exec(); err != nil {
 		log.Fatal(err)
 	}
-
-	// statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS known_words
-	// 	(id INTEGER PRIMARY KEY, user INTEGER NOT NULL, word INTEGER NOT NULL, FOREIGN KEY(user) REFERENCES users(id))`)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// if _, err := statement.Exec(); err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS words 
 		(id INTEGER PRIMARY KEY, user INTEGER NOT NULL, 
@@ -222,19 +214,6 @@ func makeSqlDB() {
 	if _, err := statement.Exec(); err != nil {
 		log.Fatal(err)
 	}
-
-	// statement, err = sqldb.Prepare("INSERT INTO users (name) VALUES (?)")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// statement.Exec("Mario Mario")
-	// rows, _ := sqldb.Query("SELECT id, name FROM users")
-	// var id int
-	// var name string
-	// for rows.Next() {
-	// 	rows.Scan(&id, &name)
-	// 	fmt.Println(strconv.Itoa(id) + ": " + name)
-	// }
 }
 
 // [END main_func]

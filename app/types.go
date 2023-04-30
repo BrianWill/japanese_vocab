@@ -26,6 +26,10 @@ type StorySql struct {
 	Tokens  string `json:"tokens,omitempty"`
 }
 
+type StoryList struct {
+	Stories []StorySql `json:"stories,omitempty"`
+}
+
 type DrillRequest struct {
 	Count          int     `json:"count,omitempty"`
 	Recency        int64   `json:"recency,omitempty"`
