@@ -30,7 +30,6 @@ import (
 	"net/http"
 	"os"
 
-	"context"
 	"database/sql"
 	"time"
 
@@ -40,9 +39,6 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	// Note: If connecting using the App Engine Flex Go runtime, use
 	// "github.com/jackc/pgx/stdlib" instead, since v4 requires
 	// Go modules which are not supported by App Engine Flex.
@@ -52,10 +48,6 @@ import (
 // [END import]
 // [START main_func]
 
-var client *mongo.Client
-var db *mongo.Database
-var jmdictCollection *mongo.Collection
-var kanjiCollection *mongo.Collection
 var allKanji KanjiDict
 var allEntries JMDict
 
@@ -87,25 +79,6 @@ func main() {
 	}
 
 	makeSqlDB()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
-
-	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
-
-	db = client.Database("JapaneseEnglish")
-	jmdictCollection = db.Collection("jmdict")
-	kanjiCollection = db.Collection("kanjidict")
-
-	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	err = client.Ping(ctx, readpref.Primary())
 
 	start := time.Now()
 	bytes, err := unzipSource("../kanji.zip")
@@ -153,8 +126,6 @@ func main() {
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
-	router.HandleFunc("/dump_kanji", DumpKanjiEndpoint).Methods("GET")
-	router.HandleFunc("/dump_entries", DumpEntriesEndpoint).Methods("GET")
 	router.HandleFunc("/drill", DrillEndpoint).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
@@ -255,95 +226,6 @@ func getKanji(characters []string) []KanjiCharacter {
 		kanji = append(kanji, k)
 	}
 	return kanji
-}
-
-func DumpEntriesEndpoint(response http.ResponseWriter, request *http.Request) {
-	dumpEntries := func() ([]JMDictEntry, error) {
-		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-		defer cancel()
-
-		cursor, err := jmdictCollection.Find(ctx, bson.D{{}})
-		if err != nil {
-			return nil, err
-		}
-		defer cursor.Close(ctx)
-
-		entries := make([]JMDictEntry, 0)
-
-		for cursor.Next(ctx) {
-			var entry JMDictEntry
-			cursor.Decode(&entry)
-			entries = append(entries, entry)
-		}
-
-		dict := JMDict{Entries: entries}
-
-		bytes, err := bson.Marshal(dict)
-		if err != nil {
-			return nil, err
-		}
-
-		err = os.WriteFile("../entries.bson", bytes, 0644)
-		if err != nil {
-			return nil, err
-		}
-		return entries, nil
-	}
-
-	kanji, err := dumpEntries()
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	json.NewEncoder(response).Encode(bson.M{
-		"kanji": len(kanji)})
-}
-
-func DumpKanjiEndpoint(response http.ResponseWriter, request *http.Request) {
-	dumpKanji := func() ([]KanjiCharacter, error) {
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
-
-		cursor, err := kanjiCollection.Find(ctx, bson.D{{}})
-		if err != nil {
-			return nil, err
-		}
-		defer cursor.Close(ctx)
-
-		kanjiCharacters := make([]KanjiCharacter, 0)
-
-		for cursor.Next(ctx) {
-			var ch KanjiCharacter
-			cursor.Decode(&ch)
-			//fmt.Printf("kanji: %s", ch.Literal)
-			kanjiCharacters = append(kanjiCharacters, ch)
-		}
-
-		dict := KanjiDict{Characters: kanjiCharacters}
-
-		bytes, err := bson.Marshal(dict)
-		if err != nil {
-			return nil, err
-		}
-
-		err = os.WriteFile("../kanji.bson", bytes, 0644)
-		if err != nil {
-			return nil, err
-		}
-		return kanjiCharacters, nil
-	}
-
-	kanji, err := dumpKanji()
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	json.NewEncoder(response).Encode(bson.M{
-		"kanji": len(kanji)})
 }
 
 func PostWordSearch(response http.ResponseWriter, request *http.Request) {
