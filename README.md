@@ -3,12 +3,21 @@
 ## TODO
 
 - reload entries bson only when needed by request rather than keeping in memory?
-- separate story list and add story into separate page
-    - make "add story" look nicer
+    - strip out unneeded parts of dictionaries
+- make "add story" look nicer
 - click word in drill list to sort it to top/active (sometimes curious and want to skip ahead to see def of word down the list)
 - better hotkeys for drilling (cursor keys?)
 
+- stories have countdown and cooldowns
+    - story list can filter out zero countdown stories
+    - sort smallest non-zero countdown to top
+
+- improve handling of people/place names in stories
+    - special highlighting?
+    - filter out of vocab? or just make it a word category you can filter for?
+
 - toucan-like stories:
+    -use AI to replace some words with Japanese, then just add them as stories?
     - for English text story, identify the commonly reoccuring words and replace them with Japanese equivalents. (might be tricky to do accurate translation)
         - generally stick to nouns, adjectives and verbs?
 

@@ -41,44 +41,20 @@ document.body.onload = function (evt) {
     }
 };
 
+storiesById = {};
+
 function updateStoryList(stories) {
-    let html = '';
-
-    html += `<h3>Active stories</h3>`
+    stories.sort((a, b) => a.countdown - b.countdown);
+    storiesById = {};
+    let html = ``
     for (let s of stories) {
-        if (s.state !== 'active') {
-            continue;
-        }
+        storiesById[s.id] = s;
         html += `<li>
-            <a story_id="${s.id}" action="drill" href="#">drill</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" action="mark_inactive" href="#">mark inactive</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" href="#">${s.title}</a>
-            </li>`;
-    }
-
-    html += `<h3>Inactive stories</h3>`
-    for (let s of stories) {
-        if (s.state !== 'inactive') {
-            continue;
-        }
-        html += `<li>
-            <a story_id="${s.id}" action="drill" href="#">drill</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" action="mark_active" href="#">make active</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" action="mark_unread" href="#">mark unread</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" href="#">${s.title}</a>
-            </li>`;
-    }
-
-    html += `<h3>Unread stories</h3>`
-    for (let s of stories) {
-        if (s.state !== 'unread') {
-            continue;
-        }
-        html += `<li>
-            <a story_id="${s.id}" action="drill" href="#">drill</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" action="mark_active" href="#">mark active</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" href="#">${s.title}</a>
+            <a story_id="${s.id}" href="/drill.html?storyId=${s.id}">drill</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" action="dec_countdown" href="#">-1</a>&nbsp;&nbsp;
+            <span>${s.countdown}</span>&nbsp;&nbsp;
+            <a story_id="${s.id}" action="inc_countdown" href="#">+1</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a>
             </li>`;
     }
     storyList.innerHTML = html;
@@ -86,30 +62,30 @@ function updateStoryList(stories) {
 
 storyList.onclick = function (evt) {
     if (evt.target.tagName == 'A') {
-        evt.preventDefault();
         var storyId = evt.target.getAttribute('story_id');
+        let story = storiesById[storyId];
 
         var action = evt.target.getAttribute('action');
         switch (action) {
             case 'drill':
-                window.location.href = `/drill.html?storyId=${storyId}`;
                 break;
-            case 'mark_inactive':
-                markStory(storyId, 'inactive');
+            case 'inc_countdown':
+                evt.preventDefault();
+                story.countdown++;
+                updateStory(story);
                 break;
-            case 'mark_unread':
-                markStory(storyId, 'unread');
-                break;
-            case 'mark_active':
-                markStory(storyId, 'active');
+            case 'dec_countdown':
+                evt.preventDefault();
+                if (story.countdown > 0) {
+                    story.countdown--;
+                    updateStory(story);
+                }
                 break;
             default:
-                window.location.href = `/story.html?storyId=${storyId}`;
                 break;
         }
     }
 };
-
 
 function getStoryList() {
     fetch('/stories_list', {
@@ -127,15 +103,16 @@ function getStoryList() {
         });
 }
 
-function markStory(id, action) {
-    fetch(`/mark/${action}/${id}`, {
-        method: 'GET',
+function updateStory(story) {
+    fetch(`/update_story`, {
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify(story),
     }).then((response) => response.json())
         .then((data) => {
-            console.log(`Success ${action}:`, data);
+            console.log(`Success update_story:`, data);
             getStoryList();
         })
         .catch((error) => {
@@ -161,31 +138,3 @@ function openStory(id) {
             console.error('Error:', error);
         });
 }
-
-// function displayDefinition(index) {
-//     var token = story.tokens[index];
-//     getKanji(token.baseForm + token.surface); // might as well get all possibly relevant kanji
-//     html = '';
-//     for (let entry of token.entries) {
-//         html += displayEntry(entry);
-//     }
-//     definitionsDiv.innerHTML = html;
-// }
-
-// storyText.onmouseup = function (evt) {
-//     console.log(document.getSelection().toString());
-// };
-
-// storyText.onmouseleave = function (evt) {
-//     console.log(document.getSelection().toString());
-// };
-
-// document.body.addEventListener('selectionchange', (event) => {
-//     console.log('changed');
-// });
-
-
-// window.setInterval(function () {
-//     console.log(document.getSelection().toString());
-// }, 300);
-

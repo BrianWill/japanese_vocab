@@ -45,16 +45,16 @@ func saveStoryDump() {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, state, content, title, link FROM stories WHERE user = $1;`, 0)
+	rows, err := sqldb.Query(`SELECT id, content, title, link FROM stories WHERE user = $1;`, 0)
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
 
-	var stories []StorySql
+	var stories []Story
 	for rows.Next() {
-		var story StorySql
-		if err := rows.Scan(&story.ID, &story.State, &story.Content, &story.Title, &story.Link); err != nil {
+		var story Story
+		if err := rows.Scan(&story.ID, &story.Content, &story.Title, &story.Link); err != nil {
 			panic(err)
 		}
 		stories = append(stories, story)

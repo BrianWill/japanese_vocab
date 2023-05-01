@@ -3,6 +3,10 @@ body {
     color: #aabdcf;
 }
 
+h3 {
+    margin-left: 2em;
+}
+
 #story {
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
     letter-spacing: 0.02em;
@@ -143,3 +147,20 @@ span.verb:hover {
     padding: 1em;
 }
 
+
+#create_story_div {
+    padding: 0em 2em;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+}
+
+#create_story_div input {
+    width: 50%;
+    height: 1.5em;
+}
+
+#new_story_text {
+    margin-top: 0.4em;
+    width: 50%;
+    height: 8em;
+    resize:vertical;
+}

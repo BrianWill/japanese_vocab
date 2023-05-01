@@ -18,7 +18,7 @@ import (
 	//"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func LoadStoriesEndpoint(response http.ResponseWriter, request *http.Request) {
+func LoadStoriesFromDumpEndpoint(response http.ResponseWriter, request *http.Request) {
 	storyList, err := loadStoryDump()
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -56,13 +56,13 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 
 func addStory(story Story, response http.ResponseWriter) error {
 	analyzerTokens := tok.Analyze(story.Content, tokenizer.Normal)
-	story.Tokens = make([]JpToken, len(analyzerTokens))
+	tokens := make([]JpToken, len(analyzerTokens))
 
 	for i, t := range analyzerTokens {
 		features := t.Features()
 		if len(features) < 9 {
 
-			story.Tokens[i] = JpToken{
+			tokens[i] = JpToken{
 				Surface: t.Surface,
 				POS:     features[0],
 				POS_1:   features[1],
@@ -70,7 +70,7 @@ func addStory(story Story, response http.ResponseWriter) error {
 
 			//fmt.Println(strconv.Itoa(len(features)), features[0], r.Surface, "features: ", strings.Join(features, ","))
 		} else {
-			story.Tokens[i] = JpToken{
+			tokens[i] = JpToken{
 				Surface:          t.Surface,
 				POS:              features[0],
 				POS_1:            features[1],
@@ -83,12 +83,12 @@ func addStory(story Story, response http.ResponseWriter) error {
 				Pronunciation:    features[8],
 			}
 		}
-		if story.Tokens[i].BaseForm == "" {
-			story.Tokens[i].BaseForm = story.Tokens[i].Surface
+		if tokens[i].BaseForm == "" {
+			tokens[i].BaseForm = tokens[i].Surface
 		}
 	}
 
-	err := getDefinitions(story.Tokens, response)
+	err := getDefinitions(tokens, response)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": failure to get definitions"` + err.Error() + `"}`))
@@ -103,7 +103,7 @@ func addStory(story Story, response http.ResponseWriter) error {
 	}
 	defer sqldb.Close()
 
-	wordIds, err := addDrillWords(story.Tokens, response)
+	wordIds, err := addDrillWords(tokens, response)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to add words: " + err.Error() + `"}`))
@@ -117,18 +117,19 @@ func addStory(story Story, response http.ResponseWriter) error {
 		return err
 	}
 
-	tokensJson, err := json.Marshal(story.Tokens)
+	tokensJson, err := json.Marshal(tokens)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to marshall tokens: " + err.Error() + `"}`))
 		return err
 	}
 
-	_, err = sqldb.Exec(`INSERT INTO stories (user, state, words, content, title, link, tokens) VALUES($1, $2, $3, $4, $5, $6, $7);`,
-		USER_ID, "unread", wordsJson, story.Content, story.Title, story.Link, tokensJson)
+	_, err = sqldb.Exec(`INSERT INTO stories (user, words, content, title, link, tokens, countdown, read_count, date_last_read, date_added) 
+			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
+		USER_ID, wordsJson, story.Content, story.Title, story.Link, tokensJson, 5, 0, 0, time.Now().Unix())
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to insert story state: " + err.Error() + `"}`))
+		response.Write([]byte(`{ "message": "` + "failure to insert story: " + err.Error() + `"}`))
 		return err
 	}
 	json.NewEncoder(response).Encode("Success adding story")
@@ -201,6 +202,8 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 		tokens = append(tokens, tokenSet[k])
 	}
 
+	unixtime := time.Now().Unix()
+
 	wordIds := make([]int64, 0)
 	for _, token := range tokens {
 		hasKanji := len(reHasKanji.FindStringIndex(token.BaseForm)) > 0
@@ -216,8 +219,6 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 			return nil, err
 		}
 		exists := rows.Next()
-
-		unixtime := time.Now().Unix()
 
 		var id int64
 		if exists {
@@ -358,7 +359,7 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, state, title, link FROM stories WHERE user = $1;`, USER_ID)
+	rows, err := sqldb.Query(`SELECT id, title, link, countdown, read_count, date_last_read, date_added FROM stories WHERE user = $1;`, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -366,12 +367,13 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	}
 	defer rows.Close()
 
-	var stories []StorySql
+	var stories []Story
 	for rows.Next() {
-		var story StorySql
-		if err := rows.Scan(&story.ID, &story.State, &story.Title, &story.Link); err != nil {
+		var story Story
+		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &story.Countdown,
+			&story.ReadCount, &story.DateLastRead, &story.DateAdded); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to read story states: " + err.Error() + `"}`))
+			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
 		}
 		stories = append(stories, story)
@@ -394,7 +396,6 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-	fmt.Println("GET STORY id: ", id)
 
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
@@ -404,7 +405,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT state, title, link, tokens, content FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
+	rows, err := sqldb.Query(`SELECT title, link, tokens, content FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -412,12 +413,12 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer rows.Close()
 
-	var story StorySql
+	var story Story
 	for rows.Next() {
 
-		if err := rows.Scan(&story.State, &story.Title, &story.Link, &story.Tokens, &story.Content); err != nil {
+		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to read story states: " + err.Error() + `"}`))
+			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
 			return
 		}
 	}
@@ -425,16 +426,16 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(story)
 }
 
-func MarkStoryEndpoint(response http.ResponseWriter, request *http.Request) {
+func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
-	params := mux.Vars(request)
-	storyId, err := strconv.Atoi(params["id"])
+
+	var story Story
+	err := json.NewDecoder(request.Body).Decode(&story)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-	fmt.Println("MARK STORY id: ", storyId)
 
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
@@ -445,7 +446,7 @@ func MarkStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	// make sure the story actually exists
-	rows, err := sqldb.Query(`SELECT state FROM stories WHERE user = $1 AND id = $2;`, USER_ID, storyId)
+	rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND id = $2;`, USER_ID, story.ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -460,16 +461,11 @@ func MarkStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	rows.Close()
 
-	action := params["action"]
-	if action != "inactive" && action != "unread" && action != "active" {
-		response.WriteHeader(400)
-		return
-	}
-
-	_, err = sqldb.Exec(`UPDATE stories SET state = $1 WHERE id = $2 AND user = $3;`, action, storyId, USER_ID)
+	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3 WHERE id = $4 AND user = $5;`,
+		story.Countdown, story.ReadCount, story.DateLastRead, story.ID, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to update story state: " + err.Error() + `"}`))
+		response.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
 		return
 	}
 

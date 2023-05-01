@@ -5,6 +5,10 @@ body {
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
 }
 
+h3 {
+    margin-left: 1em;
+}
+
 .kanji_spelling {
     font-size: 240%;
     white-space: nowrap;
@@ -166,8 +170,8 @@ body {
 
 #definitions {
     padding: 2em 3em;
-    margin-right: 2em;
-    font-size: 80%;
+    /* margin-right: 1em; */
+    font-size: 70%;
 }
 
 .kanji {
@@ -201,7 +205,7 @@ body {
 
 #kanji_results {
     padding: 1em 2em;
-    font-size: 100%;
+    font-size: 80%;
 }
 
 #kanji_results .literal {

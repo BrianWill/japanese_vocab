@@ -43,11 +43,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-
 	// Note: If connecting using the App Engine Flex Go runtime, use
 	// "github.com/jackc/pgx/stdlib" instead, since v4 requires
 	// Go modules which are not supported by App Engine Flex.
-	_ "github.com/jackc/pgx/v4/stdlib"
+	//_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 // [END import]
@@ -148,9 +147,9 @@ func main() {
 	router.HandleFunc("/read/{id}", ReadEndpoint).Methods("GET")
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
-	router.HandleFunc("/mark/{action}/{id}", MarkStoryEndpoint).Methods("GET")
+	router.HandleFunc("/update_story", UpdateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/create_story", CreateStoryEndpoint).Methods("POST")
-	router.HandleFunc("/load_stories", LoadStoriesEndpoint).Methods("GET")
+	router.HandleFunc("/load_stories", LoadStoriesFromDumpEndpoint).Methods("GET")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
@@ -190,6 +189,8 @@ func makeSqlDB() {
 			read_count INTEGER NOT NULL,
 			date_last_read INTEGER NOT NULL,
 			date_last_drill INTEGER NOT NULL,
+			date_last_wrong INTEGER NOT NULL,
+			date_added INTEGER NOT NULL,
 			definitions TEXT NOT NULL,
 			FOREIGN KEY(user) REFERENCES users(id))`)
 	if err != nil {
@@ -201,12 +202,15 @@ func makeSqlDB() {
 
 	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS stories 
 		(id INTEGER PRIMARY KEY, user INTEGER NOT NULL,
-			state   TEXT NOT NULL,
 			words	TEXT NOT NULL,
 			content	TEXT,
 			title	TEXT,
 			link	TEXT,
 			tokens	TEXT,
+			countdown INTEGER NOT NULL,
+			read_count INTEGER NOT NULL,
+			date_last_read INTEGER NOT NULL,
+			date_added INTEGER NOT NULL,
 			FOREIGN KEY(user) REFERENCES users(id))`)
 	if err != nil {
 		log.Fatal(err)
@@ -350,60 +354,103 @@ func PostWordSearch(response http.ResponseWriter, request *http.Request) {
 
 	fmt.Printf("\nword search: %v\n", wordSearch.Word)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// defer cancel()
 
-	var field string
+	// var field string
 
 	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	kanji := re.FindAllString(wordSearch.Word, -1)
 	hasKanji := len(re.FindStringIndex(wordSearch.Word)) > 0
-	if hasKanji { // if has kanji
-		field = "kanji_spellings.kanji_spelling"
-	} else {
-		field = "readings.reading"
-	}
+
+	// if hasKanji { // if has kanji
+	// 	field = "kanji_spellings.kanji_spelling"
+	// } else {
+	// 	field = "readings.reading"
+	// }
 
 	// only matches at start of string
-	startOnlyQuery := bson.D{{field, bson.D{{"$regex", "^" + wordSearch.Word}}}}
+	//startOnlyQuery := bson.D{{field, bson.D{{"$regex", "^" + wordSearch.Word}}}}
 
-	// only matches NOT at start of string
-	notStartQuery := bson.D{
-		{"$and",
-			bson.A{
-				bson.D{{field, bson.D{{"$not", bson.D{{"$regex", "^" + wordSearch.Word}}}}}},
-				bson.D{{field, bson.D{{"$regex", wordSearch.Word}}}},
-			},
-		},
-	}
+	//todo single regex match that reports whether substr is found AND whether it is at start of string
 
-	cursor, err := jmdictCollection.Find(ctx, startOnlyQuery)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer cursor.Close(ctx)
+	reStart := regexp.MustCompile(`^` + wordSearch.Word)
 	entriesStart := make([]JMDictEntry, 0)
-	for cursor.Next(ctx) {
-		var entry JMDictEntry
-		cursor.Decode(&entry)
-		entriesStart = append(entriesStart, entry)
+	entriesMid := make([]JMDictEntry, 0)
+
+	if hasKanji { // if has kanji
+		for _, entry := range allEntries.Entries {
+			start := false
+			interior := false
+			for _, kanjiSpelling := range entry.KanjiSpellings {
+				if reStart.MatchString(kanjiSpelling.KanjiSpelling) { // todo regex "^word"
+					start = true
+				} else if strings.Contains(kanjiSpelling.KanjiSpelling, wordSearch.Word) {
+					interior = true
+				}
+			}
+			if start {
+				entriesStart = append(entriesStart, entry)
+			} else if interior {
+				entriesMid = append(entriesMid, entry)
+			}
+		}
+	} else {
+		for _, entry := range allEntries.Entries {
+			start := false
+			interior := false
+			for _, reading := range entry.Readings {
+				if reStart.MatchString(reading.Reading) { // todo regex "^word"
+					start = true
+				} else if strings.Contains(reading.Reading, wordSearch.Word) {
+					interior = true
+				}
+			}
+			if start {
+				entriesStart = append(entriesStart, entry)
+			} else if interior {
+				entriesMid = append(entriesMid, entry)
+			}
+		}
 	}
 
-	cursor, err = jmdictCollection.Find(ctx, notStartQuery)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer cursor.Close(ctx)
-	entriesMid := make([]JMDictEntry, 0)
-	for cursor.Next(ctx) {
-		var entry JMDictEntry
-		cursor.Decode(&entry)
-		entriesMid = append(entriesMid, entry)
-	}
+	// cursor, err := jmdictCollection.Find(ctx, startOnlyQuery)
+	// if err != nil {
+	// 	response.WriteHeader(http.StatusInternalServerError)
+	// 	response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	// 	return
+	// }
+	// defer cursor.Close(ctx)
+	// entriesStart := make([]JMDictEntry, 0)
+	// for cursor.Next(ctx) {
+	// 	var entry JMDictEntry
+	// 	cursor.Decode(&entry)
+	// 	entriesStart = append(entriesStart, entry)
+	// }
+
+	// // only matches NOT at start of string
+	// notStartQuery := bson.D{
+	// 	{"$and",
+	// 		bson.A{
+	// 			bson.D{{field, bson.D{{"$not", bson.D{{"$regex", "^" + wordSearch.Word}}}}}},
+	// 			bson.D{{field, bson.D{{"$regex", wordSearch.Word}}}},
+	// 		},
+	// 	},
+	// }
+
+	// cursor, err = jmdictCollection.Find(ctx, notStartQuery)
+	// if err != nil {
+	// 	response.WriteHeader(http.StatusInternalServerError)
+	// 	response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	// 	return
+	// }
+	// defer cursor.Close(ctx)
+	// entriesMid := make([]JMDictEntry, 0)
+	// for cursor.Next(ctx) {
+	// 	var entry JMDictEntry
+	// 	cursor.Decode(&entry)
+	// 	entriesMid = append(entriesMid, entry)
+	// }
 
 	kanjiCharacters := getKanji(kanji)
 
