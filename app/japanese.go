@@ -236,25 +236,9 @@ func PostWordSearch(response http.ResponseWriter, request *http.Request) {
 
 	fmt.Printf("\nword search: %v\n", wordSearch.Word)
 
-	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// defer cancel()
-
-	// var field string
-
 	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	kanji := re.FindAllString(wordSearch.Word, -1)
 	hasKanji := len(re.FindStringIndex(wordSearch.Word)) > 0
-
-	// if hasKanji { // if has kanji
-	// 	field = "kanji_spellings.kanji_spelling"
-	// } else {
-	// 	field = "readings.reading"
-	// }
-
-	// only matches at start of string
-	//startOnlyQuery := bson.D{{field, bson.D{{"$regex", "^" + wordSearch.Word}}}}
-
-	//todo single regex match that reports whether substr is found AND whether it is at start of string
 
 	reStart := regexp.MustCompile(`^` + wordSearch.Word)
 	entriesStart := make([]JMDictEntry, 0)
@@ -295,44 +279,6 @@ func PostWordSearch(response http.ResponseWriter, request *http.Request) {
 			}
 		}
 	}
-
-	// cursor, err := jmdictCollection.Find(ctx, startOnlyQuery)
-	// if err != nil {
-	// 	response.WriteHeader(http.StatusInternalServerError)
-	// 	response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	// 	return
-	// }
-	// defer cursor.Close(ctx)
-	// entriesStart := make([]JMDictEntry, 0)
-	// for cursor.Next(ctx) {
-	// 	var entry JMDictEntry
-	// 	cursor.Decode(&entry)
-	// 	entriesStart = append(entriesStart, entry)
-	// }
-
-	// // only matches NOT at start of string
-	// notStartQuery := bson.D{
-	// 	{"$and",
-	// 		bson.A{
-	// 			bson.D{{field, bson.D{{"$not", bson.D{{"$regex", "^" + wordSearch.Word}}}}}},
-	// 			bson.D{{field, bson.D{{"$regex", wordSearch.Word}}}},
-	// 		},
-	// 	},
-	// }
-
-	// cursor, err = jmdictCollection.Find(ctx, notStartQuery)
-	// if err != nil {
-	// 	response.WriteHeader(http.StatusInternalServerError)
-	// 	response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	// 	return
-	// }
-	// defer cursor.Close(ctx)
-	// entriesMid := make([]JMDictEntry, 0)
-	// for cursor.Next(ctx) {
-	// 	var entry JMDictEntry
-	// 	cursor.Decode(&entry)
-	// 	entriesMid = append(entriesMid, entry)
-	// }
 
 	kanjiCharacters := getKanji(kanji)
 
