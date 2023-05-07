@@ -55,7 +55,7 @@ var tok *tokenizer.Tokenizer
 
 const SQL_FILE = "../testsql.db"
 const USER_ID = 0 // TODO for now we hardcode for just one user
-const INITIAL_COUNTDOWN = 7
+const INITIAL_COUNTDOWN = 5
 const DRILL_COOLDOWN = 60 * 60 * 3 // in seconds
 const DRILL_TYPE_KATAKANA = 1
 const DRILL_TYPE_ICHIDAN = 2

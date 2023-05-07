@@ -54,7 +54,16 @@ function displayStory(story) {
         let posClass = '';
         if (t.surface === "。") {
             html += '。</p><p>';
+        } else if (t.surface === "\n\n") {
+            if (prior && prior.surface !== "。") {
+                html += '</p><p>';
+            }
+        } else if (t.surface === "\n") {
+            if (prior && prior.surface !== "。") {
+                html += '</p><p>';
+            }
         } else if (t.surface === " ") {
+            console.log("surface was space");
             if (prior && prior.surface !== "。") {
                 html += '。</p><p>';
             }
@@ -106,7 +115,9 @@ function displayStory(story) {
 
         prior = t;
     }
+    console.log(html);
     tokenizedText.innerHTML = html + '</p>';
+    
 }
 
 var selectedTokenIndex = null;

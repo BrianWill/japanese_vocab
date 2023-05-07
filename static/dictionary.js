@@ -78,6 +78,7 @@ wordSearchText.onkeydown = function (evt) {
 // verb-godan-nu: 3
 // verb-godan-mu: 178
 // verb-godan-bu: 21
+// verb-godan-aru: 4    // this explains kudasai! it's noun form of kudasaru
 
 function displayTypeResults(results, typeString) {
     let reAllKana = /^[あ-んア-ン]+$/gm;

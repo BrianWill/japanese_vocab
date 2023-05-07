@@ -50,7 +50,7 @@ function updateStoryList(stories) {
     for (let s of stories) {
         storiesById[s.id] = s;
         html += `<li>
-            <a story_id="${s.id}" href="/drill.html?storyId=${s.id}">drill</a>&nbsp;&nbsp;
+            <a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a>&nbsp;&nbsp;
             <a story_id="${s.id}" action="dec_countdown" href="#">-1</a>&nbsp;&nbsp;
             <span>${s.countdown}</span>&nbsp;&nbsp;
             <a story_id="${s.id}" action="inc_countdown" href="#">+1</a>&nbsp;&nbsp;

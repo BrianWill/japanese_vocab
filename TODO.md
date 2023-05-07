@@ -1,5 +1,55 @@
 # japanese_vocab TODO
 
+- enforce unqiueness of story title
+- button to clear the create story form
+- the temp text of the inputs should be greyed out and disappear when the user selects the box
+- async story creation:
+    - immediately insert story and link and content
+    - reset the form when story is received and display message confirming it was added and is being tokenized
+    - isTokenized flag
+    - browser automatically requests async request to tokenize
+        - story tokenization should be idempotent?
+        - flash message when story has fininshed tokenizing
+
+- in tokenization, should distinguish between paragraphs and sentences. Provide an option to separate sentences to separate lines or not?
+
+- definition for transitive / intransitive verb pairs should always show its pair
+
+- in story, definition shows drill stats for word and hotkey let's you modify its counters
+
+- drill filter: words that have 0 drills (maybe replace filter for recently added with filter for max number of times drilled)
+
+- option to drill all wrong words, regardless of cooldown
+
+- in absence of baseform, maybe should NOT use surface? investigate "引き出し", "飛べる", "鬼滅の" -> "滅"
+    - potential form should not count as verb base form: e.g. 飛べる should be added only as 飛ぶ, not as 飛べる
+
+- revisit word cooldowns:
+    - what should policy be for words marked wrong?
+    - words marked wrong within "wrong cooldown"  window should not be marked correct (but they should still get a tally?)
+
+- option to "disable" all words unique to that story?
+    - alternavitely, perhaps just have ability to mark stories and filter drill words unique to stories with certain markings?
+        - or do we just filter for words belonging to stories that have certain countdowns? e.g. words from all stories with countdown of 2 or lower
+    - better to disable rather than remove because we don't want to lose drill history & counts
+    - checkbox next to story that toggles enable/disable of its words
+    - only words that are unique to that story are disabled
+    - requires re-processing all stories when new stories are added / removed?
+        - probably should just track which stories each word belongs to
+    - useful for adding stories that we want to get to later but aren't ready to start reading / drilling
+    
+- option to delete stories (and optionally remove all associated words--but only the words unique to that story?)
+- should the word id's for each story be in sorted order?
+
+- keep list of timestamps for every time word is reviewed and another list for every time you answer wrong? Could be useful stats at some point
+    - probably only need last couple dozen rather than complete history
+
+- story display: split into p tags on \n and \n\n
+    - add paragraph for ! and ？
+    - at story tokenization time, add 。 when \n is not preceeded by end punctuation.
+    - need to add paragraph markers into the token stream?
+    - number the paragraphs?
+
 - reload entries bson only when needed by request rather than keeping in memory?
     - strip out unneeded parts of dictionaries
 - make "add story" look nicer

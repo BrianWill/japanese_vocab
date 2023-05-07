@@ -23,7 +23,7 @@ function newDrill() {
     for (let option of drillStorySelect.options) {
         if (option.selected) {
             storyIds.push(parseInt(option.value))
-        }        
+        }
     }
     console.log('storyIds: ', storyIds);
 
@@ -141,14 +141,21 @@ document.body.onkeydown = async function (evt) {
                 [drillSet[0], drillSet[1]] = [drillSet[1], drillSet[0]];
             }
             let unixtime = Math.floor(Date.now() / 1000); // in seconds
-            word.date_last_wrong = unixtime;
-            updateWord(word);
+            if ((unixtime - word.date_last_drill > COOLDOWN_TIME) &&
+                (unixtime - word.date_last_wrong > COOLDOWN_TIME)) {
+                word.date_last_wrong = unixtime;
+                word.countdown--;
+                word.drill_count++;
+                updateWord(word);
+            }
             displayWords();
         } else if (evt.code === 'KeyD') {  // mark answered
             evt.preventDefault();
             word.answered = true;
             let unixtime = Math.floor(Date.now() / 1000); // in seconds
-            if ((unixtime - word.date_last_drill > COOLDOWN_TIME) && word.countdown > 0) {
+            if ((unixtime - word.date_last_drill > COOLDOWN_TIME) &&
+                (unixtime - word.date_last_wrong > COOLDOWN_TIME) &&
+                word.countdown > 0) {
                 word.date_last_drill = unixtime;
                 word.countdown--;
                 word.drill_count++;
@@ -211,7 +218,7 @@ function updateStoryDrillList(stories, storyId) {
             html += `<option value="${story.id}">${story.title}</option>`;
         }
     }
-    drillStorySelect.innerHTML = html; 
+    drillStorySelect.innerHTML = html;
 }
 
 
@@ -226,11 +233,11 @@ document.body.onload = function (evt) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Stories list success:', data);
-            
+
             var url = new URL(window.location.href);
             var storyId = parseInt(url.searchParams.get("storyId") || undefined);
             updateStoryDrillList(data, storyId);
-            
+
             drillCountInputText.innerHTML = drillCountInput.value;
             newDrill();
         })

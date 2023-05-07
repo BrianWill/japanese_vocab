@@ -79,7 +79,7 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		if len(storyWords) > 0 && !storyWords[w.ID] {
 			continue
 		}
-		if !drillRequest.IgnoreCooldown && (t-w.DateLastDrill) < DRILL_COOLDOWN {
+		if !drillRequest.IgnoreCooldown && ((t-w.DateLastDrill) < DRILL_COOLDOWN || (t-w.DateLastWrong) < DRILL_COOLDOWN) {
 			continue
 		}
 		if drillRequest.Recency > 0 && (t-w.DateAdded) > drillRequest.Recency {
