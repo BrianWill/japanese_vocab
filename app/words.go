@@ -20,10 +20,13 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
+
+const DRILL_ALL_IN_PROGRESS = -1
 
 func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
@@ -80,7 +83,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 			continue
 		}
 		wordOffCooldownCount++
-		if len(storyWords) > 0 && !storyWords[w.ID] {
+		if len(storyWords) != 0 && !storyWords[w.ID] {
 			continue
 		}
 		if !drillRequest.IgnoreCooldown && ((t-w.DateLastDrill) < DRILL_COOLDOWN || (t-w.DateLastWrong) < DRILL_COOLDOWN) {
@@ -100,6 +103,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	words = temp
 
+	wordMatchCount := len(words)
 	count := drillRequest.Count
 	if count > 0 && count < len(words) {
 		words = words[:count]
@@ -108,17 +112,49 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(bson.M{
 		"wordOffCooldownCount": wordOffCooldownCount,
 		"wordAllCount":         wordAllCount,
-		"words":                words})
+		"words":                words,
+		"wordMatchCount":       wordMatchCount})
 }
 
 func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB) (map[int64]bool, error) {
+	storyIdMap := make(map[int64]bool)
 	storyWords := make(map[int64]bool)
 
-	for _, storyId := range storyIds {
-		if storyId == 0 {
-			continue
-		}
+	// includes DRILL_ALL_IN_PROGRESS
+	for _, v := range storyIds {
+		storyIdMap[v] = true
+	}
 
+	if _, ok := storyIdMap[0]; ok {
+		// return empty map if all stories included
+		return storyWords, nil
+	}
+
+	if _, ok := storyIdMap[DRILL_ALL_IN_PROGRESS]; ok {
+		delete(storyIdMap, DRILL_ALL_IN_PROGRESS)
+
+		// get all stories that are in progress (have countdown greater than zero and have readcount greater than 0)
+		rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND read_count > 0 AND countdown > 0;`, USER_ID)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
+			return nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var id int64
+			err = rows.Scan(&id)
+			if err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + "failure to scan story id: " + err.Error() + `"}`))
+				return nil, err
+			}
+			storyIdMap[id] = true
+		}
+	}
+
+	for storyId, _ := range storyIdMap {
 		rows, err := sqldb.Query(`SELECT words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, storyId)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)

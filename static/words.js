@@ -47,7 +47,7 @@ function newDrill() {
             shuffle(data.words);
             drillSet = data.words;
             answeredSet = [];
-            drillInfoH.innerHTML = `${data.wordAllCount} words (${data.wordOffCooldownCount} off cooldown)`;
+            drillInfoH.innerHTML = `${data.wordAllCount} words (${data.wordOffCooldownCount} off cooldown); ${data.wordMatchCount} words matching filter`;
             displayWords();
         })
         .catch((error) => {
@@ -210,7 +210,8 @@ function showWord() {
 }
 
 function updateStoryDrillList(stories, storyId) {
-    html = `<option value="0">all stories</option>`;
+    html = `<option value="0">all stories</option>
+            <option value="-1" ${storyId == -1 ? 'selected' : ''}>all stories in progress</option>`;
     for (let story of stories) {
         if (storyId === story.id) {
             html += `<option value="${story.id}" selected>${story.title}</option>`;

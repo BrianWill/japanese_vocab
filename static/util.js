@@ -116,35 +116,38 @@ function shuffle(array) {
 
 
 function displayEntry(entry) {
-    html = `<div class="entry"><div class="word">`;
-
-    html += '<div class="readings">';
-    for (var reading of entry.readings || []) {
-        if (reading.pitch) {
-            let pitch = reading.pitch.split(',').map(x => parseInt(x));
-            let parts = splitOnHighPitch(reading.reading, pitch);
-            html += `<div class="reading">${parts[0]}<span class="high_pitch">${parts[1]}</span>${parts[2]}</div>`;
+    let readings = '';
+    for (var r of entry.readings || []) {
+        if (r.pitch) {
+            let pitch = r.pitch.split(',').map(x => parseInt(x));
+            let parts = splitOnHighPitch(r.reading, pitch);
+            readings += `<span class="reading">${parts[0]}<span class="high_pitch">${parts[1]}</span>${parts[2]}</span>`;
         } else {
-            html += `<div class="reading unknown_pitch">${reading.reading}﹖</div>`;
+            readings += `<span class="reading unknown_pitch">${r.reading}﹖</span>`;
         }
     }
 
-    html += '</div><div class="kanji_spellings">';
-    for (var kanji of entry.kanji_spellings || []) {
-        html += `<div class="kanji_spelling">${kanji.kanji_spelling}</div>`;
+    let kenjiSpellings = '';
+    for (var k of entry.kanji_spellings || []) {
+        kenjiSpellings += `<span class="kanji_spelling">${k.kanji_spelling}</span>`;
     }
 
-    html += `</div></div><div class="senses">`;
-
-    for (var sense of entry.senses || []) {
-        let pos = sense.parts_of_speech.map(x => `<span class="pos">${x}</span>`);
-        html += `<div class="sense">
+    let senses = '';
+    for (var s of entry.senses || []) {
+        let pos = s.parts_of_speech.map(x => `<span class="pos">${x}</span>`);
+        senses += `<span class="sense">
             <span>${pos.join(' ')}</span>
-            <span class="glosses">${sense.glosses.map(x => x.value).join('; &nbsp;&nbsp;')}</span>
-        </div>`;
+            <span class="glosses">${s.glosses.map(x => x.value).join('; &nbsp;&nbsp;')}</span>
+        </span>`;
     }
-
-    return html + `</div></div>`;
+    
+    return `<div class="entry">
+                <div class="word">
+                    <div class="readings">${readings}</div>
+                    <div class="kanji_spellings">${kenjiSpellings}</div>
+                    <div class="senses">${senses}</div>
+                </div>
+            </div>`;
 }
 
 function updateStory(story) {

@@ -127,14 +127,19 @@ span.verb:hover {
     
 }
 
-#story_table th {
-    color: grey;
+.story_table th {
+    color: rgb(77, 77, 77);
     padding-right: 2em;
+    font-size: 70%;
 }
 
-#story_table td {
+.story_table td {
     padding: 0.3em 0em;
+}
 
+.story_table td.story_table_section {
+    font-size: 120%;
+    padding: 2em 0em 0.2em 0em;
 }
 
 #story_list table {

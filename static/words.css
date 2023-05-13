@@ -13,12 +13,14 @@ h3 {
     font-size: 240%;
     white-space: nowrap;
     color: #daa506;
+    margin-right: 1em;
 }
 
 .reading {
     font-size: 180%;
     color: #dd3939;
     margin-bottom: 0.4em;
+    margin-right: 1em;
 }
 
 .entry {
@@ -101,9 +103,6 @@ h3 {
     background-color: rgb(36, 41, 55);
     font-size: 130%;
     border-top-right-radius: 90px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
     gap: 0px 0px;
 }
 
@@ -170,13 +169,9 @@ h3 {
 }
 
 #definitions {
-    padding: 2em 3em;
+    padding: 0em 2em;
     /* margin-right: 1em; */
     font-size: 70%;
-}
-
-.kanji {
-    margin-bottom: 1em;
 }
 
 .onyomi_readings {
@@ -204,9 +199,21 @@ h3 {
     margin-left: 2em;
 }
 
+.kanji {
+    margin-bottom: 1em;
+    margin-right: 0.5em;
+    width: 30%;
+    flex: 1 1 auto;
+}
+
 #kanji_results {
     padding: 1em 2em;
     font-size: 80%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: start;
+    align-items: start;
 }
 
 #kanji_results .literal {

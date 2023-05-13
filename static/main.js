@@ -8,6 +8,8 @@ var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 
+const DRILL_ALL_IN_PROGRESS = -1;
+
 newStoryButton.onclick = function (evt) {
     let data = {
         content: newStoryText.value,
@@ -42,6 +44,7 @@ document.body.onload = function (evt) {
 };
 
 storiesById = {};
+inProgressStories = [];
 
 function updateStoryList(stories) {
     stories.sort((a, b) => {
@@ -51,21 +54,11 @@ function updateStoryList(stories) {
         }
         return diff;
     });
-    
+
     storiesById = {};
 
-    let header = `<table id="story_table">
-    <tr>
-    <th>Drill words</th>
-    <th>Countdown</th>
-    <th>Read count</th>
-    <th>Days ago last read</th>
-    <th>Days ago created</th>
-    <th>Title</th>
-    </tr>`;
-
     function storyRow(s) {
-        
+
         return `<tr>
             <td><a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a></td>
             <td><a story_id="${s.id}" action="dec_countdown" href="#">-</a>
@@ -82,20 +75,34 @@ function updateStoryList(stories) {
     for (let s of stories) {
         storiesById[s.id] = s;
     }
-    
-    let html = `<h3 alt="read count is zero">Stories in progress</h3>` + header;
+
+    let html = `<table class="story_table">
+            <tr>
+            <th>Drill words</th>
+            <th>Countdown</th>
+            <th>Read count</th>
+            <th>Days ago last read</th>
+            <th>Days ago created</th>
+            <th>Title</th>
+            </tr>
+            <tr>
+                <td class="story_table_section" colspan="3">Stories in progress</td>
+                <td class="story_table_section" colspan="3">
+                    <a action="drill_in_progress" href="/words.html?storyId=${DRILL_ALL_IN_PROGRESS}">drill all</a>
+                </td>
+            </tr>`;
     for (let s of stories) {
         if (s.countdown > 0 && s.read_count > 0) {
-            html += storyRow(s);    
+            html += storyRow(s);
         }
     }
-    html += '</table><h3 alt="read count is zero">Stories never read</h3>' + header;
+    html += '<tr alt="read count is zero"><td class="story_table_section" colspan="6">Stories never read</td></tr>';
     for (let s of stories) {
         if (s.countdown > 0 && s.read_count === 0) {
             html += storyRow(s);
         }
     }
-    html += '</table><h3 alt="countdown is zero">Stories finished</h3>' + header;
+    html += '<tr alt="countdown is zero"><td class="story_table_section" colspan="6">Stories finished</td></tr>';
     for (let s of stories) {
         if (s.countdown === 0) {
             html += storyRow(s);
@@ -124,6 +131,8 @@ storyList.onclick = function (evt) {
                     story.countdown--;
                     updateStory(story);
                 }
+                break;
+            case 'drill_in_progress':
                 break;
             default:
                 break;
