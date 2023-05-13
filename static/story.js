@@ -3,6 +3,7 @@ var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
+var storyReadButton = document.getElementById('story_read_button');
 
 var story = null;
 
@@ -20,6 +21,19 @@ tokenizedText.onwheel = function (evt) {
     } else {
         if (tokenizedText.scrollTop <= 0) {
             evt.preventDefault();
+        }
+    }
+};
+
+const STORY_READ_COOLDOWN = 60 * 60 * 3; // 3 hours
+
+storyReadButton.onclick = function (evt) {
+    if (story !== null) {
+        let unixtime = Math.floor(Date.now() / 1000); // in seconds
+        if ((unixtime - story.date_last_read) > STORY_READ_COOLDOWN) {
+            story.date_last_read = unixtime;
+            story.read_count++;
+            updateStory(story);
         }
     }
 };
@@ -117,7 +131,7 @@ function displayStory(story) {
     }
     console.log(html);
     tokenizedText.innerHTML = html + '</p>';
-    
+
 }
 
 var selectedTokenIndex = null;

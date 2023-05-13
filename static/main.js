@@ -44,20 +44,64 @@ document.body.onload = function (evt) {
 storiesById = {};
 
 function updateStoryList(stories) {
-    stories.sort((a, b) => a.countdown - b.countdown);
+    stories.sort((a, b) => {
+        let diff = a.countdown - b.countdown;
+        if (diff === 0) {
+            return a.date_last_read - b.date_last_read
+        }
+        return diff;
+    });
+    
     storiesById = {};
-    let html = ``
+
+    let header = `<table id="story_table">
+    <tr>
+    <th>Drill words</th>
+    <th>Countdown</th>
+    <th>Read count</th>
+    <th>Days ago last read</th>
+    <th>Days ago created</th>
+    <th>Title</th>
+    </tr>`;
+
+    function storyRow(s) {
+        
+        return `<tr>
+            <td><a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a></td>
+            <td><a story_id="${s.id}" action="dec_countdown" href="#">-</a>
+                <span>${s.countdown}</span>
+                <a story_id="${s.id}" action="inc_countdown" href="#">+</a>
+            </td>
+            <td><span>${s.read_count}</span></td>
+            <td><span>${timeSince(s.date_last_read * 1000)}</span></td>
+            <td><span>${timeSince(s.date_added * 1000)}</span></td>
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            </tr>`;
+    }
+
     for (let s of stories) {
         storiesById[s.id] = s;
-        html += `<li>
-            <a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" action="dec_countdown" href="#">-1</a>&nbsp;&nbsp;
-            <span>${s.countdown}</span>&nbsp;&nbsp;
-            <a story_id="${s.id}" action="inc_countdown" href="#">+1</a>&nbsp;&nbsp;
-            <a story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a>
-            </li>`;
     }
-    storyList.innerHTML = html;
+    
+    let html = `<h3 alt="read count is zero">Stories in progress</h3>` + header;
+    for (let s of stories) {
+        if (s.countdown > 0 && s.read_count > 0) {
+            html += storyRow(s);    
+        }
+    }
+    html += '</table><h3 alt="read count is zero">Stories never read</h3>' + header;
+    for (let s of stories) {
+        if (s.countdown > 0 && s.read_count === 0) {
+            html += storyRow(s);
+        }
+    }
+    html += '</table><h3 alt="countdown is zero">Stories finished</h3>' + header;
+    for (let s of stories) {
+        if (s.countdown === 0) {
+            html += storyRow(s);
+        }
+    }
+    storyList.innerHTML = html + '</table>';
 };
 
 storyList.onclick = function (evt) {
@@ -86,39 +130,6 @@ storyList.onclick = function (evt) {
         }
     }
 };
-
-function getStoryList() {
-    fetch('/stories_list', {
-        method: 'GET', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Stories list success:', data);
-            updateStoryList(data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function updateStory(story) {
-    fetch(`/update_story`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(story),
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log(`Success update_story:`, data);
-            getStoryList();
-        })
-        .catch((error) => {
-            console.error('Error marking story:', error);
-        });
-}
 
 function openStory(id) {
     fetch('/story/' + id, {

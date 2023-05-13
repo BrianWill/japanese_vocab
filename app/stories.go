@@ -124,9 +124,10 @@ func addStory(story Story, response http.ResponseWriter) error {
 		return err
 	}
 
+	date := time.Now().Unix()
 	_, err = sqldb.Exec(`INSERT INTO stories (user, words, content, title, link, tokens, countdown, read_count, date_last_read, date_added) 
 			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
-		USER_ID, wordsJson, story.Content, story.Title, story.Link, tokensJson, 5, 0, 0, time.Now().Unix())
+		USER_ID, wordsJson, story.Content, story.Title, story.Link, tokensJson, 5, 0, date, date)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to insert story: " + err.Error() + `"}`))
@@ -405,7 +406,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT title, link, tokens, content FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
+	rows, err := sqldb.Query(`SELECT title, link, tokens, content, countdown, date_added, date_last_read, read_count FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -415,13 +416,13 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	var story Story
 	for rows.Next() {
-
-		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content); err != nil {
+		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content, &story.Countdown, &story.DateAdded, &story.DateLastRead, &story.ReadCount); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
 			return
 		}
 	}
+	story.ID = int64(id)
 
 	json.NewEncoder(response).Encode(story)
 }
@@ -455,7 +456,7 @@ func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	if !rows.Next() {
 		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "story with ID does not exist: " + err.Error() + `"}`))
+		response.Write([]byte(`{ "message": "` + "story with ID does not exist: " + strconv.FormatInt(story.ID, 10) + `"}`))
 		rows.Close()
 		return
 	}

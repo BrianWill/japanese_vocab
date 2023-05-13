@@ -126,7 +126,7 @@ func main() {
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
 	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
-	router.HandleFunc("/drill", DrillEndpoint).Methods("POST")
+	router.HandleFunc("/words", WordDrillEndpoint).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 

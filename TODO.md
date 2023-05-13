@@ -1,5 +1,7 @@
 # japanese_vocab TODO
 
+- sort stories by date last read
+
 - enforce unqiueness of story title
 - button to clear the create story form
 - the temp text of the inputs should be greyed out and disappear when the user selects the box
@@ -15,9 +17,15 @@
 
 - definition for transitive / intransitive verb pairs should always show its pair
 
+- definitions displayed in rows:
+    - top row is kanji
+    - one row per entry
+
 - in story, definition shows drill stats for word and hotkey let's you modify its counters
 
-- drill filter: words that have 0 drills (maybe replace filter for recently added with filter for max number of times drilled)
+- drill filter options:
+    - words that have 0 drills (maybe replace filter for recently added with filter for max number of times drilled)
+    - option to include words that have countdown 0
 
 - option to drill all wrong words, regardless of cooldown
 

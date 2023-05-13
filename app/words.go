@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
+func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
 	var drillRequest DrillRequest
@@ -65,17 +65,21 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		words = append(words, word)
 	}
 
-	total := len(words)
+	wordAllCount := len(words)
 
 	storyWords, err := getStoryWords(drillRequest.StoryIds, response, sqldb)
 	if err != nil {
 		return
 	}
 
-	activeCount := 0
+	wordOffCooldownCount := 0
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
+		if w.Countdown <= 0 {
+			continue
+		}
+		wordOffCooldownCount++
 		if len(storyWords) > 0 && !storyWords[w.ID] {
 			continue
 		}
@@ -88,14 +92,11 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		if drillRequest.Wrong > 0 && (t-w.DateLastWrong) > drillRequest.Wrong {
 			continue
 		}
-		if w.Countdown <= 0 {
-			continue
-		}
+
 		if !isDrillType(w.DrillType, drillRequest.Type) {
 			continue
 		}
 		temp = append(temp, w)
-		activeCount++
 	}
 	words = temp
 
@@ -105,10 +106,9 @@ func DrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	json.NewEncoder(response).Encode(bson.M{
-		"wordCount":       len(words),
-		"wordCountActive": activeCount,
-		"wordCountTotal":  total,
-		"words":           words})
+		"wordOffCooldownCount": wordOffCooldownCount,
+		"wordAllCount":         wordAllCount,
+		"words":                words})
 }
 
 func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB) (map[int64]bool, error) {

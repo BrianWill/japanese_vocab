@@ -120,7 +120,25 @@ span.verb:hover {
 
 #story_list a {
     color: #838383;
+}
+
+#story_list a.story_title {
+    color: #e3667e;
     
+}
+
+#story_table th {
+    color: grey;
+    padding-right: 2em;
+}
+
+#story_table td {
+    padding: 0.3em 0em;
+
+}
+
+#story_list table {
+    margin-left: 2em;
 }
 
 #story_container {
@@ -164,3 +182,4 @@ span.verb:hover {
     height: 8em;
     resize:vertical;
 }
+

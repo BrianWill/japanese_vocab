@@ -27,7 +27,7 @@ function newDrill() {
     }
     console.log('storyIds: ', storyIds);
 
-    fetch('drill', {
+    fetch('words', {
         method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
@@ -47,7 +47,7 @@ function newDrill() {
             shuffle(data.words);
             drillSet = data.words;
             answeredSet = [];
-            drillInfoH.innerHTML = `${data.wordCountTotal} words (${data.wordCountActive} active)`;
+            drillInfoH.innerHTML = `${data.wordAllCount} words (${data.wordOffCooldownCount} off cooldown)`;
             displayWords();
         })
         .catch((error) => {
