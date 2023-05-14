@@ -55,6 +55,28 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 }
 
 func addStory(story Story, response http.ResponseWriter) error {
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return err
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND title = $2;`, USER_ID, story.Title)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "story with same title already exists"}`))
+		return fmt.Errorf("story with same title already exists")
+	}
+
 	analyzerTokens := tok.Analyze(story.Content, tokenizer.Normal)
 	tokens := make([]JpToken, len(analyzerTokens))
 
@@ -88,20 +110,12 @@ func addStory(story Story, response http.ResponseWriter) error {
 		}
 	}
 
-	err := getDefinitions(tokens, response)
+	err = getDefinitions(tokens, response)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": failure to get definitions"` + err.Error() + `"}`))
 		return err
 	}
-
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return err
-	}
-	defer sqldb.Close()
 
 	wordIds, err := addDrillWords(tokens, response)
 	if err != nil {

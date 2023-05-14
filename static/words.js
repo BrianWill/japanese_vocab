@@ -3,7 +3,6 @@ var answerDiv = document.getElementById('answer');
 var drillInfoH = document.getElementById('drill_info');
 var drillCountInput = document.getElementById('drill_count');
 var drillCountInputText = document.getElementById('drill_count_text');
-var drillRecencySelect = document.getElementById('drill_recency');
 var drillTypeSelect = document.getElementById('drill_type');
 var drillWrongSelect = document.getElementById('drill_wrong');
 var drillStorySelect = document.getElementById('drill_story');
@@ -34,7 +33,6 @@ function newDrill() {
         },
         body: JSON.stringify({
             count: parseInt(drillCountInput.value),
-            recency: parseInt(drillRecencySelect.value),
             drill_type: drillTypeSelect.value,
             wrong: parseInt(drillWrongSelect.value),
             ignore_cooldown: ignoreCountdownCheckbox.checked,
@@ -47,7 +45,7 @@ function newDrill() {
             shuffle(data.words);
             drillSet = data.words;
             answeredSet = [];
-            drillInfoH.innerHTML = `${data.wordAllCount} words (${data.wordOffCooldownCount} off cooldown); ${data.wordMatchCount} words matching filter`;
+            drillInfoH.innerHTML = `${data.wordAllCount} words (${data.wordOffCooldownCount} active words off cooldown); ${data.wordMatchCount} words matching filter`;
             displayWords();
         })
         .catch((error) => {
@@ -60,7 +58,6 @@ drillCountInput.oninput = function (evt) {
 };
 
 drillCountInput.onchange = newDrill;
-drillRecencySelect.onchange = newDrill;
 drillTypeSelect.onchange = newDrill;
 drillWrongSelect.onchange = newDrill;
 ignoreCountdownCheckbox.onchange = newDrill;

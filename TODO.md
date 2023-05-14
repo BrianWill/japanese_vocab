@@ -1,14 +1,12 @@
 # japanese_vocab TODO
 
-- sort stories by date last read
-
-- enforce unqiueness of story title
 - button to clear the create story form
 - the temp text of the inputs should be greyed out and disappear when the user selects the box
 - async story creation:
     - immediately insert story and link and content
     - reset the form when story is received and display message confirming it was added and is being tokenized
     - isTokenized flag
+    - display error when user attempts to add story with same title as existing story
     - browser automatically requests async request to tokenize
         - story tokenization should be idempotent?
         - flash message when story has fininshed tokenizing
@@ -17,17 +15,11 @@
 
 - definition for transitive / intransitive verb pairs should always show its pair
 
-- definitions displayed in rows:
-    - top row is kanji
-    - one row per entry
-
 - in story, definition shows drill stats for word and hotkey let's you modify its counters
 
 - drill filter options:
     - words that have 0 drills (maybe replace filter for recently added with filter for max number of times drilled)
     - option to include words that have countdown 0
-
-- option to drill all wrong words, regardless of cooldown
 
 - in absence of baseform, maybe should NOT use surface? investigate "引き出し", "飛べる", "鬼滅の" -> "滅"
     - potential form should not count as verb base form: e.g. 飛べる should be added only as 飛ぶ, not as 飛べる
@@ -63,10 +55,6 @@
 - make "add story" look nicer
 - click word in drill list to sort it to top/active (sometimes curious and want to skip ahead to see def of word down the list)
 - better hotkeys for drilling (cursor keys?)
-
-- stories have countdown and cooldowns
-    - story list can filter out zero countdown stories
-    - sort smallest non-zero countdown to top
 
 - improve handling of people/place names in stories
     - special highlighting?

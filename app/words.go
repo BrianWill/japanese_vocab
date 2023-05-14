@@ -33,8 +33,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	var drillRequest DrillRequest
 	json.NewDecoder(request.Body).Decode(&drillRequest)
-	drillRequest.Recency *= 60
-	drillRequest.Wrong *= 60
+	drillRequest.WrongWithin *= 60
 
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
@@ -79,27 +78,26 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
-		if w.Countdown <= 0 {
-			continue
+		isCountdownZero := w.Countdown <= 0
+		isInStory := len(storyWords) == 0 || storyWords[w.ID]
+		isOffCooldown := ((t-w.DateLastDrill) > DRILL_COOLDOWN && (t-w.DateLastWrong) > DRILL_COOLDOWN)
+		isDrillType := isDrillType(w.DrillType, drillRequest.Type)
+
+		if isOffCooldown && !isCountdownZero {
+			wordOffCooldownCount++
 		}
-		wordOffCooldownCount++
-		if len(storyWords) != 0 && !storyWords[w.ID] {
-			continue
-		}
-		if !drillRequest.IgnoreCooldown && ((t-w.DateLastDrill) < DRILL_COOLDOWN || (t-w.DateLastWrong) < DRILL_COOLDOWN) {
-			continue
-		}
-		if drillRequest.Recency > 0 && (t-w.DateAdded) > drillRequest.Recency {
-			continue
-		}
-		if drillRequest.Wrong > 0 && (t-w.DateLastWrong) > drillRequest.Wrong {
+
+		if !isInStory || isCountdownZero || !isDrillType {
 			continue
 		}
 
-		if !isDrillType(w.DrillType, drillRequest.Type) {
-			continue
+		if drillRequest.WrongWithin > 0 {
+			if (t - w.DateLastWrong) < drillRequest.WrongWithin {
+				temp = append(temp, w)
+			}
+		} else if drillRequest.IgnoreCooldown || isOffCooldown {
+			temp = append(temp, w)
 		}
-		temp = append(temp, w)
 	}
 	words = temp
 
