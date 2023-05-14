@@ -122,6 +122,7 @@ func main() {
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
 	router.HandleFunc("/update_story", UpdateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/create_story", CreateStoryEndpoint).Methods("POST")
+	router.HandleFunc("/retokenize_story", RetokenizeStoryEndpoint).Methods("POST")
 	router.HandleFunc("/load_stories", LoadStoriesFromDumpEndpoint).Methods("GET")
 	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
 	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")

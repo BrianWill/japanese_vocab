@@ -32,6 +32,22 @@ newStoryButton.onclick = function (evt) {
         });
 };
 
+function retokenizeStory(story) {
+    fetch('/retokenize_story', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: story.id }),
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Success retokenizing:', data);
+        })
+        .catch((error) => {
+            console.error('Error retokenizing:', error);
+        });
+}
+
 
 document.body.onload = function (evt) {
     getStoryList();
@@ -58,7 +74,6 @@ function updateStoryList(stories) {
     storiesById = {};
 
     function storyRow(s) {
-
         return `<tr>
             <td><a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a></td>
             <td><a story_id="${s.id}" action="dec_countdown" href="#">-</a>
@@ -70,6 +85,8 @@ function updateStoryList(stories) {
             <td><span>${timeSince(s.date_added * 1000)}</span></td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
+
+        //<td><a action="retokenize" story_id="${s.id}" href="#">retokenize</a></td>
     }
 
     for (let s of stories) {
@@ -133,6 +150,10 @@ storyList.onclick = function (evt) {
                 }
                 break;
             case 'drill_in_progress':
+                break;
+            case 'retokenize':
+                console.log('story to retokenize', storiesById[storyId]);
+                retokenizeStory(story);
                 break;
             default:
                 break;

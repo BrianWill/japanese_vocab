@@ -83,12 +83,14 @@ function getKanji(str) {
 }
 
 function updateWord(word) {
+    let data = {...word};
+    delete data.definitions;
     fetch('/update_word', {
         method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(word),
+        body: JSON.stringify(data),
     }).then((response) => response.json()
     ).then((data) => {
         //console.log(data);

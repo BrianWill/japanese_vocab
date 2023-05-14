@@ -45,7 +45,8 @@ function newDrill() {
             shuffle(data.words);
             drillSet = data.words;
             answeredSet = [];
-            drillInfoH.innerHTML = `${data.wordAllCount} words (${data.wordOffCooldownCount} active words off cooldown); ${data.wordMatchCount} words matching filter`;
+            drillInfoH.innerHTML = `${data.wordAllCount} words (${data.wordOffCooldownCount} 
+                    active words off cooldown); ${data.wordMatchCount} words matching filter`;
             displayWords();
         })
         .catch((error) => {

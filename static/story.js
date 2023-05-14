@@ -49,6 +49,11 @@ function openStory(id) {
             story = data;
             storyTitle.innerText = data.title;
             story.tokens = JSON.parse(story.tokens);
+            story.words = JSON.parse(story.words);
+            for (let key in story.words) {
+                let word = story.words[key];
+                word.definitions = JSON.parse(word.definitions);
+            }
             console.log(`/story/${id} success:`, story);
             displayStory(data);
         })
@@ -136,19 +141,32 @@ function displayStory(story) {
 
 var selectedTokenIndex = null;
 
+const MAX_WORD_COUNTDOWN = 5;
+
 tokenizedText.onmousedown = function (evt) {
-    var index = evt.target.getAttribute("tokenIndex");
+    let index = evt.target.getAttribute("tokenIndex");
     if (index) {
         selectedTokenIndex = index;
+        
+        if (evt.ctrlKey) {  // inc countdown of the word
+            let token = story.tokens[index];
+            let word = story.words[token.wordId];
+            if (word.countdown < MAX_WORD_COUNTDOWN) {
+                word.countdown++;
+                updateWord(word);
+            }
+        }   
+
         displayDefinition(index);
     }
 };
 
 function displayDefinition(index) {
-    var token = story.tokens[index];
+    let token = story.tokens[index];
+    let word = story.words[token.wordId];
     getKanji(token.baseForm + token.surface);
     html = '';
-    for (let entry of token.entries) {
+    for (let entry of word.definitions) {
         html += displayEntry(entry);
     }
     definitionsDiv.innerHTML = html;

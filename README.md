@@ -13,7 +13,7 @@ The top has a form a form to add new stories, and below has a list of your exist
 
 ## Story page
 
-The right side shows the text of the story. Click a word to display its definitions on the left side.
+The right side shows the text of the story. Click a word to display its definitions on the left side. Ctrl-click a word to increase its drill countdown (up to max of 5).
 
 ## Drills page
 

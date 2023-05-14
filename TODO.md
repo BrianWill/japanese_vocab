@@ -1,5 +1,9 @@
 # japanese_vocab TODO
 
+- test story creation: make sure token list does not contain entries/definitions
+
+- in story, definition shows drill stats for word
+
 - button to clear the create story form
 - the temp text of the inputs should be greyed out and disappear when the user selects the box
 - async story creation:
@@ -15,11 +19,11 @@
 
 - definition for transitive / intransitive verb pairs should always show its pair
 
-- in story, definition shows drill stats for word and hotkey let's you modify its counters
+- button to drill words from the "never read" set of stories
 
 - drill filter options:
-    - words that have 0 drills (maybe replace filter for recently added with filter for max number of times drilled)
     - option to include words that have countdown 0
+    - words that have 0 drills
 
 - in absence of baseform, maybe should NOT use surface? investigate "引き出し", "飛べる", "鬼滅の" -> "滅"
     - potential form should not count as verb base form: e.g. 飛べる should be added only as 飛ぶ, not as 飛べる

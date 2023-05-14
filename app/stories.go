@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"time"
 
@@ -54,6 +55,18 @@ func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 }
 
+func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	var story Story
+	json.NewDecoder(request.Body).Decode(&story)
+
+	err := retokenizeStory(story, response)
+	if err != nil {
+		return
+	}
+}
+
 func addStory(story Story, response http.ResponseWriter) error {
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
@@ -78,21 +91,19 @@ func addStory(story Story, response http.ResponseWriter) error {
 	}
 
 	analyzerTokens := tok.Analyze(story.Content, tokenizer.Normal)
-	tokens := make([]JpToken, len(analyzerTokens))
+	tokens := make([]*JpToken, len(analyzerTokens))
 
 	for i, t := range analyzerTokens {
 		features := t.Features()
 		if len(features) < 9 {
 
-			tokens[i] = JpToken{
+			tokens[i] = &JpToken{
 				Surface: t.Surface,
 				POS:     features[0],
 				POS_1:   features[1],
 			}
-
-			//fmt.Println(strconv.Itoa(len(features)), features[0], r.Surface, "features: ", strings.Join(features, ","))
 		} else {
-			tokens[i] = JpToken{
+			tokens[i] = &JpToken{
 				Surface:          t.Surface,
 				POS:              features[0],
 				POS_1:            features[1],
@@ -151,9 +162,107 @@ func addStory(story Story, response http.ResponseWriter) error {
 	return nil
 }
 
-func filterPartsOfSpeech(tokens []JpToken) []JpToken {
-	filteredTokens := make([]JpToken, 0)
-	var prior JpToken
+func retokenizeStory(story Story, response http.ResponseWriter) error {
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return err
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT title, link, tokens, content, countdown, date_added, 
+		date_last_read, read_count FROM stories WHERE user = $1 AND id = $2;`, USER_ID, story.ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content, &story.Countdown,
+			&story.DateAdded, &story.DateLastRead, &story.ReadCount); err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
+			return err
+		}
+	}
+
+	analyzerTokens := tok.Analyze(story.Content, tokenizer.Normal)
+	tokens := make([]*JpToken, len(analyzerTokens))
+
+	for i, t := range analyzerTokens {
+		features := t.Features()
+		if len(features) < 9 {
+
+			tokens[i] = &JpToken{
+				Surface: t.Surface,
+				POS:     features[0],
+				POS_1:   features[1],
+			}
+
+		} else {
+			tokens[i] = &JpToken{
+				Surface:          t.Surface,
+				POS:              features[0],
+				POS_1:            features[1],
+				POS_2:            features[2],
+				POS_3:            features[3],
+				InflectionalType: features[4],
+				InflectionalForm: features[5],
+				BaseForm:         features[6],
+				Reading:          features[7],
+				Pronunciation:    features[8],
+			}
+		}
+		if tokens[i].BaseForm == "" {
+			tokens[i].BaseForm = tokens[i].Surface
+		}
+	}
+
+	err = getDefinitions(tokens, response)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": failure to get definitions"` + err.Error() + `"}`))
+		return err
+	}
+
+	wordIds, err := addDrillWords(tokens, response)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to add words: " + err.Error() + `"}`))
+		return err
+	}
+
+	wordsJson, err := json.Marshal(wordIds)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to marshall wordIds: " + err.Error() + `"}`))
+		return err
+	}
+
+	tokensJson, err := json.Marshal(tokens)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to marshall tokens: " + err.Error() + `"}`))
+		return err
+	}
+
+	_, err = sqldb.Exec(`UPDATE stories SET tokens = $1, words = $2 WHERE id = $3 AND user = $4;`,
+		tokensJson, wordsJson, story.ID, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
+		return err
+	}
+	json.NewEncoder(response).Encode("Success retokenizing story")
+	return nil
+}
+
+func filterPartsOfSpeech(tokens []*JpToken) []*JpToken {
+	filteredTokens := make([]*JpToken, 0)
+	prior := &JpToken{}
 	for _, t := range tokens {
 		if t.Surface == "。" {
 			continue
@@ -190,7 +299,7 @@ func filterPartsOfSpeech(tokens []JpToken) []JpToken {
 	return filteredTokens
 }
 
-func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, error) {
+func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, error) {
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -204,23 +313,25 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
 
 	fmt.Println("prefiltered tokens: ", len(tokens))
-	tokens = filterPartsOfSpeech(tokens)
-	fmt.Println("filtered tokens: ", len(tokens))
+	filteredTokens := filterPartsOfSpeech(tokens)
+	fmt.Println("filtered tokens: ", len(filteredTokens))
 
 	// deduplicate
-	tokenSet := make(map[string]JpToken)
-	for _, token := range tokens {
+	tokenSet := make(map[string]*JpToken)
+	for _, token := range filteredTokens {
 		tokenSet[token.BaseForm] = token
 	}
-	tokens = nil
+	filteredTokens = nil
 	for k := range tokenSet {
-		tokens = append(tokens, tokenSet[k])
+		filteredTokens = append(filteredTokens, tokenSet[k])
 	}
 
 	unixtime := time.Now().Unix()
 
+	idsByBaseForm := make(map[string]int64)
+
 	wordIds := make([]int64, 0)
-	for _, token := range tokens {
+	for _, token := range filteredTokens {
 		hasKanji := len(reHasKanji.FindStringIndex(token.BaseForm)) > 0
 		hasKana := len(reHasKana.FindStringIndex(token.BaseForm)) > 0
 		if !hasKanji && !hasKana {
@@ -238,8 +349,9 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 		var id int64
 		if exists {
 			rows.Scan(&id)
+			idsByBaseForm[token.BaseForm] = id
 			wordIds = append(wordIds, id)
-			fmt.Printf("getting word: %s %d \t %d\n", token.BaseForm, len(token.Entries), id)
+			//fmt.Printf("existing word: %s \t %d\n", token.BaseForm, id)
 		} else {
 			drillType := 0
 			hasKatakana := len(reHasKatakana.FindStringIndex(token.BaseForm)) > 0
@@ -280,17 +392,28 @@ func addDrillWords(tokens []JpToken, response http.ResponseWriter) ([]int64, err
 				rows.Close()
 				return nil, err
 			}
-
+			fmt.Printf("new word: %s \t %d\n", token.BaseForm, id)
+			idsByBaseForm[token.BaseForm] = id
 			wordIds = append(wordIds, id)
 
 		}
 		rows.Close()
 	}
+	sort.Slice(wordIds, func(a, b int) bool {
+		return wordIds[a] < wordIds[b]
+	})
+
+	for _, token := range tokens {
+		token.Entries = nil
+		if id, ok := idsByBaseForm[token.BaseForm]; ok {
+			token.WordId = id
+		}
+	}
 
 	return wordIds, nil
 }
 
-func getDefinitions(tokens []JpToken, response http.ResponseWriter) error {
+func getDefinitions(tokens []*JpToken, response http.ResponseWriter) error {
 	start := time.Now()
 	reHasKanji := regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	for i, token := range tokens {
@@ -420,7 +543,8 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT title, link, tokens, content, countdown, date_added, date_last_read, read_count FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
+	rows, err := sqldb.Query(`SELECT title, link, tokens, content, countdown, date_added, 
+		date_last_read, read_count, words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -430,13 +554,74 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	var story Story
 	for rows.Next() {
-		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content, &story.Countdown, &story.DateAdded, &story.DateLastRead, &story.ReadCount); err != nil {
+		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content, &story.Countdown,
+			&story.DateAdded, &story.DateLastRead, &story.ReadCount, &story.Words); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
 			return
 		}
 	}
 	story.ID = int64(id)
+
+	var wordIds []int64
+	err = json.Unmarshal([]byte(story.Words), &wordIds)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
+		return
+	}
+
+	// Helper function to generate the placeholders for the SQL query
+	placeholders := func(n int) string {
+		args := make([]byte, 2*n-1)
+		for i := range args {
+			if i%2 == 0 {
+				args[i] = '?'
+			} else {
+				args[i] = ','
+			}
+		}
+		return string(args)
+	}
+
+	query := fmt.Sprintf(`SELECT id, base_form, countdown, drill_count, read_count, 
+		date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, 
+		date_added FROM words WHERE user = %d AND id IN (%s);`, USER_ID, placeholders(len(wordIds)))
+	args := make([]interface{}, len(wordIds))
+	for i, id := range wordIds {
+		args[i] = id
+	}
+
+	rows, err = sqldb.Query(query, args...)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get words: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	words := make(map[int64]DrillWord)
+	for rows.Next() {
+		var word DrillWord
+		err = rows.Scan(&word.ID, &word.BaseForm, &word.Countdown,
+			&word.DrillCount, &word.ReadCount,
+			&word.DateLastRead, &word.DateLastDrill,
+			&word.Definitions, &word.DrillType, &word.DateLastWrong, &word.DateAdded)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
+			return
+		}
+		words[word.ID] = word
+	}
+
+	wordsJson, err := json.Marshal(words)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to marshall words: " + err.Error() + `"}`))
+		return
+	}
+	story.Words = string(wordsJson)
 
 	json.NewEncoder(response).Encode(story)
 }

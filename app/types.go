@@ -45,19 +45,18 @@ type DrillWord struct {
 }
 
 type JpToken struct {
-	Surface          string               `json:"surface,omitempty" bson:"surface,omitempty"`
-	POS              string               `json:"pos,omitempty" bson:"pos"`
-	POS_1            string               `json:"pos1,omitempty" bson:"pos1"`
-	POS_2            string               `json:"pos2,omitempty" bson:"pos2"`
-	POS_3            string               `json:"pos3,omitempty" bson:"pos3"`
-	InflectionalType string               `json:"inflectionalType,omitempty" bson:"inflectionalType"`
-	InflectionalForm string               `json:"inflectionalForm,omitempty" bson:"inflectionalForm"`
-	BaseForm         string               `json:"baseForm,omitempty" bson:"baseForm"`
-	Reading          string               `json:"reading,omitempty" bson:"reading"`
-	Pronunciation    string               `json:"pronunciation,omitempty" bson:"pronunciation"`
-	Definitions      []primitive.ObjectID `json:"definition" bson:"definitions,omitempty"`
-	Kanji            []primitive.ObjectID `json:"kanji" bson:"kanji,omitempty"`
-	Entries          []JMDictEntry        `json:"entries" bson:"entries,omitempty"`
+	Surface          string        `json:"surface,omitempty" bson:"surface,omitempty"`
+	WordId           int64         `json:"wordId,omitempty" bson:"wordId,omitempty"`
+	POS              string        `json:"pos,omitempty" bson:"pos"`
+	POS_1            string        `json:"pos1,omitempty" bson:"pos1"`
+	POS_2            string        `json:"pos2,omitempty" bson:"pos2"`
+	POS_3            string        `json:"pos3,omitempty" bson:"pos3"`
+	InflectionalType string        `json:"inflectionalType,omitempty" bson:"inflectionalType"`
+	InflectionalForm string        `json:"inflectionalForm,omitempty" bson:"inflectionalForm"`
+	BaseForm         string        `json:"baseForm,omitempty" bson:"baseForm"`
+	Reading          string        `json:"reading,omitempty" bson:"reading"`
+	Pronunciation    string        `json:"pronunciation,omitempty" bson:"pronunciation"`
+	Entries          []JMDictEntry `json:"entries,omitempty" bson:"entries,omitempty"`
 	// actually, the related words (component words and homynms) should be stored in monogo with the definition
 	// also, should distinguish between words the user has encountered vs those related words which they haven't
 	// ComponentWords []primitive.ObjectID `json:"componentWords" bson:"componentWords,omitempty"`
