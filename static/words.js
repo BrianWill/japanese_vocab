@@ -95,6 +95,9 @@ function displayWords() {
 }
 
 document.body.onkeydown = async function (evt) {
+    if (evt.ctrlKey) {
+        return;
+    }
     if (drillSet && drillSet.length > 0) {
         var word = drillSet[0];
         //console.log(evt.code);

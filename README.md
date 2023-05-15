@@ -35,3 +35,16 @@ The controls at the top allow you to filter the list of drill words. From left-t
 - select words of certain types: katakana, ichidan verbs, godan verbs
 - select words from specific stories
 - select words on cooldown (words that have recently been marked correct)
+
+
+// ichidan: 904
+// verb-godan-su: 459
+// verb-godan-ru: 701
+// verb-godan-u: 156
+// verb-godan-tsu: 26
+// verb-godan-gu: 56
+// verb-godan-ku: 233
+// verb-godan-nu: 3
+// verb-godan-mu: 178
+// verb-godan-bu: 21
+// verb-godan-aru: 4    // this explains kudasai! it's noun form of kudasaru

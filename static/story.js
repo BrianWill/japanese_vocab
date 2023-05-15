@@ -25,7 +25,7 @@ tokenizedText.onwheel = function (evt) {
     }
 };
 
-const STORY_READ_COOLDOWN = 60 * 60 * 3; // 3 hours
+const STORY_READ_COOLDOWN = 60 * 60 * 16; // 16 hours
 
 storyReadButton.onclick = function (evt) {
     if (story !== null) {
@@ -33,6 +33,9 @@ storyReadButton.onclick = function (evt) {
         if ((unixtime - story.date_last_read) > STORY_READ_COOLDOWN) {
             story.date_last_read = unixtime;
             story.read_count++;
+            if (story.countdown > 0) {
+                story.countdown--;
+            }            
             updateStory(story);
         }
     }
@@ -47,7 +50,7 @@ function openStory(id) {
     }).then((response) => response.json())
         .then((data) => {
             story = data;
-            storyTitle.innerText = data.title;
+            storyTitle.innerHTML = `<a href="${story.link}">${story.title}</a>`;
             story.tokens = JSON.parse(story.tokens);
             story.words = JSON.parse(story.words);
             for (let key in story.words) {

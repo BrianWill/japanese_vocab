@@ -1,8 +1,15 @@
 # japanese_vocab TODO
 
-- test story creation: make sure token list does not contain entries/definitions
+- kanji drills
+    - add kanji to sqlite
+    - track kanji by story the same way we track words
+        - each story has list of kanji ids
+    - "drill count" for number of times you've drilled the kanji directly
+    - "encounter count" for number of times you've dilled a word containing the kanji
 
 - in story, definition shows drill stats for word
+
+- highlighting for proper names
 
 - button to clear the create story form
 - the temp text of the inputs should be greyed out and disappear when the user selects the box

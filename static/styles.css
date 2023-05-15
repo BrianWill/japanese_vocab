@@ -128,7 +128,7 @@ span.verb:hover {
 }
 
 .story_table th {
-    color: rgb(77, 77, 77);
+    color: rgb(98, 98, 98);
     padding-right: 2em;
     font-size: 70%;
 }
@@ -139,11 +139,12 @@ span.verb:hover {
 
 .story_table td.story_table_section {
     font-size: 120%;
-    padding: 2em 0em 0.2em 0em;
+    padding: 1em 0em 0.2em 0em;
 }
 
 #story_list table {
     margin-left: 2em;
+    margin-top: 2em;
 }
 
 #story_container {
@@ -159,6 +160,12 @@ span.verb:hover {
 
 #story_title {
     text-align: center;
+    
+}
+
+#story_title a {
+    text-decoration: none;
+    color: #aabdcf;
 }
 
 #top_link {

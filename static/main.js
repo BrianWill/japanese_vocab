@@ -8,7 +8,15 @@ var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 
-const DRILL_ALL_IN_PROGRESS = -1;
+document.body.onload = function (evt) {
+    getStoryList();
+
+    if (window.location.pathname.startsWith('/read/')) {
+        let storyId = window.location.pathname.substring(6);
+        console.log("opening story with id " + storyId);
+        openStory(storyId);
+    }
+};
 
 newStoryButton.onclick = function (evt) {
     let data = {
@@ -16,6 +24,10 @@ newStoryButton.onclick = function (evt) {
         title: newStoryTitle.value,
         link: newStoryLink.value
     };
+
+    newStoryText.value = '';
+    newStoryTitle.value = '';
+    newStoryLink.value = '';
 
     fetch('/create_story', {
         method: 'POST', // or 'PUT'
@@ -26,6 +38,7 @@ newStoryButton.onclick = function (evt) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Success:', data);
+            getStoryList();
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -41,125 +54,13 @@ function retokenizeStory(story) {
         body: JSON.stringify({ id: story.id }),
     }).then((response) => response.json())
         .then((data) => {
+            getStoryList();
             console.log('Success retokenizing:', data);
         })
         .catch((error) => {
             console.error('Error retokenizing:', error);
         });
 }
-
-
-document.body.onload = function (evt) {
-    getStoryList();
-
-    if (window.location.pathname.startsWith('/read/')) {
-        let storyId = window.location.pathname.substring(6);
-        console.log("opening story with id " + storyId);
-        openStory(storyId);
-    }
-};
-
-storiesById = {};
-inProgressStories = [];
-
-function updateStoryList(stories) {
-    stories.sort((a, b) => {
-        let diff = a.countdown - b.countdown;
-        if (diff === 0) {
-            return a.date_last_read - b.date_last_read
-        }
-        return diff;
-    });
-
-    storiesById = {};
-
-    function storyRow(s) {
-        return `<tr>
-            <td><a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a></td>
-            <td><a story_id="${s.id}" action="dec_countdown" href="#">-</a>
-                <span>${s.countdown}</span>
-                <a story_id="${s.id}" action="inc_countdown" href="#">+</a>
-            </td>
-            <td><span>${s.read_count}</span></td>
-            <td><span>${timeSince(s.date_last_read * 1000)}</span></td>
-            <td><span>${timeSince(s.date_added * 1000)}</span></td>
-            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            </tr>`;
-
-        //<td><a action="retokenize" story_id="${s.id}" href="#">retokenize</a></td>
-    }
-
-    for (let s of stories) {
-        storiesById[s.id] = s;
-    }
-
-    let html = `<table class="story_table">
-            <tr>
-            <th>Drill words</th>
-            <th>Countdown</th>
-            <th>Read count</th>
-            <th>Days ago last read</th>
-            <th>Days ago created</th>
-            <th>Title</th>
-            </tr>
-            <tr>
-                <td class="story_table_section" colspan="3">Stories in progress</td>
-                <td class="story_table_section" colspan="3">
-                    <a action="drill_in_progress" href="/words.html?storyId=${DRILL_ALL_IN_PROGRESS}">drill all</a>
-                </td>
-            </tr>`;
-    for (let s of stories) {
-        if (s.countdown > 0 && s.read_count > 0) {
-            html += storyRow(s);
-        }
-    }
-    html += '<tr alt="read count is zero"><td class="story_table_section" colspan="6">Stories never read</td></tr>';
-    for (let s of stories) {
-        if (s.countdown > 0 && s.read_count === 0) {
-            html += storyRow(s);
-        }
-    }
-    html += '<tr alt="countdown is zero"><td class="story_table_section" colspan="6">Stories finished</td></tr>';
-    for (let s of stories) {
-        if (s.countdown === 0) {
-            html += storyRow(s);
-        }
-    }
-    storyList.innerHTML = html + '</table>';
-};
-
-storyList.onclick = function (evt) {
-    if (evt.target.tagName == 'A') {
-        var storyId = evt.target.getAttribute('story_id');
-        let story = storiesById[storyId];
-
-        var action = evt.target.getAttribute('action');
-        switch (action) {
-            case 'drill':
-                break;
-            case 'inc_countdown':
-                evt.preventDefault();
-                story.countdown++;
-                updateStory(story);
-                break;
-            case 'dec_countdown':
-                evt.preventDefault();
-                if (story.countdown > 0) {
-                    story.countdown--;
-                    updateStory(story);
-                }
-                break;
-            case 'drill_in_progress':
-                break;
-            case 'retokenize':
-                console.log('story to retokenize', storiesById[storyId]);
-                retokenizeStory(story);
-                break;
-            default:
-                break;
-        }
-    }
-};
 
 function openStory(id) {
     fetch('/story/' + id, {
@@ -179,3 +80,38 @@ function openStory(id) {
             console.error('Error:', error);
         });
 }
+
+
+storyList.onclick = function (evt) {
+    if (evt.target.tagName == 'A') {
+        var storyId = evt.target.getAttribute('story_id');
+        let story = storiesById[storyId];
+
+        var action = evt.target.getAttribute('action');
+        switch (action) {
+            case 'drill':
+                break;
+            case 'inc_countdown':
+                evt.preventDefault();
+                story.countdown++;
+                updateStory(story, true);
+                break;
+            case 'dec_countdown':
+                evt.preventDefault();
+                if (story.countdown > 0) {
+                    story.countdown--;
+                    updateStory(story, true);
+                }
+                break;
+            case 'drill_in_progress':
+                break;
+            case 'retokenize':
+                console.log('story to retokenize', storiesById[storyId]);
+                retokenizeStory(story);
+                break;
+            default:
+                break;
+        }
+    }
+};
+

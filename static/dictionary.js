@@ -68,18 +68,6 @@ wordSearchText.onkeydown = function (evt) {
         });
 };
 
-// ichidan: 904
-// verb-godan-su: 459
-// verb-godan-ru: 701
-// verb-godan-u: 156
-// verb-godan-tsu: 26
-// verb-godan-gu: 56
-// verb-godan-ku: 233
-// verb-godan-nu: 3
-// verb-godan-mu: 178
-// verb-godan-bu: 21
-// verb-godan-aru: 4    // this explains kudasai! it's noun form of kudasaru
-
 function displayTypeResults(results, typeString) {
     let reAllKana = /^[あ-んア-ン]+$/gm;
     let reKanjiThenKana = /^[\u4E00-\u9FAF\u3400-\u4dbf][あ-んア-ン]+$/gm;

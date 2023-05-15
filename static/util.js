@@ -152,12 +152,13 @@ function displayEntry(entry) {
             </div>`;
 }
 
-function updateStory(story) {
+function updateStory(story, refreshList) {
     let temp = { ...story };
     delete temp.content;
     delete temp.tokens;
     delete temp.link;
     delete temp.title;
+    delete temp.words;
     fetch(`/update_story`, {
         method: 'POST',
         headers: {
@@ -167,7 +168,9 @@ function updateStory(story) {
     }).then((response) => response.json())
         .then((data) => {
             console.log(`Success update_story:`, data);
-            getStoryList();
+            if (refreshList) {
+                getStoryList();
+            }
         })
         .catch((error) => {
             console.error('Error marking story:', error);
@@ -220,3 +223,72 @@ function timeSince(date) {
     // }
     // return Math.floor(seconds) + " seconds ago";
 }
+
+const DRILL_ALL_IN_PROGRESS = -1;
+
+var storiesById = {};
+
+function updateStoryList(stories) {
+    stories.sort((a, b) => {
+        let diff = a.countdown - b.countdown;
+        if (diff === 0) {
+            return a.date_last_read - b.date_last_read
+        }
+        return diff;
+    });
+
+    storiesById = {};
+
+    function storyRow(s) {
+        return `<tr>
+            <td><a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a></td>
+            <td><a story_id="${s.id}" action="dec_countdown" href="#">-</a>
+                <span>${s.countdown}</span>
+                <a story_id="${s.id}" action="inc_countdown" href="#">+</a>
+            </td>
+            <td><span>${s.read_count}</span></td>
+            <td><span>${timeSince(s.date_last_read * 1000)}</span></td>
+            <td><span>${timeSince(s.date_added * 1000)}</span></td>
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            </tr>`;
+
+        //<td><a action="retokenize" story_id="${s.id}" href="#">retokenize</a></td>
+    }
+
+    for (let s of stories) {
+        storiesById[s.id] = s;
+    }
+
+    let html = `<table class="story_table">
+            <tr>
+            <th>Drill words</th>
+            <th>Countdown</th>
+            <th>Read count</th>
+            <th>Days ago last read</th>
+            <th>Days ago created</th>
+            <th>Title</th>
+            </tr>
+            <tr>
+                <td class="story_table_section" colspan="6">Stories in progress &nbsp;&nbsp; 
+                    <a action="drill_in_progress" href="/words.html?storyId=${DRILL_ALL_IN_PROGRESS}">drill all words</a>
+                </td>
+            </tr>`;
+    for (let s of stories) {
+        if (s.countdown > 0 && s.read_count > 0) {
+            html += storyRow(s);
+        }
+    }
+    html += '<tr alt="read count is zero"><td class="story_table_section" colspan="6">Stories not yet read</td></tr>';
+    for (let s of stories) {
+        if (s.countdown > 0 && s.read_count === 0) {
+            html += storyRow(s);
+        }
+    }
+    html += '<tr alt="countdown is zero"><td class="story_table_section" colspan="6">Stories finished</td></tr>';
+    for (let s of stories) {
+        if (s.countdown === 0) {
+            html += storyRow(s);
+        }
+    }
+    storyList.innerHTML = html + '</table>';
+};
