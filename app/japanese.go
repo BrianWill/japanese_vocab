@@ -179,6 +179,7 @@ func makeSqlDB() {
 			title	TEXT,
 			link	TEXT,
 			tokens	TEXT,
+			rank INTEGER NOT NULL,
 			countdown INTEGER NOT NULL,
 			read_count INTEGER NOT NULL,
 			date_last_read INTEGER NOT NULL,

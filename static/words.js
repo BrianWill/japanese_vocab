@@ -210,15 +210,13 @@ function showWord() {
     definitionsDiv.style.visibility = 'visible';
 }
 
-function updateStoryDrillList(stories, storyId) {
-    html = `<option value="0">all stories</option>
-            <option value="-1" ${storyId == -1 ? 'selected' : ''}>all stories in progress</option>`;
+function updateStoryDrillList(stories, storyIds) {
+    html = `<option value="0">all stories</option>`;
+    for (let i = 6; i > 0; i--) {
+        html += `<option value="${-i}" ${storyIds[-i] ? 'selected' : 0}>ALL STORIES OF RANK ${i} OR HIGHER </option>`;    
+    }
     for (let story of stories) {
-        if (storyId === story.id) {
-            html += `<option value="${story.id}" selected>${story.title}</option>`;
-        } else {
-            html += `<option value="${story.id}">${story.title}</option>`;
-        }
+        html += `<option value="${story.id}" ${storyIds[story.id] ? 'selected' : 0}>${story.title}</option>`;
     }
     drillStorySelect.innerHTML = html;
 }
@@ -236,9 +234,17 @@ document.body.onload = function (evt) {
         .then((data) => {
             console.log('Stories list success:', data);
 
+            let storyIds = {};
             var url = new URL(window.location.href);
-            var storyId = parseInt(url.searchParams.get("storyId") || undefined);
-            updateStoryDrillList(data, storyId);
+            if (url.searchParams && url.searchParams.has("storyId")) {
+                storyIdsList = url.searchParams.get("storyId").split(',');
+                for (let idStr of storyIdsList) {
+                    var id = parseInt(idStr.trim());
+                    storyIds[id] = true;
+                }
+            }
+            console.log('story ids', storyIds);
+            updateStoryDrillList(data, storyIds);
 
             drillCountInputText.innerHTML = drillCountInput.value;
             newDrill();

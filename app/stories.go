@@ -19,6 +19,8 @@ import (
 	//"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const INITIAL_RANK = 1
+
 func LoadStoriesFromDumpEndpoint(response http.ResponseWriter, request *http.Request) {
 	storyList, err := loadStoryDump()
 	if err != nil {
@@ -150,9 +152,9 @@ func addStory(story Story, response http.ResponseWriter) error {
 	}
 
 	date := time.Now().Unix()
-	_, err = sqldb.Exec(`INSERT INTO stories (user, words, content, title, link, tokens, countdown, read_count, date_last_read, date_added) 
-			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
-		USER_ID, wordsJson, story.Content, story.Title, story.Link, tokensJson, 5, 0, date, date)
+	_, err = sqldb.Exec(`INSERT INTO stories (user, words, content, title, link, tokens, countdown, read_count, date_last_read, date_added, rank) 
+			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
+		USER_ID, wordsJson, story.Content, story.Title, story.Link, tokensJson, 5, 0, date, date, INITIAL_RANK)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to insert story: " + err.Error() + `"}`))
@@ -497,7 +499,7 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, title, link, countdown, read_count, date_last_read, date_added FROM stories WHERE user = $1;`, USER_ID)
+	rows, err := sqldb.Query(`SELECT id, title, link, countdown, rank, read_count, date_last_read, date_added FROM stories WHERE user = $1;`, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -508,7 +510,7 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	var stories []Story
 	for rows.Next() {
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &story.Countdown,
+		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &story.Countdown, &story.Rank,
 			&story.ReadCount, &story.DateLastRead, &story.DateAdded); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
@@ -661,8 +663,8 @@ func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	rows.Close()
 
-	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3 WHERE id = $4 AND user = $5;`,
-		story.Countdown, story.ReadCount, story.DateLastRead, story.ID, USER_ID)
+	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3, rank = $4 WHERE id = $5 AND user = $6;`,
+		story.Countdown, story.ReadCount, story.DateLastRead, story.Rank, story.ID, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))

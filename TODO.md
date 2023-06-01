@@ -1,5 +1,9 @@
 # japanese_vocab TODO
 
+- track verbs by initial sound
+
+- in story list, icon indicating if story is on cooldown
+
 - kanji drills
     - add kanji to sqlite
     - track kanji by story the same way we track words
@@ -8,6 +12,8 @@
     - "encounter count" for number of times you've dilled a word containing the kanji
 
 - in story, definition shows drill stats for word
+
+
 
 - highlighting for proper names
 
@@ -110,3 +116,13 @@
 x Map each story token to a dictionary entry. (map to specific meaning?)
 X When clicking/hovering on each word in a story, display the definition and kanji.
 x Result entries should be sorted on server in order of fewest characters in spelling and/or reading
+
+
+document.body.onkeydown = function (evt) {
+    let video = document.querySelector('video');
+    if (evt.key == 'a') {
+        video.currentTime -= 3.7;
+    } else if (evt.key == 'd') {
+        video.currentTime += 1.3;
+    }
+};

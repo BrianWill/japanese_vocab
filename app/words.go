@@ -20,13 +20,15 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"math"
 	"net/http"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-const DRILL_ALL_IN_PROGRESS = -1
+const DRILL_ALL_TOP_RANK = -1
 
 func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
@@ -69,7 +71,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	wordAllCount := len(words)
 
-	storyWords, err := getStoryWords(drillRequest.StoryIds, response, sqldb)
+	storyWords, allStories, err := getStoryWords(drillRequest.StoryIds, response, sqldb)
 	if err != nil {
 		return
 	}
@@ -79,7 +81,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	t := time.Now().Unix()
 	for _, w := range words {
 		isCountdownZero := w.Countdown <= 0
-		isInStory := len(storyWords) == 0 || storyWords[w.ID]
+		isInStory := allStories || storyWords[w.ID]
 		isOffCooldown := ((t-w.DateLastDrill) > DRILL_COOLDOWN && (t-w.DateLastWrong) > DRILL_COOLDOWN)
 		isDrillType := isDrillType(w.DrillType, drillRequest.Type)
 
@@ -114,29 +116,33 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		"wordMatchCount":       wordMatchCount})
 }
 
-func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB) (map[int64]bool, error) {
+func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB) (map[int64]bool, bool, error) {
 	storyIdMap := make(map[int64]bool)
 	storyWords := make(map[int64]bool)
 
-	// includes DRILL_ALL_IN_PROGRESS
-	for _, v := range storyIds {
-		storyIdMap[v] = true
+	var rankThreshold int64 = math.MinInt64
+	for _, id := range storyIds {
+		if id == 0 {
+			// return true if all stories included
+			return nil, true, nil
+		}
+		if id < 0 && id > rankThreshold {
+			rankThreshold = id
+		}
+		if id > 0 {
+			storyIdMap[id] = true
+			fmt.Println("story id", id)
+		}
 	}
 
-	if _, ok := storyIdMap[0]; ok {
-		// return empty map if all stories included
-		return storyWords, nil
-	}
+	fmt.Println("rank threshold", rankThreshold)
 
-	if _, ok := storyIdMap[DRILL_ALL_IN_PROGRESS]; ok {
-		delete(storyIdMap, DRILL_ALL_IN_PROGRESS)
-
-		// get all stories that are in progress (have countdown greater than zero and have readcount greater than 0)
-		rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND read_count > 0 AND countdown > 0;`, USER_ID)
+	if rankThreshold != math.MinInt64 {
+		rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND rank >= $2;`, USER_ID, -rankThreshold)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
-			return nil, err
+			return nil, false, err
 		}
 		defer rows.Close()
 
@@ -146,7 +152,7 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to scan story id: " + err.Error() + `"}`))
-				return nil, err
+				return nil, false, err
 			}
 			storyIdMap[id] = true
 		}
@@ -157,7 +163,7 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
-			return nil, err
+			return nil, false, err
 		}
 		defer rows.Close()
 
@@ -167,14 +173,14 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
-				return nil, err
+				return nil, false, err
 			}
 			var words []int64
 			err = json.Unmarshal([]byte(wordStr), &words)
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to unmarhsall story words: " + err.Error() + `"}`))
-				return nil, err
+				return nil, false, err
 			}
 
 			for _, word := range words {
@@ -182,7 +188,7 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 			}
 		}
 	}
-	return storyWords, nil
+	return storyWords, false, nil
 }
 
 func isDrillType(drillType int, requestedType string) bool {

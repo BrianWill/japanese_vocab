@@ -91,15 +91,15 @@ storyList.onclick = function (evt) {
         switch (action) {
             case 'drill':
                 break;
-            case 'inc_countdown':
+            case 'inc_rank':
                 evt.preventDefault();
-                story.countdown++;
+                story.rank++;
                 updateStory(story, true);
                 break;
-            case 'dec_countdown':
+            case 'dec_rank':
                 evt.preventDefault();
-                if (story.countdown > 0) {
-                    story.countdown--;
+                if (story.rank > 0) {
+                    story.rank--;
                     updateStory(story, true);
                 }
                 break;

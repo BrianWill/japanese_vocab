@@ -123,8 +123,15 @@ span.verb:hover {
 }
 
 #story_list a.story_title {
-    color: #e3667e;
-    
+    color: #d9e366;   
+}
+
+#story_list a.story_title.rank0 {
+    color: #808080;   
+}
+
+#story_list a.story_title.rank1 {
+    color: #a04e5e;   
 }
 
 .story_table th {

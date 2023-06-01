@@ -12,6 +12,7 @@ type Story struct {
 	Title        string `json:"title,omitempty"`
 	Link         string `json:"link,omitempty"`
 	Tokens       string `json:"tokens,omitempty"`
+	Rank         int    `json:"rank"`
 	Countdown    int    `json:"countdown"`
 	ReadCount    int    `json:"read_count"`
 	DateLastRead int64  `json:"date_last_read"`
