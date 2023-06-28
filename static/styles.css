@@ -188,16 +188,17 @@ span.verb:hover {
 #create_story_div {
     padding: 0em 2em;
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    width: 50%
 }
 
 #create_story_div input {
-    width: 50%;
+    width: 100%;
     height: 1.5em;
 }
 
 #new_story_text {
     margin-top: 0.4em;
-    width: 50%;
+    width: 100%;
     height: 8em;
     resize:vertical;
 }
@@ -208,5 +209,7 @@ span.verb:hover {
     padding: 0.5rem;
     border-radius: 20px;
     cursor: pointer;
+    display: block;
+    margin: auto;
 }
 
