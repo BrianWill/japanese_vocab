@@ -197,7 +197,6 @@ span.verb:hover {
 }
 
 #new_story_text {
-    margin-top: 0.4em;
     width: 100%;
     height: 8em;
     resize:vertical;
@@ -211,5 +210,12 @@ span.verb:hover {
     cursor: pointer;
     display: block;
     margin: auto;
+}
+
+#new_story_title, #new_story_link, #new_story_text {
+    display: block;
+    padding: 0.25rem;
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
 }
 
