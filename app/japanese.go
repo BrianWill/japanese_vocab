@@ -131,7 +131,7 @@ func main() {
 	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
-	log.Printf("Listening on http://localhost:%s", port)
+	log.Printf("Running on http://localhost:%s", port)
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal(err)
 	}
