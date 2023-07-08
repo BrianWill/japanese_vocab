@@ -122,16 +122,33 @@ span.verb:hover {
     color: #838383;
 }
 
-#story_list a.story_title {
-    color: #d9e366;   
-}
-
 #story_list a.story_title.rank0 {
     color: #808080;   
 }
 
 #story_list a.story_title.rank1 {
-    color: #a04e5e;   
+    color: #d52246;   
+}
+
+#story_list a.story_title.rank2 {
+    color: #18b283;;  
+}
+
+#story_list a.story_title.rank3 {
+    color: #eb8960;   
+}
+
+#story_list a.story_title.rank4 {
+    color: #c5ce5d;   
+}
+
+#story_list a.story_title.rank5 {
+    color: #2f82e7;   
+}
+
+
+#story_list td {
+    padding-right: 1em;
 }
 
 .story_table th {

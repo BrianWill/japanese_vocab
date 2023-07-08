@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gorilla/mux"
 	"github.com/ikawaha/kagome/v2/tokenizer"
@@ -69,29 +70,7 @@ func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request
 	}
 }
 
-func addStory(story Story, response http.ResponseWriter) error {
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return err
-	}
-	defer sqldb.Close()
-
-	rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND title = $2;`, USER_ID, story.Title)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "story with same title already exists"}`))
-		return fmt.Errorf("story with same title already exists")
-	}
-
+func tokenize(story Story, response http.ResponseWriter) ([]byte, []byte, error) {
 	analyzerTokens := tok.Analyze(story.Content, tokenizer.Normal)
 	tokens := make([]*JpToken, len(analyzerTokens))
 
@@ -123,31 +102,71 @@ func addStory(story Story, response http.ResponseWriter) error {
 		}
 	}
 
+	tokens, err := extractKanji(tokens, response)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": failure to extract kanji"` + err.Error() + `"}`))
+		return nil, nil, err
+	}
+
 	err = getDefinitions(tokens, response)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": failure to get definitions"` + err.Error() + `"}`))
-		return err
+		return nil, nil, err
 	}
 
 	wordIds, err := addDrillWords(tokens, response)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to add words: " + err.Error() + `"}`))
-		return err
+		return nil, nil, err
 	}
 
 	wordsJson, err := json.Marshal(wordIds)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to marshall wordIds: " + err.Error() + `"}`))
-		return err
+		return nil, nil, err
 	}
 
 	tokensJson, err := json.Marshal(tokens)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to marshall tokens: " + err.Error() + `"}`))
+		return nil, nil, err
+	}
+
+	return wordsJson, tokensJson, nil
+}
+
+func addStory(story Story, response http.ResponseWriter) error {
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return err
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND title = $2;`, USER_ID, story.Title)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "story with same title already exists"}`))
+		return fmt.Errorf("story with same title already exists")
+	}
+
+	wordsJson, tokensJson, err := tokenize(story, response)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to tokenize story: " + err.Error() + `"}`))
 		return err
 	}
 
@@ -162,6 +181,30 @@ func addStory(story Story, response http.ResponseWriter) error {
 	}
 	json.NewEncoder(response).Encode("Success adding story")
 	return nil
+}
+
+func extractKanji(tokens []*JpToken, response http.ResponseWriter) ([]*JpToken, error) {
+	newTokens := tokens
+	kanjiMap := make(map[string]bool)
+
+	for _, t := range tokens {
+		var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+		kanji := re.FindAllString(t.Surface, -1)
+
+		for _, s := range kanji {
+			kanjiMap[s] = true
+		}
+	}
+
+	for k := range kanjiMap {
+		tok := JpToken{
+			Surface:  k,
+			BaseForm: k,
+		}
+		newTokens = append(newTokens, &tok)
+	}
+
+	return newTokens, nil
 }
 
 func retokenizeStory(story Story, response http.ResponseWriter) error {
@@ -191,63 +234,10 @@ func retokenizeStory(story Story, response http.ResponseWriter) error {
 		}
 	}
 
-	analyzerTokens := tok.Analyze(story.Content, tokenizer.Normal)
-	tokens := make([]*JpToken, len(analyzerTokens))
-
-	for i, t := range analyzerTokens {
-		features := t.Features()
-		if len(features) < 9 {
-
-			tokens[i] = &JpToken{
-				Surface: t.Surface,
-				POS:     features[0],
-				POS_1:   features[1],
-			}
-
-		} else {
-			tokens[i] = &JpToken{
-				Surface:          t.Surface,
-				POS:              features[0],
-				POS_1:            features[1],
-				POS_2:            features[2],
-				POS_3:            features[3],
-				InflectionalType: features[4],
-				InflectionalForm: features[5],
-				BaseForm:         features[6],
-				Reading:          features[7],
-				Pronunciation:    features[8],
-			}
-		}
-		if tokens[i].BaseForm == "" {
-			tokens[i].BaseForm = tokens[i].Surface
-		}
-	}
-
-	err = getDefinitions(tokens, response)
+	wordsJson, tokensJson, err := tokenize(story, response)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": failure to get definitions"` + err.Error() + `"}`))
-		return err
-	}
-
-	wordIds, err := addDrillWords(tokens, response)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to add words: " + err.Error() + `"}`))
-		return err
-	}
-
-	wordsJson, err := json.Marshal(wordIds)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to marshall wordIds: " + err.Error() + `"}`))
-		return err
-	}
-
-	tokensJson, err := json.Marshal(tokens)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to marshall tokens: " + err.Error() + `"}`))
+		response.Write([]byte(`{ "message": "` + "failure to tokenize story: " + err.Error() + `"}`))
 		return err
 	}
 
@@ -359,6 +349,9 @@ func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, er
 			hasKatakana := len(reHasKatakana.FindStringIndex(token.BaseForm)) > 0
 			if hasKatakana {
 				drillType |= DRILL_TYPE_KATAKANA
+			}
+			if hasKanji && utf8.RuneCountInString(token.BaseForm) == 1 {
+				drillType |= DRILL_TYPE_KANJI
 			}
 
 			for _, entry := range token.Entries {

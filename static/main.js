@@ -91,18 +91,6 @@ storyList.onclick = function (evt) {
         switch (action) {
             case 'drill':
                 break;
-            case 'inc_rank':
-                evt.preventDefault();
-                story.rank++;
-                updateStory(story, true);
-                break;
-            case 'dec_rank':
-                evt.preventDefault();
-                if (story.rank > 0) {
-                    story.rank--;
-                    updateStory(story, true);
-                }
-                break;
             case 'drill_in_progress':
                 break;
             case 'retokenize':
@@ -113,5 +101,13 @@ storyList.onclick = function (evt) {
                 break;
         }
     }
+};
+
+storyList.onchange = function (evt) {
+    var storyId = evt.target.getAttribute('story_id');
+    let story = storiesById[storyId];    
+    story.rank = parseInt(evt.target.value);
+    console.log("changed", parseInt( evt.target.value));
+    updateStory(story, true);
 };
 

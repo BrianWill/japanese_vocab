@@ -50,6 +50,8 @@ import (
 
 var allKanji KanjiDict
 var allEntries JMDict
+var allEntriesByReading map[string][]*JMDictEntry
+var allEntriesByKanjiSpellings map[string][]*JMDictEntry
 
 var tok *tokenizer.Tokenizer
 
@@ -68,6 +70,7 @@ const DRILL_TYPE_GODAN_GU = 256
 const DRILL_TYPE_GODAN_MU = 512
 const DRILL_TYPE_GODAN_BU = 1024
 const DRILL_TYPE_GODAN_NU = 2048
+const DRILL_TYPE_KANJI = 4096
 const DRILL_TYPE_GODAN = DRILL_TYPE_GODAN_SU | DRILL_TYPE_GODAN_RU | DRILL_TYPE_GODAN_U | DRILL_TYPE_GODAN_TSU |
 	DRILL_TYPE_GODAN_KU | DRILL_TYPE_GODAN_GU | DRILL_TYPE_GODAN_MU | DRILL_TYPE_GODAN_BU | DRILL_TYPE_GODAN_NU
 
@@ -108,6 +111,14 @@ func main() {
 	duration = time.Since(start)
 	fmt.Println("time to load entries: ", duration)
 
+	start = time.Now()
+	buildEntryMaps()
+	if err != nil {
+		panic(err)
+	}
+	duration = time.Since(start)
+	fmt.Println("time to build entry maps: ", duration)
+
 	// [START setting_port]
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -136,6 +147,32 @@ func main() {
 		log.Fatal(err)
 	}
 	// [END setting_port]
+}
+
+func buildEntryMaps() {
+	allEntriesByKanjiSpellings = make(map[string][]*JMDictEntry)
+	allEntriesByReading = make(map[string][]*JMDictEntry)
+	for i, entry := range allEntries.Entries {
+		for _, k_ele := range entry.KanjiSpellings {
+			if k_ele.KanjiSpelling != "" {
+				if entries, ok := allEntriesByKanjiSpellings[k_ele.KanjiSpelling]; ok {
+					allEntriesByKanjiSpellings[k_ele.KanjiSpelling] = append(entries, &allEntries.Entries[i])
+				} else {
+					allEntriesByKanjiSpellings[k_ele.KanjiSpelling] = []*JMDictEntry{&allEntries.Entries[i]}
+				}
+			}
+		}
+
+		for _, r_ele := range entry.Readings {
+			if r_ele.Reading != "" {
+				if entries, ok := allEntriesByReading[r_ele.Reading]; ok {
+					allEntriesByReading[r_ele.Reading] = append(entries, &allEntries.Entries[i])
+				} else {
+					allEntriesByReading[r_ele.Reading] = []*JMDictEntry{&allEntries.Entries[i]}
+				}
+			}
+		}
+	}
 }
 
 func makeSqlDB() {

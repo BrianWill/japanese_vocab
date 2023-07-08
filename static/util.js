@@ -83,7 +83,7 @@ function getKanji(str) {
 }
 
 function updateWord(word) {
-    let data = {...word};
+    let data = { ...word };
     delete data.definitions;
     fetch('/update_word', {
         method: 'POST', // or 'PUT'
@@ -142,7 +142,7 @@ function displayEntry(entry) {
             <span class="glosses">${s.glosses.map(x => x.value).join('; &nbsp;&nbsp;')}</span>
         </span>`;
     }
-    
+
     return `<div class="entry">
                 <div class="word">
                     <div class="readings">${readings}</div>
@@ -199,7 +199,7 @@ function timeSince(date) {
     var seconds = Math.floor((new Date() - date) / 1000);
     var interval = seconds / 86400;
     return Math.floor(interval);
-    
+
 
     // var interval = seconds / 31536000;
     // if (interval > 1) {
@@ -242,15 +242,23 @@ function updateStoryList(stories) {
     function storyRow(s) {
         return `<tr>
             <td><a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a></td>
-            <td><a story_id="${s.id}" action="dec_rank" href="#">-</a>
-                <span>${s.rank}</span>
-                <a story_id="${s.id}" action="inc_rank" href="#">+</a>
+            <td>
+            <select name="rank" class="rank_select" story_id="${s.id}">
+                <option value="5" ${s.rank === 5 ? 'selected' : ''}>5</option>
+                <option value="4" ${s.rank === 4 ? 'selected' : ''}>4</option>
+                <option value="3" ${s.rank === 3 ? 'selected' : ''}>3</option>
+                <option value="2" ${s.rank === 2 ? 'selected' : ''}>2</option>
+                <option value="1" ${s.rank === 1 ? 'selected' : ''}>1</option>
+                <option value="0" ${s.rank === 0 ? 'selected' : ''}>0</option>
+            </select>
             </td>
-            <td><span>${s.read_count}</span></td>
-            <td><span>${timeSince(s.date_last_read * 1000)}</span></td>
-            <td><span>${timeSince(s.date_added * 1000)}</span></td>
             <td><a class="story_title rank${s.rank}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
+
+        /* <td><span>${s.read_count}</span></td>
+                    <td><span>${timeSince(s.date_last_read * 1000)}</span></td>
+                    <td><span>${timeSince(s.date_added * 1000)}</span></td>
+                     */
 
         //<td><a action="retokenize" story_id="${s.id}" href="#">retokenize</a></td>
     }
@@ -261,22 +269,12 @@ function updateStoryList(stories) {
 
     let html = `<table class="story_table">
             <tr>
-            <th>Drill words</th>
-            <th>Rank</th>
-            <th>Read count</th>
-            <th>Days ago last read</th>
-            <th>Days ago created</th>
-            <th></th>
-            </tr>
-            <tr>
                 <td class="story_table_section" colspan="6">Stories&nbsp;&nbsp; 
                     <a action="drill_in_progress" href="/words.html?storyId=${DRILL_ALL_IN_PROGRESS}">drill all words of top rank stories</a>
                 </td>
             </tr>`;
     for (let s of stories) {
-        
         html += storyRow(s);
-        
     }
     storyList.innerHTML = html + '</table>';
 };

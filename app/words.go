@@ -195,6 +195,8 @@ func isDrillType(drillType int, requestedType string) bool {
 	switch requestedType {
 	case "all":
 		return true
+	case "kanji":
+		return (drillType & DRILL_TYPE_KANJI) > 0
 	case "ichidan":
 		return (drillType & DRILL_TYPE_ICHIDAN) > 0
 	case "godan":
