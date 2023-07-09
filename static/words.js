@@ -69,7 +69,6 @@ function displayWords() {
         return `<div class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
                     <div class="countdown">${word.countdown}</div>
-                    <div class="drill_count">${word.drill_count}</div>
                 </div>`;
     }
 

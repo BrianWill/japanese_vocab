@@ -82,6 +82,26 @@ function openStory(id) {
 }
 
 
+resetStoryWordCountdowns = function (storyId) {
+    let data = { id:  parseInt(storyId) };    
+
+    fetch('/story_reset_countdowns', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Success:', data);
+            getStoryList();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+};
+
+
 storyList.onclick = function (evt) {
     if (evt.target.tagName == 'A') {
         var storyId = evt.target.getAttribute('story_id');
@@ -90,6 +110,10 @@ storyList.onclick = function (evt) {
         var action = evt.target.getAttribute('action');
         switch (action) {
             case 'drill':
+                break;
+            case 'reset_story_word_countdowns':
+                evt.preventDefault();
+                resetStoryWordCountdowns(storyId);
                 break;
             case 'drill_in_progress':
                 break;

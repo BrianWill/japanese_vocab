@@ -252,6 +252,9 @@ function updateStoryList(stories) {
                 <option value="0" ${s.rank === 0 ? 'selected' : ''}>0</option>
             </select>
             </td>
+            <td>
+                <a action="reset_story_word_countdowns" story_id="${s.id}" href="#">reset</a>
+            </td>
             <td><a class="story_title rank${s.rank}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
 

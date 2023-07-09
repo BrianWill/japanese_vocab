@@ -189,7 +189,7 @@ func extractKanji(tokens []*JpToken, response http.ResponseWriter) ([]*JpToken, 
 
 	for _, t := range tokens {
 		var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-		kanji := re.FindAllString(t.Surface, -1)
+		kanji := re.FindAllString(t.Surface+t.BaseForm, -1)
 
 		for _, s := range kanji {
 			kanjiMap[s] = true
@@ -197,6 +197,7 @@ func extractKanji(tokens []*JpToken, response http.ResponseWriter) ([]*JpToken, 
 	}
 
 	for k := range kanjiMap {
+		fmt.Println("FOUND KANJI: ", k)
 		tok := JpToken{
 			Surface:  k,
 			BaseForm: k,
@@ -262,6 +263,8 @@ func filterPartsOfSpeech(tokens []*JpToken) []*JpToken {
 			continue
 		} else if t.Surface == " " {
 			continue
+		} else if t.POS == "" { // kanji added in extractKanji()
+			filteredTokens = append(filteredTokens, t)
 		} else if t.POS == "動詞" && t.POS_1 == "非自立" { // auxilliary verb
 			filteredTokens = append(filteredTokens, t)
 		} else if t.POS == "副詞" { // adverb
@@ -343,6 +346,8 @@ func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, er
 			rows.Scan(&id)
 			idsByBaseForm[token.BaseForm] = id
 			wordIds = append(wordIds, id)
+
+			// todo update
 			//fmt.Printf("existing word: %s \t %d\n", token.BaseForm, id)
 		} else {
 			drillType := 0
@@ -371,8 +376,8 @@ func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, er
 			fmt.Printf("\nadding word: %s %d \t %d\n", token.BaseForm, len(token.Entries), id)
 
 			insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, user, countdown, drill_count, 
-					read_count, date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
-				token.BaseForm, USER_ID, INITIAL_COUNTDOWN, 0, 0, unixtime, 0, unixtime, 0, entriesJson, drillType)
+					read_count, date_last_read, date_last_drill, date_added, date_last_wrong, definitions, increment, drill_type) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);`,
+				token.BaseForm, USER_ID, COUNTDOWN_MAX, 0, 0, unixtime, 0, unixtime, 0, entriesJson, COUNTDOWN_MAX, drillType)
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
@@ -418,31 +423,38 @@ func getDefinitions(tokens []*JpToken, response http.ResponseWriter) error {
 		hasKanji := len(reHasKanji.FindStringIndex(searchTerm)) > 0
 
 		if hasKanji {
-			//wordQuery = bson.D{{"kanji_spellings.kanji_spelling", searchTerm}}
-			for _, entry := range allEntries.Entries {
-				for _, k_ele := range entry.KanjiSpellings {
-					if k_ele.KanjiSpelling == searchTerm {
-						entries = append(entries, entry)
-						break
-					}
-				}
-			}
-		} else {
-			//wordQuery = bson.D{{"readings.reading", searchTerm}}
-			for _, entry := range allEntries.Entries {
-				for _, r_ele := range entry.Readings {
-					if r_ele.Reading == searchTerm {
-						entries = append(entries, entry)
-						break
-					}
-				}
+			for _, e := range allEntriesByKanjiSpellings[searchTerm] {
+				entries = append(entries, *e)
 			}
 
+			// //wordQuery = bson.D{{"kanji_spellings.kanji_spelling", searchTerm}}
+			// for _, entry := range allEntries.Entries {
+			// 	for _, k_ele := range entry.KanjiSpellings {
+			// 		if k_ele.KanjiSpelling == searchTerm {
+			// 			entries = append(entries, entry)
+			// 			break
+			// 		}
+			// 	}
+			// }
+		} else {
+			for _, e := range allEntriesByReading[searchTerm] {
+				entries = append(entries, *e)
+			}
+
+			// //wordQuery = bson.D{{"readings.reading", searchTerm}}
+			// for _, entry := range allEntries.Entries {
+			// 	for _, r_ele := range entry.Readings {
+			// 		if r_ele.Reading == searchTerm {
+			// 			entries = append(entries, entry)
+			// 			break
+			// 		}
+			// 	}
+			// }
 		}
 
-		// too many matching words isn't useful (todo: let user pick best definition?)
-		if len(entries) > 8 {
-			entries = entries[:8]
+		// too many matching entries is just noise
+		if len(entries) > 10 {
+			entries = entries[:10]
 		}
 
 		tokens[i].Entries = entries
@@ -662,6 +674,100 @@ func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
 		return
+	}
+
+	json.NewEncoder(response).Encode(bson.M{"status": "success"})
+}
+
+func PostStoryResetCountdowns(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	var story Story
+
+	err := json.NewDecoder(request.Body).Decode(&story)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, story.ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
+		return
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&story.Words)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to scan story words: " + err.Error() + `"}`))
+			rows.Close()
+			return
+		}
+	}
+
+	wordIdsMap := make(map[int64]bool)
+
+	rows.Close()
+	var wordIds []int64
+	err = json.Unmarshal([]byte(story.Words), &wordIds)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to unmarshal story words: " + err.Error() + `"}`))
+		return
+	}
+
+	for _, v := range wordIds {
+		wordIdsMap[v] = true
+	}
+
+	// get all words. TODO Maybe at some point with many many words it'll be cheaper to get just the words by id, one by one
+	rows, err = sqldb.Query(`SELECT id, countdown_max FROM words WHERE user = $1;`, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	allWordIds := make([]int64, 0)
+	allWordCountdownMaxVals := make([]int64, 0)
+
+	for rows.Next() {
+		var wordId int64
+		var countdownMax int64
+		err = rows.Scan(&wordId, &countdownMax)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
+			return
+		}
+		allWordIds = append(allWordIds, wordId)
+		allWordCountdownMaxVals = append(allWordCountdownMaxVals, countdownMax)
+	}
+
+	fmt.Println("NUM WORDS ", len(allWordIds), len(allWordCountdownMaxVals))
+
+	for i, id := range allWordIds {
+		if _, ok := wordIdsMap[id]; ok {
+			fmt.Println("update word countdown:", allWordCountdownMaxVals[i], id)
+			_, err = sqldb.Exec(`UPDATE words SET countdown = $1 WHERE id = $2 AND user = $3;`, allWordCountdownMaxVals[i], id, USER_ID)
+			if err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + "failure to update word countdown_max: " + err.Error() + `"}`))
+				return
+			}
+		}
 	}
 
 	json.NewEncoder(response).Encode(bson.M{"status": "success"})

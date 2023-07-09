@@ -135,8 +135,6 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 		}
 	}
 
-	fmt.Println("rank threshold", rankThreshold)
-
 	if rankThreshold != math.MinInt64 {
 		rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND rank >= $2;`, USER_ID, -rankThreshold)
 		if err != nil {

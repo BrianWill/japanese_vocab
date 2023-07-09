@@ -57,7 +57,8 @@ var tok *tokenizer.Tokenizer
 
 const SQL_FILE = "../testsql.db"
 const USER_ID = 0 // TODO for now we hardcode for just one user
-const INITIAL_COUNTDOWN = 5
+const COUNTDOWN_MAX = 5
+
 const DRILL_COOLDOWN = 60 * 60 * 3 // in seconds
 const DRILL_TYPE_KATAKANA = 1
 const DRILL_TYPE_ICHIDAN = 2
@@ -132,6 +133,7 @@ func main() {
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
 	router.HandleFunc("/update_story", UpdateStoryEndpoint).Methods("POST")
+	router.HandleFunc("/story_reset_countdowns", PostStoryResetCountdowns).Methods("POST")
 	router.HandleFunc("/create_story", CreateStoryEndpoint).Methods("POST")
 	router.HandleFunc("/retokenize_story", RetokenizeStoryEndpoint).Methods("POST")
 	router.HandleFunc("/load_stories", LoadStoriesFromDumpEndpoint).Methods("GET")
@@ -200,6 +202,7 @@ func makeSqlDB() {
 			date_last_drill INTEGER NOT NULL,
 			date_last_wrong INTEGER NOT NULL,
 			date_added INTEGER NOT NULL,
+			countdown_max INTEGER NOT NULL,
 			definitions TEXT NOT NULL,
 			FOREIGN KEY(user) REFERENCES users(id))`)
 	if err != nil {
