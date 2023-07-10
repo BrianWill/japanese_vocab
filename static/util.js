@@ -230,7 +230,7 @@ var storiesById = {};
 
 function updateStoryList(stories) {
     stories.sort((a, b) => {
-        let diff = b.rank - a.rank;
+        let diff = b.status - a.status;
         if (diff === 0) {
             return a.date_last_read - b.date_last_read
         }
@@ -243,19 +243,17 @@ function updateStoryList(stories) {
         return `<tr>
             <td><a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a></td>
             <td>
-            <select name="rank" class="rank_select" story_id="${s.id}">
-                <option value="5" ${s.rank === 5 ? 'selected' : ''}>5</option>
-                <option value="4" ${s.rank === 4 ? 'selected' : ''}>4</option>
-                <option value="3" ${s.rank === 3 ? 'selected' : ''}>3</option>
-                <option value="2" ${s.rank === 2 ? 'selected' : ''}>2</option>
-                <option value="1" ${s.rank === 1 ? 'selected' : ''}>1</option>
-                <option value="0" ${s.rank === 0 ? 'selected' : ''}>0</option>
+            <select name="status" class="status_select" story_id="${s.id}">
+                <option value="3" ${s.status === 3 ? 'selected' : ''}>Current</option>
+                <option value="2" ${s.status === 2 ? 'selected' : ''}>Reserve</option>
+                <option value="1" ${s.status === 1 ? 'selected' : ''}>Never read</option>
+                <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
             </select>
             </td>
             <td>
                 <a action="reset_story_word_countdowns" story_id="${s.id}" href="#">reset</a>
             </td>
-            <td><a class="story_title rank${s.rank}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
 
         /* <td><span>${s.read_count}</span></td>
@@ -273,7 +271,7 @@ function updateStoryList(stories) {
     let html = `<table class="story_table">
             <tr>
                 <td class="story_table_section" colspan="6">Stories&nbsp;&nbsp; 
-                    <a action="drill_in_progress" href="/words.html?storyId=${DRILL_ALL_IN_PROGRESS}">drill all words of top rank stories</a>
+                    <a action="drill_in_progress" href="/words.html?storyId=${DRILL_ALL_IN_PROGRESS}">drill all current stories</a>
                 </td>
             </tr>`;
     for (let s of stories) {

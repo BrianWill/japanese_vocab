@@ -69,6 +69,7 @@ function displayWords() {
         return `<div class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
                     <div class="countdown">${word.countdown}</div>
+                    <div class="countdown_max">${word.countdown_max}</div>
                 </div>`;
     }
 
@@ -103,6 +104,60 @@ document.body.onkeydown = async function (evt) {
         if (evt.code === 'KeyS') {
             evt.preventDefault();
             // showWord();
+        // } else if (evt.code === 'Digit1') {  // dec countdown
+        //     evt.preventDefault();
+        //     if (drillSet && drillSet[0]) {
+        //         var word = drillSet[0];
+        //         word.countdown = 1;
+        //         word.countdown_max = 1;
+        //         updateWord(word);
+        //         displayWords();
+        //     }
+        } else if (evt.code === 'Digit2') {  // dec countdown
+            evt.preventDefault();
+            if (drillSet && drillSet[0]) {
+                var word = drillSet[0];
+                word.countdown = 2;
+                word.countdown_max = 2;
+                updateWord(word);
+                displayWords();
+            }
+        // } else if (evt.code === 'Digit3') {  // dec countdown
+        //     evt.preventDefault();
+        //     if (drillSet && drillSet[0]) {
+        //         var word = drillSet[0];
+        //         word.countdown = 3;
+        //         word.countdown_max = 3;
+        //         updateWord(word);
+        //         displayWords();
+        //     }
+        // } else if (evt.code === 'Digit4') {  // dec countdown
+        //     evt.preventDefault();
+        //     if (drillSet && drillSet[0]) {
+        //         var word = drillSet[0];
+        //         word.countdown = 4;
+        //         word.countdown_max = 4;
+        //         updateWord(word);
+        //         displayWords();
+        //     }
+        } else if (evt.code === 'Digit3') {  // dec countdown
+            evt.preventDefault();
+            if (drillSet && drillSet[0]) {
+                var word = drillSet[0];
+                word.countdown = 5;
+                word.countdown_max = 5;
+                updateWord(word);
+                displayWords();
+            }
+        } else if (evt.code === 'Key1') {  // dec countdown
+            evt.preventDefault();
+            if (drillSet && drillSet[0]) {
+                var word = drillSet[0];
+                word.countdown = 0;
+                word.countdown_max = 0;
+                updateWord(word);
+                displayWords();
+            }
         } else if (evt.code === 'Minus') {  // dec countdown
             evt.preventDefault();
             if (drillSet && drillSet[0]) {

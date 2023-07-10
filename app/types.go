@@ -12,7 +12,7 @@ type Story struct {
 	Title        string `json:"title,omitempty"`
 	Link         string `json:"link,omitempty"`
 	Tokens       string `json:"tokens,omitempty"`
-	Rank         int    `json:"rank"`
+	Status       int    `json:"status"`
 	Countdown    int    `json:"countdown"`
 	ReadCount    int    `json:"read_count"`
 	DateLastRead int64  `json:"date_last_read"`
@@ -35,6 +35,7 @@ type DrillWord struct {
 	ID            int64  `json:"id,omitempty"`
 	BaseForm      string `json:"base_form"`
 	Countdown     int    `json:"countdown"`
+	CountdownMax  int    `json:"countdown_max"`
 	DrillCount    int    `json:"drill_count"`
 	ReadCount     int    `json:"read_count"`
 	DateLastRead  int64  `json:"date_last_read"`

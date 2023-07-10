@@ -83,7 +83,7 @@ function openStory(id) {
 
 
 resetStoryWordCountdowns = function (storyId) {
-    let data = { id:  parseInt(storyId) };    
+    let data = { id: parseInt(storyId) };
 
     fetch('/story_reset_countdowns', {
         method: 'POST', // or 'PUT'
@@ -129,9 +129,9 @@ storyList.onclick = function (evt) {
 
 storyList.onchange = function (evt) {
     var storyId = evt.target.getAttribute('story_id');
-    let story = storiesById[storyId];    
-    story.rank = parseInt(evt.target.value);
-    console.log("changed", parseInt( evt.target.value));
+    let story = storiesById[storyId];
+    story.status = parseInt(evt.target.value);
+    console.log("changed", parseInt(evt.target.value));
     updateStory(story, true);
 };
 

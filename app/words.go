@@ -45,7 +45,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, base_form, countdown, drill_count, read_count, 
+	rows, err := sqldb.Query(`SELECT id, base_form, countdown, countdown_max, drill_count, read_count, 
 			date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, date_added FROM words WHERE user = $1;`, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -57,10 +57,12 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	words := make([]DrillWord, 0)
 	for rows.Next() {
 		var word DrillWord
-		err = rows.Scan(&word.ID, &word.BaseForm, &word.Countdown,
+		err = rows.Scan(&word.ID, &word.BaseForm,
+			&word.Countdown, &word.CountdownMax,
 			&word.DrillCount, &word.ReadCount,
 			&word.DateLastRead, &word.DateLastDrill,
-			&word.Definitions, &word.DrillType, &word.DateLastWrong, &word.DateAdded)
+			&word.Definitions, &word.DrillType,
+			&word.DateLastWrong, &word.DateAdded)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
@@ -136,7 +138,7 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 	}
 
 	if rankThreshold != math.MinInt64 {
-		rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND rank >= $2;`, USER_ID, -rankThreshold)
+		rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND status >= $2;`, USER_ID, -rankThreshold)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
