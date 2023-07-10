@@ -43,7 +43,7 @@ function openStory(id) {
                 let word = story.words[key];
                 word.definitions = JSON.parse(word.definitions);
             }
-            console.log(`/story/${id} success:`, story);
+            //console.log(`/story/${id} success:`, story);
             displayStory(data);
         })
         .catch((error) => {
@@ -123,7 +123,6 @@ function displayStory(story) {
 
         prior = t;
     }
-    console.log(html);
     tokenizedText.innerHTML = html + '</p>';
 
 }
@@ -140,8 +139,8 @@ tokenizedText.onmousedown = function (evt) {
         if (evt.ctrlKey) {  // inc countdown of the word
             let token = story.tokens[index];
             let word = story.words[token.wordId];
-            if (word.countdown < MAX_WORD_COUNTDOWN) {
-                word.countdown++;
+            if (word.countdown < word.countdown_max) {
+                word.countdown = word.countdown_max;
                 updateWord(word);
             }
         }   

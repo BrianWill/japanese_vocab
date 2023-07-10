@@ -246,7 +246,7 @@ function updateStoryList(stories) {
             <td>
             <select name="status" class="status_select" story_id="${s.id}">
                 <option value="3" ${s.status === 3 ? 'selected' : ''}>Current</option>
-                <option value="2" ${s.status === 2 ? 'selected' : ''}>Reserve</option>
+                <option value="2" ${s.status === 2 ? 'selected' : ''}>Read</option>
                 <option value="1" ${s.status === 1 ? 'selected' : ''}>Never read</option>
                 <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
             </select>

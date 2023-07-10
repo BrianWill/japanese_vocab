@@ -8,7 +8,7 @@ var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var definitionsDiv = document.getElementById('definitions');
-var ignoreCountdownCheckbox = document.getElementById('ignore_countdown_checkbox');
+var drillFilterSelect = document.getElementById('drill_filter');
 
 const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
 
@@ -29,7 +29,7 @@ function newDrill() {
         body: JSON.stringify({
             count: parseInt(drillCountInput.value),
             drill_type: drillTypeSelect.value,
-            ignore_cooldown: ignoreCountdownCheckbox.checked,
+            drill_filter: drillFilterSelect.value,
             storyIds: ids
         })
     }).then((response) => response.json())
@@ -54,8 +54,8 @@ function newDrill() {
                 }
             }
 
-            drillInfoH.innerHTML = `<h3>${titles.join(', ')}</h3>${data.wordAllCount} words (${data.wordOffCooldownCount} 
-                    active words off cooldown); ${data.wordMatchCount} words matching filter`;
+            drillInfoH.innerHTML = `<h3>${titles.join(', ')}</h3>${data.wordMatchCount} words matching filter<br>${data.wordAllCount}
+                    active words off cooldown)`;
             displayWords();
         })
         .catch((error) => {
@@ -69,11 +69,11 @@ drillCountInput.oninput = function (evt) {
 
 drillCountInput.onchange = newDrill;
 drillTypeSelect.onchange = newDrill;
-ignoreCountdownCheckbox.onchange = newDrill;
+drillFilterSelect.onchange = newDrill;
 
 function displayWords() {
-    function wordInfo(word, answered) {
-        return `<div class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
+    function wordInfo(word, idx, answered) {
+        return `<div index="${idx}" class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
                     <div class="countdown">${word.countdown}</div>
                     <div class="countdown_max">${word.countdown_max}</div>
@@ -82,15 +82,18 @@ function displayWords() {
 
     html = `<h3 id="current_drill_count">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
 
+    idx = 0;
     for (let word of drillSet) {
         if (!word.answered) {
-            html += wordInfo(word, false);
+            html += wordInfo(word, idx, false);
+            idx++;
         }
     }
 
     for (let word of answeredSet) {
         if (word.answered) {
-            html += wordInfo(word, true);
+            html += wordInfo(word, idx, true);
+            idx++;
         }
     }
 
@@ -179,6 +182,23 @@ document.body.onkeydown = async function (evt) {
             }
             displayWords();
         }
+    }
+};
+
+
+cardsDiv.onclick = function (evt) {
+    evt.preventDefault();
+    var idx = parseInt(evt.target.getAttribute('index'));
+    if (idx && idx < drillSet.length - 1) {
+        console.log("clicked card", idx);
+        var front = drillSet.slice(0, idx);
+        var back = drillSet.slice(idx);
+        drillSet = back;
+        answeredSet = front.concat(answeredSet);
+        for (let word of answeredSet) {
+            word.answered = true;
+        }
+        displayWords();
     }
 };
 

@@ -243,6 +243,12 @@ h3 {
     width: 12em;
 }
 
+#drill_filter {
+    font-size: 100%;
+    margin: 5px;
+    width: 18em;
+}
+
 #drill_wrong {
     font-size: 100%;
     margin: 5px;

@@ -24,10 +24,10 @@ type StoryList struct {
 }
 
 type DrillRequest struct {
-	Count          int     `json:"count,omitempty"`
-	Type           string  `json:"drill_type,omitempty"`
-	StoryIds       []int64 `json:"storyIds,omitempty"`
-	IgnoreCooldown bool    `json:"ignore_cooldown,omitempty"`
+	Count    int     `json:"count,omitempty"`
+	Type     string  `json:"drill_type,omitempty"`
+	Filter   string  `json:"drill_filter,omitempty"`
+	StoryIds []int64 `json:"storyIds,omitempty"`
 }
 
 type DrillWord struct {

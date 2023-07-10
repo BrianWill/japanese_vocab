@@ -591,7 +591,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		return string(args)
 	}
 
-	query := fmt.Sprintf(`SELECT id, base_form, countdown, drill_count, read_count, 
+	query := fmt.Sprintf(`SELECT id, base_form, countdown, countdown_max, drill_count, read_count, 
 		date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, 
 		date_added FROM words WHERE user = %d AND id IN (%s);`, USER_ID, placeholders(len(wordIds)))
 	args := make([]interface{}, len(wordIds))
@@ -610,7 +610,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	words := make(map[int64]DrillWord)
 	for rows.Next() {
 		var word DrillWord
-		err = rows.Scan(&word.ID, &word.BaseForm, &word.Countdown,
+		err = rows.Scan(&word.ID, &word.BaseForm, &word.Countdown, &word.CountdownMax,
 			&word.DrillCount, &word.ReadCount,
 			&word.DateLastRead, &word.DateLastDrill,
 			&word.Definitions, &word.DrillType, &word.DateLastWrong, &word.DateAdded)

@@ -20,7 +20,11 @@
         <option value="ichidan">ichidan verbs</option>
         <option value="godan">godan verbs</option>
     </select>
-    <label>Ignore cooldown:</label><input id="ignore_countdown_checkbox" type="checkbox">
+    <select id="drill_filter" name="drill_filter">
+        <option value="normal">off cooldown & non-zero countdown</option>
+        <option value="oncooldown">on cooldown</option>
+        <option value="zerocountdown">countdown is zero</option>
+    </select>
     <br>
     <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
     <div id="results">
