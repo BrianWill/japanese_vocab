@@ -9,15 +9,9 @@
 </head>
 
 <body>
-    <div id="top_link"><a href="/">stories</a><a href="/dictionary.html">dictionary</a></div>
+    <div id="top_link"><a href="/">stories</a></div>
     <h3 id="drill_info"></h3>
-    <input id="drill_count" type="range" step="10" value="50" min="10" max="90"><span id="drill_count_text"></span>
-    &nbsp;&nbsp;
-    <select id="drill_wrong" name="drill_wrong">
-        <option value="0">wrong or right</option>
-        <option value="180">wrong in last 3 hours</option>
-        <option value="3600">wrong in last day</option>
-    </select>
+    <input id="drill_count" type="range" step="10" value="30" min="10" max="90"><span id="drill_count_text"></span>
     &nbsp;&nbsp;
     <select id="drill_type" name="drill_type">
         <option value="all">words of all kinds</option>
@@ -25,17 +19,6 @@
         <option value="katakana">katakana words</option>
         <option value="ichidan">ichidan verbs</option>
         <option value="godan">godan verbs</option>
-    </select>
-    &nbsp;&nbsp;
-    <select multiple id="drill_story" name="drill_story">
-        <option value="all">all stories</option>
-        <option value="all_in_progress">all stories</option>
-        <option value="story1">Story 1</option>
-        <option value="story2">Story 2</option>
-        <option value="story2">Story 3</option>
-        <option value="story2">Story 4</option>
-        <option value="story2">Story 5</option>
-        <option value="story2">Story 6</option>
     </select>
     <label>Ignore cooldown:</label><input id="ignore_countdown_checkbox" type="checkbox">
     <br>

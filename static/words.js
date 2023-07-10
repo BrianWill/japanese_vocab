@@ -4,8 +4,6 @@ var drillInfoH = document.getElementById('drill_info');
 var drillCountInput = document.getElementById('drill_count');
 var drillCountInputText = document.getElementById('drill_count_text');
 var drillTypeSelect = document.getElementById('drill_type');
-var drillWrongSelect = document.getElementById('drill_wrong');
-var drillStorySelect = document.getElementById('drill_story');
 var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
@@ -16,15 +14,12 @@ const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
 
 var drillSet = null;
 var answeredSet = [];
+var storyIds = {};
+var stories;
 
 function newDrill() {
-    var storyIds = [];
-    for (let option of drillStorySelect.options) {
-        if (option.selected) {
-            storyIds.push(parseInt(option.value))
-        }
-    }
-    console.log('storyIds: ', storyIds);
+
+    let ids = Object.keys(storyIds).map(x => parseInt(x));
 
     fetch('words', {
         method: 'POST', // or 'PUT'
@@ -34,9 +29,8 @@ function newDrill() {
         body: JSON.stringify({
             count: parseInt(drillCountInput.value),
             drill_type: drillTypeSelect.value,
-            wrong: parseInt(drillWrongSelect.value),
             ignore_cooldown: ignoreCountdownCheckbox.checked,
-            storyIds: storyIds
+            storyIds: ids
         })
     }).then((response) => response.json())
         .then((data) => {
@@ -45,7 +39,22 @@ function newDrill() {
             shuffle(data.words);
             drillSet = data.words;
             answeredSet = [];
-            drillInfoH.innerHTML = `${data.wordAllCount} words (${data.wordOffCooldownCount} 
+
+            var titles = [];
+            
+            if (ids.includes(-1)) {
+                titles.push('ALL CURRENT STORIES');
+            }
+            if (ids.includes(0)) {
+                titles.push('ALL STORIES');
+            }
+            for (let story of stories) {
+                if (ids.includes(story.id)) {
+                    titles.push(story.title);
+                }
+            }
+
+            drillInfoH.innerHTML = `<h3>${titles.join(', ')}</h3>${data.wordAllCount} words (${data.wordOffCooldownCount} 
                     active words off cooldown); ${data.wordMatchCount} words matching filter`;
             displayWords();
         })
@@ -60,9 +69,7 @@ drillCountInput.oninput = function (evt) {
 
 drillCountInput.onchange = newDrill;
 drillTypeSelect.onchange = newDrill;
-drillWrongSelect.onchange = newDrill;
 ignoreCountdownCheckbox.onchange = newDrill;
-drillStorySelect.onchange = newDrill;
 
 function displayWords() {
     function wordInfo(word, answered) {
@@ -104,16 +111,7 @@ document.body.onkeydown = async function (evt) {
         if (evt.code === 'KeyS') {
             evt.preventDefault();
             // showWord();
-        // } else if (evt.code === 'Digit1') {  // dec countdown
-        //     evt.preventDefault();
-        //     if (drillSet && drillSet[0]) {
-        //         var word = drillSet[0];
-        //         word.countdown = 1;
-        //         word.countdown_max = 1;
-        //         updateWord(word);
-        //         displayWords();
-        //     }
-        } else if (evt.code === 'Digit2') {  // dec countdown
+        } else if (evt.code === 'KeyW') {  // dec countdown
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
@@ -122,25 +120,7 @@ document.body.onkeydown = async function (evt) {
                 updateWord(word);
                 displayWords();
             }
-        // } else if (evt.code === 'Digit3') {  // dec countdown
-        //     evt.preventDefault();
-        //     if (drillSet && drillSet[0]) {
-        //         var word = drillSet[0];
-        //         word.countdown = 3;
-        //         word.countdown_max = 3;
-        //         updateWord(word);
-        //         displayWords();
-        //     }
-        // } else if (evt.code === 'Digit4') {  // dec countdown
-        //     evt.preventDefault();
-        //     if (drillSet && drillSet[0]) {
-        //         var word = drillSet[0];
-        //         word.countdown = 4;
-        //         word.countdown_max = 4;
-        //         updateWord(word);
-        //         displayWords();
-        //     }
-        } else if (evt.code === 'Digit3') {  // dec countdown
+        } else if (evt.code === 'KeyE') {  // dec countdown
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
@@ -149,36 +129,12 @@ document.body.onkeydown = async function (evt) {
                 updateWord(word);
                 displayWords();
             }
-        } else if (evt.code === 'Key1') {  // dec countdown
+        } else if (evt.code === 'KeyQ') {  // dec countdown
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
                 word.countdown = 0;
                 word.countdown_max = 0;
-                updateWord(word);
-                displayWords();
-            }
-        } else if (evt.code === 'Minus') {  // dec countdown
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.countdown--;
-                updateWord(word);
-                displayWords();
-            }
-        } else if (evt.code === 'Equal') {  // inc countdown
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.countdown++;
-                updateWord(word);
-                displayWords();
-            }
-        } else if (evt.code === 'Backspace') {  // set countdown to 0
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.countdown = 0;
                 word.answered = true;
                 updateWord(word);
                 drillSet.shift();
@@ -264,18 +220,6 @@ function showWord() {
     definitionsDiv.style.visibility = 'visible';
 }
 
-function updateStoryDrillList(stories, storyIds) {
-    html = `<option value="0">all stories</option>`;
-    for (let i = 6; i > 0; i--) {
-        html += `<option value="${-i}" ${storyIds[-i] ? 'selected' : 0}>ALL STORIES OF RANK ${i} OR HIGHER </option>`;    
-    }
-    for (let story of stories) {
-        html += `<option value="${story.id}" ${storyIds[story.id] ? 'selected' : 0}>${story.title}</option>`;
-    }
-    drillStorySelect.innerHTML = html;
-}
-
-
 document.body.onload = function (evt) {
     console.log('on page load');
 
@@ -288,19 +232,19 @@ document.body.onload = function (evt) {
         .then((data) => {
             console.log('Stories list success:', data);
 
-            let storyIds = {};
+            storyIds = {};
             var url = new URL(window.location.href);
             if (url.searchParams && url.searchParams.has("storyId")) {
-                storyIdsList = url.searchParams.get("storyId").split(',');
+                let storyIdsList = url.searchParams.get("storyId").split(',');
                 for (let idStr of storyIdsList) {
                     var id = parseInt(idStr.trim());
                     storyIds[id] = true;
                 }
             }
             console.log('story ids', storyIds);
-            updateStoryDrillList(data, storyIds);
 
             drillCountInputText.innerHTML = drillCountInput.value;
+            stories = data;
             newDrill();
         })
         .catch((error) => {

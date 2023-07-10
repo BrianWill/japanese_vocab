@@ -25,7 +25,6 @@ type StoryList struct {
 
 type DrillRequest struct {
 	Count          int     `json:"count,omitempty"`
-	WrongWithin    int64   `json:"wrong,omitempty"`
 	Type           string  `json:"drill_type,omitempty"`
 	StoryIds       []int64 `json:"storyIds,omitempty"`
 	IgnoreCooldown bool    `json:"ignore_cooldown,omitempty"`

@@ -115,8 +115,6 @@ storyList.onclick = function (evt) {
                 evt.preventDefault();
                 resetStoryWordCountdowns(storyId);
                 break;
-            case 'drill_in_progress':
-                break;
             case 'retokenize':
                 console.log('story to retokenize', storiesById[storyId]);
                 retokenizeStory(story);

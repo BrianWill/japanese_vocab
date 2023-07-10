@@ -35,7 +35,6 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	var drillRequest DrillRequest
 	json.NewDecoder(request.Body).Decode(&drillRequest)
-	drillRequest.WrongWithin *= 60
 
 	sqldb, err := sql.Open("sqlite3", SQL_FILE)
 	if err != nil {
@@ -95,11 +94,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 			continue
 		}
 
-		if drillRequest.WrongWithin > 0 {
-			if (t - w.DateLastWrong) < drillRequest.WrongWithin {
-				temp = append(temp, w)
-			}
-		} else if drillRequest.IgnoreCooldown || isOffCooldown {
+		if drillRequest.IgnoreCooldown || isOffCooldown {
 			temp = append(temp, w)
 		}
 	}
