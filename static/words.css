@@ -129,19 +129,24 @@ h3 {
     align-items: baseline;
 }
 
-.countdown {
+.rank {
     margin-left: auto;
     margin-right: 20px;
     font-size: 50%;
     color: #3b3b3b;
 }
 
-.countdown_max {
-    margin-right: 20px;
-    font-size: 30%;
-    color: #3b3b3b;
+#drill_info {
+    font-size: 80%;
 }
 
+#drill_info .rank_number {
+    color: #767676;
+}
+
+#drill_info .cooldown {
+    color: #767676;
+}
 
 .drill_word:not(.answered):nth-child(2) {
     border: #dfdfdf solid 3px;
@@ -267,4 +272,9 @@ h3 {
 #top_link a {
     color: rgb(117, 117, 117);
     padding: 1em;
+}
+
+#rank_slider {
+    display: inline-block;
+    width: 200px;
 }

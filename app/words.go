@@ -48,7 +48,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, base_form, countdown, countdown_max, drill_count, read_count, 
+	rows, err := sqldb.Query(`SELECT id, base_form, rank, drill_count, 
 			date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, date_added FROM words WHERE user = $1;`, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -61,8 +61,8 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var word DrillWord
 		err = rows.Scan(&word.ID, &word.BaseForm,
-			&word.Countdown, &word.CountdownMax,
-			&word.DrillCount, &word.ReadCount,
+			&word.Rank,
+			&word.DrillCount,
 			&word.DateLastRead, &word.DateLastDrill,
 			&word.Definitions, &word.DrillType,
 			&word.DateLastWrong, &word.DateAdded)
@@ -81,15 +81,12 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	selectOnCooldown := drillRequest.Filter == DRILL_FILTER_ONCOOLDOWN
-	selectCountdownZero := drillRequest.Filter == DRILL_FILTER_ZEROCOUNTDOWN
+	countsByRank := [4]int{}
+	cooldownCountsByRank := [4]int{}
 
-	wordsZeroCountdown := 0
-	wordsOnCooldownCount := 0
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
-		isCountdownZero := w.Countdown <= 0
 		isInStory := allStories || storyWords[w.ID]
 		isOnCooldown := ((t-w.DateLastDrill) < DRILL_COOLDOWN || (t-w.DateLastWrong) < DRILL_COOLDOWN)
 		isDrillType := isDrillType(w.DrillType, drillRequest.Type)
@@ -98,26 +95,18 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 			continue
 		}
 
+		if w.Rank < drillRequest.MinRank || w.Rank > drillRequest.MaxRank {
+			continue
+		}
+
 		if isOnCooldown {
-			wordsOnCooldownCount++
+			cooldownCountsByRank[w.Rank-1]++
+		} else {
+			countsByRank[w.Rank-1]++
 		}
 
-		if isCountdownZero {
-			wordsZeroCountdown++
-		}
-
-		if selectCountdownZero {
-			if !isCountdownZero {
-				continue
-			}
-		} else if selectOnCooldown {
-			if isCountdownZero || !isOnCooldown {
-				continue
-			}
-		} else { // normal
-			if isOnCooldown || isCountdownZero {
-				continue
-			}
+		if isOnCooldown && !drillRequest.IgnoreCooldown {
+			continue
 		}
 
 		temp = append(temp, w)
@@ -126,14 +115,14 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	wordMatchCount := len(words)
 	count := drillRequest.Count
-	if count > 0 && count < len(words) && !selectOnCooldown && !selectCountdownZero {
+	if count > 0 && count < len(words) {
 		words = words[:count]
 	}
 
 	json.NewEncoder(response).Encode(bson.M{
-		"wordsOnCooldownCount": wordsOnCooldownCount,
 		"wordAllCount":         wordAllCount,
-		"wordsZeroCountdown":   wordsZeroCountdown,
+		"countsByRank":         countsByRank,
+		"cooldownCountsByRank": cooldownCountsByRank,
 		"words":                words,
 		"wordMatchCount":       wordMatchCount})
 }
@@ -253,12 +242,8 @@ func UpdateWordEndpoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	if word.CountdownMax > word.Countdown {
-		word.Countdown = word.CountdownMax
-	}
-
-	_, err = sqldb.Exec(`UPDATE words SET countdown = $1, countdown_max = $2, drill_count = $3, date_last_drill = $4, date_last_wrong = $5  WHERE base_form = $6 AND user = $7;`,
-		word.Countdown, word.CountdownMax, word.DrillCount, word.DateLastDrill, word.DateLastWrong, word.BaseForm, USER_ID)
+	_, err = sqldb.Exec(`UPDATE words SET rank = $1, drill_count = $2, date_last_drill = $3, date_last_wrong = $4  WHERE base_form = $5 AND user = $6;`,
+		word.Rank, word.DrillCount, word.DateLastDrill, word.DateLastWrong, word.BaseForm, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to update drill word: " + err.Error() + `"}`))

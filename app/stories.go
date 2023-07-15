@@ -171,9 +171,9 @@ func addStory(story Story, response http.ResponseWriter) error {
 	}
 
 	date := time.Now().Unix()
-	_, err = sqldb.Exec(`INSERT INTO stories (user, words, content, title, link, tokens, countdown, read_count, date_last_read, date_added, status) 
-			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
-		USER_ID, wordsJson, story.Content, story.Title, story.Link, tokensJson, 5, 0, date, date, INITIAL_STATUS)
+	_, err = sqldb.Exec(`INSERT INTO stories (user, words, content, title, link, tokens, date_last_read, date_added, status) 
+			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+		USER_ID, wordsJson, story.Content, story.Title, story.Link, tokensJson, date, date, INITIAL_STATUS)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to insert story: " + err.Error() + `"}`))
@@ -217,8 +217,8 @@ func retokenizeStory(story Story, response http.ResponseWriter) error {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT title, link, tokens, content, countdown, date_added, 
-		date_last_read, read_count FROM stories WHERE user = $1 AND id = $2;`, USER_ID, story.ID)
+	rows, err := sqldb.Query(`SELECT title, link, tokens, content, date_added, 
+		date_last_read FROM stories WHERE user = $1 AND id = $2;`, USER_ID, story.ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -227,8 +227,8 @@ func retokenizeStory(story Story, response http.ResponseWriter) error {
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content, &story.Countdown,
-			&story.DateAdded, &story.DateLastRead, &story.ReadCount); err != nil {
+		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content,
+			&story.DateAdded, &story.DateLastRead); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
 			return err
@@ -375,9 +375,9 @@ func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, er
 
 			fmt.Printf("\nadding word: %s %d \t %d\n", token.BaseForm, len(token.Entries), id)
 
-			insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, user, countdown, drill_count, 
-					read_count, date_last_read, date_last_drill, date_added, date_last_wrong, definitions, increment, drill_type) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);`,
-				token.BaseForm, USER_ID, COUNTDOWN_MAX, 0, 0, unixtime, 0, unixtime, 0, entriesJson, COUNTDOWN_MAX, drillType)
+			insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, user, 
+					date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type) VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+				token.BaseForm, USER_ID, unixtime, 0, unixtime, 0, entriesJson, drillType)
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
@@ -504,7 +504,7 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, title, link, countdown, status, read_count, date_last_read, date_added FROM stories WHERE user = $1;`, USER_ID)
+	rows, err := sqldb.Query(`SELECT id, title, link, status, date_last_read, date_added FROM stories WHERE user = $1;`, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -515,8 +515,8 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	var stories []Story
 	for rows.Next() {
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &story.Countdown, &story.Status,
-			&story.ReadCount, &story.DateLastRead, &story.DateAdded); err != nil {
+		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &story.Status,
+			&story.DateLastRead, &story.DateAdded); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -550,8 +550,8 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT title, link, tokens, content, countdown, date_added, 
-		date_last_read, read_count, words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
+	rows, err := sqldb.Query(`SELECT title, link, tokens, content, date_added, 
+		date_last_read, words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -561,8 +561,8 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	var story Story
 	for rows.Next() {
-		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content, &story.Countdown,
-			&story.DateAdded, &story.DateLastRead, &story.ReadCount, &story.Words); err != nil {
+		if err := rows.Scan(&story.Title, &story.Link, &story.Tokens, &story.Content,
+			&story.DateAdded, &story.DateLastRead, &story.Words); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
 			return
@@ -591,7 +591,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		return string(args)
 	}
 
-	query := fmt.Sprintf(`SELECT id, base_form, countdown, countdown_max, drill_count, read_count, 
+	query := fmt.Sprintf(`SELECT id, base_form, rank, drill_count,
 		date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, 
 		date_added FROM words WHERE user = %d AND id IN (%s);`, USER_ID, placeholders(len(wordIds)))
 	args := make([]interface{}, len(wordIds))
@@ -610,8 +610,8 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	words := make(map[int64]DrillWord)
 	for rows.Next() {
 		var word DrillWord
-		err = rows.Scan(&word.ID, &word.BaseForm, &word.Countdown, &word.CountdownMax,
-			&word.DrillCount, &word.ReadCount,
+		err = rows.Scan(&word.ID, &word.BaseForm, &word.Rank,
+			&word.DrillCount,
 			&word.DateLastRead, &word.DateLastDrill,
 			&word.Definitions, &word.DrillType, &word.DateLastWrong, &word.DateAdded)
 		if err != nil {
@@ -668,104 +668,12 @@ func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	rows.Close()
 
-	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3, status = $4 WHERE id = $5 AND user = $6;`,
-		story.Countdown, story.ReadCount, story.DateLastRead, story.Status, story.ID, USER_ID)
+	_, err = sqldb.Exec(`UPDATE stories SET date_last_read = $1, status = $2 WHERE id = $3 AND user = $4;`,
+		story.DateLastRead, story.Status, story.ID, USER_ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
 		return
-	}
-
-	json.NewEncoder(response).Encode(bson.M{"status": "success"})
-}
-
-func PostStoryResetCountdowns(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
-
-	var story Story
-
-	err := json.NewDecoder(request.Body).Decode(&story)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	rows, err := sqldb.Query(`SELECT words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, story.ID)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
-		return
-	}
-
-	for rows.Next() {
-		err = rows.Scan(&story.Words)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to scan story words: " + err.Error() + `"}`))
-			rows.Close()
-			return
-		}
-	}
-
-	wordIdsMap := make(map[int64]bool)
-
-	rows.Close()
-	var wordIds []int64
-	err = json.Unmarshal([]byte(story.Words), &wordIds)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to unmarshal story words: " + err.Error() + `"}`))
-		return
-	}
-
-	for _, v := range wordIds {
-		wordIdsMap[v] = true
-	}
-
-	// get all words. TODO Maybe at some point with many many words it'll be cheaper to get just the words by id, one by one
-	rows, err = sqldb.Query(`SELECT id, countdown_max FROM words WHERE user = $1;`, USER_ID)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
-		return
-	}
-	defer rows.Close()
-
-	allWordIds := make([]int64, 0)
-	allWordCountdownMaxVals := make([]int64, 0)
-
-	for rows.Next() {
-		var wordId int64
-		var countdownMax int64
-		err = rows.Scan(&wordId, &countdownMax)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
-			return
-		}
-		allWordIds = append(allWordIds, wordId)
-		allWordCountdownMaxVals = append(allWordCountdownMaxVals, countdownMax)
-	}
-
-	for i, id := range allWordIds {
-		if _, ok := wordIdsMap[id]; ok {
-			fmt.Println("countdown max", allWordCountdownMaxVals[i], id)
-			_, err = sqldb.Exec(`UPDATE words SET countdown = $1 WHERE id = $2 AND user = $3;`, allWordCountdownMaxVals[i], id, USER_ID)
-			if err != nil {
-				response.WriteHeader(http.StatusInternalServerError)
-				response.Write([]byte(`{ "message": "` + "failure to reset word countdowns of a story: " + err.Error() + `"}`))
-				return
-			}
-		}
 	}
 
 	json.NewEncoder(response).Encode(bson.M{"status": "success"})

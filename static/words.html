@@ -5,11 +5,13 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
     <link rel="stylesheet" href="words.css">
+    <link rel="stylesheet" href="nouislider.css">
     <title>Jpn Words</title>
 </head>
 
 <body>
     <div id="top_link"><a href="/">stories</a></div>
+    <h3 id="drill_title"></h3>
     <h3 id="drill_info"></h3>
     <input id="drill_count" type="range" step="10" value="30" min="10" max="90"><span id="drill_count_text"></span>
     &nbsp;&nbsp;
@@ -20,11 +22,8 @@
         <option value="ichidan">ichidan verbs</option>
         <option value="godan">godan verbs</option>
     </select>
-    <select id="drill_filter" name="drill_filter">
-        <option value="normal">off cooldown & non-zero countdown</option>
-        <option value="oncooldown">on cooldown</option>
-        <option value="zerocountdown">countdown is zero</option>
-    </select>
+    <label>Rank:</label> <div id="rank_slider"></div> &nbsp;&nbsp;&nbsp;&nbsp;
+    <label>Ignore cooldown:</label> <input id="cooldownCheckbox" type="checkbox"> 
     <br>
     <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
     <div id="results">
@@ -37,5 +36,6 @@
 </body>
 <script src="words.js"></script>
 <script src="util.js"></script>
+<script src="nouislider.js"></script>
 
 </html>

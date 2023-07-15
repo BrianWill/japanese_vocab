@@ -13,8 +13,6 @@ type Story struct {
 	Link         string `json:"link,omitempty"`
 	Tokens       string `json:"tokens,omitempty"`
 	Status       int    `json:"status"`
-	Countdown    int    `json:"countdown"`
-	ReadCount    int    `json:"read_count"`
 	DateLastRead int64  `json:"date_last_read"`
 	DateAdded    int64  `json:"date_added"`
 }
@@ -24,19 +22,20 @@ type StoryList struct {
 }
 
 type DrillRequest struct {
-	Count    int     `json:"count,omitempty"`
-	Type     string  `json:"drill_type,omitempty"`
-	Filter   string  `json:"drill_filter,omitempty"`
-	StoryIds []int64 `json:"storyIds,omitempty"`
+	Count          int     `json:"count,omitempty"`
+	Type           string  `json:"drill_type,omitempty"`
+	Filter         string  `json:"drill_filter,omitempty"`
+	MinRank        int     `json:"min_rank,omitempty"`
+	MaxRank        int     `json:"max_rank,omitempty"`
+	IgnoreCooldown bool    `json:"ignore_cooldown,omitempty"`
+	StoryIds       []int64 `json:"story_ids,omitempty"`
 }
 
 type DrillWord struct {
 	ID            int64  `json:"id,omitempty"`
 	BaseForm      string `json:"base_form"`
-	Countdown     int    `json:"countdown"`
-	CountdownMax  int    `json:"countdown_max"`
+	Rank          int    `json:"rank"`
 	DrillCount    int    `json:"drill_count"`
-	ReadCount     int    `json:"read_count"`
 	DateLastRead  int64  `json:"date_last_read"`
 	DateLastDrill int64  `json:"date_last_drill"`
 	Definitions   string `json:"definitions"`

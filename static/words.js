@@ -1,5 +1,6 @@
 var cardsDiv = document.getElementById('cards');
 var answerDiv = document.getElementById('answer');
+var drillTitleH = document.getElementById('drill_title');
 var drillInfoH = document.getElementById('drill_info');
 var drillCountInput = document.getElementById('drill_count');
 var drillCountInputText = document.getElementById('drill_count_text');
@@ -7,8 +8,9 @@ var drillTypeSelect = document.getElementById('drill_type');
 var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
+var ignoreCooldown = document.getElementById('cooldownCheckbox')
 var definitionsDiv = document.getElementById('definitions');
-var drillFilterSelect = document.getElementById('drill_filter');
+var rankSlider = document.getElementById('rank_slider');
 
 const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
 
@@ -21,6 +23,8 @@ function newDrill() {
 
     let ids = Object.keys(storyIds).map(x => parseInt(x));
 
+    var ranks = rankSlider.noUiSlider.get();
+
     fetch('words', {
         method: 'POST', // or 'PUT'
         headers: {
@@ -29,8 +33,10 @@ function newDrill() {
         body: JSON.stringify({
             count: parseInt(drillCountInput.value),
             drill_type: drillTypeSelect.value,
-            drill_filter: drillFilterSelect.value,
-            storyIds: ids
+            ignore_cooldown: ignoreCooldown.value,
+            story_ids: ids,
+            min_rank: ranks[0],
+            max_rank: ranks[1],
         })
     }).then((response) => response.json())
         .then((data) => {
@@ -54,9 +60,14 @@ function newDrill() {
                 }
             }
 
-            drillInfoH.innerHTML = `<h3>${titles.join(', ')}</h3>${data.wordMatchCount} words<br>
-            ${data.wordsOnCooldownCount} on cooldown<br>
-            ${data.wordsZeroCountdown} with zero countdown`;
+            drillTitleH.innerHTML = `<h3>${titles.join(', ')}</h3>`;
+
+            drillInfoH.innerHTML = `
+                ${data.wordAllCount} words total, ${data.wordMatchCount} in story  &nbsp;&nbsp;&nbsp;
+                <span class="rank_number">Rank 1:</span> ${data.countsByRank[0]} words <span class="cooldown">(${data.cooldownCountsByRank[0]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
+                <span class="rank_number">Rank 2:</span> ${data.countsByRank[1]} words <span class="cooldown">(${data.cooldownCountsByRank[1]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
+                <span class="rank_number">Rank 3:</span> ${data.countsByRank[2]} words <span class="cooldown">(${data.cooldownCountsByRank[2]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
+                <span class="rank_number">Rank 4:</span> ${data.countsByRank[3]} words <span class="cooldown">(${data.cooldownCountsByRank[3]} on cooldown)</span>`;
             displayWords();
         })
         .catch((error) => {
@@ -70,14 +81,13 @@ drillCountInput.oninput = function (evt) {
 
 drillCountInput.onchange = newDrill;
 drillTypeSelect.onchange = newDrill;
-drillFilterSelect.onchange = newDrill;
+ignoreCooldown.onchange = newDrill;
 
 function displayWords() {
     function wordInfo(word, idx, answered) {
         return `<div index="${idx}" class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
-                    <div class="countdown">${word.countdown}</div>
-                    <div class="countdown_max">${word.countdown_max}</div>
+                    <div class="rank">${word.rank}</div>
                 </div>`;
     }
 
@@ -111,16 +121,18 @@ document.body.onkeydown = async function (evt) {
     }
     if (drillSet && drillSet.length > 0) {
         var word = drillSet[0];
+        let unixtime = Math.floor(Date.now() / 1000); // in seconds
         //console.log(evt.code);
         if (evt.code === 'KeyS') {
             evt.preventDefault();
             // showWord();
-        } else if (evt.code === 'KeyW') {  // dec countdown
+        } else if (evt.code === 'Digit1') { 
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
-                word.countdown = 2;
-                word.countdown_max = 2;
+                word.rank = 1;
+                word.date_last_drill = unixtime;
+                word.answered = true;
                 updateWord(word);
                 drillSet.shift();
                 answeredSet.unshift(word);
@@ -129,12 +141,13 @@ document.body.onkeydown = async function (evt) {
                 }
                 displayWords();
             }
-        } else if (evt.code === 'KeyE') {  // dec countdown
+        } else if (evt.code === 'Digit2') {  
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
-                word.countdown = 5;
-                word.countdown_max = 5;
+                word.rank = 2;
+                word.date_last_drill = unixtime;
+                word.answered = true;
                 updateWord(word);
                 drillSet.shift();
                 answeredSet.unshift(word);
@@ -143,12 +156,26 @@ document.body.onkeydown = async function (evt) {
                 }
                 displayWords();
             }
-        } else if (evt.code === 'KeyQ') {  // dec countdown
+        } else if (evt.code === 'Digit3') {  
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
-                word.countdown = 0;
-                word.countdown_max = 0;
+                word.rank = 3;
+                word.answered = true;
+                word.date_last_drill = unixtime;
+                updateWord(word);
+                drillSet.shift();
+                answeredSet.unshift(word);
+                if (drillSet.length === 0) {
+                    nextRound();
+                }
+                displayWords();
+            }
+        } else if (evt.code === 'Digit4') {  
+            evt.preventDefault();
+            if (drillSet && drillSet[0]) {
+                var word = drillSet[0];
+                word.rank = 4;
                 word.answered = true;
                 updateWord(word);
                 drillSet.shift();
@@ -165,24 +192,18 @@ document.body.onkeydown = async function (evt) {
             if (drillSet.length > 1) {
                 [drillSet[0], drillSet[1]] = [drillSet[1], drillSet[0]];
             }
-            let unixtime = Math.floor(Date.now() / 1000); // in seconds
             if ((unixtime - word.date_last_drill > COOLDOWN_TIME) &&
                 (unixtime - word.date_last_wrong > COOLDOWN_TIME)) {
                 word.date_last_wrong = unixtime;
-                word.countdown--;
-                word.drill_count++;
                 updateWord(word);
             }
             displayWords();
         } else if (evt.code === 'KeyD') {  // mark answered
             evt.preventDefault();
             word.answered = true;
-            let unixtime = Math.floor(Date.now() / 1000); // in seconds
             if ((unixtime - word.date_last_drill > COOLDOWN_TIME) &&
-                (unixtime - word.date_last_wrong > COOLDOWN_TIME) &&
-                word.countdown > 0) {
+                (unixtime - word.date_last_wrong > COOLDOWN_TIME)) {
                 word.date_last_drill = unixtime;
-                word.countdown--;
                 word.drill_count++;
                 updateWord(word);
             }
@@ -254,6 +275,37 @@ function showWord() {
 document.body.onload = function (evt) {
     console.log('on page load');
 
+    noUiSlider.create(rankSlider, {
+        start: [2, 4],
+        step: 1,
+        connect: true,
+        pips: {
+            mode: 'count',
+            values: 4,
+            density: 1,
+            stepped: true
+        },
+        range: {
+            'min': 1,
+            'max': 4
+        },
+        format: {
+            // 'to' the formatted value. Receives a number.
+            to: function (value) {
+                return value;
+            },
+            // 'from' the formatted value.
+            // Receives a string, should return a number.
+            from: function (value) {
+                return value;
+            }
+        }
+    });
+
+    function sliderUpdate(values, handle, unencoded, tap, positions, noUiSlider) {
+        newDrill();
+    }
+
     fetch('/stories_list', {
         method: 'GET', // or 'PUT'
         headers: {
@@ -276,7 +328,8 @@ document.body.onload = function (evt) {
 
             drillCountInputText.innerHTML = drillCountInput.value;
             stories = data;
-            newDrill();
+            //newDrill();
+            rankSlider.noUiSlider.on('update', sliderUpdate);  // calls newDrill upon registration
         })
         .catch((error) => {
             console.error('Error:', error);

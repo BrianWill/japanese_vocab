@@ -251,18 +251,8 @@ function updateStoryList(stories) {
                 <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
             </select>
             </td>
-            <td>
-                <a action="reset_story_word_countdowns" story_id="${s.id}" href="#">reset</a>
-            </td>
             <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
-
-        /* <td><span>${s.read_count}</span></td>
-                    <td><span>${timeSince(s.date_last_read * 1000)}</span></td>
-                    <td><span>${timeSince(s.date_added * 1000)}</span></td>
-                     */
-
-        //<td><a action="retokenize" story_id="${s.id}" href="#">retokenize</a></td>
     }
 
     for (let s of stories) {

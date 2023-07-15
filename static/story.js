@@ -129,8 +129,6 @@ function displayStory(story) {
 
 var selectedTokenIndex = null;
 
-const MAX_WORD_COUNTDOWN = 5;
-
 tokenizedText.onmousedown = function (evt) {
     let index = evt.target.getAttribute("tokenIndex");
     if (index) {
@@ -139,8 +137,8 @@ tokenizedText.onmousedown = function (evt) {
         // if (evt.ctrlKey) {  // inc countdown of the word
         //     let token = story.tokens[index];
         //     let word = story.words[token.wordId];
-        //     if (word.countdown < word.countdown_max) {
-        //         word.countdown = word.countdown_max;
+        //     if (word.countdown < word.rank) {
+        //         word.countdown = word.rank;
         //         updateWord(word);
         //     }
         // }   
