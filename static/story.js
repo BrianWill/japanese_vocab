@@ -136,14 +136,14 @@ tokenizedText.onmousedown = function (evt) {
     if (index) {
         selectedTokenIndex = index;
         
-        if (evt.ctrlKey) {  // inc countdown of the word
-            let token = story.tokens[index];
-            let word = story.words[token.wordId];
-            if (word.countdown < word.countdown_max) {
-                word.countdown = word.countdown_max;
-                updateWord(word);
-            }
-        }   
+        // if (evt.ctrlKey) {  // inc countdown of the word
+        //     let token = story.tokens[index];
+        //     let word = story.words[token.wordId];
+        //     if (word.countdown < word.countdown_max) {
+        //         word.countdown = word.countdown_max;
+        //         updateWord(word);
+        //     }
+        // }   
 
         displayDefinition(index);
     }

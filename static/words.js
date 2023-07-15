@@ -54,8 +54,9 @@ function newDrill() {
                 }
             }
 
-            drillInfoH.innerHTML = `<h3>${titles.join(', ')}</h3>${data.wordMatchCount} words matching filter<br>${data.wordAllCount}
-                    active words off cooldown)`;
+            drillInfoH.innerHTML = `<h3>${titles.join(', ')}</h3>${data.wordMatchCount} words<br>
+            ${data.wordsOnCooldownCount} on cooldown<br>
+            ${data.wordsZeroCountdown} with zero countdown`;
             displayWords();
         })
         .catch((error) => {
@@ -121,6 +122,11 @@ document.body.onkeydown = async function (evt) {
                 word.countdown = 2;
                 word.countdown_max = 2;
                 updateWord(word);
+                drillSet.shift();
+                answeredSet.unshift(word);
+                if (drillSet.length === 0) {
+                    nextRound();
+                }
                 displayWords();
             }
         } else if (evt.code === 'KeyE') {  // dec countdown
@@ -130,6 +136,11 @@ document.body.onkeydown = async function (evt) {
                 word.countdown = 5;
                 word.countdown_max = 5;
                 updateWord(word);
+                drillSet.shift();
+                answeredSet.unshift(word);
+                if (drillSet.length === 0) {
+                    nextRound();
+                }
                 displayWords();
             }
         } else if (evt.code === 'KeyQ') {  // dec countdown

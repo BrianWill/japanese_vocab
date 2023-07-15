@@ -271,9 +271,9 @@ function updateStoryList(stories) {
 
     let html = `<table class="story_table">
             <tr>
-                <td class="story_table_section" colspan="6">Stories&nbsp;&nbsp; 
-                    <a action="drill_current" href="/words.html?storyId=${DRILL_ALL_CURRENT}">drill all current stories</a>&nbsp;&nbsp;
-                    <a action="drill_all" href="/words.html?storyId=${DRILL_ALL}">drill all stories</a>
+                <td class="story_table_section" colspan="6">Stories<br> 
+                    <a action="drill_all" href="/words.html?storyId=${DRILL_ALL}">words of all stories</a><br>
+                    <a action="drill_current" href="/words.html?storyId=${DRILL_ALL_CURRENT}">words of all current stories</a>
                 </td>
             </tr>`;
     for (let s of stories) {

@@ -84,7 +84,8 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	selectOnCooldown := drillRequest.Filter == DRILL_FILTER_ONCOOLDOWN
 	selectCountdownZero := drillRequest.Filter == DRILL_FILTER_ZEROCOUNTDOWN
 
-	wordOffCooldownCount := 0
+	wordsZeroCountdown := 0
+	wordsOnCooldownCount := 0
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
@@ -93,12 +94,16 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		isOnCooldown := ((t-w.DateLastDrill) < DRILL_COOLDOWN || (t-w.DateLastWrong) < DRILL_COOLDOWN)
 		isDrillType := isDrillType(w.DrillType, drillRequest.Type)
 
-		if !isOnCooldown && !isCountdownZero {
-			wordOffCooldownCount++
-		}
-
 		if !isInStory || !isDrillType {
 			continue
+		}
+
+		if isOnCooldown {
+			wordsOnCooldownCount++
+		}
+
+		if isCountdownZero {
+			wordsZeroCountdown++
 		}
 
 		if selectCountdownZero {
@@ -126,8 +131,9 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	json.NewEncoder(response).Encode(bson.M{
-		"wordOffCooldownCount": wordOffCooldownCount,
+		"wordsOnCooldownCount": wordsOnCooldownCount,
 		"wordAllCount":         wordAllCount,
+		"wordsZeroCountdown":   wordsZeroCountdown,
 		"words":                words,
 		"wordMatchCount":       wordMatchCount})
 }
