@@ -33,7 +33,7 @@ function newDrill() {
         body: JSON.stringify({
             count: parseInt(drillCountInput.value),
             drill_type: drillTypeSelect.value,
-            ignore_cooldown: ignoreCooldown.value,
+            ignore_cooldown: ignoreCooldown.checked,
             story_ids: ids,
             min_rank: ranks[0],
             max_rank: ranks[1],
@@ -63,7 +63,7 @@ function newDrill() {
             drillTitleH.innerHTML = `<h3>${titles.join(', ')}</h3>`;
 
             drillInfoH.innerHTML = `
-                ${data.wordAllCount} words total, ${data.wordMatchCount} in story  &nbsp;&nbsp;&nbsp;
+                ${data.countAllWords} words total, ${data.countWordsInStory} in story, ${data.wordMatchCount} passing filter  &nbsp;&nbsp;&nbsp;
                 <span class="rank_number">Rank 1:</span> ${data.countsByRank[0]} words <span class="cooldown">(${data.cooldownCountsByRank[0]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
                 <span class="rank_number">Rank 2:</span> ${data.countsByRank[1]} words <span class="cooldown">(${data.cooldownCountsByRank[1]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
                 <span class="rank_number">Rank 3:</span> ${data.countsByRank[2]} words <span class="cooldown">(${data.cooldownCountsByRank[2]} on cooldown)</span> &nbsp;&nbsp;&nbsp;

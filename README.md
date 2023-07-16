@@ -39,16 +39,16 @@ You can drill the words of an individual story by clicking its "words" link. Two
 
 The right side shows the word list, with the current word at the top with a white border. The left side shows the definitions of the current word.
 
+New words are ranked 4, 
+
 Hotkeys:
 
 - **d** marks the current word correct (moving the card to the discard pile at the bottom)
 - **a** marks the current word wrong (marking it red and moving it down to the second position in the list)
-- **q** sets the current word's countdown and max countdown to 0
-- **w** sets the current word's countdown and max countdown to 2
-- **e** sets the current word's countdown and max countdown to 5
+- **1**, **2**, **3**, **4** set the current word's rank and mark it correct
 
 When you exhaust the list, the words you marked wrong will be reshuffled for another round. Keep answering until you see the message "Drill Complete". Refresh the page to drill more words from the story. 
 
-When you mark a word correct or wrong, it is put on cooldown for 3 hours. The default filter excludes words on cooldown, but you can change the filter to select only words on cooldown.
+When you mark a word correct or wrong, it is put on cooldown for 3 hours. Click the "Ignore Cooldown" button to not filter out words on cooldown.
 
-You can also filter by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
+Words can be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.

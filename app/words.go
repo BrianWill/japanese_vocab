@@ -61,8 +61,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var word DrillWord
 		err = rows.Scan(&word.ID, &word.BaseForm,
-			&word.Rank,
-			&word.DrillCount,
+			&word.Rank, &word.DrillCount,
 			&word.DateLastRead, &word.DateLastDrill,
 			&word.Definitions, &word.DrillType,
 			&word.DateLastWrong, &word.DateAdded)
@@ -74,7 +73,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		words = append(words, word)
 	}
 
-	wordAllCount := len(words)
+	countAllWords := len(words)
 
 	storyWords, allStories, err := getStoryWords(drillRequest.StoryIds, response, sqldb)
 	if err != nil {
@@ -84,6 +83,8 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	countsByRank := [4]int{}
 	cooldownCountsByRank := [4]int{}
 
+	countWordsInStory := 0
+
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
@@ -91,18 +92,24 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		isOnCooldown := ((t-w.DateLastDrill) < DRILL_COOLDOWN || (t-w.DateLastWrong) < DRILL_COOLDOWN)
 		isDrillType := isDrillType(w.DrillType, drillRequest.Type)
 
-		if !isInStory || !isDrillType {
+		if !isInStory {
 			continue
 		}
 
-		if w.Rank < drillRequest.MinRank || w.Rank > drillRequest.MaxRank {
-			continue
-		}
+		countWordsInStory++
 
 		if isOnCooldown {
 			cooldownCountsByRank[w.Rank-1]++
 		} else {
 			countsByRank[w.Rank-1]++
+		}
+
+		if !isDrillType {
+			continue
+		}
+
+		if w.Rank < drillRequest.MinRank || w.Rank > drillRequest.MaxRank {
+			continue
 		}
 
 		if isOnCooldown && !drillRequest.IgnoreCooldown {
@@ -120,7 +127,8 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	json.NewEncoder(response).Encode(bson.M{
-		"wordAllCount":         wordAllCount,
+		"countAllWords":        countAllWords,
+		"countWordsInStory":    countWordsInStory,
 		"countsByRank":         countsByRank,
 		"cooldownCountsByRank": cooldownCountsByRank,
 		"words":                words,

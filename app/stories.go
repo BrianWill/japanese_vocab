@@ -21,6 +21,7 @@ import (
 )
 
 const INITIAL_STATUS = 1
+const INITIAL_RANK = 4
 
 func LoadStoriesFromDumpEndpoint(response http.ResponseWriter, request *http.Request) {
 	storyList, err := loadStoryDump()
@@ -376,8 +377,8 @@ func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, er
 			fmt.Printf("\nadding word: %s %d \t %d\n", token.BaseForm, len(token.Entries), id)
 
 			insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, user, 
-					date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type) VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-				token.BaseForm, USER_ID, unixtime, 0, unixtime, 0, entriesJson, drillType)
+					date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type, rank) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+				token.BaseForm, USER_ID, unixtime, 0, unixtime, 0, entriesJson, drillType, INITIAL_RANK)
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
@@ -426,30 +427,10 @@ func getDefinitions(tokens []*JpToken, response http.ResponseWriter) error {
 			for _, e := range allEntriesByKanjiSpellings[searchTerm] {
 				entries = append(entries, *e)
 			}
-
-			// //wordQuery = bson.D{{"kanji_spellings.kanji_spelling", searchTerm}}
-			// for _, entry := range allEntries.Entries {
-			// 	for _, k_ele := range entry.KanjiSpellings {
-			// 		if k_ele.KanjiSpelling == searchTerm {
-			// 			entries = append(entries, entry)
-			// 			break
-			// 		}
-			// 	}
-			// }
 		} else {
 			for _, e := range allEntriesByReading[searchTerm] {
 				entries = append(entries, *e)
 			}
-
-			// //wordQuery = bson.D{{"readings.reading", searchTerm}}
-			// for _, entry := range allEntries.Entries {
-			// 	for _, r_ele := range entry.Readings {
-			// 		if r_ele.Reading == searchTerm {
-			// 			entries = append(entries, entry)
-			// 			break
-			// 		}
-			// 	}
-			// }
 		}
 
 		// too many matching entries is just noise
