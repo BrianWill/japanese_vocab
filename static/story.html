@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 
 <head>
     <meta charset="utf-8">
@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="../words.css">
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="nouislider.css">
     <title>Jpn Stories</title>
 </head>
 
@@ -14,6 +15,8 @@
     <div id="top_link"><a href="/">stories</a></div>
     <div id="story_container">
         <div id="answer">
+            <div id="player"></div><br>
+            <label>Playback speed:</label> <div id="player_speed_slider"></div>
             <div id="kanji_results"></div>
             <div id="definitions"></div>
         </div>
@@ -28,5 +31,6 @@
 </body>
 <script src="../util.js"></script>
 <script src="../story.js"></script>
+<script src="nouislider.js"></script>
 
 </html>

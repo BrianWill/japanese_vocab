@@ -22,8 +22,12 @@
         <option value="ichidan">ichidan verbs</option>
         <option value="godan">godan verbs</option>
     </select>
-    <label>Rank:</label> <div id="rank_slider"></div> &nbsp;&nbsp;&nbsp;&nbsp;
-    <label>Ignore cooldown:</label> <input id="cooldownCheckbox" type="checkbox"> 
+    <select id="filter_select">
+        <option value="off" selected>words off cooldown</option>
+        <option value="on">words on cooldown</option>
+        <option value="all">words on or off cooldown</option>
+    </select>
+    <label>Rank:</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div id="rank_slider"></div>
     <br>
     <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
     <div id="results">

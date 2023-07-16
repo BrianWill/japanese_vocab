@@ -22,13 +22,12 @@ type StoryList struct {
 }
 
 type DrillRequest struct {
-	Count          int     `json:"count,omitempty"`
-	Type           string  `json:"drill_type,omitempty"`
-	Filter         string  `json:"drill_filter,omitempty"`
-	MinRank        int     `json:"min_rank,omitempty"`
-	MaxRank        int     `json:"max_rank,omitempty"`
-	IgnoreCooldown bool    `json:"ignore_cooldown,omitempty"`
-	StoryIds       []int64 `json:"story_ids,omitempty"`
+	Count    int     `json:"count,omitempty"`
+	Type     string  `json:"drill_type,omitempty"`
+	Filter   string  `json:"filter,omitempty"` // "on", "off", "both"
+	MinRank  int     `json:"min_rank,omitempty"`
+	MaxRank  int     `json:"max_rank,omitempty"`
+	StoryIds []int64 `json:"story_ids,omitempty"`
 }
 
 type DrillWord struct {

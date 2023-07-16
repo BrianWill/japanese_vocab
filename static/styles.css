@@ -232,3 +232,9 @@ span.verb:hover {
     outline: none;
 }
 
+
+#player_speed_slider {
+    width: 800px;
+    margin-bottom: 2em;
+    margin-left: 1em;
+}

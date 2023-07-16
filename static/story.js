@@ -3,14 +3,10 @@ var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
+var playerSpeedSlider = document.getElementById('player_speed_slider');
+
 
 var story = null;
-
-document.body.onload = function (evt) {
-    var url = new URL(window.location.href);
-    var storyId = parseInt(url.searchParams.get("storyId") || undefined);
-    openStory(storyId);
-};
 
 tokenizedText.onwheel = function (evt) {
     if (evt.wheelDeltaY < 0) {
@@ -24,10 +20,91 @@ tokenizedText.onwheel = function (evt) {
     }
 };
 
-const STORY_READ_COOLDOWN = 60 * 60 * 16; // 16 hours
-
+document.body.onkeydown = async function (evt) {
+    if (evt.ctrlKey) {
+        return;
+    }
+    if (player) {
+        //console.log(evt.code);
+        if (evt.code === 'KeyA') {
+            evt.preventDefault();
+            var timemark = player.getCurrentTime();
+            player.seekTo(timemark - 1.7, true);
+            //player.playVideo();
+            // showWord();
+        } else if (evt.code === 'KeyD') { 
+            evt.preventDefault();
+            var timemark = player.getCurrentTime();
+            player.seekTo(timemark + 1.2, true);
+        } else if (evt.code === 'KeyQ') {
+            evt.preventDefault();
+            var timemark = player.getCurrentTime();
+            player.seekTo(timemark - 5, true);
+            //player.playVideo();
+            // showWord();
+        } else if (evt.code === 'KeyE') { 
+            evt.preventDefault();
+            var timemark = player.getCurrentTime();
+            player.seekTo(timemark + 4, true);
+        } else if (evt.code === 'Space') { 
+            evt.preventDefault();
+            var state = player.getPlayerState();
+            if (state === 1) {  // playing
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        }
+    }
+};
 
 function openStory(id) {
+
+    noUiSlider.create(playerSpeedSlider, {
+        start: [1],
+        step: 0.05,
+        connect: true,
+        pips: {
+            mode: 'count',
+            values: 5,
+            format: {
+                // 'to' the formatted value. Receives a number.
+                to: function (value) {
+                    var value = (value).toLocaleString(
+                        undefined, // leave undefined to use the visitor's browser 
+                                   // locale or a string like 'en-US' to override it.
+                        { minimumFractionDigits: 1 }
+                    );
+                    return value;
+                },
+                // 'from' the formatted value.
+                // Receives a string, should return a number.
+                from: function (value) {
+                    return value;
+                }
+            }
+        },
+        range: {
+            'min': 0.4,
+            'max': 1.6
+        },
+        format: {
+            // 'to' the formatted value. Receives a number.
+            to: function (value) {
+                return value;
+            },
+            // 'from' the formatted value.
+            // Receives a string, should return a number.
+            from: function (value) {
+                return value;
+            }
+        }
+    });
+
+    function sliderUpdate(values, handle, unencoded, tap, positions, noUiSlider) {
+        player.setPlaybackRate(values[0]);
+    }
+
     fetch('/story/' + id, {
         method: 'GET', // or 'PUT'
         headers: {
@@ -45,6 +122,28 @@ function openStory(id) {
             }
             //console.log(`/story/${id} success:`, story);
             displayStory(data);
+
+            if (data.link.startsWith('https://www.youtube.com/watch?v=')) {
+                let youtubeId = data.link.split('https://www.youtube.com/watch?v=')[1];
+                player = new YT.Player('player', {
+                    height: '700',
+                    width: '900',
+                    videoId: youtubeId,
+                    
+                    playerVars: {
+                        'playsinline': 1,
+                        'cc_lang_pref': 'ja',
+                        'disablekb': 1
+                    },
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange,
+                        //'onPlaybackRateChange': onPlaybackRateChange
+                    }
+                });
+            }
+
+            playerSpeedSlider.noUiSlider.on('update', sliderUpdate);  // calls newDrill upon registration
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -52,8 +151,7 @@ function openStory(id) {
 }
 
 function displayStory(story) {
-    let words = '';
-    let punctuationTokens = [' ', '。', '、'];
+    //let punctuationTokens = [' ', '。', '、'];
 
     let html = '<p>';
     let prior = null;
@@ -133,16 +231,6 @@ tokenizedText.onmousedown = function (evt) {
     let index = evt.target.getAttribute("tokenIndex");
     if (index) {
         selectedTokenIndex = index;
-        
-        // if (evt.ctrlKey) {  // inc countdown of the word
-        //     let token = story.tokens[index];
-        //     let word = story.words[token.wordId];
-        //     if (word.countdown < word.rank) {
-        //         word.countdown = word.rank;
-        //         updateWord(word);
-        //     }
-        // }   
-
         displayDefinition(index);
     }
 };
@@ -156,4 +244,34 @@ function displayDefinition(index) {
         html += displayEntry(entry);
     }
     definitionsDiv.innerHTML = html;
+}
+
+// loads the IFrame Player API code asynchronously.
+var tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+var player;
+function onYouTubeIframeAPIReady() {
+    var url = new URL(window.location.href);
+    var storyId = parseInt(url.searchParams.get("storyId") || undefined);
+    openStory(storyId);    
+}
+
+function onPlayerReady(event) {
+    event.target.playVideo();
+    console.log('starting video');
+}
+
+var done = false;
+function onPlayerStateChange(event) {
+    
+}
+function stopVideo() {
+    player.stopVideo();
+}
+
+function onPlaybackRateChange(val) {
+    console.log('changed rate', val);
 }

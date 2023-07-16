@@ -23,6 +23,10 @@ import (
 const INITIAL_STATUS = 1
 const INITIAL_RANK = 4
 
+const DRILL_FILTER_ON_COOLDOWN = "on"
+const DRILL_FILTER_OFF_COOLDOWN = "off"
+const DRILL_FILTER_ALL = "all"
+
 func LoadStoriesFromDumpEndpoint(response http.ResponseWriter, request *http.Request) {
 	storyList, err := loadStoryDump()
 	if err != nil {

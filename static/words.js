@@ -8,7 +8,7 @@ var drillTypeSelect = document.getElementById('drill_type');
 var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
-var ignoreCooldown = document.getElementById('cooldownCheckbox')
+var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
 var rankSlider = document.getElementById('rank_slider');
 
@@ -33,7 +33,7 @@ function newDrill() {
         body: JSON.stringify({
             count: parseInt(drillCountInput.value),
             drill_type: drillTypeSelect.value,
-            ignore_cooldown: ignoreCooldown.checked,
+            filter: filterSelect.value,
             story_ids: ids,
             min_rank: ranks[0],
             max_rank: ranks[1],
@@ -81,7 +81,7 @@ drillCountInput.oninput = function (evt) {
 
 drillCountInput.onchange = newDrill;
 drillTypeSelect.onchange = newDrill;
-ignoreCooldown.onchange = newDrill;
+filterSelect.onchange = newDrill;
 
 function displayWords() {
     function wordInfo(word, idx, answered) {

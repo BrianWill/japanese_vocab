@@ -248,6 +248,12 @@ h3 {
     width: 12em;
 }
 
+#filter_select {
+    font-size: 100%;
+    margin: 5px;
+    width: 14em;
+}
+
 #drill_filter {
     font-size: 100%;
     margin: 5px;
@@ -276,5 +282,5 @@ h3 {
 
 #rank_slider {
     display: inline-block;
-    width: 200px;
+    width: 120px;
 }

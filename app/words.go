@@ -85,6 +85,18 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	countWordsInStory := 0
 
+	includeOnCooldown := false
+	includeOffCooldown := false
+	switch drillRequest.Filter {
+	case DRILL_FILTER_ON_COOLDOWN:
+		includeOnCooldown = true
+	case DRILL_FILTER_OFF_COOLDOWN:
+		includeOffCooldown = true
+	case DRILL_FILTER_ALL:
+		includeOnCooldown = true
+		includeOffCooldown = true
+	}
+
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
@@ -112,7 +124,11 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 			continue
 		}
 
-		if isOnCooldown && !drillRequest.IgnoreCooldown {
+		if isOnCooldown && !includeOnCooldown {
+			continue
+		}
+
+		if !isOnCooldown && !includeOffCooldown {
 			continue
 		}
 
