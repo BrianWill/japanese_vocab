@@ -119,6 +119,10 @@ document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
         return;
     }
+    if ((evt.code === 'KeyR') && evt.altKey) { 
+        console.log('alt r');
+        newDrill();
+    }
     if (drillSet && drillSet.length > 0) {
         var word = drillSet[0];
         let unixtime = Math.floor(Date.now() / 1000); // in seconds
@@ -131,14 +135,7 @@ document.body.onkeydown = async function (evt) {
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
                 word.rank = 1;
-                word.date_last_drill = unixtime;
-                word.answered = true;
                 updateWord(word);
-                drillSet.shift();
-                answeredSet.unshift(word);
-                if (drillSet.length === 0) {
-                    nextRound();
-                }
                 displayWords();
             }
         } else if (evt.code === 'Digit2') {  
@@ -146,14 +143,7 @@ document.body.onkeydown = async function (evt) {
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
                 word.rank = 2;
-                word.date_last_drill = unixtime;
-                word.answered = true;
                 updateWord(word);
-                drillSet.shift();
-                answeredSet.unshift(word);
-                if (drillSet.length === 0) {
-                    nextRound();
-                }
                 displayWords();
             }
         } else if (evt.code === 'Digit3') {  
@@ -161,14 +151,7 @@ document.body.onkeydown = async function (evt) {
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
                 word.rank = 3;
-                word.answered = true;
-                word.date_last_drill = unixtime;
                 updateWord(word);
-                drillSet.shift();
-                answeredSet.unshift(word);
-                if (drillSet.length === 0) {
-                    nextRound();
-                }
                 displayWords();
             }
         } else if (evt.code === 'Digit4') {  
@@ -176,16 +159,9 @@ document.body.onkeydown = async function (evt) {
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
                 word.rank = 4;
-                word.answered = true;
                 updateWord(word);
-                drillSet.shift();
-                answeredSet.unshift(word);
-                if (drillSet.length === 0) {
-                    nextRound();
-                }
                 displayWords();
             }
-        } else if ((evt.code === 'KeyR') && evt.altKey) {  // todo reset drill    
         } else if (evt.code === 'KeyA') {  // mark wrong and swap top two words
             evt.preventDefault();
             word.wrong = true;

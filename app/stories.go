@@ -381,8 +381,8 @@ func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, er
 			fmt.Printf("\nadding word: %s %d \t %d\n", token.BaseForm, len(token.Entries), id)
 
 			insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, user, 
-					date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type, rank) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
-				token.BaseForm, USER_ID, unixtime, 0, unixtime, 0, entriesJson, drillType, INITIAL_RANK)
+					date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type, rank, drill_count) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
+				token.BaseForm, USER_ID, unixtime, 0, unixtime, 0, entriesJson, drillType, INITIAL_RANK, 0)
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))

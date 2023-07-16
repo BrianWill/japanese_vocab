@@ -39,16 +39,24 @@ You can drill the words of an individual story by clicking its "words" link. Two
 
 The right side shows the word list, with the current word at the top with a white border. The left side shows the definitions of the current word.
 
-New words are ranked 4, 
+Word rank is displayed on the right. New words start off at Rank 4. Words can be filtered by rank, and Rank 1 words are filtered out by the default filter.
+
+Words with lower ranks have longer cooldowns:
+
+- Rank 4 cooldown: 3 hours
+- Rank 3 cooldown: 2 days
+- Rank 2 cooldown: 7 days
+- Rank 1 cooldown: 30 days
 
 Hotkeys:
 
 - **d** marks the current word correct (moving the card to the discard pile at the bottom)
 - **a** marks the current word wrong (marking it red and moving it down to the second position in the list)
-- **1**, **2**, **3**, **4** set the current word's rank and mark it correct
+- **1**, **2**, **3**, **4** set the current word's rank
+- **alt-r** refreshes the drill
 
-When you exhaust the list, the words you marked wrong will be reshuffled for another round. Keep answering until you see the message "Drill Complete". Refresh the page to drill more words from the story. 
+When you exhaust the list, the words you marked wrong will be reshuffled. Keep answering until you see the message "Round Complete", then press **alt-r** to drill more words from the story.
 
-When you mark a word correct or wrong, it is put on cooldown for 3 hours. Click the "Ignore Cooldown" button to not filter out words on cooldown.
+When you mark a word correct or wrong, it is put on cooldown for 3 hours. Words can be filtered by their cooldown status.
 
-Words can be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
+Words can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.

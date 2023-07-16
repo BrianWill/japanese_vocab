@@ -24,8 +24,8 @@ document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
         return;
     }
+    console.log(evt.code);
     if (player) {
-        //console.log(evt.code);
         if (evt.code === 'KeyA') {
             evt.preventDefault();
             var timemark = player.getCurrentTime();
@@ -54,6 +54,10 @@ document.body.onkeydown = async function (evt) {
             } else {
                 player.playVideo();
             }
+        } else if (evt.code.startsWith('Digit')) {
+            var digit = parseInt(evt.code.slice(-1));
+            var duration =player.getDuration();
+            player.seekTo(duration * (digit / 10), true);
         }
     }
 };
@@ -123,8 +127,17 @@ function openStory(id) {
             //console.log(`/story/${id} success:`, story);
             displayStory(data);
 
+            let youtubeId = null;
+
             if (data.link.startsWith('https://www.youtube.com/watch?v=')) {
-                let youtubeId = data.link.split('https://www.youtube.com/watch?v=')[1];
+                youtubeId = data.link.split('https://www.youtube.com/watch?v=')[1];
+            }
+
+            if (data.link.startsWith('https://youtu.be/')) {
+                youtubeId = data.link.split('https://youtu.be/')[1];
+            }
+
+            if (youtubeId) {
                 player = new YT.Player('player', {
                     height: '700',
                     width: '900',

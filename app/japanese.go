@@ -58,7 +58,10 @@ var tok *tokenizer.Tokenizer
 const SQL_FILE = "../testsql.db"
 const USER_ID = 0 // TODO for now we hardcode for just one user
 
-const DRILL_COOLDOWN = 60 * 60 * 3 // in seconds
+const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 3       // 3 hours in seconds
+const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 2  // 2 days in seconds
+const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 7  // 7 days in seconds
+const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 24 * 30 // 30 days weeks in seconds
 const DRILL_TYPE_KATAKANA = 1
 const DRILL_TYPE_ICHIDAN = 2
 const DRILL_TYPE_GODAN_SU = 8

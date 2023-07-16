@@ -28,12 +28,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-const DRILL_ALL_TOP_RANK = -1
-
-const DRILL_FILTER_NORMAL = "normal"
-const DRILL_FILTER_ONCOOLDOWN = "oncooldown"
-const DRILL_FILTER_ZEROCOUNTDOWN = "zerocountdown"
-
 func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
@@ -97,11 +91,14 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 		includeOffCooldown = true
 	}
 
+	cooldowns := [5]int64{0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4}
+
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
 	for _, w := range words {
 		isInStory := allStories || storyWords[w.ID]
-		isOnCooldown := ((t-w.DateLastDrill) < DRILL_COOLDOWN || (t-w.DateLastWrong) < DRILL_COOLDOWN)
+		var cooldown = cooldowns[w.Rank]
+		isOnCooldown := ((t-w.DateLastDrill) < cooldown || (t-w.DateLastWrong) < cooldown)
 		isDrillType := isDrillType(w.DrillType, drillRequest.Type)
 
 		if !isInStory {
@@ -137,9 +134,11 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	words = temp
 
 	wordMatchCount := len(words)
-	count := drillRequest.Count
-	if count > 0 && count < len(words) {
-		words = words[:count]
+	if !includeOnCooldown {
+		count := drillRequest.Count
+		if count > 0 && count < len(words) {
+			words = words[:count]
+		}
 	}
 
 	json.NewEncoder(response).Encode(bson.M{
