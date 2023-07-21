@@ -143,6 +143,27 @@ span.verb:hover {
     padding-right: 1em;
 }
 
+#complete_log_link {
+    color: #838383;
+    font-size: 70%;
+    margin-left: 2em;
+    margin-bottom: 1em;
+    font-weight: normal;
+}
+
+#log_events a {
+    color: #838383;
+}
+
+#log_events td {
+    padding-right: 1em;
+}
+
+#log_events table {
+    margin-left: 2em;
+}
+
+
 .story_table th {
     color: rgb(98, 98, 98);
     padding-right: 2em;
@@ -156,6 +177,11 @@ span.verb:hover {
 .story_table td.story_table_section {
     font-size: 120%;
     padding: 1em 0em 0.2em 0em;
+}
+
+.story_table td.story_table_section a {
+    font-size: 70%;
+    padding: 1em 0em 0.2em 2em;
 }
 
 #story_list table {

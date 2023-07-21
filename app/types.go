@@ -17,6 +17,12 @@ type Story struct {
 	DateAdded    int64  `json:"date_added"`
 }
 
+type LogEvent struct {
+	ID      int64 `json:"id,omitempty"`
+	StoryID int64 `json:"story_id,omitempty"`
+	Date    int64 `json:"date,omitempty"`
+}
+
 type StoryList struct {
 	Stories []Story `json:"stories,omitempty"`
 }

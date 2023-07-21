@@ -1,5 +1,9 @@
 # Japanese Vocab trainer
 
+A program for collecting stories (short exercepts of Japanese) and drilling their vocabulary.
+
+![](./images/story.png)
+
 ## Running
 
 1. [Install Go](https://go.dev/doc/install), version 1.15 or later.
@@ -8,6 +12,8 @@
 1. In the browser, open `localhost:8080`
 
 ## Stories
+
+![](./images/stories.png)
 
 You can add stories *via* the form at the top of the main page. For example, paste the title of a youtube video, its link, and its Japanese transcript into the form, then click the "Create Story" button.
 
@@ -34,6 +40,8 @@ Note that the grammatical analysis is not always 100% accurate but is generally 
 Clicking a word gives its definitions and information about its kanji.
 
 ## Drilling
+
+![](./images/drill.png)
 
 You can drill the words of an individual story by clicking its "words" link. Two links at the top of the story list let you drill the words from all stories or the words from all current stories.
 

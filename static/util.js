@@ -187,6 +187,7 @@ function getStoryList() {
         .then((data) => {
             console.log('Stories list success:', data);
             updateStoryList(data);
+            getLogEvents();
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -196,32 +197,31 @@ function getStoryList() {
 
 function timeSince(date) {
 
-    var seconds = Math.floor((new Date() - date) / 1000);
-    var interval = seconds / 86400;
-    return Math.floor(interval);
+    var now = Math.floor(new Date() / 1000);
 
+    var elapsedSeconds = now - date;
 
-    // var interval = seconds / 31536000;
-    // if (interval > 1) {
-    //     return Math.floor(interval) + " years ago";
-    // }
-    // interval = seconds / 2592000;
-    // if (interval > 1) {
-    //     return Math.floor(interval) + " months ago";
-    // }
-    // interval = seconds / 86400;
-    // if (interval > 1) {
-    //     return Math.floor(interval) + " days ago";
-    // }
-    // interval = seconds / 3600;
-    // if (interval > 1) {
-    //     return Math.floor(interval) + " hours ago";
-    // }
-    // interval = seconds / 60;
-    // if (interval > 1) {
-    //     return Math.floor(interval) + " minutes ago";
-    // }
-    // return Math.floor(seconds) + " seconds ago";
+    var interval = elapsedSeconds / 31536000;
+    if (interval > 1) {
+        return Math.floor(interval) + " years ago";
+    }
+    interval = elapsedSeconds / 2592000;
+    if (interval > 1) {
+        return Math.floor(interval) + " months ago";
+    }
+    interval = elapsedSeconds / 86400;
+    if (interval > 1) {
+        return Math.floor(interval) + " days ago";
+    }
+    interval = elapsedSeconds / 3600;
+    if (interval > 1) {
+        return Math.floor(interval) + " hours ago";
+    }
+    interval = elapsedSeconds / 60;
+    if (interval > 1) {
+        return Math.floor(interval) + " minutes ago";
+    }
+    return Math.floor(elapsedSeconds) + " seconds ago";
 }
 
 const DRILL_ALL_CURRENT = -1;
@@ -251,6 +251,7 @@ function updateStoryList(stories) {
                 <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
             </select>
             </td>
+            <td><a class="log" action="log" story_id="${s.id}" href="#">log</a></td>
             <td><a class="link" href="${s.link}">link</a></td>
             <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
@@ -262,9 +263,8 @@ function updateStoryList(stories) {
 
     let html = `<table class="story_table">
             <tr>
-                <td class="story_table_section" colspan="6">Stories<br> 
-                    <a action="drill_all" href="/words.html?storyId=${DRILL_ALL}">words of all stories</a><br>
-                    <a action="drill_current" href="/words.html?storyId=${DRILL_ALL_CURRENT}">words of all current stories</a>
+                <td class="story_table_section" colspan="6">STORIES <span><a action="drill_all" href="/words.html?storyId=${DRILL_ALL}">words of all stories</a>&nbsp;
+                <a action="drill_current" href="/words.html?storyId=${DRILL_ALL_CURRENT}">words of all current stories</a></span>
                 </td>
             </tr>`;
     for (let s of stories) {

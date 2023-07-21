@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"sort"
@@ -26,6 +27,11 @@ const INITIAL_RANK = 4
 const DRILL_FILTER_ON_COOLDOWN = "on"
 const DRILL_FILTER_OFF_COOLDOWN = "off"
 const DRILL_FILTER_ALL = "all"
+
+const STORY_STATUS_CURRENT = 3
+const STORY_STATUS_READ = 2
+const STORY_STATUS_NEVER_READ = 1
+const STORY_STATUS_ARCHIVE = 0
 
 func LoadStoriesFromDumpEndpoint(response http.ResponseWriter, request *http.Request) {
 	storyList, err := loadStoryDump()
@@ -662,6 +668,136 @@ func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 
 	json.NewEncoder(response).Encode(bson.M{"status": "success"})
+}
+
+func AddLogEvent(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	params := mux.Vars(request)
+	var storyId int64
+	id, err := strconv.Atoi(params["id"])
+	storyId = int64(id)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	date := time.Now().Unix()
+
+	if storyId < 0 {
+		// get random story from set of current stories
+
+		rows, err := sqldb.Query(`SELECT id, status FROM stories WHERE user = $1 AND status = $2;`, USER_ID, STORY_STATUS_CURRENT)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+			return
+		}
+		defer rows.Close()
+
+		var stories = make([]Story, 0)
+		var story Story
+		for rows.Next() {
+			if err := rows.Scan(&story.ID, &story.Status); err != nil {
+				response.WriteHeader(http.StatusInternalServerError)
+				response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
+				return
+			}
+			if story.Status == STORY_STATUS_CURRENT {
+				stories = append(stories, story)
+			}
+		}
+
+		if len(stories) == 0 {
+			json.NewEncoder(response).Encode("Did not add a log even. No current stories.")
+			return
+		}
+
+		rand.Seed(date)
+		storyId = stories[rand.Intn(len(stories))].ID
+	}
+
+	_, err = sqldb.Exec(`INSERT INTO log_events (date, story, user) 
+			VALUES($1, $2, $3);`,
+		date, storyId, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to insert log event: " + err.Error() + `"}`))
+	}
+	json.NewEncoder(response).Encode("Success adding log event")
+}
+
+func RemoveLogEvent(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	params := mux.Vars(request)
+	var logId int64
+	id, err := strconv.Atoi(params["id"])
+	logId = int64(id)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	_, err = sqldb.Exec(`DELETE FROM log_events WHERE id = $1;`, logId)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to delete log event: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(response).Encode(bson.M{"status": "success"})
+}
+
+func GetLogEvents(response http.ResponseWriter, request *http.Request) {
+	response.Header().Add("content-type", "application/json")
+
+	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	rows, err := sqldb.Query(`SELECT id, date, story FROM log_events WHERE user = $1 ORDER BY date DESC;`, USER_ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	var logEvents = make([]LogEvent, 0)
+	for rows.Next() {
+		var logEvent LogEvent
+		if err := rows.Scan(&logEvent.ID, &logEvent.Date, &logEvent.StoryID); err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
+			return
+		}
+		logEvents = append(logEvents, logEvent)
+	}
+
+	json.NewEncoder(response).Encode(bson.M{"logEvents": logEvents})
 }
 
 // [END indexHandler]

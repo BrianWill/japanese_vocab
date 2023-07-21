@@ -7,6 +7,7 @@ var storyTitle = document.getElementById('story_title');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
+var logEvents = document.getElementById('log_events');
 
 document.body.onload = function (evt) {
     getStoryList();
@@ -17,6 +18,86 @@ document.body.onload = function (evt) {
         openStory(storyId);
     }
 };
+
+logEvents.onclick = function(evt) {
+    if (evt.target.tagName == 'A') {
+        var logId = evt.target.getAttribute('log_id');
+        var action = evt.target.getAttribute('action');
+        switch (action) {
+            case 'remove':
+                evt.preventDefault();
+                removeLogEvent(logId);
+                break;
+        }
+    }
+};
+
+function addLogEvent(storyId) {
+    fetch(`/add_log_event/${storyId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Added a log event');
+            getLogEvents();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+
+}
+
+function removeLogEvent(logId) {
+    fetch(`/remove_log_event/${logId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Added a log event');
+            getLogEvents();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function getLogEvents() {
+    const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
+    var timeOfLastWeek = new Date() - WEEK_IN_SECONDS;
+
+    fetch('/log_events/' + timeOfLastWeek, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            updateLogEvents(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function updateLogEvents(data) {
+    let html = `<table class="log_table">`;
+    var storyLookup = storiesById || {};
+
+    
+    for (let d of data.logEvents) {
+        html += `<tr>
+            <td><a action="remove" log_id="${d.id}" href="#">remove log entry</a></td>
+            <td>${timeSince(d.date)}</td>
+            <td><a story_id="${d.story_id}" href="/story.html?storyId=${d.story_id}">${storyLookup[d.story_id].title}</a></td>
+            </tr>`;        
+    }
+
+    logEvents.innerHTML = html + '</table>';
+}
 
 newStoryButton.onclick = function (evt) {
     let data = {
@@ -109,6 +190,10 @@ storyList.onclick = function (evt) {
 
         var action = evt.target.getAttribute('action');
         switch (action) {
+            case 'log':
+                evt.preventDefault();
+                addLogEvent(storyId);
+                break;
             case 'drill':
                 break;
             case 'reset_story_word_countdowns':

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os/exec"
 	"regexp"
 	"sort"
 	"strings"
@@ -131,6 +132,9 @@ func main() {
 
 	router := mux.NewRouter()
 
+	router.HandleFunc("/add_log_event/{id}", AddLogEvent).Methods("GET")
+	router.HandleFunc("/remove_log_event/{id}", RemoveLogEvent).Methods("GET")
+	router.HandleFunc("/log_events/{since}", GetLogEvents).Methods("GET")
 	router.HandleFunc("/read/{id}", ReadEndpoint).Methods("GET")
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
@@ -149,6 +153,8 @@ func main() {
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal(err)
 	}
+
+	exec.Command("open", "http://localhost:8080/").Run()
 	// [END setting_port]
 }
 
@@ -222,6 +228,20 @@ func makeSqlDB() {
 			date_last_read INTEGER NOT NULL,
 			date_added INTEGER NOT NULL,
 			FOREIGN KEY(user) REFERENCES users(id))`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS log_events 
+	(id INTEGER PRIMARY KEY, 
+		user INTEGER NOT NULL,
+		story INTEGER NOT NULL,
+		date INTEGER NOT NULL,
+		FOREIGN KEY (story) REFERENCES stories (id),
+		FOREIGN KEY (user) REFERENCES users (id))`)
 	if err != nil {
 		log.Fatal(err)
 	}
