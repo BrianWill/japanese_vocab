@@ -1,6 +1,6 @@
 # Japanese Vocab trainer
 
-A program for collecting stories (short exercepts of Japanese) and drilling their vocabulary.
+A program for collecting stories (short excerpts of Japanese) and drilling their vocabulary.
 
 ![](./images/story.png)
 
@@ -15,7 +15,7 @@ A program for collecting stories (short exercepts of Japanese) and drilling thei
 
 ![](./images/stories.png)
 
-You can add stories *via* the form at the top of the main page. For example, paste the title of a youtube video, its link, and its Japanese transcript into the form, then click the "Create Story" button.
+You can add stories *via* the form on the main page. For example, paste the title of a youtube video, its link, and its Japanese transcript into the form, then click the "Create Story" button.
 
 You can set the status of each story: 
 
@@ -23,6 +23,8 @@ You can set the status of each story:
 - "Read": for stories you want to put aside but revisit later
 - "Never Read": the initial state of new stories
 - "Archive": for stories you are unlikely to revisit
+
+The "log" link adds a story to the log displayed at the top of the page.
 
 Click a story's title to see its text. Through grammatical analysis, the words of the stories are highlighted based on part of speech:
 

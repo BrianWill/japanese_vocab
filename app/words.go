@@ -43,7 +43,7 @@ func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	rows, err := sqldb.Query(`SELECT id, base_form, rank, drill_count, 
-			date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, date_added FROM words WHERE user = $1;`, USER_ID)
+			date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, date_added FROM words;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
@@ -170,7 +170,7 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 	}
 
 	if rankThreshold != math.MinInt64 {
-		rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND status >= $2;`, USER_ID, -rankThreshold)
+		rows, err := sqldb.Query(`SELECT id FROM stories WHERE status >= $1;`, -rankThreshold)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
@@ -191,7 +191,7 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 	}
 
 	for storyId, _ := range storyIdMap {
-		rows, err := sqldb.Query(`SELECT words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, storyId)
+		rows, err := sqldb.Query(`SELECT words FROM stories WHERE id = $1;`, storyId)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to get story words: " + err.Error() + `"}`))
@@ -252,7 +252,7 @@ func UpdateWordEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1 AND user = $2;`, word.BaseForm, USER_ID)
+	rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1;`, word.BaseForm)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
@@ -265,8 +265,8 @@ func UpdateWordEndpoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE words SET rank = $1, drill_count = $2, date_last_drill = $3, date_last_wrong = $4  WHERE base_form = $5 AND user = $6;`,
-		word.Rank, word.DrillCount, word.DateLastDrill, word.DateLastWrong, word.BaseForm, USER_ID)
+	_, err = sqldb.Exec(`UPDATE words SET rank = $1, drill_count = $2, date_last_drill = $3, date_last_wrong = $4  WHERE base_form = $5;`,
+		word.Rank, word.DrillCount, word.DateLastDrill, word.DateLastWrong, word.BaseForm)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to update drill word: " + err.Error() + `"}`))

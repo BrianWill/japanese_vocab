@@ -56,8 +56,7 @@ var allEntriesByKanjiSpellings map[string][]*JMDictEntry
 
 var tok *tokenizer.Tokenizer
 
-const SQL_FILE = "../testsql.db"
-const USER_ID = 0 // TODO for now we hardcode for just one user
+const SQL_FILE = "../ja.db"
 
 const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 3       // 3 hours in seconds
 const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 2  // 2 days in seconds
@@ -191,25 +190,17 @@ func makeSqlDB() {
 	}
 	defer sqldb.Close()
 
-	statement, err := sqldb.Prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := statement.Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS words 
-		(id INTEGER PRIMARY KEY, user INTEGER NOT NULL, 
+	statement, err := sqldb.Prepare(`CREATE TABLE IF NOT EXISTS words 
+		(id INTEGER PRIMARY KEY,
 			base_form TEXT NOT NULL, 
 			drill_count INTEGER NOT NULL,
+			drill_type INTEGER NOT NULL,
 			date_last_read INTEGER NOT NULL,
 			date_last_drill INTEGER NOT NULL,
 			date_last_wrong INTEGER NOT NULL,
 			date_added INTEGER NOT NULL,
 			rank INTEGER NOT NULL,
-			definitions TEXT NOT NULL,
-			FOREIGN KEY(user) REFERENCES users(id))`)
+			definitions TEXT NOT NULL)`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -218,7 +209,7 @@ func makeSqlDB() {
 	}
 
 	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS stories 
-		(id INTEGER PRIMARY KEY, user INTEGER NOT NULL,
+		(id INTEGER PRIMARY KEY, 
 			words	TEXT NOT NULL,
 			content	TEXT,
 			title	TEXT,
@@ -226,8 +217,7 @@ func makeSqlDB() {
 			tokens	TEXT,
 			status INTEGER NOT NULL,
 			date_last_read INTEGER NOT NULL,
-			date_added INTEGER NOT NULL,
-			FOREIGN KEY(user) REFERENCES users(id))`)
+			date_added INTEGER NOT NULL)`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -237,11 +227,9 @@ func makeSqlDB() {
 
 	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS log_events 
 	(id INTEGER PRIMARY KEY, 
-		user INTEGER NOT NULL,
 		story INTEGER NOT NULL,
 		date INTEGER NOT NULL,
-		FOREIGN KEY (story) REFERENCES stories (id),
-		FOREIGN KEY (user) REFERENCES users (id))`)
+		FOREIGN KEY (story) REFERENCES stories (id))`)
 	if err != nil {
 		log.Fatal(err)
 	}

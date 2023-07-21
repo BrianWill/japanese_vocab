@@ -160,7 +160,7 @@ func addStory(story Story, response http.ResponseWriter) error {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND title = $2;`, USER_ID, story.Title)
+	rows, err := sqldb.Query(`SELECT id FROM stories WHERE title = $1;`, story.Title)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -182,9 +182,9 @@ func addStory(story Story, response http.ResponseWriter) error {
 	}
 
 	date := time.Now().Unix()
-	_, err = sqldb.Exec(`INSERT INTO stories (user, words, content, title, link, tokens, date_last_read, date_added, status) 
-			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
-		USER_ID, wordsJson, story.Content, story.Title, story.Link, tokensJson, date, date, INITIAL_STATUS)
+	_, err = sqldb.Exec(`INSERT INTO stories (words, content, title, link, tokens, date_last_read, date_added, status) 
+			VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+		wordsJson, story.Content, story.Title, story.Link, tokensJson, date, date, INITIAL_STATUS)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to insert story: " + err.Error() + `"}`))
@@ -229,7 +229,7 @@ func retokenizeStory(story Story, response http.ResponseWriter) error {
 	defer sqldb.Close()
 
 	rows, err := sqldb.Query(`SELECT title, link, tokens, content, date_added, 
-		date_last_read FROM stories WHERE user = $1 AND id = $2;`, USER_ID, story.ID)
+		date_last_read FROM stories WHERE id = $1;`, story.ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -253,8 +253,8 @@ func retokenizeStory(story Story, response http.ResponseWriter) error {
 		return err
 	}
 
-	_, err = sqldb.Exec(`UPDATE stories SET tokens = $1, words = $2 WHERE id = $3 AND user = $4;`,
-		tokensJson, wordsJson, story.ID, USER_ID)
+	_, err = sqldb.Exec(`UPDATE stories SET tokens = $1, words = $2 WHERE id = $3;`,
+		tokensJson, wordsJson, story.ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
@@ -344,7 +344,7 @@ func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, er
 			continue
 		}
 
-		rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1 AND user = $2;`, token.BaseForm, USER_ID)
+		rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1;`, token.BaseForm)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "error while looking up word: " + err.Error() + `"}`))
@@ -386,9 +386,9 @@ func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, er
 
 			fmt.Printf("\nadding word: %s %d \t %d\n", token.BaseForm, len(token.Entries), id)
 
-			insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, user, 
-					date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type, rank, drill_count) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
-				token.BaseForm, USER_ID, unixtime, 0, unixtime, 0, entriesJson, drillType, INITIAL_RANK, 0)
+			insertResult, err := sqldb.Exec(`INSERT INTO words (base_form,  
+					date_last_read, date_last_drill, date_added, date_last_wrong, definitions, drill_type, rank, drill_count) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+				token.BaseForm, unixtime, 0, unixtime, 0, entriesJson, drillType, INITIAL_RANK, 0)
 			if err != nil {
 				response.WriteHeader(http.StatusInternalServerError)
 				response.Write([]byte(`{ "message": "` + "failure to insert word: " + err.Error() + `"}`))
@@ -495,7 +495,7 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, title, link, status, date_last_read, date_added FROM stories WHERE user = $1;`, USER_ID)
+	rows, err := sqldb.Query(`SELECT id, title, link, status, date_last_read, date_added FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -542,7 +542,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	rows, err := sqldb.Query(`SELECT title, link, tokens, content, date_added, 
-		date_last_read, words FROM stories WHERE user = $1 AND id = $2;`, USER_ID, id)
+		date_last_read, words FROM stories WHERE id = $1;`, id)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -584,7 +584,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 
 	query := fmt.Sprintf(`SELECT id, base_form, rank, drill_count,
 		date_last_read, date_last_drill, definitions, drill_type, date_last_wrong, 
-		date_added FROM words WHERE user = %d AND id IN (%s);`, USER_ID, placeholders(len(wordIds)))
+		date_added FROM words WHERE id IN (%s);`, placeholders(len(wordIds)))
 	args := make([]interface{}, len(wordIds))
 	for i, id := range wordIds {
 		args[i] = id
@@ -644,7 +644,7 @@ func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	// make sure the story actually exists
-	rows, err := sqldb.Query(`SELECT id FROM stories WHERE user = $1 AND id = $2;`, USER_ID, story.ID)
+	rows, err := sqldb.Query(`SELECT id FROM stories WHERE id = $1;`, story.ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -659,8 +659,8 @@ func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	}
 	rows.Close()
 
-	_, err = sqldb.Exec(`UPDATE stories SET date_last_read = $1, status = $2 WHERE id = $3 AND user = $4;`,
-		story.DateLastRead, story.Status, story.ID, USER_ID)
+	_, err = sqldb.Exec(`UPDATE stories SET date_last_read = $1, status = $2 WHERE id = $3;`,
+		story.DateLastRead, story.Status, story.ID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
@@ -696,7 +696,7 @@ func AddLogEvent(response http.ResponseWriter, request *http.Request) {
 	if storyId < 0 {
 		// get random story from set of current stories
 
-		rows, err := sqldb.Query(`SELECT id, status FROM stories WHERE user = $1 AND status = $2;`, USER_ID, STORY_STATUS_CURRENT)
+		rows, err := sqldb.Query(`SELECT id, status FROM stories WHERE status = $1;`, STORY_STATUS_CURRENT)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -726,9 +726,9 @@ func AddLogEvent(response http.ResponseWriter, request *http.Request) {
 		storyId = stories[rand.Intn(len(stories))].ID
 	}
 
-	_, err = sqldb.Exec(`INSERT INTO log_events (date, story, user) 
-			VALUES($1, $2, $3);`,
-		date, storyId, USER_ID)
+	_, err = sqldb.Exec(`INSERT INTO log_events (date, story) 
+			VALUES($1, $2);`,
+		date, storyId)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to insert log event: " + err.Error() + `"}`))
@@ -778,7 +778,7 @@ func GetLogEvents(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, date, story FROM log_events WHERE user = $1 ORDER BY date DESC;`, USER_ID)
+	rows, err := sqldb.Query(`SELECT id, date, story FROM log_events ORDER BY date DESC;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))

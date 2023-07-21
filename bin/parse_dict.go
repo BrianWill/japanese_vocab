@@ -37,7 +37,7 @@ var dictCollection *mongo.Collection
 
 var tok *tokenizer.Tokenizer
 
-const SQL_FILE = "../testsql.db"
+const SQL_FILE = "../ja.db"
 
 func main() {
 	var err error
