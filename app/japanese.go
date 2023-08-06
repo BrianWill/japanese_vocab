@@ -21,12 +21,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"os/exec"
+	//"os/exec"
 	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
 
+	"crypto/md5"
+	"encoding/hex"
 	"log"
 	"net/http"
 	"os"
@@ -36,8 +38,10 @@ import (
 
 	"github.com/ikawaha/kagome-dict/ipa"
 	"github.com/ikawaha/kagome/v2/tokenizer"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
 	// Note: If connecting using the App Engine Flex Go runtime, use
@@ -54,9 +58,14 @@ var allEntries JMDict
 var allEntriesByReading map[string][]*JMDictEntry
 var allEntriesByKanjiSpellings map[string][]*JMDictEntry
 
+var sessionStore *sessions.CookieStore
+
+const SESSION_KEY = "supersecret" // todo insecure; use env variable instead
+
 var tok *tokenizer.Tokenizer
 
-const SQL_FILE = "../ja.db"
+const SQL_USERS_FILE = "../users.db"
+const SALT = "QWOpVRp6SObKeO6bBth5"
 
 const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 3       // 3 hours in seconds
 const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 2  // 2 days in seconds
@@ -84,7 +93,10 @@ func main() {
 		panic(err)
 	}
 
-	makeSqlDB()
+	//cookieStore = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	sessionStore = sessions.NewCookieStore([]byte(SESSION_KEY)) // todo insecure
+
+	makeMainDB()
 
 	start := time.Now()
 	bytes, err := unzipSource("../kanji.zip")
@@ -134,26 +146,28 @@ func main() {
 	router.HandleFunc("/add_log_event/{id}", AddLogEvent).Methods("GET")
 	router.HandleFunc("/remove_log_event/{id}", RemoveLogEvent).Methods("GET")
 	router.HandleFunc("/log_events/{since}", GetLogEvents).Methods("GET")
-	router.HandleFunc("/read/{id}", ReadEndpoint).Methods("GET")
+	router.HandleFunc("/loginauth", PostLoginAuth).Methods("POST")
+	router.HandleFunc("/logout", PostLogout).Methods("POST")
+	router.HandleFunc("/register", PostRegisterUser).Methods("POST")
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
-	router.HandleFunc("/update_story", UpdateStoryEndpoint).Methods("POST")
-	router.HandleFunc("/create_story", CreateStoryEndpoint).Methods("POST")
-	router.HandleFunc("/retokenize_story", RetokenizeStoryEndpoint).Methods("POST")
-	router.HandleFunc("/load_stories", LoadStoriesFromDumpEndpoint).Methods("GET")
-	router.HandleFunc("/story/{id}", GetStoryEndpoint).Methods("GET")
-	router.HandleFunc("/stories_list", GetStoriesListEndpoint).Methods("GET")
-	router.HandleFunc("/kanji", KanjiEndpoint).Methods("POST")
-	router.HandleFunc("/words", WordDrillEndpoint).Methods("POST")
-	router.HandleFunc("/update_word", UpdateWordEndpoint).Methods("POST")
+	router.HandleFunc("/update_story", UpdateStory).Methods("POST")
+	router.HandleFunc("/create_story", CreateStory).Methods("POST")
+	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
+	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
+	router.HandleFunc("/stories_list", GetStoriesList).Methods("GET")
+	router.HandleFunc("/kanji", Kanji).Methods("POST")
+	router.HandleFunc("/words", WordDrill).Methods("POST")
+	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
+	router.HandleFunc("/", GetMain).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
-	log.Printf("Running on http://localhost:%s", port)
+	log.Printf("Running on port: %s", port)
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal(err)
 	}
 
-	exec.Command("open", "http://localhost:8080/").Run()
+	//exec.Command("open", "http://localhost:8080/").Run()
 	// [END setting_port]
 }
 
@@ -183,8 +197,28 @@ func buildEntryMaps() {
 	}
 }
 
-func makeSqlDB() {
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+func makeMainDB() {
+	sqldb, err := sql.Open("sqlite3", SQL_USERS_FILE)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer sqldb.Close()
+
+	statement, err := sqldb.Prepare(`CREATE TABLE IF NOT EXISTS users 
+	(id INTEGER PRIMARY KEY,
+		email TEXT NOT NULL, 
+		passwordHash TEXT NOT NULL)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func makeUserDB(userhash string) {
+	sqldb, err := sql.Open("sqlite3", "../users/"+userhash+".db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -242,7 +276,7 @@ func makeSqlDB() {
 
 // [START indexHandler]
 
-func KanjiEndpoint(response http.ResponseWriter, request *http.Request) {
+func Kanji(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
 	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -273,6 +307,145 @@ func getKanji(characters []string) []KanjiCharacter {
 		kanji = append(kanji, k)
 	}
 	return kanji
+}
+
+func GetMain(response http.ResponseWriter, request *http.Request) {
+
+	session, err := sessionStore.Get(request, "session")
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if session.IsNew {
+		http.Redirect(response, request, "/login.html", http.StatusSeeOther)
+	}
+
+	//dbPath := session.Values["user_db_path"]
+
+	http.ServeFile(response, request, "../static/index.html")
+}
+
+func PostLoginAuth(response http.ResponseWriter, request *http.Request) {
+	err := request.ParseForm()
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "could not parse login form: " + err.Error() + `"}`))
+		return
+	}
+	email := request.FormValue("email")
+
+	sqldb, err := sql.Open("sqlite3", SQL_USERS_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	row := sqldb.QueryRow(`SELECT passwordHash FROM users WHERE email = ?;`, email)
+	var passwordHash string
+	err = row.Scan(&passwordHash)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to access password for user; user may not exist" + `"}`))
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(request.FormValue("password")+SALT))
+	if err != nil {
+		http.Redirect(response, request, "/login.html", http.StatusSeeOther)
+		return
+	}
+
+	session, err := sessionStore.Get(request, "session")
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	session.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400 * 7, // 7 days
+		HttpOnly: true,
+	}
+	session.Values["email"] = email
+	hash := md5.Sum([]byte(email))
+	session.Values["user_db_path"] = "../users/" + hex.EncodeToString(hash[:]) + ".db"
+
+	err = session.Save(request, response)
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(response, request, "/", http.StatusSeeOther)
+}
+
+func PostLogout(response http.ResponseWriter, request *http.Request) {
+	session, _ := sessionStore.Get(request, "session")
+
+	delete(session.Values, "userId")
+	session.Save(request, response)
+
+	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
+}
+
+func PostRegisterUser(response http.ResponseWriter, request *http.Request) {
+	err := request.ParseForm()
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "could not parse login form: " + err.Error() + `"}`))
+		return
+	}
+	email := request.FormValue("email")
+
+	sqldb, err := sql.Open("sqlite3", SQL_USERS_FILE)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	row := sqldb.QueryRow(`SELECT passwordHash FROM users WHERE email = ?;`, email)
+	var hash string
+	err = row.Scan(&hash)
+	if err == nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "user with that email already exists" + `"}`))
+		return
+	}
+
+	password := request.FormValue("password")
+	if password != request.FormValue("password2") {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "the typed passwords do not match: " + `"}`))
+		return
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password+SALT), 8) // 8 is arbitrarily chosen cost
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to hash password: " + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`INSERT INTO users (email, passwordHash) VALUES($1, $2);`, email, string(passwordHash))
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to insert user: " + err.Error() + `"}`))
+		return
+	}
+
+	// create user DB
+	bytes := md5.Sum([]byte(email))
+	makeUserDB(hex.EncodeToString(bytes[:]))
+
+	// var cookie = http.Cookie{Name: "user", Value: "test", Expires: time.Now().Add(365 * 24 * time.Hour)}
+	// http.SetCookie(response, &cookie)
+
+	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
 }
 
 func PostWordSearch(response http.ResponseWriter, request *http.Request) {

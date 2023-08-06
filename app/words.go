@@ -28,13 +28,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func WordDrillEndpoint(response http.ResponseWriter, request *http.Request) {
+func WordDrill(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect {
+		return
+	}
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
+
 	response.Header().Add("content-type", "application/json")
 
 	var drillRequest DrillRequest
 	json.NewDecoder(request.Body).Decode(&drillRequest)
 
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -190,7 +199,7 @@ func getStoryWords(storyIds []int64, response http.ResponseWriter, sqldb *sql.DB
 		}
 	}
 
-	for storyId, _ := range storyIdMap {
+	for storyId := range storyIdMap {
 		rows, err := sqldb.Query(`SELECT words FROM stories WHERE id = $1;`, storyId)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
@@ -239,12 +248,21 @@ func isDrillType(drillType int, requestedType string) bool {
 	return false
 }
 
-func UpdateWordEndpoint(response http.ResponseWriter, request *http.Request) {
+func UpdateWord(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect {
+		return
+	}
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
+
 	response.Header().Add("content-type", "application/json")
 	var word DrillWord
 	json.NewDecoder(request.Body).Decode(&word)
 
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))

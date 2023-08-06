@@ -113,6 +113,10 @@ span.verb:hover {
     text-decoration: underline;
 }
 
+a {
+    color: #838383;
+}
+
 #story_list li {
     margin-bottom: 0.4em;
 

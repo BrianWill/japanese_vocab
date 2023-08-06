@@ -5,6 +5,7 @@ import (
 	// "context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -33,55 +34,43 @@ const STORY_STATUS_READ = 2
 const STORY_STATUS_NEVER_READ = 1
 const STORY_STATUS_ARCHIVE = 0
 
-func LoadStoriesFromDumpEndpoint(response http.ResponseWriter, request *http.Request) {
-	storyList, err := loadStoryDump()
-	if err != nil {
+func CreateStory(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect || err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": failure to load stories from dump"` + err.Error() + `"}`))
-		return
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	fmt.Println("loaded story dump", len(storyList.Stories))
-
-	for _, s := range storyList.Stories {
-		story := Story{
-			Content: s.Content,
-			Title:   s.Title,
-			Link:    s.Link,
-		}
-		fmt.Println("adding story ", story.Title)
-		err := addStory(story, response)
-		if err != nil {
-			return
-		}
-	}
-}
-
-func CreateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 
 	var story Story
 	json.NewDecoder(request.Body).Decode(&story)
 
-	err := addStory(story, response)
+	err = addStory(story, response, dbPath)
 	if err != nil {
 		return
 	}
 }
 
-func RetokenizeStoryEndpoint(response http.ResponseWriter, request *http.Request) {
+func RetokenizeStory(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect || err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
+
 	response.Header().Add("content-type", "application/json")
 
 	var story Story
 	json.NewDecoder(request.Body).Decode(&story)
 
-	err := retokenizeStory(story, response)
+	err = retokenizeStory(story, response, dbPath)
 	if err != nil {
 		return
 	}
 }
 
-func tokenize(story Story, response http.ResponseWriter) ([]byte, []byte, error) {
+func tokenize(story Story, response http.ResponseWriter, sqldb *sql.DB) ([]byte, []byte, error) {
 	analyzerTokens := tok.Analyze(story.Content, tokenizer.Normal)
 	tokens := make([]*JpToken, len(analyzerTokens))
 
@@ -127,7 +116,7 @@ func tokenize(story Story, response http.ResponseWriter) ([]byte, []byte, error)
 		return nil, nil, err
 	}
 
-	wordIds, err := addDrillWords(tokens, response)
+	wordIds, err := addDrillWords(tokens, response, sqldb)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to add words: " + err.Error() + `"}`))
@@ -151,8 +140,8 @@ func tokenize(story Story, response http.ResponseWriter) ([]byte, []byte, error)
 	return wordsJson, tokensJson, nil
 }
 
-func addStory(story Story, response http.ResponseWriter) error {
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+func addStory(story Story, response http.ResponseWriter, dbPath string) error {
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -174,7 +163,7 @@ func addStory(story Story, response http.ResponseWriter) error {
 		return fmt.Errorf("story with same title already exists")
 	}
 
-	wordsJson, tokensJson, err := tokenize(story, response)
+	wordsJson, tokensJson, err := tokenize(story, response, sqldb)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to tokenize story: " + err.Error() + `"}`))
@@ -219,8 +208,8 @@ func extractKanji(tokens []*JpToken, response http.ResponseWriter) ([]*JpToken, 
 	return newTokens, nil
 }
 
-func retokenizeStory(story Story, response http.ResponseWriter) error {
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+func retokenizeStory(story Story, response http.ResponseWriter, dbPath string) error {
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -246,7 +235,7 @@ func retokenizeStory(story Story, response http.ResponseWriter) error {
 		}
 	}
 
-	wordsJson, tokensJson, err := tokenize(story, response)
+	wordsJson, tokensJson, err := tokenize(story, response, sqldb)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to tokenize story: " + err.Error() + `"}`))
@@ -305,15 +294,7 @@ func filterPartsOfSpeech(tokens []*JpToken) []*JpToken {
 	return filteredTokens
 }
 
-func addDrillWords(tokens []*JpToken, response http.ResponseWriter) ([]int64, error) {
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return nil, err
-	}
-	defer sqldb.Close()
-
+func addDrillWords(tokens []*JpToken, response http.ResponseWriter, sqldb *sql.DB) ([]int64, error) {
 	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	var reHasKana = regexp.MustCompile(`[あ-んア-ン]`)
 	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
@@ -484,10 +465,38 @@ func getVerbDrillType(sense JMDictSense) int {
 	return drillType
 }
 
-func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request) {
+func GetUserDb(response http.ResponseWriter, request *http.Request) (string, bool, error) {
+	session, err := sessionStore.Get(request, "session")
+	if err != nil {
+		return "", false, err
+	}
+
+	if session.IsNew {
+		http.Redirect(response, request, "/login.html", http.StatusSeeOther)
+		return "", true, err
+	}
+
+	dbPath, ok := session.Values["user_db_path"].(string)
+	if !ok {
+		return "", false, errors.New("session missing db path")
+	}
+
+	return dbPath, false, nil
+}
+
+func GetStoriesList(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect {
+		return
+	}
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
+
 	response.Header().Add("content-type", "application/json")
 
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -518,12 +527,13 @@ func GetStoriesListEndpoint(response http.ResponseWriter, request *http.Request)
 	json.NewEncoder(response).Encode(stories)
 }
 
-func ReadEndpoint(response http.ResponseWriter, request *http.Request) {
-	fmt.Println(request.URL.Path)
-	http.ServeFile(response, request, "../static/index.html")
-}
+func GetStory(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect || err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
 
-func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	response.Header().Add("content-type", "application/json")
 	params := mux.Vars(request)
 	id, err := strconv.Atoi(params["id"])
@@ -533,7 +543,7 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -624,18 +634,24 @@ func GetStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(story)
 }
 
-func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
+func UpdateStory(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect || err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
+
 	response.Header().Add("content-type", "application/json")
 
 	var story Story
-	err := json.NewDecoder(request.Body).Decode(&story)
+	err = json.NewDecoder(request.Body).Decode(&story)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -671,6 +687,12 @@ func UpdateStoryEndpoint(response http.ResponseWriter, request *http.Request) {
 }
 
 func AddLogEvent(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect || err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
+
 	response.Header().Add("content-type", "application/json")
 
 	params := mux.Vars(request)
@@ -683,7 +705,7 @@ func AddLogEvent(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -737,6 +759,12 @@ func AddLogEvent(response http.ResponseWriter, request *http.Request) {
 }
 
 func RemoveLogEvent(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect || err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
+
 	response.Header().Add("content-type", "application/json")
 
 	params := mux.Vars(request)
@@ -749,7 +777,7 @@ func RemoveLogEvent(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -768,9 +796,18 @@ func RemoveLogEvent(response http.ResponseWriter, request *http.Request) {
 }
 
 func GetLogEvents(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect {
+		return
+	}
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	}
+
 	response.Header().Add("content-type", "application/json")
 
-	sqldb, err := sql.Open("sqlite3", SQL_FILE)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))

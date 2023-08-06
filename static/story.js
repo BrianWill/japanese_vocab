@@ -273,6 +273,8 @@ function onYouTubeIframeAPIReady() {
 }
 
 function onPlayerReady(event) {
+    let playerControlsDiv = document.getElementById('player_controls');
+    playerControlsDiv.style.display = 'block';
     event.target.playVideo();
     console.log('starting video');
 }
