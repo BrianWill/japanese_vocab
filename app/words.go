@@ -100,7 +100,7 @@ func WordDrill(response http.ResponseWriter, request *http.Request) {
 		includeOffCooldown = true
 	}
 
-	cooldowns := [5]int64{0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4}
+	cooldowns := [5]int64{DRILL_COOLDOWN_RANK_0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4}
 
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()

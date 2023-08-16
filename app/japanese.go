@@ -67,10 +67,11 @@ var tok *tokenizer.Tokenizer
 const SQL_USERS_FILE = "../users.db"
 const SALT = "QWOpVRp6SObKeO6bBth5"
 
-const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 3       // 3 hours in seconds
-const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 2  // 2 days in seconds
-const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 7  // 7 days in seconds
-const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 24 * 30 // 30 days weeks in seconds
+const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 5        // 5 hours in seconds
+const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 2   // 2 days in seconds
+const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 7   // 7 days in seconds
+const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 24 * 30  // 30 days weeks in seconds
+const DRILL_COOLDOWN_RANK_0 = 60 * 60 * 24 * 180 // 180 days in seconds
 const DRILL_TYPE_KATAKANA = 1
 const DRILL_TYPE_ICHIDAN = 2
 const DRILL_TYPE_GODAN_SU = 8
@@ -197,6 +198,22 @@ func buildEntryMaps() {
 	}
 }
 
+func auth(handlerFunc http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, err := sessionStore.Get(r, "session")
+		if err != nil {
+			http.Redirect(w, r, "/login.html", http.StatusFound)
+			return
+		}
+
+		if session.IsNew {
+			http.Redirect(w, r, "/login.html", http.StatusFound)
+		}
+
+		handlerFunc.ServeHTTP(w, r)
+	}
+}
+
 func makeMainDB() {
 	sqldb, err := sql.Open("sqlite3", SQL_USERS_FILE)
 	if err != nil {
@@ -233,8 +250,7 @@ func makeUserDB(userhash string) {
 			date_last_drill INTEGER NOT NULL,
 			date_last_wrong INTEGER NOT NULL,
 			date_added INTEGER NOT NULL,
-			rank INTEGER NOT NULL,
-			definitions TEXT NOT NULL)`)
+			rank INTEGER NOT NULL)`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -244,13 +260,10 @@ func makeUserDB(userhash string) {
 
 	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS stories 
 		(id INTEGER PRIMARY KEY, 
-			words	TEXT NOT NULL,
-			content	TEXT,
+			lines TEXT,         
 			title	TEXT,
 			link	TEXT,
-			tokens	TEXT,
 			status INTEGER NOT NULL,
-			date_last_read INTEGER NOT NULL,
 			date_added INTEGER NOT NULL)`)
 	if err != nil {
 		log.Fatal(err)

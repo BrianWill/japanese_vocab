@@ -6,15 +6,28 @@ import (
 )
 
 type Story struct {
-	ID           int64  `json:"id,omitempty"`
-	Words        string `json:"words,omitempty"`
-	Content      string `json:"content,omitempty"`
-	Title        string `json:"title,omitempty"`
-	Link         string `json:"link,omitempty"`
-	Tokens       string `json:"tokens,omitempty"`
-	Status       int    `json:"status"`
-	DateLastRead int64  `json:"date_last_read"`
-	DateAdded    int64  `json:"date_added"`
+	ID int64 `json:"id,omitempty"`
+	//Words        string `json:"words,omitempty"`
+	Content string `json:"content,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Link    string `json:"link,omitempty"`
+	Lines   []Line `json:"lines,omitempty"`
+	//Tokens       string `json:"tokens,omitempty"`
+	Status int `json:"status"`
+	//DateLastRead int64 `json:"date_last_read"`
+	DateAdded int64 `json:"date_added"`
+}
+
+type Line struct {
+	Words     []LineWord `json:"words,omitempty"`
+	Timestamp string     `json:"timestamp,omitempty"`
+	Content   string     `json:"content,omitempty"`
+}
+
+type LineWord struct {
+	ID      int64  `json:"id,omitempty"`
+	Surface string `json:"surface,omitempty"`
+	POS     string `json:"color,omitempty"` // highlight color
 }
 
 type LogEvent struct {
