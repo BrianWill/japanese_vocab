@@ -3,6 +3,7 @@ package main
 // [START import]
 import (
 	// "context"
+	"compress/gzip"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -41,7 +42,7 @@ func CreateStory(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	var story Story
 	json.NewDecoder(request.Body).Decode(&story)
@@ -53,12 +54,13 @@ func CreateStory(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	_, err = addStory(story, sqldb, false)
+	_, newWordCount, err := addStory(story, sqldb, false)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
+	fmt.Println("total new words added:", newWordCount)
 	json.NewEncoder(response).Encode("Success adding story")
 }
 
@@ -69,7 +71,7 @@ func RetokenizeStory(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	var story Story
 	json.NewDecoder(request.Body).Decode(&story)
@@ -81,16 +83,17 @@ func RetokenizeStory(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	_, err = addStory(story, sqldb, true)
+	_, newWordCount, err := addStory(story, sqldb, true)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
+	fmt.Println("total new words added:", newWordCount)
 	json.NewEncoder(response).Encode("Success retokenizing story")
 }
 
-func tokenize(content string) ([]*JpToken, error) {
+func tokenize(content string) ([]*JpToken, []string, error) {
 	analyzerTokens := tok.Analyze(content, tokenizer.Normal)
 	tokens := make([]*JpToken, len(analyzerTokens))
 
@@ -122,30 +125,25 @@ func tokenize(content string) ([]*JpToken, error) {
 		}
 	}
 
-	tokens, err := extractKanji(tokens)
+	kanji, err := extractKanji(tokens)
 	if err != nil {
-		return nil, fmt.Errorf(`failure to extract kanji` + err.Error())
+		return nil, nil, fmt.Errorf(`failure to extract kanji` + err.Error())
 	}
 
-	// err = getDefinitions(tokens)
-	// if err != nil {
-	// 	return nil, fmt.Errorf(`failure to get definitions` + err.Error())
-	// }
-
-	return tokens, nil
+	return tokens, kanji, nil
 }
 
-func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, err error) {
+func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCount int, err error) {
 	if retokenize {
 		var linesJSON string
 		row := sqldb.QueryRow(`SELECT title, link, lines, date_added 
 			FROM stories WHERE id = $1;`, story.ID)
 		if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded); err != nil {
-			return 0, fmt.Errorf("failure to read story: " + err.Error())
+			return 0, 0, fmt.Errorf("failure to read story: " + err.Error())
 		}
 		err := json.Unmarshal([]byte(linesJSON), &story.Lines)
 		if err != nil {
-			return 0, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
+			return 0, 0, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
 		}
 		for _, line := range story.Lines {
 			story.Content += line.Timestamp + "\n" + line.Content + "\n"
@@ -153,88 +151,82 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, err error)
 	} else {
 		row := sqldb.QueryRow(`SELECT id FROM stories WHERE title = $1;`, story.Title)
 		if err := row.Scan(&story.ID); err != nil && err != sql.ErrNoRows {
-			return 0, fmt.Errorf("story with same title already exists: " + err.Error())
+			return 0, 0, fmt.Errorf("story with same title already exists: " + err.Error())
 		}
 	}
 
+	// if text has timestamps, split on timestamps,
+	// otherwise split on blank lines
 	timestampRegex := regexp.MustCompile(`(?m)^\s*\d*:\d*\s*$`) // match timestamp line
 	timestamps := timestampRegex.FindAllString(story.Content, -1)
 	lineContents := timestampRegex.Split(story.Content, -1)
 
-	lines := make([]Line, 0)
-
-	// todo: check that the timestamps increase in value
-
-	for i, timestamp := range timestamps {
-		fmt.Println(timestamp, strings.TrimSpace(lineContents[i+1]))
-
-		tokens, err := tokenize(strings.TrimSpace(lineContents[i+1]))
-		if err != nil {
-			return 0, fmt.Errorf("failure to tokenize story: " + err.Error())
-		}
-
-		wordsOfLine, err := addWords(tokens, sqldb)
-		if err != nil {
-			return 0, fmt.Errorf("failure to add words: " + err.Error())
-		}
-
-		lines = append(lines, Line{
-			Content:   lineContents[i+1],
-			Timestamp: timestamp,
-			Words:     wordsOfLine,
-		})
-	}
-
-	if len(timestamps) == 0 {
+	if len(timestamps) > 0 {
+		// todo: check that the timestamps increase in value
+		lineContents = lineContents[1:]
+	} else {
 		blanklinesRegex := regexp.MustCompile(`(?m)^\s*$\n`) // match timestamp line
 		lineContents = blanklinesRegex.Split(story.Content, -1)
+	}
 
-		for _, content := range lineContents {
-			fmt.Println("line without timestamp", content)
+	lines := make([]Line, len(lineContents))
 
-			tokens, err := tokenize(strings.TrimSpace(content))
-			if err != nil {
-				return 0, fmt.Errorf("failure to tokenize story: " + err.Error())
-			}
+	newWordCount = 0
 
-			wordsOfLine, err := addWords(tokens, sqldb)
-			if err != nil {
-				return 0, fmt.Errorf("failure to add words: " + err.Error())
-			}
+	for i, content := range lineContents {
+		timestamp := ":"
+		if len(timestamps) > 0 {
+			timestamp = timestamps[i]
+		}
+		timestamp = strings.TrimSpace(timestamp)
+		content = strings.TrimSpace(content)
 
-			lines = append(lines, Line{
-				Content:   content,
-				Timestamp: ":",
-				Words:     wordsOfLine,
-			})
+		fmt.Println(timestamp, content)
+
+		tokens, kanjiSet, err := tokenize(content)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failure to tokenize story: " + err.Error())
+		}
+
+		wordsOfLine, lineKanji, addedWordCount, err := addWords(tokens, kanjiSet, sqldb)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failure to add words: " + err.Error())
+		}
+		newWordCount += addedWordCount
+
+		lines[i] = Line{
+			Content:   content,
+			Timestamp: timestamp,
+			Words:     wordsOfLine,
+			Kanji:     lineKanji,
 		}
 	}
 
 	linesJson, err := json.Marshal(lines)
 	if err != nil {
-		return 0, fmt.Errorf("failure to lines: " + err.Error())
+		return 0, 0, fmt.Errorf("failure to lines: " + err.Error())
 	}
 
 	if retokenize {
 		_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`,
 			linesJson, story.ID)
 		if err != nil {
-			return 0, fmt.Errorf("failure to update story: " + err.Error())
+			return 0, 0, fmt.Errorf("failure to update story: " + err.Error())
 		}
-		return story.ID, nil
+		return story.ID, newWordCount, nil
 	} else {
 		date := time.Now().Unix()
 		result, err := sqldb.Exec(`INSERT INTO stories (lines, title, link, date_added, status) 
 				VALUES($1, $2, $3, $4, $5);`,
 			linesJson, story.Title, story.Link, date, INITIAL_STATUS)
 		if err != nil {
-			return 0, fmt.Errorf("failure to insert story: " + err.Error())
+			return 0, 0, fmt.Errorf("failure to insert story: " + err.Error())
 		}
 		id, err = result.LastInsertId()
 		if err != nil {
-			return 0, fmt.Errorf("failure to insert story: " + err.Error())
+			return 0, 0, fmt.Errorf("failure to insert story: " + err.Error())
 		}
-		return id, nil
+		return id, newWordCount, nil
 	}
 }
 
@@ -294,8 +286,7 @@ func getTokenPOS(token *JpToken, priorToken *JpToken) string {
 	}
 }
 
-func extractKanji(tokens []*JpToken) ([]*JpToken, error) {
-	newTokens := tokens
+func extractKanji(tokens []*JpToken) ([]string, error) {
 	kanjiMap := make(map[string]bool)
 
 	for _, t := range tokens {
@@ -307,20 +298,22 @@ func extractKanji(tokens []*JpToken) ([]*JpToken, error) {
 		}
 	}
 
+	kanji := make([]string, len(kanjiMap))
+
+	i := 0
 	for k := range kanjiMap {
-		tok := JpToken{
-			Surface:  k,
-			BaseForm: k,
-		}
-		newTokens = append(newTokens, &tok)
+		kanji[i] = k
+		i++
 	}
 
-	return newTokens, nil
+	return kanji, nil
 }
 
-func addWords(tokens []*JpToken, sqldb *sql.DB) ([]LineWord, error) {
+func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, []LineKanji, int, error) {
 	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
+
+	newWordCount := 0
 
 	lineWords := make([]LineWord, len(tokens))
 	for i, token := range tokens {
@@ -331,85 +324,141 @@ func addWords(tokens []*JpToken, sqldb *sql.DB) ([]LineWord, error) {
 
 		lineWord := &lineWords[i]
 		lineWord.Surface = token.Surface
+		lineWord.BaseForm = token.BaseForm
 		lineWord.POS = getTokenPOS(token, priorToken)
 
 		if lineWord.POS == "" { // not a vocab word
 			continue
 		}
 
-		row := sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1;`, token.BaseForm)
+		var id int64
+		err := sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1`, token.BaseForm).Scan(&id)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, nil, 0, err
+		}
+		if err == nil {
+			// user found
+			lineWord.ID = id // word already exists in word set
+			//fmt.Println("word already exists", token.BaseForm, id)
+			continue
+		}
+
+		drillType := 0
+
+		// has katakana
+		if len(reHasKatakana.FindStringIndex(token.BaseForm)) > 0 {
+			drillType |= DRILL_TYPE_KATAKANA
+		}
+
+		// is a single kanji
+		hasKanji := len(reHasKanji.FindStringIndex(token.BaseForm)) > 0
+		if hasKanji && utf8.RuneCountInString(token.BaseForm) == 1 {
+			drillType |= DRILL_TYPE_KANJI
+		}
+
+		entries := getDefinitions(token.BaseForm)
+
+		for _, entry := range entries {
+			for _, sense := range entry.Senses {
+				drillType |= getVerbDrillType(sense)
+			}
+		}
+
+		unixtime := time.Now().Unix()
+
+		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form,  date_last_read, date_last_drill,
+				date_added, date_last_wrong,  drill_type, rank, drill_count) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+			token.BaseForm, unixtime, 0, unixtime, 0, drillType, INITIAL_RANK, 0)
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
+		}
+
+		id, err = insertResult.LastInsertId()
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("failure to get id of inserted word: " + err.Error())
+		}
+		lineWord.ID = id
+		newWordCount++
+
+	}
+
+	lineKanji := make([]LineKanji, len(kanjiSet))
+	for i, kanji := range kanjiSet {
+
+		lk := &lineKanji[i]
+		lk.Character = kanji
 
 		var id int64
-		err := row.Scan(&id)
-		if err != nil { // word already exists in word set
-			lineWord.ID = id
-		} else {
-			drillType := 0
-
-			// has katakana
-			if len(reHasKatakana.FindStringIndex(token.BaseForm)) > 0 {
-				drillType |= DRILL_TYPE_KATAKANA
-			}
-
-			// is a single kanji
-			hasKanji := len(reHasKanji.FindStringIndex(token.BaseForm)) > 0
-			if hasKanji && utf8.RuneCountInString(token.BaseForm) == 1 {
-				drillType |= DRILL_TYPE_KANJI
-			}
-
-			for _, entry := range token.Entries {
-				for _, sense := range entry.Senses {
-					drillType |= getVerbDrillType(sense)
-				}
-			}
-
-			unixtime := time.Now().Unix()
-
-			insertResult, err := sqldb.Exec(`INSERT INTO words (base_form,  date_last_read, date_last_drill,
-					date_added, date_last_wrong,  drill_type, rank, drill_count) 
-					VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-				token.BaseForm, unixtime, 0, unixtime, 0, drillType, INITIAL_RANK, 0)
-			if err != nil {
-				return nil, fmt.Errorf("failure to insert word: " + err.Error())
-			}
-
-			id, err := insertResult.LastInsertId()
-			if err != nil {
-				return nil, fmt.Errorf("failure to get id of inserted word: " + err.Error())
-			}
-			lineWord.ID = id
+		err := sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1;`, lk.Character).Scan(&id)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, nil, 0, err
 		}
+		if err == nil {
+			// kanji found
+			lk.ID = id // kanji already exists in word set
+			//fmt.Println("kanji already exists", kanji, id)
+			continue
+		}
+
+		unixtime := time.Now().Unix()
+		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_last_read, date_last_drill,
+				date_added, date_last_wrong, drill_type, rank, drill_count) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+			kanji, unixtime, 0, unixtime, 0, DRILL_TYPE_KANJI, INITIAL_RANK, 0)
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("failure to insert kanji: " + err.Error())
+		}
+
+		id, err = insertResult.LastInsertId()
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("failure to get id of inserted kanji: " + err.Error())
+		}
+		lk.ID = id
+		newWordCount++
 	}
 
-	return lineWords, nil
+	return lineWords, lineKanji, newWordCount, nil
 }
 
-func getDefinitions(tokens []*JpToken) error {
-	reHasKanji := regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-	for i, token := range tokens {
-		entries := make([]JMDictEntry, 0)
-
-		searchTerm := token.BaseForm
-		hasKanji := len(reHasKanji.FindStringIndex(searchTerm)) > 0
-
-		if hasKanji {
-			for _, e := range allEntriesByKanjiSpellings[searchTerm] {
-				entries = append(entries, *e)
-			}
-		} else {
-			for _, e := range allEntriesByReading[searchTerm] {
-				entries = append(entries, *e)
-			}
-		}
-
-		// too many matching entries is just noise
-		if len(entries) > 10 {
-			entries = entries[:10]
-		}
-
-		tokens[i].Entries = entries
+func getDefinitions(baseForm string) []JMDictEntry {
+	if entries, ok := definitionsCache[baseForm]; ok {
+		return entries
 	}
-	return nil
+
+	entries := make([]JMDictEntry, 0)
+
+	hasKanji := len(reHasKanji.FindStringIndex(baseForm)) > 0
+	if hasKanji {
+		for _, e := range allEntriesByKanjiSpellings[baseForm] {
+			entries = append(entries, *e)
+		}
+	} else {
+		for _, e := range allEntriesByReading[baseForm] {
+			entries = append(entries, *e)
+		}
+	}
+
+	//fmt.Println("get definitions", baseForm, len(entries))
+
+	definitionsCache[baseForm] = entries
+	return entries
+}
+
+func getDefinitionsJSON(baseForm string) (string, error) {
+	if json, ok := definitionsJSONCache[baseForm]; ok {
+		return json, nil
+	}
+
+	entries := getDefinitions(baseForm)
+
+	entriesJSON, err := json.Marshal(entries)
+	if err != nil {
+		return "", fmt.Errorf("failure marshalling definitions for word: %s", baseForm)
+	}
+
+	definitionsJSONCache[baseForm] = string(entriesJSON)
+	return string(entriesJSON), nil
 }
 
 func getVerbDrillType(sense JMDictSense) int {
@@ -470,7 +519,7 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -502,38 +551,48 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(stories)
 }
 
-func GetStory(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
+func GetStory(w http.ResponseWriter, r *http.Request) {
+	dbPath, redirect, err := GetUserDb(w, r)
 	if redirect || err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
-	params := mux.Vars(request)
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("content-encoding", "gzip")
+
+	gw := gzip.NewWriter(w)
+	defer gw.Close()
+
+	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 	defer sqldb.Close()
 
 	story, err := getStory(int64(id), sqldb)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
-	json.NewEncoder(response).Encode(story)
+	err = json.NewEncoder(gw).Encode(story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
 }
 
 func getStory(id int64, sqldb *sql.DB) (Story, error) {
@@ -550,6 +609,16 @@ func getStory(id int64, sqldb *sql.DB) (Story, error) {
 		return Story{}, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
 	}
 
+	definitions := make(map[string][]JMDictEntry)
+
+	for _, line := range story.Lines {
+		for _, word := range line.Words {
+			definitions[word.BaseForm] = getDefinitions(word.BaseForm)
+		}
+	}
+
+	story.Definitions = definitions
+
 	return story, nil
 }
 
@@ -560,7 +629,7 @@ func UpdateStory(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	var story Story
 	err = json.NewDecoder(request.Body).Decode(&story)
@@ -612,7 +681,7 @@ func AddLogEvent(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(request)
 	var storyId int64
@@ -684,7 +753,7 @@ func RemoveLogEvent(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(request)
 	var logId int64
@@ -724,7 +793,7 @@ func GetLogEvents(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {

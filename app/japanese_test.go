@@ -87,6 +87,7 @@ func setup(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	initialize()
 	makeUserDB(USERHASH)
 }
 
@@ -151,10 +152,11 @@ func TestAddAndGetStory(t *testing.T) {
 	}
 
 	fmt.Println("testing: before add story")
-	id, err := addStory(story, sqldb, false)
+	id, newWordCount, err := addStory(story, sqldb, false)
 	if err != nil {
 		t.Error("fail add story: ", err)
 	}
+	fmt.Println("total new words added:", newWordCount)
 
 	fmt.Println("testing: before get story")
 	story, err = getStory(id, sqldb)

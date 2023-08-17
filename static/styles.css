@@ -268,3 +268,9 @@ a {
     margin-bottom: 2em;
     margin-left: 1em;
 }
+
+
+.line_timestamp {
+    font-size: 70%;
+    margin-right: 1em;
+}

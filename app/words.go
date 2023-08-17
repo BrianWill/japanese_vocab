@@ -38,7 +38,7 @@ func WordDrill(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	var drillRequest DrillRequest
 	json.NewDecoder(request.Body).Decode(&drillRequest)
@@ -258,7 +258,7 @@ func UpdateWord(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 	}
 
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 	var word DrillWord
 	json.NewDecoder(request.Body).Decode(&word)
 

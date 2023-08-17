@@ -6,28 +6,33 @@ import (
 )
 
 type Story struct {
-	ID int64 `json:"id,omitempty"`
-	//Words        string `json:"words,omitempty"`
-	Content string `json:"content,omitempty"`
-	Title   string `json:"title,omitempty"`
-	Link    string `json:"link,omitempty"`
-	Lines   []Line `json:"lines,omitempty"`
-	//Tokens       string `json:"tokens,omitempty"`
-	Status int `json:"status"`
-	//DateLastRead int64 `json:"date_last_read"`
-	DateAdded int64 `json:"date_added"`
+	ID          int64                    `json:"id,omitempty"`
+	Content     string                   `json:"content,omitempty"`
+	Title       string                   `json:"title,omitempty"`
+	Link        string                   `json:"link,omitempty"`
+	Lines       []Line                   `json:"lines,omitempty"`
+	Status      int                      `json:"status"`
+	DateAdded   int64                    `json:"date_added,omitempty"`
+	Definitions map[string][]JMDictEntry `json:"definitions,omitempty"`
 }
 
 type Line struct {
-	Words     []LineWord `json:"words,omitempty"`
-	Timestamp string     `json:"timestamp,omitempty"`
-	Content   string     `json:"content,omitempty"`
+	Words     []LineWord  `json:"words,omitempty"`
+	Timestamp string      `json:"timestamp,omitempty"`
+	Content   string      `json:"content,omitempty"`
+	Kanji     []LineKanji `json:"kanji,omitempty"`
 }
 
 type LineWord struct {
-	ID      int64  `json:"id,omitempty"`
-	Surface string `json:"surface,omitempty"`
-	POS     string `json:"color,omitempty"` // highlight color
+	ID       int64  `json:"id,omitempty"`
+	BaseForm string `json:"baseform,omitempty"`
+	Surface  string `json:"surface,omitempty"`
+	POS      string `json:"pos,omitempty"` // highlight color
+}
+
+type LineKanji struct {
+	ID        int64  `json:"id,omitempty"`
+	Character string `json:"character,omitempty"`
 }
 
 type LogEvent struct {
@@ -63,18 +68,18 @@ type DrillWord struct {
 }
 
 type JpToken struct {
-	Surface          string        `json:"surface,omitempty" bson:"surface,omitempty"`
-	WordId           int64         `json:"wordId,omitempty" bson:"wordId,omitempty"`
-	POS              string        `json:"pos,omitempty" bson:"pos"`
-	POS_1            string        `json:"pos1,omitempty" bson:"pos1"`
-	POS_2            string        `json:"pos2,omitempty" bson:"pos2"`
-	POS_3            string        `json:"pos3,omitempty" bson:"pos3"`
-	InflectionalType string        `json:"inflectionalType,omitempty" bson:"inflectionalType"`
-	InflectionalForm string        `json:"inflectionalForm,omitempty" bson:"inflectionalForm"`
-	BaseForm         string        `json:"baseForm,omitempty" bson:"baseForm"`
-	Reading          string        `json:"reading,omitempty" bson:"reading"`
-	Pronunciation    string        `json:"pronunciation,omitempty" bson:"pronunciation"`
-	Entries          []JMDictEntry `json:"entries,omitempty" bson:"entries,omitempty"`
+	Surface          string `json:"surface,omitempty" bson:"surface,omitempty"`
+	WordId           int64  `json:"wordId,omitempty" bson:"wordId,omitempty"`
+	POS              string `json:"pos,omitempty" bson:"pos"`
+	POS_1            string `json:"pos1,omitempty" bson:"pos1"`
+	POS_2            string `json:"pos2,omitempty" bson:"pos2"`
+	POS_3            string `json:"pos3,omitempty" bson:"pos3"`
+	InflectionalType string `json:"inflectionalType,omitempty" bson:"inflectionalType"`
+	InflectionalForm string `json:"inflectionalForm,omitempty" bson:"inflectionalForm"`
+	BaseForm         string `json:"baseForm,omitempty" bson:"baseForm"`
+	Reading          string `json:"reading,omitempty" bson:"reading"`
+	Pronunciation    string `json:"pronunciation,omitempty" bson:"pronunciation"`
+	//Entries          []JMDictEntry `json:"entries,omitempty" bson:"entries,omitempty"`
 	// actually, the related words (component words and homynms) should be stored in monogo with the definition
 	// also, should distinguish between words the user has encountered vs those related words which they haven't
 	// ComponentWords []primitive.ObjectID `json:"componentWords" bson:"componentWords,omitempty"`

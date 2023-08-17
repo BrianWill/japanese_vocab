@@ -58,6 +58,11 @@ var allEntries JMDict
 var allEntriesByReading map[string][]*JMDictEntry
 var allEntriesByKanjiSpellings map[string][]*JMDictEntry
 
+var definitionsCache map[string][]JMDictEntry // base form to []JMDictEntry
+var definitionsJSONCache map[string]string    // base form to JSON string of []JMDictEntry
+
+var reHasKanji *regexp.Regexp
+
 var sessionStore *sessions.CookieStore
 
 const SESSION_KEY = "supersecret" // todo insecure; use env variable instead
@@ -98,6 +103,7 @@ func main() {
 	sessionStore = sessions.NewCookieStore([]byte(SESSION_KEY)) // todo insecure
 
 	makeMainDB()
+	initialize()
 
 	start := time.Now()
 	bytes, err := unzipSource("../kanji.zip")
@@ -172,6 +178,13 @@ func main() {
 	// [END setting_port]
 }
 
+// everything requiring init for production and testing
+func initialize() {
+	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	definitionsCache = make(map[string][]JMDictEntry)
+	definitionsJSONCache = make(map[string]string)
+}
+
 func buildEntryMaps() {
 	allEntriesByKanjiSpellings = make(map[string][]*JMDictEntry)
 	allEntriesByReading = make(map[string][]*JMDictEntry)
@@ -243,7 +256,7 @@ func makeUserDB(userhash string) {
 
 	statement, err := sqldb.Prepare(`CREATE TABLE IF NOT EXISTS words 
 		(id INTEGER PRIMARY KEY,
-			base_form TEXT NOT NULL, 
+			base_form TEXT NOT NULL UNIQUE,
 			drill_count INTEGER NOT NULL,
 			drill_type INTEGER NOT NULL,
 			date_last_read INTEGER NOT NULL,
@@ -290,7 +303,7 @@ func makeUserDB(userhash string) {
 // [START indexHandler]
 
 func Kanji(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	// defer cancel()
@@ -462,7 +475,7 @@ func PostRegisterUser(response http.ResponseWriter, request *http.Request) {
 }
 
 func PostWordSearch(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	var wordSearch WordSearch
 	json.NewDecoder(request.Body).Decode(&wordSearch)
@@ -537,7 +550,7 @@ func PostWordSearch(response http.ResponseWriter, request *http.Request) {
 }
 
 func PostWordTypeSearch(response http.ResponseWriter, request *http.Request) {
-	response.Header().Add("content-type", "application/json")
+	response.Header().Set("Content-Type", "application/json")
 
 	var wordSearch WordSearch
 	json.NewDecoder(request.Body).Decode(&wordSearch)
