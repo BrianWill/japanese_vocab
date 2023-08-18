@@ -100,7 +100,7 @@ func WordDrill(response http.ResponseWriter, request *http.Request) {
 		includeOffCooldown = true
 	}
 
-	cooldowns := [4]int64{DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4}
+	cooldowns := [5]int64{0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4}
 
 	temp := make([]DrillWord, 0)
 	t := time.Now().Unix()
@@ -248,50 +248,53 @@ func isDrillType(drillType int, requestedType string) bool {
 	return false
 }
 
-func UpdateWord(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
+func UpdateWord(w http.ResponseWriter, r *http.Request) {
+	dbPath, redirect, err := GetUserDb(w, r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
 	if redirect {
 		return
 	}
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	}
 
-	response.Header().Set("Content-Type", "application/json")
-	var word DrillWord
-	json.NewDecoder(request.Body).Decode(&word)
+	w.Header().Set("Content-Type", "application/json")
+
+	var word WordUpdate
+	json.NewDecoder(r.Body).Decode(&word)
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id FROM words WHERE base_form = $1;`, word.BaseForm)
+	row := sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1;`, word.BaseForm)
+	var id int64
+	err = row.Scan(&id)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+		if err == sql.ErrNoRows {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{ "message": "` + "cannot update word; word not found" + err.Error() + `"}`))
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "error looking up word " + err.Error() + `"}`))
 		return
 	}
-	exists := rows.Next()
-	rows.Close()
 
-	if !exists {
-		return
-	}
-
-	_, err = sqldb.Exec(`UPDATE words SET rank = $1, drill_count = $2, date_last_drill = $3, date_last_wrong = $4  WHERE base_form = $5;`,
-		word.Rank, word.DrillCount, word.DateLastDrill, word.DateLastWrong, word.BaseForm)
+	_, err = sqldb.Exec(`UPDATE words SET rank = $1, date_last_drill = $2 WHERE base_form = $3;`,
+		word.Rank, word.DateLastDrill, word.BaseForm)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to update drill word: " + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update word: " + err.Error() + `"}`))
 		return
 	}
 
-	json.NewEncoder(response).Encode(word)
+	json.NewEncoder(w).Encode(word)
 }
 
 // [END indexHandler]

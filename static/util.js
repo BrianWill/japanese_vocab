@@ -82,23 +82,43 @@ function getKanji(str) {
     });
 }
 
-function updateWord(word) {
-    let data = { ...word };
-    delete data.definitions;
+function updateWord(word, marking) {
     fetch('/update_word', {
         method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(word),
     }).then((response) => response.json()
     ).then((data) => {
-        //console.log(data);
+        if (marking) {
+            snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
+        } else {
+            snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to rank ${data.rank}`);
+        }        
+        updateWordInfo(data);
     }).catch((error) => {
         console.error('Error:', error);
     });
 }
 
+var snackebarTimeoutHandle = null;
+
+function snackbarMessage(msg) {
+    // Get the snackbar DIV
+    var el = document.getElementById("snackbar");
+
+    // Add the "show" class to DIV
+    el.className = "show";
+    el.innerHTML = msg;
+
+    clearTimeout(snackebarTimeoutHandle);
+
+    // After 3 seconds, remove the show class from DIV
+    snackebarTimeoutHandle = setTimeout(function () { 
+        el.className = "";
+    }, 3000);
+}
 
 function shuffle(array) {
     if (array.length < 2) {

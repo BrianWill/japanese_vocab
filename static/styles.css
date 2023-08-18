@@ -79,17 +79,19 @@ tr.connecting_particle {
 
 span.verb_auxiliary,
 tr.verb_auxiliary {
-    color: #9a6565;;
+    color: #9a6565;
+    ;
 }
 
 span.adverb,
 tr.adverb {
-    color: #458159;;
+    color: #458159;
+    ;
 }
 
 span.verb,
 tr.verb {
-    
+
     color: #b64747;
 }
 
@@ -103,14 +105,6 @@ span.admoninal_adjective,
 tr.pronoun,
 tr.admoninal_adjective {
     color: #5782a9;
-}
-
-
-span.pad_left:hover,
-span.particle:hover,
-span.verb_auxiliary:hover,
-span.verb:hover {
-    text-decoration: underline;
 }
 
 a {
@@ -127,15 +121,15 @@ a {
 }
 
 #story_list a.story_title.status0 {
-    color: #808080;   
+    color: #808080;
 }
 
 #story_list a.story_title.status1 {
-    color: #d52246;   
+    color: #d52246;
 }
 
 #story_list a.story_title.status2 {
-    color: #2f82e7;   
+    color: #2f82e7;
 }
 
 #story_list a.story_title.status3 {
@@ -205,7 +199,7 @@ a {
 
 #story_title {
     text-align: center;
-    
+
 }
 
 #story_title a {
@@ -237,7 +231,7 @@ a {
 #new_story_text {
     width: 100%;
     height: 8em;
-    resize:vertical;
+    resize: vertical;
 }
 
 #new_story_button {
@@ -250,14 +244,18 @@ a {
     margin: auto;
 }
 
-#new_story_title, #new_story_link, #new_story_text {
+#new_story_title,
+#new_story_link,
+#new_story_text {
     display: block;
     padding: 0.25rem;
     margin-bottom: 0.5rem;
     border-radius: 5px;
 }
 
-#new_story_title:focus, #new_story_link:focus, #new_story_text:focus {
+#new_story_title:focus,
+#new_story_link:focus,
+#new_story_text:focus {
     box-shadow: 0 0 0 3px #aabdcf, 0 0 0 1px black;
     outline: none;
 }
@@ -272,14 +270,14 @@ a {
 #player_controls {
     display: block;
     float: right;
-    width:40%;
+    width: 40%;
     height: 30px;
 }
 
 input[type=number]#player_speed_number {
     margin-top: 3em;
     margin-right: 3em;
-    width:3em;
+    width: 3em;
     height: 30px;
     font-size: 80%;
 }
@@ -287,4 +285,187 @@ input[type=number]#player_speed_number {
 .line_timestamp {
     font-size: 70%;
     margin-right: 1em;
+}
+
+#tokenized_story .line_timestamp:hover {
+    color: rgb(36, 132, 21);
+    cursor: pointer;
+    text-decoration: rgb(36, 132, 21) solid underline;
+    text-underline-offset: 0.2em;
+}
+
+.offcooldown.rank1,
+.offcooldown.rank2,
+.offcooldown.rank3 {
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-underline-offset: 0.4em;
+    padding-left: 0.1em;
+    padding-right: 0.1em;
+}
+/* 
+.rank1, .rank2, .rank3 {
+    background-color: black;
+    border-radius: 14px;
+}
+
+.rank1 {
+    background-color: #414141
+}
+
+.rank2 {
+    background-color: #3b3b3b
+}
+
+.rank3 {
+    background-color: #2d2d2d
+} */
+
+#tokenized_story.show_rank .rank1,
+#tokenized_story.show_rank .rank2,
+#tokenized_story.show_rank .rank3 {
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-underline-offset: 0.4em;
+    padding-left: 0.1em;
+    padding-right: 0.1em;
+}
+
+#tokenized_story.show_rank span.rank1 {
+    text-decoration-color: #b2c14e;
+}
+
+#tokenized_story.show_rank span.rank2 {
+    
+    text-decoration-color: #858f42;
+}
+
+#tokenized_story.show_rank span.rank3 {
+    
+    text-decoration-color: #5e6534;
+}
+
+
+.offcooldown.rank1 {
+    text-decoration-color: #ae9f9f;
+}
+
+.offcooldown.rank2 {
+    
+    text-decoration-color: #5a4b4b;
+}
+
+.offcooldown.rank3 {
+    
+    text-decoration-color: #443b3b;
+}
+
+span.pad_left:hover,
+span.particle:hover,
+span.verb_auxiliary:hover,
+span.verb:hover {
+    text-decoration-style: underline;
+}
+
+
+/* copied from https://www.w3schools.com/howto/howto_js_snackbar.asp
+  The snackbar - position it at the bottom and in the middle of the screen */
+#snackbar {
+    visibility: hidden;
+    /* Hidden by default. Visible on click */
+    min-width: 250px;
+    /* Set a default minimum width */
+    margin-left: -125px;
+    /* Divide value of min-width by 2 */
+    background-color: #333;
+    /* Black background color */
+    color: #adadad;
+    /* White text color */
+    text-align: center;
+    /* Centered text */
+    border-radius: 2px;
+    /* Rounded borders */
+    padding: 16px;
+    /* Padding */
+    position: fixed;
+    /* Sit on top of the screen */
+    z-index: 1;
+    /* Add a z-index if needed */
+    left: 50%;
+    /* Center the snackbar */
+    bottom: 30px;
+    /* 30px from the bottom */
+}
+
+.snackbar_word {
+    color: #ffffff;
+    font-size: 120%;
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+    visibility: visible;
+    /* Show the snackbar */
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+    However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.5s;
+    animation: fadein 0.5s;
+}
+
+#snackbar.hide {
+    visibility: visible;
+    /* Show the snackbar */
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+    However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.0s, fadeout 0.5s;
+    animation: fadein 0.0s, fadeout 0.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+
+@keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
 }

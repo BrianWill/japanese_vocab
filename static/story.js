@@ -24,43 +24,81 @@ document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
         return;
     }
-    console.log(evt.code);
-    if (player) {
-        if (evt.code === 'KeyA') {
-            evt.preventDefault();
-            var timemark = player.getCurrentTime();
-            player.seekTo(timemark - 1.7, true);
-            //player.playVideo();
-            // showWord();
-        } else if (evt.code === 'KeyD') { 
-            evt.preventDefault();
-            var timemark = player.getCurrentTime();
-            player.seekTo(timemark + 1.2, true);
-        } else if (evt.code === 'KeyQ') {
-            evt.preventDefault();
-            var timemark = player.getCurrentTime();
-            player.seekTo(timemark - 5, true);
-            //player.playVideo();
-            // showWord();
-        } else if (evt.code === 'KeyE') { 
-            evt.preventDefault();
-            var timemark = player.getCurrentTime();
-            player.seekTo(timemark + 4, true);
-        } else if (evt.code === 'Space') { 
-            evt.preventDefault();
-            var state = player.getPlayerState();
-            if (state === 1) {  // playing
-                player.pauseVideo();
-            } else {
-                player.playVideo();
+    //console.log(evt);
+    let timemark = player.getCurrentTime();
+    
+    if (evt.code === 'KeyA') {
+        evt.preventDefault();
+        if (!player) { return; }
+        player.seekTo(timemark - 1.7, true);
+    } else if (evt.code === 'KeyD') { 
+        evt.preventDefault();
+        if (!player) { return; }
+        player.seekTo(timemark + 1.2, true);
+    } else if (evt.code === 'KeyQ') {
+        evt.preventDefault();
+        if (!player) { return; }
+        player.seekTo(timemark - 5, true);
+    } else if (evt.code === 'KeyE') { 
+        evt.preventDefault();
+        if (!player) { return; }
+        player.seekTo(timemark + 4, true);
+    } else if (evt.code === 'KeyP' || evt.code === 'KeyS') { 
+        evt.preventDefault();
+        if (!player) { return; }
+        let state = player.getPlayerState();
+        if (state === 1) {  // playing
+            player.pauseVideo();
+        } else {
+            player.playVideo();
+        }
+    } else if (evt.code === 'KeyC') {
+        evt.preventDefault();
+        tokenizedText.classList.toggle('show_rank');    
+    } else if (evt.code === 'Space') { 
+        evt.preventDefault();
+        if (selectedWordBaseForm) {
+            let wordInfo = story.word_info[selectedWordBaseForm];
+            updateWord({
+                base_form: selectedWordBaseForm,
+                date_last_drill: Math.floor(Date.now() / 1000), 
+                rank: wordInfo.rank,
+            }, true);
+        }
+    } else if (evt.code.startsWith('Digit')) {
+        evt.preventDefault();
+        let digit = parseInt(evt.code.slice(-1));
+        if (!evt.altKey) {
+            if (digit < 1 || digit > 4) {
+                return;
             }
-        } else if (evt.code.startsWith('Digit')) {
-            var digit = parseInt(evt.code.slice(-1));
-            var duration =player.getDuration();
+            if (selectedWordBaseForm) {
+                updateWord({
+                    base_form: selectedWordBaseForm,
+                    date_last_drill: Math.floor(Date.now() / 1000),
+                    rank: digit,
+                });
+            }
+        } else {
+            if (!player) { return; }
+            let duration = player.getDuration();
             player.seekTo(duration * (digit / 10), true);
         }
     }
 };
+
+function updateWordInfo(word) {
+    let wordSpans = tokenizedText.querySelectorAll(`span[baseform="${word.base_form}"]`);
+    console.log('updating word info', word.base_form, word.rank, word.date_last_drill, 'found spans', wordSpans.length);
+    for (let span of wordSpans) {
+        span.classList.remove('rank1', 'rank2', 'rank3', 'rank4', 'offcooldown');
+        span.classList.add('rank' + word.rank);
+    }
+
+    var wordInfo = story.word_info[word.base_form];
+    wordInfo.rank = word.rank;
+    wordInfo.date_last_drill = word.date_last_drill;
+}
 
 function openStory(id) {
     fetch('/story/' + id, {
@@ -115,18 +153,32 @@ function openStory(id) {
         });
 }
 
+const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 24 * 1000; // 1000 days in seconds
+const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 40;  // 40 days in seconds
+const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 5;   // 5 days in seconds
+const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 5;        // 5 hours in second
+
+const cooldownsByRank = [0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4];
+
 function displayStory(story) {
     //let punctuationTokens = [' ', '。', '、'];
 
     let html = '';
 
+    let unixTime = Math.floor(Date.now() / 1000);
+
     for (let line of story.lines) {
         html += `<p><a class="line_timestamp">${line.timestamp}</a>`;
         for (let word of line.words) {
-            html += `<span wordId="${word.id || ''}" baseform="${word.baseform || ''}" class="lineword ${word.pos || ''}">${word.surface}</span>`;
-            // if (!word.id) {
-            //     console.log(`no id: ${word.surface} __ ${word.pos}`);
-            // }
+            let wordinfo = story.word_info[word.baseform];
+            if (word.id) {
+                let timeSinceLastDrill = unixTime - wordinfo.date_last_drill;
+                let offCooldown = timeSinceLastDrill > cooldownsByRank[wordinfo.rank];
+                html += `<span wordId="${word.id || ''}" baseform="${word.baseform || ''}" 
+                    class="lineword rank${wordinfo.rank} ${offCooldown ? 'offcooldown' : ''} ${word.pos || ''}">${word.surface}</span>`;
+            } else {
+                html += `<span class="lineword nonword">${word.surface}</span>`;
+            }            
         }
         html += '</p>'
     }
@@ -134,24 +186,33 @@ function displayStory(story) {
     tokenizedText.innerHTML = html;
 }
 
-var selectedTokenIndex = null;
+var selectedWordBaseForm = null;
 
 
 tokenizedText.onmousedown = function (evt) {
-    console.log(evt.target);
-    if (!evt.target.hasAttribute('baseform')) {
-        return;
-    }
-    let baseform = evt.target.getAttribute('baseform');
-    let surface = evt.target.innerHTML;
-    displayDefinition(baseform, surface);
-    
+    //console.log(evt.target);
+    if (evt.target.hasAttribute('baseform')) {
+        let baseform = evt.target.getAttribute('baseform');
+        selectedWordBaseForm = baseform;
+
+        console.log('baseform', baseform);
+        let surface = evt.target.innerHTML;
+        displayDefinition(baseform, surface);    
+    } else if (evt.target.classList.contains('line_timestamp')) {
+        let [mins, seconds] = evt.target.innerHTML.split(':');
+        mins = parseInt(mins);
+        seconds = parseInt(seconds);
+        console.log("timestamp", mins, seconds);
+        player.seekTo(mins * 60 + seconds);
+        player.playVideo();
+    }    
 };
 
 function displayDefinition(baseform, surface) {
     getKanji(baseform + surface);
     html = '';
-    for (let entry of story.definitions[baseform]) {
+    let wordInfo = story.word_info[baseform];
+    for (let entry of wordInfo.definitions) {
         html += displayEntry(entry);
     }
     definitionsDiv.innerHTML = html;

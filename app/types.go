@@ -73,6 +73,12 @@ type DrillWord struct {
 	DateAdded     int64  `json:"date_added"`
 }
 
+type WordUpdate struct {
+	BaseForm      string `json:"base_form"`
+	Rank          int    `json:"rank"`
+	DateLastDrill int64  `json:"date_last_drill"`
+}
+
 type JpToken struct {
 	Surface          string `json:"surface,omitempty" bson:"surface,omitempty"`
 	WordId           int64  `json:"wordId,omitempty" bson:"wordId,omitempty"`
