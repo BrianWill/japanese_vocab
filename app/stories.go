@@ -609,15 +609,30 @@ func getStory(id int64, sqldb *sql.DB) (Story, error) {
 		return Story{}, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
 	}
 
-	definitions := make(map[string][]JMDictEntry)
+	wordInfo := make(map[string]WordInfo)
 
 	for _, line := range story.Lines {
 		for _, word := range line.Words {
-			definitions[word.BaseForm] = getDefinitions(word.BaseForm)
+			wordInfo[word.BaseForm] = WordInfo{
+				Definitions: getDefinitions(word.BaseForm),
+			}
 		}
 	}
 
-	story.Definitions = definitions
+	story.WordInfo = wordInfo
+
+	for baseForm := range story.WordInfo {
+		wordInfo := story.WordInfo[baseForm]
+
+		row := sqldb.QueryRow(`SELECT rank, date_last_drill FROM words WHERE base_form = $1;`, baseForm)
+
+		err = row.Scan(&wordInfo.Rank, &wordInfo.DateLastDrill)
+		if err != nil && err != sql.ErrNoRows {
+			return Story{}, fmt.Errorf("failure to get word info: " + err.Error())
+		}
+
+		story.WordInfo[baseForm] = wordInfo
+	}
 
 	return story, nil
 }

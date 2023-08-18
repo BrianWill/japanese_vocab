@@ -269,6 +269,20 @@ a {
     margin-left: 1em;
 }
 
+#player_controls {
+    display: block;
+    float: right;
+    width:40%;
+    height: 30px;
+}
+
+input[type=number]#player_speed_number {
+    margin-top: 3em;
+    margin-right: 3em;
+    width:3em;
+    height: 30px;
+    font-size: 80%;
+}
 
 .line_timestamp {
     font-size: 70%;

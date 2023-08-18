@@ -6,14 +6,20 @@ import (
 )
 
 type Story struct {
-	ID          int64                    `json:"id,omitempty"`
-	Content     string                   `json:"content,omitempty"`
-	Title       string                   `json:"title,omitempty"`
-	Link        string                   `json:"link,omitempty"`
-	Lines       []Line                   `json:"lines,omitempty"`
-	Status      int                      `json:"status"`
-	DateAdded   int64                    `json:"date_added,omitempty"`
-	Definitions map[string][]JMDictEntry `json:"definitions,omitempty"`
+	ID        int64               `json:"id,omitempty"`
+	Content   string              `json:"content,omitempty"`
+	Title     string              `json:"title,omitempty"`
+	Link      string              `json:"link,omitempty"`
+	Lines     []Line              `json:"lines,omitempty"`
+	Status    int                 `json:"status"`
+	DateAdded int64               `json:"date_added,omitempty"`
+	WordInfo  map[string]WordInfo `json:"word_info,omitempty"`
+}
+
+type WordInfo struct {
+	Rank          int           `json:"rank"`
+	Definitions   []JMDictEntry `json:"definitions,omitempty"`
+	DateLastDrill int64         `json:"date_last_drill"`
 }
 
 type Line struct {

@@ -3,7 +3,7 @@ var tokenizedText = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
-var playerSpeedSlider = document.getElementById('player_speed_slider');
+var playerSpeedNumber = document.getElementById('player_speed_number');
 
 
 var story = null;
@@ -63,52 +63,6 @@ document.body.onkeydown = async function (evt) {
 };
 
 function openStory(id) {
-
-    noUiSlider.create(playerSpeedSlider, {
-        start: [1],
-        step: 0.05,
-        connect: true,
-        pips: {
-            mode: 'count',
-            values: 5,
-            format: {
-                // 'to' the formatted value. Receives a number.
-                to: function (value) {
-                    var value = (value).toLocaleString(
-                        undefined, // leave undefined to use the visitor's browser 
-                                   // locale or a string like 'en-US' to override it.
-                        { minimumFractionDigits: 1 }
-                    );
-                    return value;
-                },
-                // 'from' the formatted value.
-                // Receives a string, should return a number.
-                from: function (value) {
-                    return value;
-                }
-            }
-        },
-        range: {
-            'min': 0.4,
-            'max': 1.6
-        },
-        format: {
-            // 'to' the formatted value. Receives a number.
-            to: function (value) {
-                return value;
-            },
-            // 'from' the formatted value.
-            // Receives a string, should return a number.
-            from: function (value) {
-                return value;
-            }
-        }
-    });
-
-    function sliderUpdate(values, handle, unencoded, tap, positions, noUiSlider) {
-        player.setPlaybackRate(values[0]);
-    }
-
     fetch('/story/' + id, {
         method: 'GET', // or 'PUT'
         headers: {
@@ -148,9 +102,13 @@ function openStory(id) {
                         //'onPlaybackRateChange': onPlaybackRateChange
                     }
                 });
+
+                playerSpeedNumber.onchange = function (evt) {
+                    player.setPlaybackRate(parseFloat(playerSpeedNumber.value));
+                }
             }
 
-            playerSpeedSlider.noUiSlider.on('update', sliderUpdate);  // calls newDrill upon registration
+
         })
         .catch((error) => {
             console.error('Error:', error);
