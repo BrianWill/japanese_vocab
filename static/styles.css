@@ -51,9 +51,9 @@ h3 {
     white-space: nowrap;
 }
 
-span.pad_left:not(:first-child) {
+/* span.pad_left:not(:first-child) {
     padding-left: 0.0em;
-}
+} */
 
 span.noun,
 tr.noun {
@@ -294,71 +294,29 @@ input[type=number]#player_speed_number {
     text-underline-offset: 0.2em;
 }
 
-.offcooldown.rank1,
-.offcooldown.rank2,
-.offcooldown.rank3 {
-    text-decoration-line: underline;
-    text-decoration-style: solid;
-    text-underline-offset: 0.4em;
-    padding-left: 0.1em;
-    padding-right: 0.1em;
-}
-/* 
-.rank1, .rank2, .rank3 {
-    background-color: black;
-    border-radius: 14px;
-}
-
-.rank1 {
-    background-color: #414141
-}
-
-.rank2 {
-    background-color: #3b3b3b
-}
-
+.rank1,
+.rank2,
 .rank3 {
-    background-color: #2d2d2d
-} */
-
-#tokenized_story.show_rank .rank1,
-#tokenized_story.show_rank .rank2,
-#tokenized_story.show_rank .rank3 {
-    text-decoration-line: underline;
-    text-decoration-style: solid;
-    text-underline-offset: 0.4em;
-    padding-left: 0.1em;
-    padding-right: 0.1em;
+    border-radius: 14px;
+    padding-right: 0.2em;
+    padding-left: 0.2em;
 }
 
+.offcooldown.rank1,
 #tokenized_story.show_rank span.rank1 {
-    text-decoration-color: #b2c14e;
+    background-color: #565656;
 }
 
+.offcooldown.rank2,
 #tokenized_story.show_rank span.rank2 {
-    
-    text-decoration-color: #858f42;
+    background-color: #323232;
 }
 
+.offcooldown.rank3,
 #tokenized_story.show_rank span.rank3 {
-    
-    text-decoration-color: #5e6534;
+    background-color: #0e0e0e;
 }
 
-
-.offcooldown.rank1 {
-    text-decoration-color: #ae9f9f;
-}
-
-.offcooldown.rank2 {
-    
-    text-decoration-color: #5a4b4b;
-}
-
-.offcooldown.rank3 {
-    
-    text-decoration-color: #443b3b;
-}
 
 span.pad_left:hover,
 span.particle:hover,

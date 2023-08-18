@@ -73,9 +73,10 @@ document.body.onkeydown = async function (evt) {
                 return;
             }
             if (selectedWordBaseForm) {
+                let wordInfo = story.word_info[selectedWordBaseForm];
                 updateWord({
                     base_form: selectedWordBaseForm,
-                    date_last_drill: Math.floor(Date.now() / 1000),
+                    date_last_drill: wordInfo.date_last_drill,
                     rank: digit,
                 });
             }
@@ -90,11 +91,15 @@ document.body.onkeydown = async function (evt) {
 function updateWordInfo(word) {
     let wordSpans = tokenizedText.querySelectorAll(`span[baseform="${word.base_form}"]`);
     console.log('updating word info', word.base_form, word.rank, word.date_last_drill, 'found spans', wordSpans.length);
+    let unixTime = Math.floor(Date.now() / 1000);
     for (let span of wordSpans) {
         span.classList.remove('rank1', 'rank2', 'rank3', 'rank4', 'offcooldown');
+        if (isOffCooldown(word.rank, word.date_last_drill, unixTime)) {
+            span.classList.add('offcooldown');
+        }
         span.classList.add('rank' + word.rank);
+        
     }
-
     var wordInfo = story.word_info[word.base_form];
     wordInfo.rank = word.rank;
     wordInfo.date_last_drill = word.date_last_drill;
@@ -172,8 +177,7 @@ function displayStory(story) {
         for (let word of line.words) {
             let wordinfo = story.word_info[word.baseform];
             if (word.id) {
-                let timeSinceLastDrill = unixTime - wordinfo.date_last_drill;
-                let offCooldown = timeSinceLastDrill > cooldownsByRank[wordinfo.rank];
+                let offCooldown = isOffCooldown(wordinfo.rank, wordinfo.date_last_drill, unixTime);
                 html += `<span wordId="${word.id || ''}" baseform="${word.baseform || ''}" 
                     class="lineword rank${wordinfo.rank} ${offCooldown ? 'offcooldown' : ''} ${word.pos || ''}">${word.surface}</span>`;
             } else {
@@ -184,6 +188,11 @@ function displayStory(story) {
     }
 
     tokenizedText.innerHTML = html;
+}
+
+function isOffCooldown(rank, dateLastDrill, unixTime) {
+    let timeSinceLastDrill = unixTime - dateLastDrill;
+    return timeSinceLastDrill > cooldownsByRank[rank];
 }
 
 var selectedWordBaseForm = null;
