@@ -262,17 +262,15 @@ function updateStoryList(stories) {
 
     function storyRow(s) {
         return `<tr>
-            <td><a story_id="${s.id}" href="/words.html?storyId=${s.id}">words</a></td>
             <td>
-            <select name="status" class="status_select" story_id="${s.id}">
-                <option value="3" ${s.status === 3 ? 'selected' : ''}>Current</option>
-                <option value="2" ${s.status === 2 ? 'selected' : ''}>Read</option>
-                <option value="1" ${s.status === 1 ? 'selected' : ''}>Never read</option>
-                <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
-            </select>
+                <select name="status" class="status_select" story_id="${s.id}">
+                    <option value="3" ${s.status === 3 ? 'selected' : ''}>Current</option>
+                    <option value="2" ${s.status === 2 ? 'selected' : ''}>Read</option>
+                    <option value="1" ${s.status === 1 ? 'selected' : ''}>Never read</option>
+                    <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
+                </select>
             </td>
             <td><a class="log" action="log" story_id="${s.id}" href="#">log</a></td>
-            <td><a class="link" href="${s.link}">link</a></td>
             <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
     }

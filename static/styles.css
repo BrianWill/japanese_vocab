@@ -303,17 +303,17 @@ input[type=number]#player_speed_number {
 }
 
 .offcooldown.rank1,
-#tokenized_story.show_rank span.rank1 {
+#tokenized_story.highlight_all_words span.rank1 {
     background-color: #565656;
 }
 
 .offcooldown.rank2,
-#tokenized_story.show_rank span.rank2 {
+#tokenized_story.highlight_all_words span.rank2 {
     background-color: #323232;
 }
 
 .offcooldown.rank3,
-#tokenized_story.show_rank span.rank3 {
+#tokenized_story.highlight_all_words span.rank3 {
     background-color: #0e0e0e;
 }
 
@@ -325,6 +325,9 @@ span.verb:hover {
     text-decoration-style: underline;
 }
 
+#highlight_message {
+    font-size: 60%;
+}
 
 /* copied from https://www.w3schools.com/howto/howto_js_snackbar.asp
   The snackbar - position it at the bottom and in the middle of the screen */

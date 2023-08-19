@@ -4,7 +4,8 @@ var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var playerSpeedNumber = document.getElementById('player_speed_number');
-
+var drillWordsLink = document.getElementById('drill_words_link');
+var highlightMessage = document.getElementById('highlight_message');
 
 var story = null;
 
@@ -54,14 +55,19 @@ document.body.onkeydown = async function (evt) {
         }
     } else if (evt.code === 'KeyC') {
         evt.preventDefault();
-        tokenizedText.classList.toggle('show_rank');    
+        tokenizedText.classList.toggle('highlight_all_words');
+        if (tokenizedText.classList.contains('highlight_all_words')) {
+            highlightMessage.innerHTML = 'Highlighting all rank 1-3 words';
+        } else {
+            highlightMessage.innerHTML = 'Highlighting only the rank 1-3 words off cooldown';
+        }
     } else if (evt.code === 'Space') { 
         evt.preventDefault();
         if (selectedWordBaseForm) {
             let wordInfo = story.word_info[selectedWordBaseForm];
             updateWord({
                 base_form: selectedWordBaseForm,
-                date_last_drill: Math.floor(Date.now() / 1000), 
+                date_marked: Math.floor(Date.now() / 1000), 
                 rank: wordInfo.rank,
             }, true);
         }
@@ -76,7 +82,7 @@ document.body.onkeydown = async function (evt) {
                 let wordInfo = story.word_info[selectedWordBaseForm];
                 updateWord({
                     base_form: selectedWordBaseForm,
-                    date_last_drill: wordInfo.date_last_drill,
+                    date_marked: wordInfo.date_marked,
                     rank: digit,
                 });
             }
@@ -90,11 +96,11 @@ document.body.onkeydown = async function (evt) {
 
 function updateWordInfo(word) {
     let wordSpans = tokenizedText.querySelectorAll(`span[baseform="${word.base_form}"]`);
-    console.log('updating word info', word.base_form, word.rank, word.date_last_drill, 'found spans', wordSpans.length);
+    console.log('updating word info', word.base_form, word.rank, word.date_marked, 'found spans', wordSpans.length);
     let unixTime = Math.floor(Date.now() / 1000);
     for (let span of wordSpans) {
         span.classList.remove('rank1', 'rank2', 'rank3', 'rank4', 'offcooldown');
-        if (isOffCooldown(word.rank, word.date_last_drill, unixTime)) {
+        if (isOffCooldown(word.rank, word.date_marked, unixTime)) {
             span.classList.add('offcooldown');
         }
         span.classList.add('rank' + word.rank);
@@ -102,7 +108,7 @@ function updateWordInfo(word) {
     }
     var wordInfo = story.word_info[word.base_form];
     wordInfo.rank = word.rank;
-    wordInfo.date_last_drill = word.date_last_drill;
+    wordInfo.date_marked = word.date_marked;
 }
 
 function openStory(id) {
@@ -114,6 +120,7 @@ function openStory(id) {
     }).then((response) => response.json())
         .then((data) => {
             story = data;
+            drillWordsLink.setAttribute('href', `/words.html?storyId=${story.id}`);
             storyTitle.innerHTML = `<a href="${story.link}">${story.title}</a>`;
             console.log(story);
             displayStory(data);
@@ -177,7 +184,7 @@ function displayStory(story) {
         for (let word of line.words) {
             let wordinfo = story.word_info[word.baseform];
             if (word.id) {
-                let offCooldown = isOffCooldown(wordinfo.rank, wordinfo.date_last_drill, unixTime);
+                let offCooldown = isOffCooldown(wordinfo.rank, wordinfo.date_marked, unixTime);
                 html += `<span wordId="${word.id || ''}" baseform="${word.baseform || ''}" 
                     class="lineword rank${wordinfo.rank} ${offCooldown ? 'offcooldown' : ''} ${word.pos || ''}">${word.surface}</span>`;
             } else {
@@ -190,8 +197,8 @@ function displayStory(story) {
     tokenizedText.innerHTML = html;
 }
 
-function isOffCooldown(rank, dateLastDrill, unixTime) {
-    let timeSinceLastDrill = unixTime - dateLastDrill;
+function isOffCooldown(rank, dateMarked, unixTime) {
+    let timeSinceLastDrill = unixTime - dateMarked;
     return timeSinceLastDrill > cooldownsByRank[rank];
 }
 

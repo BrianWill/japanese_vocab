@@ -17,9 +17,9 @@ type Story struct {
 }
 
 type WordInfo struct {
-	Rank          int           `json:"rank"`
-	Definitions   []JMDictEntry `json:"definitions,omitempty"`
-	DateLastDrill int64         `json:"date_last_drill"`
+	Rank        int           `json:"rank"`
+	Definitions []JMDictEntry `json:"definitions,omitempty"`
+	DateMarked  int64         `json:"date_marked"`
 }
 
 type Line struct {
@@ -34,6 +34,7 @@ type LineWord struct {
 	BaseForm string `json:"baseform,omitempty"`
 	Surface  string `json:"surface,omitempty"`
 	POS      string `json:"pos,omitempty"` // highlight color
+	Category int    `json:"Category,omitempty"`
 }
 
 type LineKanji struct {
@@ -52,31 +53,26 @@ type StoryList struct {
 }
 
 type DrillRequest struct {
-	Count    int     `json:"count,omitempty"`
-	Type     string  `json:"drill_type,omitempty"`
-	Filter   string  `json:"filter,omitempty"` // "on", "off", "both"
-	MinRank  int     `json:"min_rank,omitempty"`
-	MaxRank  int     `json:"max_rank,omitempty"`
 	StoryIds []int64 `json:"story_ids,omitempty"`
 }
 
 type DrillWord struct {
-	ID            int64  `json:"id,omitempty"`
-	BaseForm      string `json:"base_form"`
-	Rank          int    `json:"rank"`
-	DrillCount    int    `json:"drill_count"`
-	DateLastRead  int64  `json:"date_last_read"`
-	DateLastDrill int64  `json:"date_last_drill"`
-	Definitions   string `json:"definitions"`
-	DrillType     int    `json:"drill_type"`
-	DateLastWrong int64  `json:"date_last_wrong"`
-	DateAdded     int64  `json:"date_added"`
+	ID       int64  `json:"id,omitempty"`
+	BaseForm string `json:"base_form"`
+	Rank     int    `json:"rank"`
+	//DrillCount    int    `json:"drill_count"`
+	//DateLastRead  int64  `json:"date_last_read"`
+	DateMarked int64 `json:"date_marked"`
+	//Definitions   string `json:"definitions"`
+	Category int `json:"category"`
+	//DateLastWrong int64  `json:"date_last_wrong"`
+	//DateAdded     int64  `json:"date_added"`
 }
 
 type WordUpdate struct {
-	BaseForm      string `json:"base_form"`
-	Rank          int    `json:"rank"`
-	DateLastDrill int64  `json:"date_last_drill"`
+	BaseForm   string `json:"base_form"`
+	Rank       int    `json:"rank"`
+	DateMarked int64  `json:"date_marked"`
 }
 
 type JpToken struct {

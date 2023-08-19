@@ -16,3 +16,4 @@
 
 
 ignore/*
+app/air_errors.log

@@ -30,53 +30,6 @@ import (
 	"github.com/ikawaha/kagome/v2/tokenizer"
 )
 
-// func TestIndexHandler(t *testing.T) {
-// 	req, err := http.NewRequest("GET", "/", nil)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	rr := httptest.NewRecorder()
-// 	handler := http.HandlerFunc(indexHandler)
-// 	handler.ServeHTTP(rr, req)
-
-// 	if status := rr.Code; status != http.StatusOK {
-// 		t.Errorf(
-// 			"unexpected status: got (%v) want (%v)",
-// 			status,
-// 			http.StatusOK,
-// 		)
-// 	}
-
-// 	expected := "Hello, World!"
-// 	if rr.Body.String() != expected {
-// 		t.Errorf(
-// 			"unexpected body: got (%v) want (%v)",
-// 			rr.Body.String(),
-// 			"Hello, World!",
-// 		)
-// 	}
-// }
-
-// func TestIndexHandlerNotFound(t *testing.T) {
-// 	req, err := http.NewRequest("GET", "/404", nil)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	rr := httptest.NewRecorder()
-// 	handler := http.HandlerFunc(indexHandler)
-// 	handler.ServeHTTP(rr, req)
-
-// 	if status := rr.Code; status != http.StatusNotFound {
-// 		t.Errorf(
-// 			"unexpected status: got (%v) want (%v)",
-// 			status,
-// 			http.StatusNotFound,
-// 		)
-// 	}
-// }
-
 const USERHASH = "testuser"
 const TEST_DB_PATH = "../users/" + USERHASH + ".db"
 
@@ -91,7 +44,7 @@ func setup(t *testing.T) {
 	makeUserDB(USERHASH)
 }
 
-func teradown(t *testing.T) {
+func teardown(t *testing.T) {
 	fmt.Println("testing: teardown")
 	e := os.Remove(TEST_DB_PATH)
 	if e != nil {
@@ -101,7 +54,7 @@ func teradown(t *testing.T) {
 
 func TestAddAndGetStory(t *testing.T) {
 	setup(t)
-	defer teradown(t)
+	defer teardown(t)
 
 	sqldb, err := sql.Open("sqlite3", TEST_DB_PATH)
 	if err != nil {

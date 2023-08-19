@@ -4,7 +4,7 @@ var drillTitleH = document.getElementById('drill_title');
 var drillInfoH = document.getElementById('drill_info');
 var drillCountInput = document.getElementById('drill_count');
 var drillCountInputText = document.getElementById('drill_count_text');
-var drillTypeSelect = document.getElementById('drill_type');
+var categorySelect = document.getElementById('category');
 var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
@@ -16,63 +16,41 @@ const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
 
 var drillSet = null;
 var answeredSet = [];
-var storyIds = {};
 var stories;
+var words;
+var wordInfoMap;
 
 function newDrill() {
 
-    let ids = Object.keys(storyIds).map(x => parseInt(x));
 
     var ranks = rankSlider.noUiSlider.get();
+    // count: parseInt(drillCountInput.value),
+    //category: categorySelect.value,
+    //filter: filterSelect.value,
+    //min_rank: ranks[0],
+    //max_rank: ranks[1],
 
-    fetch('words', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            count: parseInt(drillCountInput.value),
-            drill_type: drillTypeSelect.value,
-            filter: filterSelect.value,
-            story_ids: ids,
-            min_rank: ranks[0],
-            max_rank: ranks[1],
-        })
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Drill success:', data);
-            drillComlpeteDiv.style.display = 'none';
-            shuffle(data.words);
-            drillSet = data.words;
-            answeredSet = [];
+    drillComlpeteDiv.style.display = 'none';
+    shuffle(words);
+    drillSet = words;
+    answeredSet = [];
 
-            var titles = [];
-            
-            if (ids.includes(-1)) {
-                titles.push('ALL CURRENT STORIES');
-            }
-            if (ids.includes(0)) {
-                titles.push('ALL STORIES');
-            }
-            for (let story of stories) {
-                if (ids.includes(story.id)) {
-                    titles.push(story.title);
-                }
-            }
 
-            drillTitleH.innerHTML = `<h3>${titles.join(', ')}</h3>`;
+    let allWordsCount;
+    let wordsInStoryCount;
+    let wordMatchCount;
+    let countsByRank = [];
+    let cooldownCountsByRank = [];
 
-            drillInfoH.innerHTML = `
-                ${data.countAllWords} words total, ${data.countWordsInStory} in story, ${data.wordMatchCount} passing filter  &nbsp;&nbsp;&nbsp;
-                <span class="rank_number">Rank 1:</span> ${data.countsByRank[0]} words <span class="cooldown">(${data.cooldownCountsByRank[0]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
-                <span class="rank_number">Rank 2:</span> ${data.countsByRank[1]} words <span class="cooldown">(${data.cooldownCountsByRank[1]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
-                <span class="rank_number">Rank 3:</span> ${data.countsByRank[2]} words <span class="cooldown">(${data.cooldownCountsByRank[2]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
-                <span class="rank_number">Rank 4:</span> ${data.countsByRank[3]} words <span class="cooldown">(${data.cooldownCountsByRank[3]} on cooldown)</span>`;
-            displayWords();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
+    drillInfoH.innerHTML = `
+                        ${allWordsCount} words total, ${wordsInStoryCount} in story, ${wordMatchCount} passing filter  &nbsp;&nbsp;&nbsp;
+                        <span class="rank_number">Rank 1:</span> ${countsByRank[0]} words <span class="cooldown">(${cooldownCountsByRank[0]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
+                        <span class="rank_number">Rank 2:</span> ${countsByRank[1]} words <span class="cooldown">(${cooldownCountsByRank[1]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
+                        <span class="rank_number">Rank 3:</span> ${countsByRank[2]} words <span class="cooldown">(${cooldownCountsByRank[2]} on cooldown)</span> &nbsp;&nbsp;&nbsp;
+                        <span class="rank_number">Rank 4:</span> ${countsByRank[3]} words <span class="cooldown">(${cooldownCountsByRank[3]} on cooldown)</span>`;
+    displayWords();
+    
+    //drillCountInputText.innerHTML = drillCountInput.value;
 }
 
 drillCountInput.oninput = function (evt) {
@@ -80,7 +58,7 @@ drillCountInput.oninput = function (evt) {
 };
 
 drillCountInput.onchange = newDrill;
-drillTypeSelect.onchange = newDrill;
+categorySelect.onchange = newDrill;
 filterSelect.onchange = newDrill;
 
 function displayWords() {
@@ -119,7 +97,7 @@ document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
         return;
     }
-    if ((evt.code === 'KeyR') && evt.altKey) { 
+    if ((evt.code === 'KeyR') && evt.altKey) {
         console.log('alt r');
         newDrill();
     }
@@ -130,7 +108,7 @@ document.body.onkeydown = async function (evt) {
         if (evt.code === 'KeyS') {
             evt.preventDefault();
             // showWord();
-        } else if (evt.code === 'Digit1') { 
+        } else if (evt.code === 'Digit1') {
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
@@ -138,7 +116,7 @@ document.body.onkeydown = async function (evt) {
                 updateWord(word);
                 displayWords();
             }
-        } else if (evt.code === 'Digit2') {  
+        } else if (evt.code === 'Digit2') {
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
@@ -146,7 +124,7 @@ document.body.onkeydown = async function (evt) {
                 updateWord(word);
                 displayWords();
             }
-        } else if (evt.code === 'Digit3') {  
+        } else if (evt.code === 'Digit3') {
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
@@ -154,7 +132,7 @@ document.body.onkeydown = async function (evt) {
                 updateWord(word);
                 displayWords();
             }
-        } else if (evt.code === 'Digit4') {  
+        } else if (evt.code === 'Digit4') {
             evt.preventDefault();
             if (drillSet && drillSet[0]) {
                 var word = drillSet[0];
@@ -168,7 +146,7 @@ document.body.onkeydown = async function (evt) {
             if (drillSet.length > 1) {
                 [drillSet[0], drillSet[1]] = [drillSet[1], drillSet[0]];
             }
-            if ((unixtime - word.date_last_drill > COOLDOWN_TIME) &&
+            if ((unixtime - word.date_marked > COOLDOWN_TIME) &&
                 (unixtime - word.date_last_wrong > COOLDOWN_TIME)) {
                 word.date_last_wrong = unixtime;
                 updateWord(word);
@@ -177,9 +155,9 @@ document.body.onkeydown = async function (evt) {
         } else if (evt.code === 'KeyD') {  // mark answered
             evt.preventDefault();
             word.answered = true;
-            if ((unixtime - word.date_last_drill > COOLDOWN_TIME) &&
+            if ((unixtime - word.date_marked > COOLDOWN_TIME) &&
                 (unixtime - word.date_last_wrong > COOLDOWN_TIME)) {
-                word.date_last_drill = unixtime;
+                word.date_marked = unixtime;
                 word.drill_count++;
                 updateWord(word);
             }
@@ -232,14 +210,18 @@ function nextRound() {
 }
 
 function loadWordDefinition(word) {
-    getKanji(word.base_form); // might as well get all possibly relevant kanji
-    let defs = JSON.parse(word.definitions);
-    if (defs && typeof defs === 'object') {
-        html = '';
-        for (let def of defs) {
-            html += displayEntry(def);
+    getKanji(word.base_form); // get all possibly relevant kanji
+    
+    let wordInfo = wordInfoMap[word.base_form];
+    if (wordInfo) {
+        let defs = wordInfo.definitions;
+        if (defs) {
+            html = '';
+            for (let def of defs) {
+                html += displayEntry(def);
+            }
+            definitionsDiv.innerHTML = html;
         }
-        definitionsDiv.innerHTML = html;
     }
 }
 
@@ -290,6 +272,7 @@ document.body.onload = function (evt) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Stories list success:', data);
+            stories = data;
 
             storyIds = {};
             var url = new URL(window.location.href);
@@ -300,12 +283,43 @@ document.body.onload = function (evt) {
                     storyIds[id] = true;
                 }
             }
-            console.log('story ids', storyIds);
 
-            drillCountInputText.innerHTML = drillCountInput.value;
-            stories = data;
-            //newDrill();
-            rankSlider.noUiSlider.on('update', sliderUpdate);  // calls newDrill upon registration
+            var titles = [];
+
+            let ids = Object.keys(storyIds).map(x => parseInt(x));
+            if (ids.includes(-1)) {
+                titles.push('ALL CURRENT STORIES');
+            }
+            if (ids.includes(0)) {
+                titles.push('ALL STORIES');
+            }
+            for (let story of stories) {
+                if (ids.includes(story.id)) {
+                    titles.push(story.title);
+                }
+            }
+
+            drillTitleH.innerHTML = `<h3>${titles.join(', ')}</h3>`;
+
+            fetch('words', {
+                method: 'POST', // or 'PUT'
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    story_ids: ids,
+                })
+            }).then((response) => response.json())
+                .then((data) => {
+                    console.log('Words retrieved:', data);
+                    words = data.words;
+                    wordInfoMap = data.wordInfoMap;
+
+                    rankSlider.noUiSlider.on('update', sliderUpdate);  // calls newDrill upon registration
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
         })
         .catch((error) => {
             console.error('Error:', error);
