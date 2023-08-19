@@ -20,7 +20,8 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	// "fmt"
+	"fmt"
+
 	// "math"
 	"net/http"
 	//"time"
@@ -51,6 +52,13 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
+	baseForms, err := getStoryWords(drillRequest.StoryIds, sqldb)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
 	rows, err := sqldb.Query(`SELECT id, base_form, rank, date_marked, category FROM words;`)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -70,7 +78,9 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
 			return
 		}
-		words = append(words, word)
+		if _, ok := baseForms[word.BaseForm]; ok {
+			words = append(words, word)
+		}
 	}
 
 	wordInfoMap := make(map[string]WordInfo)
@@ -93,6 +103,42 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(bson.M{"words": words, "wordInfoMap": wordInfoMap})
+}
+
+func getStoryWords(storyIds []int64, sqldb *sql.DB) (map[string]bool, error) {
+	baseForms := make(map[string]bool)
+
+	for _, id := range storyIds {
+		rows, err := sqldb.Query(`SELECT lines FROM stories WHERE id = $1`, id)
+		if err != nil {
+			return nil, fmt.Errorf("failure to get story words: " + err.Error())
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var linesJSON string
+			var lines []Line
+			err = rows.Scan(&linesJSON)
+			if err != nil {
+				return nil, fmt.Errorf("failure to scan story line: " + err.Error())
+			}
+			err := json.Unmarshal([]byte(linesJSON), &lines)
+			if err != nil {
+				return nil, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
+			}
+
+			for _, line := range lines {
+				for _, kanji := range line.Kanji {
+					baseForms[kanji.Character] = true
+				}
+				for _, word := range line.Words {
+					baseForms[word.BaseForm] = true
+				}
+			}
+		}
+	}
+
+	return baseForms, nil
 }
 
 func UpdateWord(w http.ResponseWriter, r *http.Request) {

@@ -69,7 +69,7 @@ document.body.onkeydown = async function (evt) {
                 base_form: selectedWordBaseForm,
                 date_marked: Math.floor(Date.now() / 1000), 
                 rank: wordInfo.rank,
-            }, true);
+            }, story.word_info, true);
         }
     } else if (evt.code.startsWith('Digit')) {
         evt.preventDefault();
@@ -84,7 +84,7 @@ document.body.onkeydown = async function (evt) {
                     base_form: selectedWordBaseForm,
                     date_marked: wordInfo.date_marked,
                     rank: digit,
-                });
+                }, story.word_info);
             }
         } else {
             if (!player) { return; }
@@ -93,23 +93,6 @@ document.body.onkeydown = async function (evt) {
         }
     }
 };
-
-function updateWordInfo(word) {
-    let wordSpans = tokenizedText.querySelectorAll(`span[baseform="${word.base_form}"]`);
-    console.log('updating word info', word.base_form, word.rank, word.date_marked, 'found spans', wordSpans.length);
-    let unixTime = Math.floor(Date.now() / 1000);
-    for (let span of wordSpans) {
-        span.classList.remove('rank1', 'rank2', 'rank3', 'rank4', 'offcooldown');
-        if (isOffCooldown(word.rank, word.date_marked, unixTime)) {
-            span.classList.add('offcooldown');
-        }
-        span.classList.add('rank' + word.rank);
-        
-    }
-    var wordInfo = story.word_info[word.base_form];
-    wordInfo.rank = word.rank;
-    wordInfo.date_marked = word.date_marked;
-}
 
 function openStory(id) {
     fetch('/story/' + id, {
@@ -164,13 +147,6 @@ function openStory(id) {
             console.error('Error:', error);
         });
 }
-
-const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 24 * 1000; // 1000 days in seconds
-const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 40;  // 40 days in seconds
-const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 5;   // 5 days in seconds
-const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 5;        // 5 hours in second
-
-const cooldownsByRank = [0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4];
 
 function displayStory(story) {
     //let punctuationTokens = [' ', '。', '、'];

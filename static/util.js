@@ -1,3 +1,9 @@
+const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 24 * 1000; // 1000 days in seconds
+const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 40;  // 40 days in seconds
+const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 5;   // 5 days in seconds
+const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 5;        // 5 hours in second
+const cooldownsByRank = [0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4];
+
 function splitOnHighPitch(str, pitch) {
     let [downPitch, upPitch] = pitch;
     //console.log(`downpitch ${downPitch}, up pitch ${upPitch}`);
@@ -82,7 +88,7 @@ function getKanji(str) {
     });
 }
 
-function updateWord(word, marking) {
+function updateWord(word, wordInfoMap, marking) {
     fetch('/update_word', {
         method: 'POST', // or 'PUT'
         headers: {
@@ -96,10 +102,31 @@ function updateWord(word, marking) {
         } else {
             snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to rank ${data.rank}`);
         }        
-        updateWordInfo(data);
+        updateWordInfo(data, wordInfoMap);
     }).catch((error) => {
         console.error('Error:', error);
     });
+}
+
+function updateWordInfo(word, wordInfoMap) {
+    let tokenizedText = document.getElementById('tokenized_text');
+    if (tokenizedText) {
+        let wordSpans = tokenizedText.querySelectorAll(`span[baseform="${word.base_form}"]`);
+        console.log('updating word info', word.base_form, word.rank, word.date_marked, 'found spans', wordSpans.length);
+        let unixTime = Math.floor(Date.now() / 1000);
+        for (let span of wordSpans) {
+            span.classList.remove('rank1', 'rank2', 'rank3', 'rank4', 'offcooldown');
+            if (isOffCooldown(word.rank, word.date_marked, unixTime)) {
+                span.classList.add('offcooldown');
+            }
+            span.classList.add('rank' + word.rank);
+            
+        }
+    }
+    
+    var wordInfo = wordInfoMap[word.base_form];
+    wordInfo.rank = word.rank;
+    wordInfo.date_marked = word.date_marked;
 }
 
 var snackebarTimeoutHandle = null;
