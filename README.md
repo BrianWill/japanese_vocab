@@ -1,8 +1,9 @@
 # Japanese Vocab trainer
 
-A program for collecting stories (short excerpts of Japanese) and drilling their vocabulary.
+A program for collecting stories (short excerpts of Japanese) and drilling their vocabulary. An instance of the app will be hosted soon at [JapanVocab.com](https://japanvocab.com).
 
 ![](./images/story.png)
+
 
 ## Running
 
@@ -24,8 +25,6 @@ You can set the status of each story:
 - "Never Read": the initial state of new stories
 - "Archive": for stories you are unlikely to revisit
 
-The "log" link adds a story to the log displayed at the top of the page.
-
 Click a story's title to see its text. Through grammatical analysis, the words of the stories are highlighted based on part of speech:
 
 - white words: nouns
@@ -39,34 +38,40 @@ Click a story's title to see its text. Through grammatical analysis, the words o
 
 Note that the grammatical analysis is not always 100% accurate but is generally quite good.
 
-Clicking a word gives its definitions and information about its kanji.
+Clicking a word selects it and shows its definitions and information about its kanji. Hotkeys:
+
+- 1: sets the selected word's rank to level 1
+- 2: sets the selected word's rank to level 2
+- 3: sets the selected word's rank to level 3
+- 4: sets the selected word's rank to level 4
+- space: marks the selected word as reviewed with the current timestamp
 
 ## Drilling
 
 ![](./images/drill.png)
 
-You can drill the words of an individual story by clicking its "words" link. Two links at the top of the story list let you drill the words from all stories or the words from all current stories.
+From a story's page, you can click "drill words" to drill its words. Two links at the top of the main page let you drill the words from all stories or the words from all current stories.
 
-The right side shows the word list, with the current word at the top with a white border. The left side shows the definitions of the current word.
+In the word list, word rank is displayed on the right. New words start off at Rank 1. Words with higher ranks have longer cooldowns:
 
-Word rank is displayed on the right. New words start off at Rank 4. Words can be filtered by rank, and Rank 1 words are filtered out by the default filter.
-
-Words with lower ranks have longer cooldowns:
-
-- Rank 4 cooldown: 3 hours
-- Rank 3 cooldown: 2 days
-- Rank 2 cooldown: 7 days
-- Rank 1 cooldown: 30 days
+- Rank 1 cooldown: 5 hours
+- Rank 2 cooldown: 4 days
+- Rank 3 cooldown: 30 days
+- Rank 4 cooldown: 1000 days
 
 Hotkeys:
 
-- **d** marks the current word correct (moving the card to the discard pile at the bottom)
-- **a** marks the current word wrong (marking it red and moving it down to the second position in the list)
-- **1**, **2**, **3**, **4** set the current word's rank
-- **alt-r** refreshes the drill
+- **d** marks the current word correct (moving the card to the discard pile at the bottom) and sets its timestamp
+- **a** marks the current word wrong (marking it red and moving it down to the second position in the list) and sets its timestamp
+- **1**: sets the selected word's rank to level 1
+- **2**: sets the selected word's rank to level 2
+- **3**: sets the selected word's rank to level 3
+- **4**: sets the selected word's rank to level 4
 
-When you exhaust the list, the words you marked wrong will be reshuffled. Keep answering until you see the message "Round Complete", then press **alt-r** to drill more words from the story.
+When you exhaust the list, the words you marked wrong will be reshuffled. Keep answering until all words are marked correct.
 
-When you mark a word correct or wrong, it is put on cooldown for 3 hours. Words can be filtered by their cooldown status.
+When you mark a word correct or wrong, it is put on cooldown.
+
+By deafult, the list includes only words off cooldown, but you can choose to include all words or only words *on* cooldown.
 
 Words can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.

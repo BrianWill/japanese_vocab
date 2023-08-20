@@ -73,8 +73,8 @@ const SQL_USERS_FILE = "../users.db"
 const SALT = "QWOpVRp6SObKeO6bBth5"
 
 const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 24 * 1000 // 1000 days in seconds
-const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 40   // 40 days in seconds
-const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 5    // 5 days in seconds
+const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 30   // 30 days in seconds
+const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 4    // 4 days in seconds
 const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 5         // 5 hours in second
 const DRILL_CATEGORY_KATAKANA = 1
 const DRILL_CATEGORY_ICHIDAN = 2
