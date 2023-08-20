@@ -297,7 +297,6 @@ function updateStoryList(stories) {
                     <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
                 </select>
             </td>
-            <td><a class="log" action="log" story_id="${s.id}" href="#">log</a></td>
             <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
     }
@@ -317,3 +316,21 @@ function updateStoryList(stories) {
     }
     storyList.innerHTML = html + '</table>';
 };
+
+function addLogEvent(storyId) {
+    fetch(`/add_log_event/${storyId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log(data);
+            snackbarMessage(data.message);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+
+}
+

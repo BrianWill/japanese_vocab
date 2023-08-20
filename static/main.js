@@ -32,23 +32,6 @@ logEvents.onclick = function(evt) {
     }
 };
 
-function addLogEvent(storyId) {
-    fetch(`/add_log_event/${storyId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Added a log event');
-            getLogEvents();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-
-}
-
 function removeLogEvent(logId) {
     fetch(`/remove_log_event/${logId}`, {
         method: 'GET',
@@ -180,34 +163,6 @@ resetStoryWordCountdowns = function (storyId) {
         .catch((error) => {
             console.error('Error:', error);
         });
-};
-
-
-storyList.onclick = function (evt) {
-    if (evt.target.tagName == 'A') {
-        var storyId = evt.target.getAttribute('story_id');
-        let story = storiesById[storyId];
-
-        var action = evt.target.getAttribute('action');
-        switch (action) {
-            case 'log':
-                evt.preventDefault();
-                addLogEvent(storyId);
-                break;
-            case 'drill':
-                break;
-            case 'reset_story_word_countdowns':
-                evt.preventDefault();
-                resetStoryWordCountdowns(storyId);
-                break;
-            case 'retokenize':
-                console.log('story to retokenize', storiesById[storyId]);
-                retokenizeStory(story);
-                break;
-            default:
-                break;
-        }
-    }
 };
 
 storyList.onchange = function (evt) {

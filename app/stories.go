@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -34,6 +33,8 @@ const STORY_STATUS_CURRENT = 3
 const STORY_STATUS_READ = 2
 const STORY_STATUS_NEVER_READ = 1
 const STORY_STATUS_ARCHIVE = 0
+
+const STORY_LOG_COOLDOWN = 60 * 60 * 8 // 8 hour cooldown (in seconds)
 
 func CreateStory(response http.ResponseWriter, request *http.Request) {
 	dbPath, redirect, err := GetUserDb(response, request)
@@ -737,49 +738,32 @@ func AddLogEvent(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	date := time.Now().Unix()
+	unixtime := time.Now().Unix()
+	cooldownWindowStart := unixtime - STORY_LOG_COOLDOWN
 
-	if storyId < 0 {
-		// get random story from set of current stories
+	row := sqldb.QueryRow(`SELECT date FROM log_events WHERE date > $1 AND story = $2`, cooldownWindowStart, storyId)
 
-		rows, err := sqldb.Query(`SELECT id, status FROM stories WHERE status = $1;`, STORY_STATUS_CURRENT)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
-			return
-		}
-		defer rows.Close()
-
-		var stories = make([]Story, 0)
-		var story Story
-		for rows.Next() {
-			if err := rows.Scan(&story.ID, &story.Status); err != nil {
-				response.WriteHeader(http.StatusInternalServerError)
-				response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
-				return
-			}
-			if story.Status == STORY_STATUS_CURRENT {
-				stories = append(stories, story)
-			}
-		}
-
-		if len(stories) == 0 {
-			json.NewEncoder(response).Encode("Did not add a log even. No current stories.")
-			return
-		}
-
-		rand.Seed(date)
-		storyId = stories[rand.Intn(len(stories))].ID
+	var existingId int64
+	err = row.Scan(&existingId)
+	if err == nil {
+		response.Write([]byte(`{ "message": "No entry added to the read log. This story was previously logged within the 8 hour cooldown window."}`))
+		return
+	} else if err != sql.ErrNoRows {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
 	}
 
 	_, err = sqldb.Exec(`INSERT INTO log_events (date, story) 
 			VALUES($1, $2);`,
-		date, storyId)
+		unixtime, storyId)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to insert log event: " + err.Error() + `"}`))
+		return
 	}
-	json.NewEncoder(response).Encode("Success adding log event")
+
+	response.Write([]byte(`{ "message": "Entry for story added to the read log."}`))
 }
 
 func RemoveLogEvent(response http.ResponseWriter, request *http.Request) {

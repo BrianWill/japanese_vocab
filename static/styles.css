@@ -430,3 +430,8 @@ span.verb:hover {
         opacity: 0;
     }
 }
+
+#story_actions a {
+    line-height: 2em;
+    font-size: 80%;
+}

@@ -6,6 +6,7 @@ var kanjiResultsDiv = document.getElementById('kanji_results');
 var playerSpeedNumber = document.getElementById('player_speed_number');
 var drillWordsLink = document.getElementById('drill_words_link');
 var highlightMessage = document.getElementById('highlight_message');
+var logStoryLink = document.getElementById('log_story_link');
 
 var story = null;
 
@@ -209,6 +210,11 @@ function displayDefinition(baseform, surface) {
     }
     definitionsDiv.innerHTML = html;
 }
+
+logStoryLink.onclick = function (evt) {
+    evt.preventDefault();
+    addLogEvent(story.id);
+};
 
 // loads the IFrame Player API code asynchronously.
 var tag = document.createElement('script');
