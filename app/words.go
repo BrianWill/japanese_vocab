@@ -18,6 +18,7 @@ package main
 
 // [START import]
 import (
+	"compress/gzip"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -33,13 +34,18 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	if redirect {
 		return
 	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("content-encoding", "gzip")
+
+	gw := gzip.NewWriter(w)
+	defer gw.Close()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
 
 	var drillRequest DrillRequest
 	json.NewDecoder(r.Body).Decode(&drillRequest)
@@ -47,7 +53,7 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 	defer sqldb.Close()
@@ -55,14 +61,14 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	baseForms, err := getStoryWords(drillRequest.StoryIds, sqldb)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
 	rows, err := sqldb.Query(`SELECT id, base_form, rank, date_marked, category FROM words;`)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+		gw.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
 		return
 	}
 	defer rows.Close()
@@ -75,10 +81,12 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 			&word.Category)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
+			gw.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
 			return
 		}
-		if _, ok := baseForms[word.BaseForm]; ok {
+		if len(drillRequest.StoryIds) == 0 {
+			words = append(words, word)
+		} else if _, ok := baseForms[word.BaseForm]; ok {
 			words = append(words, word)
 		}
 	}
@@ -95,14 +103,14 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 		err = row.Scan(&wordInfo.Rank, &wordInfo.DateMarked)
 		if err != nil && err != sql.ErrNoRows {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))
+			gw.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))
 			return
 		}
 
 		wordInfoMap[word.BaseForm] = wordInfo
 	}
 
-	json.NewEncoder(w).Encode(bson.M{"words": words, "wordInfoMap": wordInfoMap})
+	json.NewEncoder(gw).Encode(bson.M{"words": words, "wordInfoMap": wordInfoMap})
 }
 
 func getStoryWords(storyIds []int64, sqldb *sql.DB) (map[string]bool, error) {

@@ -54,6 +54,7 @@ function newDrill() {
                     (includeOffCooldown && offcooldown) ||
                     (includeOnCooldown && !offcooldown)
                 ) {
+                    word.answered = false;
                     drillSet.push(word);
                 }
             }
@@ -133,7 +134,7 @@ function displayWords() {
     cardsDiv.innerHTML = html;
 
     if (drillSet[0]) {
-        loadWordDefinition(drillSet[0])
+        loadWordDefinition(drillSet[0].base_form)
     }
 }
 
@@ -248,19 +249,19 @@ function nextRound() {
     shuffle(drillSet);
 }
 
-function loadWordDefinition(word) {
-    getKanji(word.base_form); // get all possibly relevant kanji
+function loadWordDefinition(baseForm) {
+    getKanji(baseForm); // get all possibly relevant kanji
 
-    let wordInfo = wordInfoMap[word.base_form];
+    let wordInfo = wordInfoMap[baseForm];
     if (wordInfo) {
         let defs = wordInfo.definitions;
+        html = '';
         if (defs) {
-            html = '';
             for (let def of defs) {
                 html += displayEntry(def);
             }
-            definitionsDiv.innerHTML = html;
         }
+        definitionsDiv.innerHTML = html;
     }
 }
 
@@ -273,7 +274,7 @@ document.body.onload = function (evt) {
     console.log('on page load');
 
     noUiSlider.create(rankSlider, {
-        start: [1, 3],
+        start: [1, 4],
         step: 1,
         connect: true,
         pips: {
@@ -310,7 +311,7 @@ document.body.onload = function (evt) {
         }
     }).then((response) => response.json())
         .then((data) => {
-            console.log('Stories list success:', data);
+            //console.log('Stories list success:', data);
             stories = data;
 
             storyIds = {};
@@ -350,7 +351,7 @@ document.body.onload = function (evt) {
                 })
             }).then((response) => response.json())
                 .then((data) => {
-                    console.log('Words retrieved:', data);
+                    //console.log('Words retrieved:', data);
                     words = data.words;
                     wordInfoMap = data.wordInfoMap;
 
