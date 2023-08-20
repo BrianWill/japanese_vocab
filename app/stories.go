@@ -531,6 +531,21 @@ func GetUserDb(response http.ResponseWriter, request *http.Request) (string, boo
 	return dbPath, false, nil
 }
 
+func VacuumDb(userDbPath string) error {
+	sqldb, err := sql.Open("sqlite3", userDbPath)
+	if err != nil {
+		return fmt.Errorf("failure to open user db: " + err.Error())
+	}
+	defer sqldb.Close()
+
+	_, err = sqldb.Exec(`VACUUM;`)
+	if err != nil {
+		return fmt.Errorf("failure to vacuum user db: " + err.Error())
+	}
+
+	return nil
+}
+
 func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	dbPath, redirect, err := GetUserDb(response, request)
 	if redirect {

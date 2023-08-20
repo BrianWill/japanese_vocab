@@ -280,7 +280,7 @@ function updateStoryList(stories) {
     stories.sort((a, b) => {
         let diff = b.status - a.status;
         if (diff === 0) {
-            return a.date_added - b.date_added
+            return b.date_added - a.date_added
         }
         return diff;
     });

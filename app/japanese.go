@@ -149,6 +149,12 @@ func main() {
 
 	router := mux.NewRouter()
 
+	for _, s := range os.Args {
+		if s == "-dev" {
+			router.Use(devMiddleware)
+		}
+	}
+
 	router.HandleFunc("/add_log_event/{id}", AddLogEvent).Methods("GET")
 	router.HandleFunc("/remove_log_event/{id}", RemoveLogEvent).Methods("GET")
 	router.HandleFunc("/log_events/{since}", GetLogEvents).Methods("GET")
@@ -175,6 +181,13 @@ func main() {
 
 	//exec.Command("open", "http://localhost:8080/").Run()
 	// [END setting_port]
+}
+
+func devMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+		h.ServeHTTP(w, r)
+	})
 }
 
 // everything requiring init for production and testing
@@ -349,19 +362,19 @@ func GetMain(response http.ResponseWriter, request *http.Request) {
 	http.ServeFile(response, request, "../static/index.html")
 }
 
-func PostLoginAuth(response http.ResponseWriter, request *http.Request) {
-	err := request.ParseForm()
+func PostLoginAuth(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "could not parse login form: " + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "could not parse login form: " + err.Error() + `"}`))
 		return
 	}
-	email := request.FormValue("email")
+	email := r.FormValue("email")
 
 	sqldb, err := sql.Open("sqlite3", SQL_USERS_FILE)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 	defer sqldb.Close()
@@ -370,20 +383,20 @@ func PostLoginAuth(response http.ResponseWriter, request *http.Request) {
 	var passwordHash string
 	err = row.Scan(&passwordHash)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to access password for user; user may not exist" + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to access password for user; user may not exist" + `"}`))
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(request.FormValue("password")+SALT))
+	err = bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(r.FormValue("password")+SALT))
 	if err != nil {
-		http.Redirect(response, request, "/login.html", http.StatusSeeOther)
+		http.Redirect(w, r, "/login.html", http.StatusSeeOther)
 		return
 	}
 
-	session, err := sessionStore.Get(request, "session")
+	session, err := sessionStore.Get(r, "session")
 	if err != nil {
-		http.Error(response, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -394,15 +407,23 @@ func PostLoginAuth(response http.ResponseWriter, request *http.Request) {
 	}
 	session.Values["email"] = email
 	hash := md5.Sum([]byte(email))
-	session.Values["user_db_path"] = "../users/" + hex.EncodeToString(hash[:]) + ".db"
+	userDbPath := "../users/" + hex.EncodeToString(hash[:]) + ".db"
+	session.Values["user_db_path"] = userDbPath
 
-	err = session.Save(request, response)
+	err = session.Save(r, w)
 	if err != nil {
-		http.Error(response, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(response, request, "/", http.StatusSeeOther)
+	// vacuuming the db will compact it to free up wasted space
+	err = VacuumDb(userDbPath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func PostLogout(response http.ResponseWriter, request *http.Request) {

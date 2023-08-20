@@ -116,6 +116,38 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 func getStoryWords(storyIds []int64, sqldb *sql.DB) (map[string]bool, error) {
 	baseForms := make(map[string]bool)
 
+	if len(storyIds) == 1 && storyIds[0] == -1 {
+		rows, err := sqldb.Query(`SELECT lines FROM stories WHERE status = $1`, STORY_STATUS_CURRENT)
+		if err != nil {
+			return nil, fmt.Errorf("failure to get story words: " + err.Error())
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var linesJSON string
+			var lines []Line
+			err = rows.Scan(&linesJSON)
+			if err != nil {
+				return nil, fmt.Errorf("failure to scan story line: " + err.Error())
+			}
+			err := json.Unmarshal([]byte(linesJSON), &lines)
+			if err != nil {
+				return nil, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
+			}
+
+			for _, line := range lines {
+				for _, kanji := range line.Kanji {
+					baseForms[kanji.Character] = true
+				}
+				for _, word := range line.Words {
+					baseForms[word.BaseForm] = true
+				}
+			}
+		}
+
+		return baseForms, nil
+	}
+
 	for _, id := range storyIds {
 		rows, err := sqldb.Query(`SELECT lines FROM stories WHERE id = $1`, id)
 		if err != nil {
