@@ -168,6 +168,9 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCou
 	} else {
 		blanklinesRegex := regexp.MustCompile(`(?m)^\s*$\n`) // match timestamp line
 		lineContents = blanklinesRegex.Split(story.Content, -1)
+		if len(lineContents) > 0 && lineContents[0] == "" {
+			lineContents = lineContents[1:]
+		}
 	}
 
 	lines := make([]Line, len(lineContents))
@@ -175,14 +178,14 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCou
 	newWordCount = 0
 
 	for i, content := range lineContents {
-		timestamp := ":"
+		timestamp := "0:00"
 		if len(timestamps) > 0 {
 			timestamp = timestamps[i]
 		}
 		timestamp = strings.TrimSpace(timestamp)
 		content = strings.TrimSpace(content)
 
-		fmt.Println(timestamp, content)
+		//fmt.Println(timestamp, content)
 
 		tokens, kanjiSet, err := tokenize(content)
 		if err != nil {

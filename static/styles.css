@@ -260,18 +260,17 @@ a {
     outline: none;
 }
 
-
-#player_speed_slider {
-    width: 800px;
-    margin-bottom: 2em;
-    margin-left: 1em;
+#player_controls {
+    font-size: 70%;
+    display: block;
+    margin: 1em;
 }
 
-#player_controls {
-    display: block;
-    float: right;
-    width: 40%;
-    height: 30px;
+#player_container {
+    display: grid; 
+    grid-auto-columns: 1fr; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 0px 0px; 
 }
 
 input[type=number]#player_speed_number {
@@ -279,7 +278,7 @@ input[type=number]#player_speed_number {
     margin-right: 3em;
     width: 3em;
     height: 30px;
-    font-size: 80%;
+    font-size: 100%;
 }
 
 .line_timestamp {
@@ -304,17 +303,19 @@ input[type=number]#player_speed_number {
 
 .offcooldown.rank1,
 #tokenized_story.highlight_all_words span.rank1 {
-    background-color: #565656;
+    background-color: #040404;
+    border: dashed #a1a0a0 1px;
+    
 }
 
 .offcooldown.rank2,
 #tokenized_story.highlight_all_words span.rank2 {
-    background-color: #323232;
+    background-color: #0d0d0d;
 }
 
 .offcooldown.rank3,
 #tokenized_story.highlight_all_words span.rank3 {
-    background-color: #0e0e0e;
+    background-color: #393838;
 }
 
 
@@ -326,7 +327,7 @@ span.verb:hover {
 }
 
 #highlight_message {
-    font-size: 60%;
+    font-size: 80%;
 }
 
 /* copied from https://www.w3schools.com/howto/howto_js_snackbar.asp

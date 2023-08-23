@@ -1,5 +1,5 @@
 var storyTitle = document.getElementById('story_title');
-var tokenizedText = document.getElementById('tokenized_story');
+var tokenizedStory = document.getElementById('tokenized_story');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
@@ -10,13 +10,13 @@ var logStoryLink = document.getElementById('log_story_link');
 
 var story = null;
 
-tokenizedText.onwheel = function (evt) {
+tokenizedStory.onwheel = function (evt) {
     if (evt.wheelDeltaY < 0) {
-        if (tokenizedText.scrollTop >= tokenizedText.scrollTopMax) {
+        if (tokenizedStory.scrollTop >= tokenizedStory.scrollTopMax) {
             evt.preventDefault();
         }
     } else {
-        if (tokenizedText.scrollTop <= 0) {
+        if (tokenizedStory.scrollTop <= 0) {
             evt.preventDefault();
         }
     }
@@ -27,7 +27,10 @@ document.body.onkeydown = async function (evt) {
         return;
     }
     //console.log(evt);
-    let timemark = player.getCurrentTime();
+    let timemark = 0;
+    if (player) {
+        timemark = player.getCurrentTime();
+    }
     
     if (evt.code === 'KeyA') {
         evt.preventDefault();
@@ -56,8 +59,8 @@ document.body.onkeydown = async function (evt) {
         }
     } else if (evt.code === 'KeyC') {
         evt.preventDefault();
-        tokenizedText.classList.toggle('highlight_all_words');
-        if (tokenizedText.classList.contains('highlight_all_words')) {
+        tokenizedStory.classList.toggle('highlight_all_words');
+        if (tokenizedStory.classList.contains('highlight_all_words')) {
             highlightMessage.innerHTML = 'Highlighting all rank 1-3 words';
         } else {
             highlightMessage.innerHTML = 'Highlighting only the rank 1-3 words off cooldown';
@@ -121,8 +124,7 @@ function openStory(id) {
 
             if (youtubeId) {
                 player = new YT.Player('player', {
-                    height: '300',
-                    width: '500',
+                    
                     videoId: youtubeId,
                     
                     playerVars: {
@@ -171,7 +173,7 @@ function displayStory(story) {
         html += '</p>'
     }
 
-    tokenizedText.innerHTML = html;
+    tokenizedStory.innerHTML = html;
 }
 
 function isOffCooldown(rank, dateMarked, unixTime) {
@@ -182,7 +184,7 @@ function isOffCooldown(rank, dateMarked, unixTime) {
 var selectedWordBaseForm = null;
 
 
-tokenizedText.onmousedown = function (evt) {
+tokenizedStory.onmousedown = function (evt) {
     //console.log(evt.target);
     if (evt.target.hasAttribute('baseform')) {
         let baseform = evt.target.getAttribute('baseform');
@@ -230,8 +232,6 @@ function onYouTubeIframeAPIReady() {
 }
 
 function onPlayerReady(event) {
-    let playerControlsDiv = document.getElementById('player_controls');
-    playerControlsDiv.style.display = 'block';
     event.target.playVideo();
     console.log('starting video');
 }

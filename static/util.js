@@ -102,25 +102,24 @@ function updateWord(word, wordInfoMap, marking) {
         } else {
             snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to rank ${data.rank}`);
         }        
-        updateWordInfo(data, wordInfoMap);
+        updateWordInfo(data, wordInfoMap, marking);
     }).catch((error) => {
         console.error('Error:', error);
     });
 }
 
-function updateWordInfo(word, wordInfoMap) {
-    let tokenizedText = document.getElementById('tokenized_text');
-    if (tokenizedText) {
-        let wordSpans = tokenizedText.querySelectorAll(`span[baseform="${word.base_form}"]`);
+function updateWordInfo(word, wordInfoMap, marking) {
+    let tokenizedStory = document.getElementById('tokenized_story');
+    if (tokenizedStory) {
+        let wordSpans = tokenizedStory.querySelectorAll(`span[baseform="${word.base_form}"]`);
         console.log('updating word info', word.base_form, word.rank, word.date_marked, 'found spans', wordSpans.length);
         let unixTime = Math.floor(Date.now() / 1000);
         for (let span of wordSpans) {
-            span.classList.remove('rank1', 'rank2', 'rank3', 'rank4', 'offcooldown');
-            if (isOffCooldown(word.rank, word.date_marked, unixTime)) {
-                span.classList.add('offcooldown');
-            }
+            span.classList.remove('rank1', 'rank2', 'rank3', 'rank4');
             span.classList.add('rank' + word.rank);
-            
+            if (marking) {
+                span.classList.remove('offcooldown');
+            }
         }
     }
     
@@ -136,14 +135,14 @@ function snackbarMessage(msg) {
     var el = document.getElementById("snackbar");
 
     // Add the "show" class to DIV
-    el.className = "show";
+    el.classList.add("show");
     el.innerHTML = msg;
 
     clearTimeout(snackebarTimeoutHandle);
 
     // After 3 seconds, remove the show class from DIV
     snackebarTimeoutHandle = setTimeout(function () { 
-        el.className = "";
+        el.classList.remove('show');
     }, 3000);
 }
 
