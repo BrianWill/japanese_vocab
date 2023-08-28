@@ -8,9 +8,12 @@ var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var logEvents = document.getElementById('log_events');
+var queuedStoriesDiv = document.getElementById('queued_stories');
 
 document.body.onload = function (evt) {
     getStoryList();
+    getLogEvents();
+    getQueuedStories();
 
     if (window.location.pathname.startsWith('/read/')) {
         let storyId = window.location.pathname.substring(6);
@@ -66,16 +69,28 @@ function getLogEvents() {
         });
 }
 
+function displayQueuedStories(queuedStories) {
+    let html = `<table class="log_table">`;
+    
+    for (let qs of queuedStories) {
+        html += `<tr>
+            <td><a action="remove" log_id="${qs.id}" href="#">remove from queue</a></td>
+            <td>${qs.days_from_now} days from now</td>
+            <td><a story_id="${qs.story_id}" href="/story.html?storyId=${qs.story_id}">${qs.title}</a></td>
+            </tr>`;        
+    }
+
+    queuedStoriesDiv.innerHTML = html + '</table>';
+}
+
 function updateLogEvents(data) {
     let html = `<table class="log_table">`;
-    var storyLookup = storiesById || {};
-
     
     for (let d of data.logEvents) {
         html += `<tr>
             <td><a action="remove" log_id="${d.id}" href="#">remove log entry</a></td>
             <td>${timeSince(d.date)}</td>
-            <td><a story_id="${d.story_id}" href="/story.html?storyId=${d.story_id}">${storyLookup[d.story_id].title}</a></td>
+            <td><a story_id="${d.story_id}" href="/story.html?storyId=${d.story_id}">${d.title}</a></td>
             </tr>`;        
     }
 
@@ -139,6 +154,22 @@ function openStory(id) {
             story.tokens = JSON.parse(story.tokens);
             console.log(`/story/${id} success:`, story);
             displayStory(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function getQueuedStories(id) {
+    fetch('/get_enqueued_stories', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log(`success retrieving enqueued stories`, data);
+            displayQueuedStories(data);
         })
         .catch((error) => {
             console.error('Error:', error);

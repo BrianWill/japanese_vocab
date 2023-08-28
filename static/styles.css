@@ -161,6 +161,19 @@ a {
     margin-left: 2em;
 }
 
+#queued_stories a {
+    color: #838383;
+}
+
+#queued_stories td {
+    padding-right: 1em;
+}
+
+#queued_stories table {
+    margin-left: 2em;
+}
+
+
 
 .story_table th {
     color: rgb(98, 98, 98);

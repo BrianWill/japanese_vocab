@@ -233,7 +233,6 @@ function getStoryList() {
         .then((data) => {
             console.log('Stories list success:', data);
             updateStoryList(data);
-            getLogEvents();
         })
         .catch((error) => {
             console.error('Error:', error);

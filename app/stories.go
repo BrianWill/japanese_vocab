@@ -1,6 +1,5 @@
 package main
 
-// [START import]
 import (
 	// "context"
 	"compress/gzip"
@@ -841,7 +840,10 @@ func GetLogEvents(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, date, story FROM log_events ORDER BY date DESC;`)
+	rows, err := sqldb.Query(`SELECT l.id, l.date, l.story, s.title 
+								FROM log_events as l
+								INNER JOIN stories as s ON l.story = s.id 
+								ORDER BY date DESC;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -851,17 +853,14 @@ func GetLogEvents(response http.ResponseWriter, request *http.Request) {
 
 	var logEvents = make([]LogEvent, 0)
 	for rows.Next() {
-		var logEvent LogEvent
-		if err := rows.Scan(&logEvent.ID, &logEvent.Date, &logEvent.StoryID); err != nil {
+		var le LogEvent
+		if err := rows.Scan(&le.ID, &le.Date, &le.StoryID, &le.Title); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
 			return
 		}
-		logEvents = append(logEvents, logEvent)
+		logEvents = append(logEvents, le)
 	}
 
 	json.NewEncoder(response).Encode(bson.M{"logEvents": logEvents})
 }
-
-// [END indexHandler]
-// [END gae_go111_app]

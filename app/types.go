@@ -43,9 +43,10 @@ type LineKanji struct {
 }
 
 type LogEvent struct {
-	ID      int64 `json:"id,omitempty"`
-	StoryID int64 `json:"story_id,omitempty"`
-	Date    int64 `json:"date,omitempty"`
+	ID      int64  `json:"id,omitempty"`
+	StoryID int64  `json:"story_id,omitempty"`
+	Date    int64  `json:"date,omitempty"`
+	Title   string `json:"title,omitempty"`
 }
 
 type StoryList struct {
@@ -54,6 +55,19 @@ type StoryList struct {
 
 type DrillRequest struct {
 	StoryIds []int64 `json:"story_ids,omitempty"`
+}
+
+type EnqueueRequest struct {
+	StoryId int64 `json:"story_id,omitempty"`
+	Count   int   `json:"count,omitempty"`
+}
+
+type EnqueuedStory struct {
+	DaysFromNow int    `json:"days_from_now"`
+	ID          int64  `json:"id,omitempty"`
+	StoryID     int64  `json:"storyId,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Link        string `json:"link,omitempty"`
 }
 
 type DrillWord struct {

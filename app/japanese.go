@@ -1,22 +1,5 @@
-// Copyright 2019 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     https://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// [START gae_go111_app]
-
 package main
 
-// [START import]
 import (
 	"encoding/json"
 	"fmt"
@@ -44,14 +27,7 @@ import (
 	"github.com/gorilla/sessions"
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
-	// Note: If connecting using the App Engine Flex Go runtime, use
-	// "github.com/jackc/pgx/stdlib" instead, since v4 requires
-	// Go modules which are not supported by App Engine Flex.
-	//_ "github.com/jackc/pgx/v4/stdlib"
 )
-
-// [END import]
-// [START main_func]
 
 var allKanji KanjiDict
 var allEntries JMDict
@@ -171,6 +147,11 @@ func main() {
 	router.HandleFunc("/kanji", Kanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
+	router.HandleFunc("/enqueue_story", EnqueueStory).Methods("POST")
+	router.HandleFunc("/get_enqueued_stories", GetEnqueuedStories).Methods("GET")
+	router.HandleFunc("/balance_queue", BalanceQueue).Methods("POST")
+	router.HandleFunc("/mark_queued_story", MarkQueuedStory).Methods("POST")
+	router.HandleFunc("/remove_queued_story", RemoveQueuedStory).Methods("POST")
 	router.HandleFunc("/", GetMain).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
@@ -299,6 +280,18 @@ func makeUserDB(userhash string) {
 	(id INTEGER PRIMARY KEY, 
 		story INTEGER NOT NULL,
 		date INTEGER NOT NULL,
+		FOREIGN KEY (story) REFERENCES stories (id))`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS queued_stories 
+	(id INTEGER PRIMARY KEY, 
+		story INTEGER NOT NULL,
+		days_from_now INTEGER NOT NULL,
 		FOREIGN KEY (story) REFERENCES stories (id))`)
 	if err != nil {
 		log.Fatal(err)
@@ -631,6 +624,3 @@ func sortResults(entries []JMDictEntry, hasKanji bool, word string) {
 		})
 	}
 }
-
-// [END indexHandler]
-// [END gae_go111_app]
