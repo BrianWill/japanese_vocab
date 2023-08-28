@@ -207,8 +207,10 @@ function displayDefinition(baseform, surface) {
     getKanji(baseform + surface);
     html = '';
     let wordInfo = story.word_info[baseform];
-    for (let entry of wordInfo.definitions) {
-        html += displayEntry(entry);
+    if (wordInfo && wordInfo.definitions) {
+        for (let entry of wordInfo.definitions) {
+            html += displayEntry(entry);
+        }
     }
     definitionsDiv.innerHTML = html;
 }
