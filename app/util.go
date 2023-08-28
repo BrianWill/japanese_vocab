@@ -2,11 +2,7 @@ package main
 
 import (
 	"archive/zip"
-	//"database/sql"
-	// "fmt"
 	"io"
-	//"os"
-	//"go.mongodb.org/mongo-driver/bson"
 )
 
 func unzipSource(path string) ([]byte, error) {

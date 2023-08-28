@@ -295,6 +295,9 @@ function updateStoryList(stories) {
                     <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
                 </select>
             </td>
+            <td>
+                <a action="schedule" story_id="${s.id}" href="#">schedule</a>
+            </td>
             <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
     }

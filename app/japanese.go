@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	//"os/exec"
 	"regexp"
 	"sort"
 	"strings"
@@ -147,11 +146,11 @@ func main() {
 	router.HandleFunc("/kanji", Kanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
-	router.HandleFunc("/enqueue_story", EnqueueStory).Methods("POST")
+	router.HandleFunc("/schedule_story/{storyId}", EnqueueStory).Methods("GET")
 	router.HandleFunc("/get_enqueued_stories", GetEnqueuedStories).Methods("GET")
-	router.HandleFunc("/balance_queue", BalanceQueue).Methods("POST")
-	router.HandleFunc("/mark_queued_story", MarkQueuedStory).Methods("POST")
-	router.HandleFunc("/remove_queued_story", RemoveQueuedStory).Methods("POST")
+	router.HandleFunc("/balance_queue", BalanceQueue).Methods("GET")
+	router.HandleFunc("/mark_queued_story/{id}/{storyId}", MarkQueuedStory).Methods("GET")
+	router.HandleFunc("/remove_queued_story/{id}", RemoveQueuedStory).Methods("GET")
 	router.HandleFunc("/", GetMain).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 

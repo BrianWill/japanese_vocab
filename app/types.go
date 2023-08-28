@@ -65,7 +65,7 @@ type EnqueueRequest struct {
 type EnqueuedStory struct {
 	DaysFromNow int    `json:"days_from_now"`
 	ID          int64  `json:"id,omitempty"`
-	StoryID     int64  `json:"storyId,omitempty"`
+	StoryID     int64  `json:"story_id,omitempty"`
 	Title       string `json:"title,omitempty"`
 	Link        string `json:"link,omitempty"`
 }

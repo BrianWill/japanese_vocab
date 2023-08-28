@@ -9,6 +9,7 @@ var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var logEvents = document.getElementById('log_events');
 var queuedStoriesDiv = document.getElementById('queued_stories');
+var balanceQueueLink = document.getElementById('balance_queue_link');
 
 document.body.onload = function (evt) {
     getStoryList();
@@ -35,6 +36,40 @@ logEvents.onclick = function(evt) {
     }
 };
 
+queuedStoriesDiv.onclick = function(evt) {
+    if (evt.target.tagName == 'A') {
+        var logId = evt.target.getAttribute('log_id');
+        var storyId = evt.target.getAttribute('story_id');
+        var action = evt.target.getAttribute('action');
+        switch (action) {
+            case 'remove':
+                evt.preventDefault();
+                removeQueuedStory(logId);
+                break;
+            case 'log':
+                evt.preventDefault();
+                markQueuedStory(logId, storyId);
+                break;
+        }
+    }
+};
+
+balanceQueueLink.onclick = function(evt) {
+    fetch(`/balance_queue`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Rebalanced queue', data);
+            getQueuedStories();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+};
+
 function removeLogEvent(logId) {
     fetch(`/remove_log_event/${logId}`, {
         method: 'GET',
@@ -50,6 +85,57 @@ function removeLogEvent(logId) {
             console.error('Error:', error);
         });
 }
+
+
+function removeQueuedStory(logId) {
+    fetch(`/remove_queued_story/${logId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('remove a queued story');
+            getQueuedStories();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function scheduleStory(storyId) {
+    fetch(`/schedule_story/${storyId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('scechduled a story');
+            getQueuedStories();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function markQueuedStory(logId, storyId) {
+    fetch(`/mark_queued_story/${logId}/${storyId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('moved queud story entry to the log');
+            getQueuedStories();
+            getLogEvents();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 
 function getLogEvents() {
     const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
@@ -74,8 +160,9 @@ function displayQueuedStories(queuedStories) {
     
     for (let qs of queuedStories) {
         html += `<tr>
-            <td><a action="remove" log_id="${qs.id}" href="#">remove from queue</a></td>
-            <td>${qs.days_from_now} days from now</td>
+            <td><a action="remove" log_id="${qs.id}" href="#">remove</a></td>
+            <td><a action="log" log_id="${qs.id}" story_id="${qs.story_id}"  href="#">log</a></td>
+            <td>in ${qs.days_from_now} days</td>
             <td><a story_id="${qs.story_id}" href="/story.html?storyId=${qs.story_id}">${qs.title}</a></td>
             </tr>`;        
     }
@@ -202,5 +289,18 @@ storyList.onchange = function (evt) {
     story.status = parseInt(evt.target.value);
     console.log("changed", parseInt(evt.target.value));
     updateStory(story, true);
+};
+
+storyList.onclick = function (evt) {
+    if (evt.target.tagName == 'A') {
+        var storyId = evt.target.getAttribute('story_id');
+        var action = evt.target.getAttribute('action');
+        switch (action) {
+            case 'schedule':
+                evt.preventDefault();
+                scheduleStory(storyId);
+                break;
+        }
+    }
 };
 

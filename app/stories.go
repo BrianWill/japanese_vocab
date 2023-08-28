@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "context"
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
@@ -18,7 +17,6 @@ import (
 	"github.com/ikawaha/kagome/v2/tokenizer"
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
-	//"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const INITIAL_STATUS = 1
