@@ -23,10 +23,10 @@ type WordInfo struct {
 }
 
 type Line struct {
-	Words     []LineWord  `json:"words,omitempty"`
-	Timestamp string      `json:"timestamp,omitempty"`
-	Content   string      `json:"content,omitempty"`
-	Kanji     []LineKanji `json:"kanji,omitempty"`
+	Words     []LineWord `json:"words,omitempty"`
+	Timestamp string     `json:"timestamp,omitempty"`
+	//Content   string      `json:"content,omitempty"`
+	Kanji []LineKanji `json:"kanji,omitempty"`
 }
 
 type LineWord struct {
@@ -49,7 +49,14 @@ type LogEvent struct {
 	Title   string `json:"title,omitempty"`
 }
 
-type RemoveLineRequest struct {
+type SplitLineRequest struct {
+	StoryID     int64   `json:"story_id,omitempty"`
+	LineToSplit int     `json:"line_to_split"`
+	WordIdx     int     `json:"word_idx"`
+	Timestamp   float64 `json:"timestamp"`
+}
+
+type ConsolidateLineRequest struct {
 	StoryID      int64 `json:"story_id,omitempty"`
 	LineToRemove int   `json:"line_to_remove,omitempty"`
 }

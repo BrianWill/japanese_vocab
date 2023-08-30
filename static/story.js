@@ -161,12 +161,13 @@ function displayStory(story) {
 
     for (let idx in story.lines) {
         let line = story.lines[idx];
-        html += `<p><a class="line_timestamp" lineIdx="${idx}">${line.timestamp}</a>`;
-        for (let word of line.words) {
+        html += `<p line_idx="${idx}"><a class="line_timestamp">${line.timestamp}</a>`;
+        for (let wordIdx in line.words) {
+            let word = line.words[wordIdx];
             let wordinfo = story.word_info[word.baseform];
             if (word.id) {
                 let offCooldown = isOffCooldown(wordinfo.rank, wordinfo.date_marked, unixTime);
-                html += `<span wordId="${word.id || ''}" baseform="${word.baseform || ''}" 
+                html += `<span word_idx_in_line="${wordIdx}" word_id="${word.id || ''}" baseform="${word.baseform || ''}" 
                     class="lineword rank${wordinfo.rank} ${offCooldown ? 'offcooldown' : ''} ${word.pos || ''}">${word.surface}</span>`;
             } else {
                 html += `<span class="lineword nonword">${word.surface}</span>`;
@@ -188,14 +189,41 @@ var selectedWordBaseForm = null;
 
 tokenizedStory.onmousedown = function (evt) {
     if (evt.target.hasAttribute('baseform')) {
-        let baseform = evt.target.getAttribute('baseform');
-        selectedWordBaseForm = baseform;
-
-        console.log('baseform', baseform);
-        let surface = evt.target.innerHTML;
-        displayDefinition(baseform, surface);    
+        if (evt.ctrlKey) {
+            let timestamp = player.getCurrentTime();
+            let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+            let wordIdx = parseInt(evt.target.getAttribute('word_idx_in_line'));
+            fetch('/story_split_line', {
+                method: 'POST', // or 'PUT'
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    story_id: story.id,
+                    line_to_split: lineIdx,
+                    timestamp: timestamp,
+                    word_idx: wordIdx
+                }),
+            }).then((response) => response.json())
+                .then((data) => {
+                    console.log('Success:', data);
+                    story.lines = data;
+                    displayStory(story);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        } else {
+            let baseform = evt.target.getAttribute('baseform');
+            selectedWordBaseForm = baseform;
+            console.log('baseform', baseform);
+            let surface = evt.target.innerHTML;
+            displayDefinition(baseform, surface);    
+        }
+        
     } else if (evt.target.classList.contains('line_timestamp')) {
         if (evt.ctrlKey) {
+            let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
             fetch('/story_consolidate_line', {
                 method: 'POST', // or 'PUT'
                 headers: {
@@ -203,7 +231,7 @@ tokenizedStory.onmousedown = function (evt) {
                 },
                 body: JSON.stringify({
                     story_id: story.id,
-                    line_to_remove: parseInt(evt.target.getAttribute('lineIdx'))
+                    line_to_remove: lineIdx
                 }),
             }).then((response) => response.json())
                 .then((data) => {

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -143,7 +144,10 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCou
 			return 0, 0, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
 		}
 		for _, line := range story.Lines {
-			story.Content += line.Timestamp + "\n" + line.Content + "\n"
+			story.Content += line.Timestamp + "\n"
+			for _, word := range line.Words {
+				story.Content += word.Surface
+			}
 		}
 	} else {
 		row := sqldb.QueryRow(`SELECT id FROM stories WHERE title = $1;`, story.Title)
@@ -195,7 +199,6 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCou
 		newWordCount += addedWordCount
 
 		lines[i] = Line{
-			Content:   content,
 			Timestamp: timestamp,
 			Words:     wordsOfLine,
 			Kanji:     lineKanji,
@@ -745,21 +748,21 @@ func ConsolidateLine(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var removeLine RemoveLineRequest
-	err = json.NewDecoder(r.Body).Decode(&removeLine)
+	var consolidateLine ConsolidateLineRequest
+	err = json.NewDecoder(r.Body).Decode(&consolidateLine)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
-	if removeLine.LineToRemove < 1 {
+	if consolidateLine.LineToRemove < 1 {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to conslidate must have index of 1 or greater"` + err.Error() + `"}`))
+		w.Write([]byte(`{ "message: line to conslidate must have index of 1 or greater}`))
 		return
 	}
 
-	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, removeLine.StoryID)
+	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, consolidateLine.StoryID)
 
 	var linesJSON string
 	if err := row.Scan(&linesJSON); err != nil {
@@ -776,17 +779,17 @@ func ConsolidateLine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if removeLine.LineToRemove >= len(lines) {
+	if consolidateLine.LineToRemove >= len(lines) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to conslidate must have index of 1 or greater"` + err.Error() + `"}`))
+		w.Write([]byte(`{ "message: line to conslidate must have index of 1 or greater}`))
 		return
 	}
 
-	idx := removeLine.LineToRemove
+	idx := consolidateLine.LineToRemove
 	prevLine := &lines[idx-1]
 	line := lines[idx]
 
-	prevLine.Content += line.Content
+	//prevLine.Content += line.Content
 	prevLine.Words = append(prevLine.Words, line.Words...)
 
 	kanjiMap := make(map[string]LineKanji)
@@ -814,12 +817,138 @@ func ConsolidateLine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// _, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, removeLine.StoryID)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
-	// 	return
-	// }
+	_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, consolidateLine.StoryID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
+		return
+	}
+
+	w.Write(linesBytes)
+}
+
+func SplitLine(w http.ResponseWriter, r *http.Request) {
+	dbPath, redirect, err := GetUserDb(w, r)
+	if redirect || err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var splitLine SplitLineRequest
+	err = json.NewDecoder(r.Body).Decode(&splitLine)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, splitLine.StoryID)
+
+	var linesJSON string
+	if err := row.Scan(&linesJSON); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to get story lines": "` + err.Error() + `"}`))
+		return
+	}
+
+	var lines []Line
+	err = json.Unmarshal([]byte(linesJSON), &lines)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to unmarhsal story lines JSON": "` + err.Error() + `"}`))
+		return
+	}
+
+	if splitLine.LineToSplit < 0 || splitLine.LineToSplit >= len(lines) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{ "message: line to split must have index of 1 or greater}`))
+		return
+	}
+
+	idx := splitLine.LineToSplit
+	origLine := &lines[idx]
+
+	if splitLine.WordIdx < 1 || splitLine.WordIdx >= len(origLine.Words) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{ "message: line to split word index must be in range}`))
+		return
+	}
+
+	timestamp := fmt.Sprintf("%d:%d", int(math.Floor(splitLine.Timestamp/60)), int(splitLine.Timestamp)%60)
+	if splitLine.Timestamp == 0 {
+		timestamp = origLine.Timestamp
+	}
+
+	newLine := Line{
+		Words:     origLine.Words[splitLine.WordIdx:],
+		Timestamp: timestamp,
+	}
+	origLine.Words = origLine.Words[:splitLine.WordIdx]
+
+	kanjiMap := make(map[string]LineKanji)
+	for _, v := range origLine.Kanji {
+		kanjiMap[v.Character] = v
+	}
+	for _, v := range newLine.Kanji {
+		kanjiMap[v.Character] = v
+	}
+
+	origKanjiMap := make(map[string]bool)
+	for _, word := range origLine.Words {
+		for _, rune := range word.Surface {
+			s := string(rune)
+			if _, ok := kanjiMap[s]; ok {
+				origKanjiMap[string(rune)] = true
+			}
+		}
+	}
+	newKanjiMap := make(map[string]bool)
+	for _, word := range newLine.Words {
+		for _, rune := range word.Surface {
+			s := string(rune)
+			if _, ok := kanjiMap[s]; ok {
+				newKanjiMap[string(rune)] = true
+			}
+		}
+	}
+
+	origLine.Kanji = make([]LineKanji, 0)
+	for ch, _ := range origKanjiMap {
+		origLine.Kanji = append(origLine.Kanji, kanjiMap[ch])
+	}
+	newLine.Kanji = make([]LineKanji, 0)
+	for ch, _ := range newKanjiMap {
+		newLine.Kanji = append(newLine.Kanji, kanjiMap[ch])
+	}
+
+	// insert the line
+	lines = append(lines[:idx+1], lines[idx:]...)
+	lines[idx+1] = newLine
+
+	linesBytes, err := json.Marshal(lines)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to JSONify story lines": "` + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, splitLine.StoryID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
+		return
+	}
 
 	w.Write(linesBytes)
 }
