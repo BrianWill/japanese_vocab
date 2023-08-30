@@ -141,7 +141,7 @@ a {
     padding-right: 1em;
 }
 
-#complete_log_link {
+.header_link {
     color: #838383;
     font-size: 70%;
     margin-left: 2em;

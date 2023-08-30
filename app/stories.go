@@ -27,7 +27,6 @@ const DRILL_FILTER_OFF_COOLDOWN = "off"
 const DRILL_FILTER_ALL = "all"
 
 const STORY_STATUS_CURRENT = 3
-const STORY_STATUS_READ = 2
 const STORY_STATUS_NEVER_READ = 1
 const STORY_STATUS_ARCHIVE = 0
 
@@ -679,6 +678,7 @@ func UpdateStory(response http.ResponseWriter, request *http.Request) {
 	if redirect || err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")
@@ -726,139 +726,100 @@ func UpdateStory(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(bson.M{"status": "success"})
 }
 
-func AddLogEvent(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
+// remove a line and combine its content with the previous line
+func ConsolidateLine(w http.ResponseWriter, r *http.Request) {
+	dbPath, redirect, err := GetUserDb(w, r)
 	if redirect || err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	}
-
-	response.Header().Set("Content-Type", "application/json")
-
-	params := mux.Vars(request)
-	var storyId int64
-	id, err := strconv.Atoi(params["id"])
-	storyId = int64(id)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 	defer sqldb.Close()
 
-	unixtime := time.Now().Unix()
-	cooldownWindowStart := unixtime - STORY_LOG_COOLDOWN
+	w.Header().Set("Content-Type", "application/json")
 
-	row := sqldb.QueryRow(`SELECT date FROM log_events WHERE date > $1 AND story = $2`, cooldownWindowStart, storyId)
-
-	var existingId int64
-	err = row.Scan(&existingId)
-	if err == nil {
-		response.Write([]byte(`{ "message": "No entry added to the read log. This story was previously logged within the 8 hour cooldown window."}`))
-		return
-	} else if err != sql.ErrNoRows {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	_, err = sqldb.Exec(`INSERT INTO log_events (date, story) 
-			VALUES($1, $2);`,
-		unixtime, storyId)
+	var removeLine RemoveLineRequest
+	err = json.NewDecoder(r.Body).Decode(&removeLine)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to insert log event: " + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
-	response.Write([]byte(`{ "message": "Entry for story added to the read log."}`))
-}
-
-func RemoveLogEvent(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
-	if redirect || err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	if removeLine.LineToRemove < 1 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{ "message: line to conslidate must have index of 1 or greater"` + err.Error() + `"}`))
+		return
 	}
 
-	response.Header().Set("Content-Type", "application/json")
+	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, removeLine.StoryID)
 
-	params := mux.Vars(request)
-	var logId int64
-	id, err := strconv.Atoi(params["id"])
-	logId = int64(id)
+	var linesJSON string
+	if err := row.Scan(&linesJSON); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to get story lines": "` + err.Error() + `"}`))
+		return
+	}
+
+	var lines []Line
+	err = json.Unmarshal([]byte(linesJSON), &lines)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to unmarhsal story lines JSON": "` + err.Error() + `"}`))
 		return
 	}
 
-	sqldb, err := sql.Open("sqlite3", dbPath)
+	if removeLine.LineToRemove >= len(lines) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{ "message: line to conslidate must have index of 1 or greater"` + err.Error() + `"}`))
+		return
+	}
+
+	idx := removeLine.LineToRemove
+	prevLine := &lines[idx-1]
+	line := lines[idx]
+
+	prevLine.Content += line.Content
+	prevLine.Words = append(prevLine.Words, line.Words...)
+
+	kanjiMap := make(map[string]LineKanji)
+	for _, v := range prevLine.Kanji {
+		kanjiMap[v.Character] = v
+	}
+	for _, v := range line.Kanji {
+		kanjiMap[v.Character] = v
+	}
+
+	prevLine.Kanji = make([]LineKanji, len(kanjiMap))
+	i := 0
+	for _, v := range kanjiMap {
+		prevLine.Kanji[i] = v
+		i++
+	}
+
+	// remove the line
+	lines = append(lines[:idx], lines[idx+1:]...)
+
+	linesBytes, err := json.Marshal(lines)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	_, err = sqldb.Exec(`DELETE FROM log_events WHERE id = $1;`, logId)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to delete log event: " + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to JSONify story lines": "` + err.Error() + `"}`))
 		return
 	}
 
-	json.NewEncoder(response).Encode(bson.M{"status": "success"})
-}
+	// _, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, removeLine.StoryID)
+	// if err != nil {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
+	// 	return
+	// }
 
-func GetLogEvents(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
-	if redirect {
-		return
-	}
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	}
-
-	response.Header().Set("Content-Type", "application/json")
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	rows, err := sqldb.Query(`SELECT l.id, l.date, l.story, s.title 
-								FROM log_events as l
-								INNER JOIN stories as s ON l.story = s.id 
-								ORDER BY date DESC;`)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
-		return
-	}
-	defer rows.Close()
-
-	var logEvents = make([]LogEvent, 0)
-	for rows.Next() {
-		var le LogEvent
-		if err := rows.Scan(&le.ID, &le.Date, &le.StoryID, &le.Title); err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to read story: " + err.Error() + `"}`))
-			return
-		}
-		logEvents = append(logEvents, le)
-	}
-
-	json.NewEncoder(response).Encode(bson.M{"logEvents": logEvents})
+	w.Write(linesBytes)
 }

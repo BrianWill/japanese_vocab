@@ -162,7 +162,7 @@ function displayQueuedStories(queuedStories) {
         html += `<tr>
             <td><a action="remove" log_id="${qs.id}" href="#">remove</a></td>
             <td><a action="log" log_id="${qs.id}" story_id="${qs.story_id}"  href="#">log</a></td>
-            <td>in ${qs.days_from_now} days</td>
+            <td>${timeSince(qs.date)}</td>
             <td><a story_id="${qs.story_id}" href="/story.html?storyId=${qs.story_id}">${qs.title}</a></td>
             </tr>`;        
     }

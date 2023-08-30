@@ -101,7 +101,7 @@ function updateWord(word, wordInfoMap, marking) {
             snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
         } else {
             snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to rank ${data.rank}`);
-        }        
+        }
         updateWordInfo(data, wordInfoMap, marking);
     }).catch((error) => {
         console.error('Error:', error);
@@ -122,7 +122,7 @@ function updateWordInfo(word, wordInfoMap, marking) {
             }
         }
     }
-    
+
     var wordInfo = wordInfoMap[word.base_form];
     wordInfo.rank = word.rank;
     wordInfo.date_marked = word.date_marked;
@@ -141,7 +141,7 @@ function snackbarMessage(msg) {
     clearTimeout(snackebarTimeoutHandle);
 
     // After 3 seconds, remove the show class from DIV
-    snackebarTimeoutHandle = setTimeout(function () { 
+    snackebarTimeoutHandle = setTimeout(function () {
         el.classList.remove('show');
     }, 3000);
 }
@@ -241,32 +241,73 @@ function getStoryList() {
 
 
 function timeSince(date) {
-
-    var now = Math.floor(new Date() / 1000);
-
-    var elapsedSeconds = now - date;
-
-    var interval = elapsedSeconds / 31536000;
-    if (interval > 1) {
-        return Math.floor(interval) + " years ago";
+    let now = Math.floor(new Date() / 1000);
+    let elapsedSeconds = now - date;
+    if (elapsedSeconds > 0) {
+        elapsedSeconds++; // adding one second fixes cases like "24 hours" instead of "1 day";
+        let interval = elapsedSeconds / 31536000;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `${val} ${val == 1 ? 'year' : 'years'} ago`;
+        }
+        interval = elapsedSeconds / 2592000;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `${val} ${val == 1 ? 'month' : 'months'} ago`;
+        }
+        interval = elapsedSeconds / 86400;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `${val} ${val == 1 ? 'day' : 'days'} ago`;
+        }
+        interval = elapsedSeconds / 3600;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `${val} ${val == 1 ? 'hour' : 'hours'} ago`;
+        }
+        interval = elapsedSeconds / 60;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `${val} ${val == 1 ? 'minute' : 'minutes'} ago`;
+        }
+        if (interval > 1) {
+            var val = Math.floor(elapsedSeconds);
+            return `${val} ${val == 1 ? 'second' : 'seconds'} ago`;
+        }
+    } else {
+        elapsedSeconds = - elapsedSeconds;
+        elapsedSeconds++;  // adding one second fixes cases like "24 hours" instead of "1 day";
+        let interval = elapsedSeconds / 31536000;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `in ${val} ${val == 1 ? 'year' : 'years'}`;
+        }
+        interval = elapsedSeconds / 2592000;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `in ${val} ${val == 1 ? 'month' : 'months'}`;
+        }
+        interval = elapsedSeconds / 86400;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `in ${val} ${val == 1 ? 'day' : 'days'}`;
+        }
+        interval = elapsedSeconds / 3600;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `in ${val} ${val == 1 ? 'hour' : 'hours'}`;
+        }
+        interval = elapsedSeconds / 60;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `in ${val} ${val == 1 ? 'minute' : 'minutes'}`;
+        }
+        if (interval > 1) {
+            var val = Math.floor(elapsedSeconds);
+            return `in ${val} ${val == 1 ? 'second' : 'seconds'}`;
+        }
     }
-    interval = elapsedSeconds / 2592000;
-    if (interval > 1) {
-        return Math.floor(interval) + " months ago";
-    }
-    interval = elapsedSeconds / 86400;
-    if (interval > 1) {
-        return Math.floor(interval) + " days ago";
-    }
-    interval = elapsedSeconds / 3600;
-    if (interval > 1) {
-        return Math.floor(interval) + " hours ago";
-    }
-    interval = elapsedSeconds / 60;
-    if (interval > 1) {
-        return Math.floor(interval) + " minutes ago";
-    }
-    return Math.floor(elapsedSeconds) + " seconds ago";
+    return 'now';
 }
 
 const DRILL_ALL_CURRENT = -1;
@@ -290,7 +331,6 @@ function updateStoryList(stories) {
             <td>
                 <select name="status" class="status_select" story_id="${s.id}">
                     <option value="3" ${s.status === 3 ? 'selected' : ''}>Current</option>
-                    <option value="2" ${s.status === 2 ? 'selected' : ''}>Read</option>
                     <option value="1" ${s.status === 1 ? 'selected' : ''}>Never read</option>
                     <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
                 </select>

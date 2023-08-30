@@ -12,10 +12,12 @@
 
 <body>
     <a href="login.html">Login or register</a>
-    <h3>READ IN LAST WEEK <a id="complete_log_link" href="#">complete log</a></h3>
+    <h3>READ IN LAST WEEK <a id="complete_log_link" class="header_link" href="#">complete log</a></h3>
     <div id="log_events"></div>
-    <h3>SCHEDULED QUEUE <a id="balance_queue_link" href="#">rebalance queue</a></h3>
+    <h3>SCHEDULE <a id="balance_queue_link" class="header_link" href="#">rebalance schedule</a></h3>
     <div id="queued_stories"></div>
+    <div id="story_list"></div>
+    <div id="snackbar"></div>
     <h3>CREATE STORY</h3>
     <div id="create_story_div">
     <input id="new_story_title" type="text" placeholder="Title">
@@ -23,9 +25,6 @@
     <textarea id="new_story_text" placeholder="Content"></textarea>
     <button id="new_story_button">Create Story</button>
     </div>
-    <div id="story_list">
-    </div>
-    <div id="snackbar"></div>
 </body>
 <script src="../main.js"></script>
 <script src="../util.js"></script>

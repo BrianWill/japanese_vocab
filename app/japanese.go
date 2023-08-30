@@ -142,6 +142,7 @@ func main() {
 	router.HandleFunc("/create_story", CreateStory).Methods("POST")
 	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
+	router.HandleFunc("/story_consolidate_line", ConsolidateLine).Methods("POST")
 	router.HandleFunc("/stories_list", GetStoriesList).Methods("GET")
 	router.HandleFunc("/kanji", Kanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")
@@ -290,7 +291,7 @@ func makeUserDB(userhash string) {
 	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS queued_stories 
 	(id INTEGER PRIMARY KEY, 
 		story INTEGER NOT NULL,
-		days_from_now INTEGER NOT NULL,
+		date INTEGER NOT NULL,
 		FOREIGN KEY (story) REFERENCES stories (id))`)
 	if err != nil {
 		log.Fatal(err)

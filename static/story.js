@@ -151,6 +151,7 @@ function openStory(id) {
         });
 }
 
+
 function displayStory(story) {
     //let punctuationTokens = [' ', '。', '、'];
 
@@ -158,8 +159,9 @@ function displayStory(story) {
 
     let unixTime = Math.floor(Date.now() / 1000);
 
-    for (let line of story.lines) {
-        html += `<p><a class="line_timestamp">${line.timestamp}</a>`;
+    for (let idx in story.lines) {
+        let line = story.lines[idx];
+        html += `<p><a class="line_timestamp" lineIdx="${idx}">${line.timestamp}</a>`;
         for (let word of line.words) {
             let wordinfo = story.word_info[word.baseform];
             if (word.id) {
@@ -185,7 +187,6 @@ var selectedWordBaseForm = null;
 
 
 tokenizedStory.onmousedown = function (evt) {
-    //console.log(evt.target);
     if (evt.target.hasAttribute('baseform')) {
         let baseform = evt.target.getAttribute('baseform');
         selectedWordBaseForm = baseform;
@@ -194,12 +195,33 @@ tokenizedStory.onmousedown = function (evt) {
         let surface = evt.target.innerHTML;
         displayDefinition(baseform, surface);    
     } else if (evt.target.classList.contains('line_timestamp')) {
-        let [mins, seconds] = evt.target.innerHTML.split(':');
-        mins = parseInt(mins);
-        seconds = parseInt(seconds);
-        console.log("timestamp", mins, seconds);
-        player.seekTo(mins * 60 + seconds);
-        player.playVideo();
+        if (evt.ctrlKey) {
+            fetch('/story_consolidate_line', {
+                method: 'POST', // or 'PUT'
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    story_id: story.id,
+                    line_to_remove: parseInt(evt.target.getAttribute('lineIdx'))
+                }),
+            }).then((response) => response.json())
+                .then((data) => {
+                    console.log('Success:', data);
+                    story.lines = data;
+                    displayStory(story);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        } else {
+            let [mins, seconds] = evt.target.innerHTML.split(':');
+            mins = parseInt(mins);
+            seconds = parseInt(seconds);
+            console.log("timestamp", mins, seconds);
+            player.seekTo(mins * 60 + seconds);
+            player.playVideo();
+        }
     }    
 };
 

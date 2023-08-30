@@ -49,6 +49,11 @@ type LogEvent struct {
 	Title   string `json:"title,omitempty"`
 }
 
+type RemoveLineRequest struct {
+	StoryID      int64 `json:"story_id,omitempty"`
+	LineToRemove int   `json:"line_to_remove,omitempty"`
+}
+
 type StoryList struct {
 	Stories []Story `json:"stories,omitempty"`
 }
@@ -63,11 +68,11 @@ type EnqueueRequest struct {
 }
 
 type EnqueuedStory struct {
-	DaysFromNow int    `json:"days_from_now"`
-	ID          int64  `json:"id,omitempty"`
-	StoryID     int64  `json:"story_id,omitempty"`
-	Title       string `json:"title,omitempty"`
-	Link        string `json:"link,omitempty"`
+	Date    int    `json:"date"`
+	ID      int64  `json:"id,omitempty"`
+	StoryID int64  `json:"story_id,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Link    string `json:"link,omitempty"`
 }
 
 type DrillWord struct {
