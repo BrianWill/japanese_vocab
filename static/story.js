@@ -234,8 +234,11 @@ function isOffCooldown(rank, dateMarked, unixTime) {
 var selectedWordBaseForm = null;
 
 function splitLine(target) {
-    let timestamp = player.getCurrentTime();
     let lineIdx = parseInt(target.parentNode.getAttribute('line_idx'));
+    let timestamp = parseTimestamp(story.lines[lineIdx].timestamp);
+    if (player) {
+        timestamp = player.getCurrentTime();
+    }
     let wordIdx = parseInt(target.getAttribute('word_idx_in_line'));
     fetch('/story_split_line', {
         method: 'POST', // or 'PUT'
@@ -293,6 +296,11 @@ tokenizedStory.onmousedown = function (evt) {
                 .catch((error) => {
                     console.error('Error:', error);
                 });
+        } else if (evt.altKey) { 
+            if (!player) { return; }
+            let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+            let seconds = player.getCurrentTime();
+            setTimestamp(lineIdx, seconds);
         } else {
             selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
             let seconds = parseTimestamp(evt.target.innerHTML);

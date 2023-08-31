@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
+	//"unicode/utf8"
 
 	"github.com/gorilla/mux"
 	"github.com/ikawaha/kagome/v2/tokenizer"
@@ -320,14 +320,8 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 	newWordCount := 0
 	unixtime := time.Now().Unix()
 
-	wordsToInsert := make(map[string]*LineWord)
-
 	lineWords := make([]LineWord, len(tokens))
 	for i, token := range tokens {
-		if _, ok := wordsToInsert[token.BaseForm]; ok {
-			continue // early out
-		}
-
 		priorToken := &JpToken{}
 		if i > 0 {
 			priorToken = tokens[i-1]
@@ -357,12 +351,7 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 			category |= DRILL_CATEGORY_KATAKANA
 		}
 
-		if hasKanji && utf8.RuneCountInString(token.BaseForm) == 1 {
-			continue // these cases handled by kanji insertion below
-		}
-
 		entries := getDefinitions(token.BaseForm)
-
 		for _, entry := range entries {
 			for _, sense := range entry.Senses {
 				category |= getVerbCategory(sense)
@@ -381,8 +370,20 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 			continue
 		}
 
-		wordsToInsert[token.BaseForm] = lineWord
+		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
+			date_added, category, rank, drill_count) 
+			VALUES($1, $2, $3, $4, $5, $6);`,
+			lineWord.BaseForm, 0, unixtime, lineWord.Category, INITIAL_RANK, 0)
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
+		}
+
+		id, err = insertResult.LastInsertId()
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("failure to get id of inserted word: " + err.Error())
+		}
 		newWordCount++
+		lineWord.ID = id
 	}
 
 	kanjiToInsert := make(map[string]*LineKanji)
@@ -407,23 +408,6 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 		}
 
 		kanjiToInsert[kanji] = lk
-		newWordCount++
-	}
-
-	for _, word := range wordsToInsert {
-		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, rank, drill_count) 
-			VALUES($1, $2, $3, $4, $5, $6);`,
-			word.BaseForm, 0, unixtime, word.Category, INITIAL_RANK, 0)
-		if err != nil {
-			return nil, nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
-		}
-
-		id, err := insertResult.LastInsertId()
-		if err != nil {
-			return nil, nil, 0, fmt.Errorf("failure to get id of inserted word: " + err.Error())
-		}
-		word.ID = id
 	}
 
 	for _, lk := range kanjiToInsert {
@@ -439,6 +423,7 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("failure to get id of inserted kanji: " + err.Error())
 		}
+		newWordCount++
 		lk.ID = id
 	}
 
@@ -469,21 +454,21 @@ func getDefinitions(baseForm string) []JMDictEntry {
 	return entries
 }
 
-func getDefinitionsJSON(baseForm string) (string, error) {
-	if json, ok := definitionsJSONCache[baseForm]; ok {
-		return json, nil
-	}
+// func getDefinitionsJSON(baseForm string) (string, error) {
+// 	if json, ok := definitionsJSONCache[baseForm]; ok {
+// 		return json, nil
+// 	}
 
-	entries := getDefinitions(baseForm)
+// 	entries := getDefinitions(baseForm)
 
-	entriesJSON, err := json.Marshal(entries)
-	if err != nil {
-		return "", fmt.Errorf("failure marshalling definitions for word: %s", baseForm)
-	}
+// 	entriesJSON, err := json.Marshal(entries)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failure marshalling definitions for word: %s", baseForm)
+// 	}
 
-	definitionsJSONCache[baseForm] = string(entriesJSON)
-	return string(entriesJSON), nil
-}
+// 	definitionsJSONCache[baseForm] = string(entriesJSON)
+// 	return string(entriesJSON), nil
+// }
 
 func getVerbCategory(sense JMDictSense) int {
 	category := 0
@@ -924,11 +909,11 @@ func SplitLine(w http.ResponseWriter, r *http.Request) {
 	}
 
 	origLine.Kanji = make([]LineKanji, 0)
-	for ch, _ := range origKanjiMap {
+	for ch := range origKanjiMap {
 		origLine.Kanji = append(origLine.Kanji, kanjiMap[ch])
 	}
 	newLine.Kanji = make([]LineKanji, 0)
-	for ch, _ := range newKanjiMap {
+	for ch := range newKanjiMap {
 		newLine.Kanji = append(newLine.Kanji, kanjiMap[ch])
 	}
 

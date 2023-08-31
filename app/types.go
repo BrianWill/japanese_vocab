@@ -32,7 +32,7 @@ type Line struct {
 type LineWord struct {
 	ID       int64  `json:"id,omitempty"`
 	BaseForm string `json:"baseform,omitempty"`
-	Surface  string `json:"surface,omitempty"`
+	Surface  string `json:"surface"`
 	POS      string `json:"pos,omitempty"` // highlight color
 	Category int    `json:"Category,omitempty"`
 }

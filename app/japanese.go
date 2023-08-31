@@ -34,7 +34,7 @@ var allEntriesByReading map[string][]*JMDictEntry
 var allEntriesByKanjiSpellings map[string][]*JMDictEntry
 
 var definitionsCache map[string][]JMDictEntry // base form to []JMDictEntry
-var definitionsJSONCache map[string]string    // base form to JSON string of []JMDictEntry
+//var definitionsJSONCache map[string]string    // base form to JSON string of []JMDictEntry
 
 var reHasKanji *regexp.Regexp
 
@@ -177,7 +177,7 @@ func devMiddleware(h http.Handler) http.Handler {
 func initialize() {
 	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	definitionsCache = make(map[string][]JMDictEntry)
-	definitionsJSONCache = make(map[string]string)
+	//definitionsJSONCache = make(map[string]string)
 }
 
 func buildEntryMaps() {
