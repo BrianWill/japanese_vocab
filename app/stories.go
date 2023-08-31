@@ -952,3 +952,81 @@ func SplitLine(w http.ResponseWriter, r *http.Request) {
 
 	w.Write(linesBytes)
 }
+
+func SetTimestamp(w http.ResponseWriter, r *http.Request) {
+	dbPath, redirect, err := GetUserDb(w, r)
+	if redirect || err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var setTimestamp SetTimestampRequest
+	err = json.NewDecoder(r.Body).Decode(&setTimestamp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, setTimestamp.StoryID)
+
+	var linesJSON string
+	if err := row.Scan(&linesJSON); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to get story lines": "` + err.Error() + `"}`))
+		return
+	}
+
+	var lines []Line
+	err = json.Unmarshal([]byte(linesJSON), &lines)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to unmarshal story lines JSON": "` + err.Error() + `"}`))
+		return
+	}
+
+	if setTimestamp.LineIdx < 0 || setTimestamp.LineIdx >= len(lines) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{ "message: line to split must have index of 1 or greater}`))
+		return
+	}
+
+	line := &lines[setTimestamp.LineIdx]
+
+	if setTimestamp.Timestamp < 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{ "message: cannot set timestamp to value less than zero}`))
+		return
+	}
+
+	minutes := math.Floor(setTimestamp.Timestamp / 60)
+	seconds := setTimestamp.Timestamp - minutes*60
+	line.Timestamp = fmt.Sprintf("%d:%v", int(minutes), seconds)
+
+	linesBytes, err := json.Marshal(lines)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to JSONify story lines": "` + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, setTimestamp.StoryID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
+		return
+	}
+
+	w.Write(linesBytes)
+}

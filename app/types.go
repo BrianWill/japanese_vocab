@@ -61,6 +61,12 @@ type ConsolidateLineRequest struct {
 	LineToRemove int   `json:"line_to_remove,omitempty"`
 }
 
+type SetTimestampRequest struct {
+	StoryID   int64   `json:"story_id,omitempty"`
+	LineIdx   int     `json:"line_idx"`
+	Timestamp float64 `json:"timestamp"`
+}
+
 type StoryList struct {
 	Stories []Story `json:"stories,omitempty"`
 }

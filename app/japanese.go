@@ -144,6 +144,7 @@ func main() {
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/story_consolidate_line", ConsolidateLine).Methods("POST")
 	router.HandleFunc("/story_split_line", SplitLine).Methods("POST")
+	router.HandleFunc("/story_set_timestamp", SetTimestamp).Methods("POST")
 	router.HandleFunc("/stories_list", GetStoriesList).Methods("GET")
 	router.HandleFunc("/kanji", Kanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")

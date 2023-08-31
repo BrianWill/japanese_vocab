@@ -9,6 +9,7 @@ var highlightMessage = document.getElementById('highlight_message');
 var logStoryLink = document.getElementById('log_story_link');
 
 var story = null;
+var selectedLineIdx = 0;
 
 tokenizedStory.onwheel = function (evt) {
     if (evt.wheelDeltaY < 0) {
@@ -26,17 +27,17 @@ document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
         return;
     }
-    //console.log(evt);
+    console.log(evt);
     let timemark = 0;
     if (player) {
         timemark = player.getCurrentTime();
     }
-    
+
     if (evt.code === 'KeyA') {
         evt.preventDefault();
         if (!player) { return; }
         player.seekTo(timemark - 1.7, true);
-    } else if (evt.code === 'KeyD') { 
+    } else if (evt.code === 'KeyD') {
         evt.preventDefault();
         if (!player) { return; }
         player.seekTo(timemark + 1.2, true);
@@ -44,11 +45,11 @@ document.body.onkeydown = async function (evt) {
         evt.preventDefault();
         if (!player) { return; }
         player.seekTo(timemark - 5, true);
-    } else if (evt.code === 'KeyE') { 
+    } else if (evt.code === 'KeyE') {
         evt.preventDefault();
         if (!player) { return; }
         player.seekTo(timemark + 4, true);
-    } else if (evt.code === 'KeyP' || evt.code === 'KeyS') { 
+    } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
         evt.preventDefault();
         if (!player) { return; }
         let state = player.getPlayerState();
@@ -57,6 +58,21 @@ document.body.onkeydown = async function (evt) {
         } else {
             player.playVideo();
         }
+    } else if (evt.code === 'Minus') {
+        evt.preventDefault();
+        if (!player) { return; }
+        let timestamp = story.lines[selectedLineIdx].timestamp;
+        let seconds = parseTimestamp(timestamp) - 0.5;
+        if (seconds < 0) {
+            return;
+        }
+        setTimestamp(selectedLineIdx, seconds);
+    } else if (evt.code === 'Equal') {
+        evt.preventDefault();
+        if (!player) { return; }
+        let timestamp = story.lines[selectedLineIdx].timestamp;
+        let seconds = parseTimestamp(timestamp) + 0.5;
+        setTimestamp(selectedLineIdx, seconds);
     } else if (evt.code === 'KeyC') {
         evt.preventDefault();
         tokenizedStory.classList.toggle('highlight_all_words');
@@ -65,13 +81,13 @@ document.body.onkeydown = async function (evt) {
         } else {
             highlightMessage.innerHTML = 'Highlighting only the rank 1-3 words off cooldown';
         }
-    } else if (evt.code === 'Space') { 
+    } else if (evt.code === 'Space') {
         evt.preventDefault();
         if (selectedWordBaseForm) {
             let wordInfo = story.word_info[selectedWordBaseForm];
             updateWord({
                 base_form: selectedWordBaseForm,
-                date_marked: Math.floor(Date.now() / 1000), 
+                date_marked: Math.floor(Date.now() / 1000),
                 rank: wordInfo.rank,
             }, story.word_info, true);
         }
@@ -97,6 +113,37 @@ document.body.onkeydown = async function (evt) {
         }
     }
 };
+
+// returns time in seconds
+function parseTimestamp(timestamp) {
+    let [mins, seconds] = timestamp.split(':');
+    mins = parseInt(mins);
+    seconds = parseFloat(seconds);
+    return mins * 60 + seconds;
+}
+
+function setTimestamp(lineIdx, timestamp) {
+    fetch('/story_set_timestamp', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            story_id: story.id,
+            line_idx: lineIdx,
+            timestamp: timestamp,
+        }),
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Success:', data);
+            story.lines = data;
+            displayStory(story);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 
 function openStory(id) {
     fetch('/story/' + id, {
@@ -124,9 +171,9 @@ function openStory(id) {
 
             if (youtubeId) {
                 player = new YT.Player('player', {
-                    
+
                     videoId: youtubeId,
-                    
+
                     playerVars: {
                         'playsinline': 1,
                         'cc_lang_pref': 'ja',
@@ -171,7 +218,7 @@ function displayStory(story) {
                     class="lineword rank${wordinfo.rank} ${offCooldown ? 'offcooldown' : ''} ${word.pos || ''}">${word.surface}</span>`;
             } else {
                 html += `<span class="lineword nonword">${word.surface}</span>`;
-            }            
+            }
         }
         html += '</p>'
     }
@@ -186,41 +233,45 @@ function isOffCooldown(rank, dateMarked, unixTime) {
 
 var selectedWordBaseForm = null;
 
+function splitLine(target) {
+    let timestamp = player.getCurrentTime();
+    let lineIdx = parseInt(target.parentNode.getAttribute('line_idx'));
+    let wordIdx = parseInt(target.getAttribute('word_idx_in_line'));
+    fetch('/story_split_line', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            story_id: story.id,
+            line_to_split: lineIdx,
+            timestamp: timestamp,
+            word_idx: wordIdx
+        }),
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Success:', data);
+            story.lines = data;
+            displayStory(story);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 
 tokenizedStory.onmousedown = function (evt) {
     if (evt.target.hasAttribute('baseform')) {
         if (evt.ctrlKey) {
-            let timestamp = player.getCurrentTime();
-            let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
-            let wordIdx = parseInt(evt.target.getAttribute('word_idx_in_line'));
-            fetch('/story_split_line', {
-                method: 'POST', // or 'PUT'
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    story_id: story.id,
-                    line_to_split: lineIdx,
-                    timestamp: timestamp,
-                    word_idx: wordIdx
-                }),
-            }).then((response) => response.json())
-                .then((data) => {
-                    console.log('Success:', data);
-                    story.lines = data;
-                    displayStory(story);
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
+            splitLine(evt.target);
         } else {
             let baseform = evt.target.getAttribute('baseform');
             selectedWordBaseForm = baseform;
             console.log('baseform', baseform);
             let surface = evt.target.innerHTML;
-            displayDefinition(baseform, surface);    
+            displayDefinition(baseform, surface);
         }
-        
+
     } else if (evt.target.classList.contains('line_timestamp')) {
         if (evt.ctrlKey) {
             let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
@@ -243,14 +294,12 @@ tokenizedStory.onmousedown = function (evt) {
                     console.error('Error:', error);
                 });
         } else {
-            let [mins, seconds] = evt.target.innerHTML.split(':');
-            mins = parseInt(mins);
-            seconds = parseInt(seconds);
-            console.log("timestamp", mins, seconds);
-            player.seekTo(mins * 60 + seconds);
+            selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+            let seconds = parseTimestamp(evt.target.innerHTML);
+            player.seekTo(seconds);
             player.playVideo();
         }
-    }    
+    }
 };
 
 function displayDefinition(baseform, surface) {
@@ -280,7 +329,7 @@ var player;
 function onYouTubeIframeAPIReady() {
     var url = new URL(window.location.href);
     var storyId = parseInt(url.searchParams.get("storyId") || undefined);
-    openStory(storyId);    
+    openStory(storyId);
 }
 
 function onPlayerReady(event) {
@@ -290,7 +339,7 @@ function onPlayerReady(event) {
 
 var done = false;
 function onPlayerStateChange(event) {
-    
+
 }
 function stopVideo() {
     player.stopVideo();
