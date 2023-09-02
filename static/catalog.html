@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
 
     <link rel="stylesheet" href="../styles.css">
-    <title>Jpn Stories</title>
+    <link rel="stylesheet" href="../catalog.css">
+    <title>Japan Vocab</title>
 </head>
 
 <body>
@@ -19,8 +20,16 @@
         <button id="new_story_button">Create Story</button>
     </div>
 
-</body>
-<script src="../catalog.js"></script>
-<script src="../util.js"></script>
+    <h3>STORIES <select>
+        <option value="0">all</option>
+        <option value="1">in my set</option>
+        <option value="2">archive</option>
+        <option value="3">never read</option>
+    </select></h3>
+    
+    <div id="story_list"></div>
 
+</body>
+<script src="../util.js"></script>
+<script src="../catalog.js"></script>
 </html>

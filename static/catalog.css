@@ -1,0 +1,9 @@
+body {
+    color: #dfdfdf;
+    font-size: 130%;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+}
+
+body h3 {
+    margin-left: 2em;
+}

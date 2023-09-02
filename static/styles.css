@@ -129,7 +129,8 @@ a {
 }
 
 #story_list a.story_title.status2 {
-    color: #2f82e7;
+    color: #18b283;
+    /* color: #2f82e7; */
 }
 
 #story_list a.story_title.status3 {
@@ -229,6 +230,7 @@ a {
 #top_link a {
     color: rgb(117, 117, 117);
     padding: 1em;
+    text-decoration: none;
 }
 
 

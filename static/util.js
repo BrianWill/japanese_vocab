@@ -4,6 +4,10 @@ const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 4;   // 4 days in seconds
 const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 5;        // 5 hours in second
 const cooldownsByRank = [0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4];
 
+const STORY_STATUS_CURRENT = 2;
+const STORY_STATUS_NEVER_READ = 1;
+const STORY_STATUS_ARCHIVE = 0;
+
 function splitOnHighPitch(str, pitch) {
     let [downPitch, upPitch] = pitch;
     //console.log(`downpitch ${downPitch}, up pitch ${upPitch}`);
@@ -239,7 +243,6 @@ function getStoryList() {
         });
 }
 
-
 function timeSince(date) {
     let now = Math.floor(new Date() / 1000);
     let elapsedSeconds = now - date;
@@ -312,38 +315,6 @@ function timeSince(date) {
 
 const DRILL_ALL_CURRENT = -1;
 const DRILL_ALL = 0;
-
-var storiesById = {};
-
-function displayStoryList(stories) {
-    stories.sort((a, b) => {
-        return b.date_added - a.date_added
-    });
-
-    function storyRow(s) {
-        let button = '';
-        return `<tr>
-            <td>
-                <a action="schedule" story_id="${s.id}" href="#">schedule</a>
-            </td>
-            <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            </tr>`;
-    }
-
-
-    let html = `<table class="story_table">`;
-
-    storiesById = {};
-
-    for (let s of stories) {
-        storiesById[s.id] = s;
-        if (s.status === 3) {     
-            html += storyRow(s);
-        }
-    }
-
-    storyList.innerHTML = html + '</table>';
-};
 
 function addLogEvent(storyId) {
     fetch(`/add_log_event/${storyId}`, {

@@ -11,12 +11,6 @@ document.body.onload = function (evt) {
     getStoryList();
     getLogEvents();
     getQueuedStories();
-
-    if (window.location.pathname.startsWith('/read/')) {
-        let storyId = window.location.pathname.substring(6);
-        console.log("opening story with id " + storyId);
-        openStory(storyId);
-    }
 };
 
 logEvents.onclick = function(evt) {
@@ -239,3 +233,36 @@ storyList.onclick = function (evt) {
     }
 };
 
+
+
+var storiesById = {};
+
+function displayStoryList(stories) {
+    stories.sort((a, b) => {
+        return b.date_added - a.date_added
+    });
+
+    function storyRow(s) {
+        let button = '';
+        return `<tr>
+            <td>
+                <a action="schedule" story_id="${s.id}" href="#">schedule</a>
+            </td>
+            <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            </tr>`;
+    }
+
+
+    let html = `<table class="story_table">`;
+
+    storiesById = {};
+
+    for (let s of stories) {
+        storiesById[s.id] = s;
+        if (s.status === STORY_STATUS_CURRENT) {     
+            html += storyRow(s);
+        }
+    }
+
+    storyList.innerHTML = html + '</table>';
+};
