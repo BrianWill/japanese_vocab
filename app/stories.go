@@ -28,7 +28,6 @@ const DRILL_FILTER_OFF_COOLDOWN = "off"
 const DRILL_FILTER_ALL = "all"
 
 const STORY_STATUS_CURRENT = 3
-const STORY_STATUS_NEVER_READ = 1
 const STORY_STATUS_ARCHIVE = 0
 
 const STORY_LOG_COOLDOWN = 60 * 60 * 8 // 8 hour cooldown (in seconds)
@@ -219,9 +218,9 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCou
 		return story.ID, newWordCount, nil
 	} else {
 		date := time.Now().Unix()
-		result, err := sqldb.Exec(`INSERT INTO stories (lines, title, link, date_added, status) 
-				VALUES($1, $2, $3, $4, $5);`,
-			linesJson, story.Title, story.Link, date, INITIAL_STATUS)
+		result, err := sqldb.Exec(`INSERT INTO stories (lines, title, link, date_added, status, audio) 
+				VALUES($1, $2, $3, $4, $5, $6);`,
+			linesJson, story.Title, story.Link, date, INITIAL_STATUS, "")
 		if err != nil {
 			return 0, 0, fmt.Errorf("failure to insert story: " + err.Error())
 		}

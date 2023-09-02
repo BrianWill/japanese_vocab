@@ -121,11 +121,11 @@ a {
 }
 
 #story_list a.story_title.status0 {
-    color: #808080;
+    color: #d52246;
 }
 
 #story_list a.story_title.status1 {
-    color: #d52246;
+    color: #bbbb36;
 }
 
 #story_list a.story_title.status2 {

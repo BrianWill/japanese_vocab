@@ -6,7 +6,6 @@ var kanjiResultsDiv = document.getElementById('kanji_results');
 var playerSpeedNumber = document.getElementById('player_speed_number');
 var drillWordsLink = document.getElementById('drill_words_link');
 var highlightMessage = document.getElementById('highlight_message');
-var logStoryLink = document.getElementById('log_story_link');
 var audioPlayer = document.getElementById('audio_player');
 
 var story = null;
@@ -144,7 +143,7 @@ document.body.onkeydown = async function (evt) {
 
 
 tokenizedStory.onmousedown = function (evt) {
-    if (evt.target.hasAttribute('baseform')) {
+    if (evt.target.hasAttribute('word_idx_in_line')) {
         evt.preventDefault();
         if (evt.ctrlKey) {
             splitLine(evt.target);
@@ -284,7 +283,7 @@ function openStory(id) {
                         //'onPlaybackRateChange': onPlaybackRateChange
                     }
                 });
-            } else if (story.audio !== '') {
+            } else if (story.audio) {
                 audioPlayer.style.display = 'block';
                 audioPlayer.src = '/audio/' + story.audio;
             }
@@ -321,7 +320,7 @@ function displayStory(story) {
                 html += `<span word_idx_in_line="${wordIdx}" word_id="${word.id || ''}" baseform="${word.baseform || ''}" 
                     class="lineword rank${wordinfo.rank} ${offCooldown ? 'offcooldown' : ''} ${word.pos || ''}">${word.surface}</span>`;
             } else {
-                html += `<span class="lineword nonword">${word.surface}</span>`;
+                html += `<span word_idx_in_line="${wordIdx}" class="lineword nonword">${word.surface}</span>`;
             }
         }
         html += '</p>'
@@ -391,11 +390,6 @@ function displayDefinition(baseform, surface) {
     }
     definitionsDiv.innerHTML = html;
 }
-
-logStoryLink.onclick = function (evt) {
-    evt.preventDefault();
-    addLogEvent(story.id);
-};
 
 // loads the IFrame Player API code asynchronously.
 var tag = document.createElement('script');

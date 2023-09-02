@@ -1,8 +1,4 @@
-var newStoryText = document.getElementById('new_story_text');
-var newStoryButton = document.getElementById('new_story_button');
 var storyList = document.getElementById('story_list');
-var newStoryTitle = document.getElementById('new_story_title');
-var newStoryLink = document.getElementById('new_story_link');
 var storyTitle = document.getElementById('story_title');
 var wordList = document.getElementById('word_list');
 var definitionsDiv = document.getElementById('definitions');
@@ -48,7 +44,7 @@ queuedStoriesDiv.onclick = function(evt) {
                 break;
             case 'log':
                 evt.preventDefault();
-                markQueuedStory(logId, storyId);
+                logScheduledStory(logId, storyId);
                 break;
         }
     }
@@ -88,7 +84,7 @@ function removeLogEvent(logId) {
 
 
 function removeQueuedStory(logId) {
-    fetch(`/remove_queued_story/${logId}`, {
+    fetch(`/remove_scheduled_story/${logId}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -119,8 +115,8 @@ function scheduleStory(storyId) {
         });
 }
 
-function markQueuedStory(logId, storyId) {
-    fetch(`/mark_queued_story/${logId}/${storyId}`, {
+function logScheduledStory(logId, storyId) {
+    fetch(`/log_scheduled_story/${logId}/${storyId}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -155,10 +151,10 @@ function getLogEvents() {
         });
 }
 
-function displayQueuedStories(queuedStories) {
+function displayStorySchedule(scheduledStories) {
     let html = `<table class="log_table">`;
     
-    for (let qs of queuedStories) {
+    for (let qs of scheduledStories) {
         html += `<tr>
             <td><a action="remove" log_id="${qs.id}" href="#">remove</a></td>
             <td><a action="log" log_id="${qs.id}" story_id="${qs.story_id}"  href="#">log</a></td>
@@ -175,57 +171,13 @@ function updateLogEvents(data) {
     
     for (let d of data.logEvents) {
         html += `<tr>
-            <td><a action="remove" log_id="${d.id}" href="#">remove log entry</a></td>
+            <td><a action="remove" log_id="${d.id}" href="#">remove</a></td>
             <td>${timeSince(d.date)}</td>
             <td><a story_id="${d.story_id}" href="/story.html?storyId=${d.story_id}">${d.title}</a></td>
             </tr>`;        
     }
 
     logEvents.innerHTML = html + '</table>';
-}
-
-newStoryButton.onclick = function (evt) {
-    let data = {
-        content: newStoryText.value,
-        title: newStoryTitle.value,
-        link: newStoryLink.value
-    };
-
-    newStoryText.value = '';
-    newStoryTitle.value = '';
-    newStoryLink.value = '';
-
-    fetch('/create_story', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success:', data);
-            getStoryList();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-};
-
-function retokenizeStory(story) {
-    fetch('/retokenize_story', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: story.id }),
-    }).then((response) => response.json())
-        .then((data) => {
-            getStoryList();
-            console.log('Success retokenizing:', data);
-        })
-        .catch((error) => {
-            console.error('Error retokenizing:', error);
-        });
 }
 
 function openStory(id) {
@@ -256,49 +208,32 @@ function getQueuedStories(id) {
     }).then((response) => response.json())
         .then((data) => {
             console.log(`success retrieving enqueued stories`, data);
-            displayQueuedStories(data);
+            displayStorySchedule(data);
         })
         .catch((error) => {
             console.error('Error:', error);
         });
 }
 
-
-resetStoryWordCountdowns = function (storyId) {
-    let data = { id: parseInt(storyId) };
-
-    fetch('/story_reset_countdowns', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success:', data);
-            getStoryList();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-};
-
-storyList.onchange = function (evt) {
-    var storyId = evt.target.getAttribute('story_id');
-    let story = storiesById[storyId];
-    story.status = parseInt(evt.target.value);
-    console.log("changed", parseInt(evt.target.value));
-    updateStory(story, true);
-};
-
 storyList.onclick = function (evt) {
     if (evt.target.tagName == 'A') {
         var storyId = evt.target.getAttribute('story_id');
         var action = evt.target.getAttribute('action');
+        let story = storiesById[storyId];
         switch (action) {
             case 'schedule':
                 evt.preventDefault();
                 scheduleStory(storyId);
+                break;
+            case 'add':
+                evt.preventDefault();
+                story.status = 3;
+                updateStory(story, true);
+                break;
+            case 'remove':
+                evt.preventDefault();
+                story.status = 0;
+                updateStory(story, true);
                 break;
         }
     }

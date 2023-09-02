@@ -388,3 +388,19 @@ h3 {
         opacity: 0;
     }
 }
+
+.drill_word .rank1 {
+    color: #c44949;
+}
+
+.drill_word .rank2 {
+    color: #b2b23b;
+}
+
+.drill_word .rank3 {
+    color: #429642;
+}
+
+.drill_word .rank > span {
+    font-size: 40%;
+}

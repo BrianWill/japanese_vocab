@@ -110,7 +110,7 @@ function displayWords() {
     function wordInfo(word, idx, answered) {
         return `<div index="${idx}" class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
-                    <div class="rank">${word.rank}</div>
+                    <div class="rank rank${word.rank}"><span>rank</span> ${word.rank}</div>
                 </div>`;
     }
 

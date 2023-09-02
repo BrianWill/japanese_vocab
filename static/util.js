@@ -232,7 +232,7 @@ function getStoryList() {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Stories list success:', data);
-            updateStoryList(data);
+            displayStoryList(data);
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -315,26 +315,14 @@ const DRILL_ALL = 0;
 
 var storiesById = {};
 
-function updateStoryList(stories) {
+function displayStoryList(stories) {
     stories.sort((a, b) => {
-        let diff = b.status - a.status;
-        if (diff === 0) {
-            return b.date_added - a.date_added
-        }
-        return diff;
+        return b.date_added - a.date_added
     });
 
-    storiesById = {};
-
     function storyRow(s) {
+        let button = '';
         return `<tr>
-            <td>
-                <select name="status" class="status_select" story_id="${s.id}">
-                    <option value="3" ${s.status === 3 ? 'selected' : ''}>Current</option>
-                    <option value="1" ${s.status === 1 ? 'selected' : ''}>Never read</option>
-                    <option value="0" ${s.status === 0 ? 'selected' : ''}>Archive</option>
-                </select>
-            </td>
             <td>
                 <a action="schedule" story_id="${s.id}" href="#">schedule</a>
             </td>
@@ -342,19 +330,18 @@ function updateStoryList(stories) {
             </tr>`;
     }
 
+
+    let html = `<table class="story_table">`;
+
+    storiesById = {};
+
     for (let s of stories) {
         storiesById[s.id] = s;
+        if (s.status === 3) {     
+            html += storyRow(s);
+        }
     }
 
-    let html = `<table class="story_table">
-            <tr>
-                <td class="story_table_section" colspan="6">STORIES <span><a action="drill_all" href="/words.html">words of all stories</a>&nbsp;
-                <a action="drill_current" href="/words.html?storyId=${DRILL_ALL_CURRENT}">words of all current stories</a></span>
-                </td>
-            </tr>`;
-    for (let s of stories) {
-        html += storyRow(s);
-    }
     storyList.innerHTML = html + '</table>';
 };
 
