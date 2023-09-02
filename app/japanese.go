@@ -270,6 +270,7 @@ func makeUserDB(userhash string) {
 			title	TEXT UNIQUE,
 			link	TEXT UNIQUE,
 			status INTEGER NOT NULL,
+			audio	TEXT,
 			date_added INTEGER NOT NULL)`)
 	if err != nil {
 		log.Fatal(err)

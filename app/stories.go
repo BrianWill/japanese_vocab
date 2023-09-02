@@ -620,11 +620,11 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStory(id int64, sqldb *sql.DB) (Story, error) {
-	row := sqldb.QueryRow(`SELECT title, link, lines, date_added FROM stories WHERE id = $1;`, id)
+	row := sqldb.QueryRow(`SELECT title, link, lines, date_added, audio FROM stories WHERE id = $1;`, id)
 
 	var linesJSON string
 	story := Story{ID: id}
-	if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded); err != nil {
+	if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded, &story.Audio); err != nil {
 		return Story{}, fmt.Errorf("failure to scan story row: " + err.Error())
 	}
 
@@ -870,7 +870,7 @@ func SplitLine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	timestamp := fmt.Sprintf("%d:%d", int(math.Floor(splitLine.Timestamp/60)), int(splitLine.Timestamp)%60)
+	timestamp := secondsToTimestamp(splitLine.Timestamp)
 	if splitLine.Timestamp == 0 {
 		timestamp = origLine.Timestamp
 	}
@@ -995,9 +995,7 @@ func SetTimestamp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	minutes := math.Floor(setTimestamp.Timestamp / 60)
-	seconds := setTimestamp.Timestamp - minutes*60
-	line.Timestamp = fmt.Sprintf("%d:%v", int(minutes), seconds)
+	line.Timestamp = secondsToTimestamp(setTimestamp.Timestamp)
 
 	linesBytes, err := json.Marshal(lines)
 	if err != nil {
@@ -1014,4 +1012,16 @@ func SetTimestamp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(linesBytes)
+}
+
+func secondsToTimestamp(seconds float64) string {
+	minutes := math.Floor(seconds / 60)
+	seconds -= minutes * 60
+	wholeSeconds := math.Floor(seconds)
+	fracSeconds := seconds - wholeSeconds
+	s := fmt.Sprintf("%d:%02d", int(minutes), int(seconds))
+	if fracSeconds > 0 {
+		s += ".5"
+	}
+	return s
 }

@@ -7,9 +7,11 @@ var playerSpeedNumber = document.getElementById('player_speed_number');
 var drillWordsLink = document.getElementById('drill_words_link');
 var highlightMessage = document.getElementById('highlight_message');
 var logStoryLink = document.getElementById('log_story_link');
+var audioPlayer = document.getElementById('audio_player');
 
 var story = null;
 var selectedLineIdx = 0;
+var videoPlayer;
 
 tokenizedStory.onwheel = function (evt) {
     if (evt.wheelDeltaY < 0) {
@@ -27,53 +29,70 @@ document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
         return;
     }
-    console.log(evt);
-    let timemark = 0;
-    if (player) {
-        timemark = player.getCurrentTime();
+    //console.log(evt);
+
+    if (videoPlayer) {
+        let timemark = videoPlayer.getCurrentTime();
+        if (evt.code === 'KeyA') {
+            evt.preventDefault();
+            videoPlayer.seekTo(timemark - 1.7, true);
+        } else if (evt.code === 'KeyD') {
+            evt.preventDefault();
+            videoPlayer.seekTo(timemark + 1.2, true);
+        } else if (evt.code === 'KeyQ') {
+            evt.preventDefault();
+            videoPlayer.seekTo(timemark - 5, true);
+        } else if (evt.code === 'KeyE') {
+            evt.preventDefault();
+            videoPlayer.seekTo(timemark + 4, true);
+        } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
+            evt.preventDefault();
+            let state = videoPlayer.getPlayerState();
+            if (state === 1) {  // playing
+                videoPlayer.pauseVideo();
+            } else {
+                videoPlayer.playVideo();
+            }
+        } else if (evt.code.startsWith('Digit')) {
+            if (evt.altKey) {
+                evt.preventDefault();
+                let digit = parseInt(evt.code.slice(-1));
+                let duration = videoPlayer.getDuration();
+                videoPlayer.seekTo(duration * (digit / 10), true);
+            }
+        }
+    } else if (audioPlayer) {
+        let timemark = audioPlayer.currentTime;
+        if (evt.code === 'KeyA') {
+            evt.preventDefault();
+            audioPlayer.currentTime = timemark - 1.7;
+        } else if (evt.code === 'KeyD') {
+            evt.preventDefault();
+            audioPlayer.currentTime = timemark + 1.2;
+        } else if (evt.code === 'KeyQ') {
+            evt.preventDefault();
+            audioPlayer.currentTime = timemark - 5;
+        } else if (evt.code === 'KeyE') {
+            evt.preventDefault();
+            audioPlayer.currentTime = timemark + 4;
+        } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
+            evt.preventDefault();
+            if (audioPlayer.paused) {  // playing
+                audioPlayer.play();
+            } else {
+                audioPlayer.pause();
+            }
+        } else if (evt.code.startsWith('Digit')) {
+            if (evt.altKey) {
+                evt.preventDefault();
+                let digit = parseInt(evt.code.slice(-1));
+                let duration = audioPlayer.duration;
+                audioPlayer.currentTime = duration * (digit / 10);
+            }
+        }
     }
 
-    if (evt.code === 'KeyA') {
-        evt.preventDefault();
-        if (!player) { return; }
-        player.seekTo(timemark - 1.7, true);
-    } else if (evt.code === 'KeyD') {
-        evt.preventDefault();
-        if (!player) { return; }
-        player.seekTo(timemark + 1.2, true);
-    } else if (evt.code === 'KeyQ') {
-        evt.preventDefault();
-        if (!player) { return; }
-        player.seekTo(timemark - 5, true);
-    } else if (evt.code === 'KeyE') {
-        evt.preventDefault();
-        if (!player) { return; }
-        player.seekTo(timemark + 4, true);
-    } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
-        evt.preventDefault();
-        if (!player) { return; }
-        let state = player.getPlayerState();
-        if (state === 1) {  // playing
-            player.pauseVideo();
-        } else {
-            player.playVideo();
-        }
-    } else if (evt.code === 'Minus') {
-        evt.preventDefault();
-        if (!player) { return; }
-        let timestamp = story.lines[selectedLineIdx].timestamp;
-        let seconds = parseTimestamp(timestamp) - 0.5;
-        if (seconds < 0) {
-            return;
-        }
-        setTimestamp(selectedLineIdx, seconds);
-    } else if (evt.code === 'Equal') {
-        evt.preventDefault();
-        if (!player) { return; }
-        let timestamp = story.lines[selectedLineIdx].timestamp;
-        let seconds = parseTimestamp(timestamp) + 0.5;
-        setTimestamp(selectedLineIdx, seconds);
-    } else if (evt.code === 'KeyC') {
+    if (evt.code === 'KeyC') {
         evt.preventDefault();
         tokenizedStory.classList.toggle('highlight_all_words');
         if (tokenizedStory.classList.contains('highlight_all_words')) {
@@ -91,6 +110,19 @@ document.body.onkeydown = async function (evt) {
                 rank: wordInfo.rank,
             }, story.word_info, true);
         }
+    } else if (evt.code === 'Minus') {
+        evt.preventDefault();
+        let timestamp = story.lines[selectedLineIdx].timestamp;
+        let seconds = parseTimestamp(timestamp) - 0.5;
+        if (seconds < 0) {
+            return;
+        }
+        setTimestamp(selectedLineIdx, seconds);
+    } else if (evt.code === 'Equal') {
+        evt.preventDefault();
+        let timestamp = story.lines[selectedLineIdx].timestamp;
+        let seconds = parseTimestamp(timestamp) + 0.5;
+        setTimestamp(selectedLineIdx, seconds);
     } else if (evt.code.startsWith('Digit')) {
         evt.preventDefault();
         let digit = parseInt(evt.code.slice(-1));
@@ -106,13 +138,80 @@ document.body.onkeydown = async function (evt) {
                     rank: digit,
                 }, story.word_info);
             }
-        } else {
-            if (!player) { return; }
-            let duration = player.getDuration();
-            player.seekTo(duration * (digit / 10), true);
         }
     }
 };
+
+
+tokenizedStory.onmousedown = function (evt) {
+    if (evt.target.hasAttribute('baseform')) {
+        evt.preventDefault();
+        if (evt.ctrlKey) {
+            splitLine(evt.target);
+        } else {
+            let baseform = evt.target.getAttribute('baseform');
+            selectedWordBaseForm = baseform;
+            console.log('baseform', baseform);
+            let surface = evt.target.innerHTML;
+            displayDefinition(baseform, surface);
+        }
+
+    } else if (evt.target.classList.contains('line_timestamp')) {
+        evt.preventDefault();
+        if (evt.ctrlKey) {
+            let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+            fetch('/story_consolidate_line', {
+                method: 'POST', // or 'PUT'
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    story_id: story.id,
+                    line_to_remove: lineIdx
+                }),
+            }).then((response) => response.json())
+                .then((data) => {
+                    console.log('Success:', data);
+                    story.lines = data;
+                    displayStory(story);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        } else if (evt.altKey) {
+            if (videoPlayer) {
+                selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+                let seconds = videoPlayer.getCurrentTime();
+                seconds -= 0.5;
+                if (seconds < 0) {
+                    seconds = 0;
+                }
+                setTimestamp(selectedLineIdx, seconds);
+            } else if (audioPlayer) {
+                selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+                let seconds = roundToHalfSecond(audioPlayer.currentTime);
+                seconds -= 0.5;
+                if (seconds < 0) {
+                    seconds = 0;
+                }
+                setTimestamp(selectedLineIdx, seconds);
+            }
+        } else {
+            if (videoPlayer) {
+                selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+                let seconds = parseTimestamp(evt.target.innerHTML);
+                videoPlayer.seekTo(seconds);
+                videoPlayer.playVideo();
+            } else if (audioPlayer) {
+                selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+                let seconds = parseTimestamp(evt.target.innerHTML);
+                audioPlayer.currentTime = seconds;
+                audioPlayer.play();
+            }
+        }
+    }
+};
+
 
 // returns time in seconds
 function parseTimestamp(timestamp) {
@@ -170,7 +269,7 @@ function openStory(id) {
             }
 
             if (youtubeId) {
-                player = new YT.Player('player', {
+                videoPlayer = new YT.Player('player', {
 
                     videoId: youtubeId,
 
@@ -185,19 +284,24 @@ function openStory(id) {
                         //'onPlaybackRateChange': onPlaybackRateChange
                     }
                 });
-
-                playerSpeedNumber.onchange = function (evt) {
-                    player.setPlaybackRate(parseFloat(playerSpeedNumber.value));
-                }
+            } else if (story.audio !== '') {
+                audioPlayer.style.display = 'block';
+                audioPlayer.src = '/audio/' + story.audio;
             }
-
-
         })
         .catch((error) => {
             console.error('Error:', error);
         });
 }
 
+
+playerSpeedNumber.onchange = function (evt) {
+    if (videoPlayer) {
+        videoPlayer.setPlaybackRate(parseFloat(playerSpeedNumber.value));
+    } else if (audioPlayer) {
+        audioPlayer.playbackRate = parseFloat(playerSpeedNumber.value);
+    }
+}
 
 function displayStory(story) {
     //let punctuationTokens = [' ', '。', '、'];
@@ -236,8 +340,18 @@ var selectedWordBaseForm = null;
 function splitLine(target) {
     let lineIdx = parseInt(target.parentNode.getAttribute('line_idx'));
     let timestamp = parseTimestamp(story.lines[lineIdx].timestamp);
-    if (player) {
-        timestamp = player.getCurrentTime();
+    if (videoPlayer) {
+        timestamp = videoPlayer.getCurrentTime();
+        timestamp -= 0.5;
+        if (timestamp < 0) {
+            timestamp = 0;
+        }
+    } else if (audioPlayer) {
+        timestamp = audioPlayer.currentTime;
+        timestamp -= 0.5;
+        if (timestamp < 0) {
+            timestamp = 0;
+        }
     }
     let wordIdx = parseInt(target.getAttribute('word_idx_in_line'));
     fetch('/story_split_line', {
@@ -262,53 +376,9 @@ function splitLine(target) {
         });
 }
 
-
-tokenizedStory.onmousedown = function (evt) {
-    if (evt.target.hasAttribute('baseform')) {
-        if (evt.ctrlKey) {
-            splitLine(evt.target);
-        } else {
-            let baseform = evt.target.getAttribute('baseform');
-            selectedWordBaseForm = baseform;
-            console.log('baseform', baseform);
-            let surface = evt.target.innerHTML;
-            displayDefinition(baseform, surface);
-        }
-
-    } else if (evt.target.classList.contains('line_timestamp')) {
-        if (evt.ctrlKey) {
-            let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
-            fetch('/story_consolidate_line', {
-                method: 'POST', // or 'PUT'
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    story_id: story.id,
-                    line_to_remove: lineIdx
-                }),
-            }).then((response) => response.json())
-                .then((data) => {
-                    console.log('Success:', data);
-                    story.lines = data;
-                    displayStory(story);
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-        } else if (evt.altKey) { 
-            if (!player) { return; }
-            let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
-            let seconds = player.getCurrentTime();
-            setTimestamp(lineIdx, seconds);
-        } else {
-            selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
-            let seconds = parseTimestamp(evt.target.innerHTML);
-            player.seekTo(seconds);
-            player.playVideo();
-        }
-    }
-};
+function roundToHalfSecond(seconds) {
+    return Math.round(seconds * 2) / 2;
+}
 
 function displayDefinition(baseform, surface) {
     getKanji(baseform + surface);
@@ -333,7 +403,7 @@ tag.src = "https://www.youtube.com/iframe_api";
 var firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-var player;
+
 function onYouTubeIframeAPIReady() {
     var url = new URL(window.location.href);
     var storyId = parseInt(url.searchParams.get("storyId") || undefined);
@@ -348,9 +418,6 @@ function onPlayerReady(event) {
 var done = false;
 function onPlayerStateChange(event) {
 
-}
-function stopVideo() {
-    player.stopVideo();
 }
 
 function onPlaybackRateChange(val) {

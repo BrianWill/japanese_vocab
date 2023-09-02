@@ -451,3 +451,8 @@ span.verb:hover {
     line-height: 2em;
     font-size: 80%;
 }
+
+#audio_player {
+    padding: 1em;
+    display: none;
+}

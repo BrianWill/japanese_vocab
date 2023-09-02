@@ -18,4 +18,4 @@
 ignore/*
 app/air_errors.log
 app/tmp/air_errors.log
-static/ignore/*
+static/audio/ignore/*
