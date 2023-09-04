@@ -144,7 +144,6 @@ document.body.onkeydown = async function (evt) {
 
 tokenizedStory.onmousedown = function (evt) {
     if (evt.target.hasAttribute('word_idx_in_line')) {
-        evt.preventDefault();
         if (evt.ctrlKey) {
             splitLine(evt.target);
         } else {
@@ -177,7 +176,7 @@ tokenizedStory.onmousedown = function (evt) {
                 .catch((error) => {
                     console.error('Error:', error);
                 });
-        } else if (evt.altKey) {
+        } else if (evt.altKey || (evt.which == 2 || evt.button == 4 )) {
             if (videoPlayer) {
                 selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
                 let seconds = videoPlayer.getCurrentTime();
@@ -193,6 +192,7 @@ tokenizedStory.onmousedown = function (evt) {
                 if (seconds < 0) {
                     seconds = 0;
                 }
+                console.log(seconds);
                 setTimestamp(selectedLineIdx, seconds);
             }
         } else {

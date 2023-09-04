@@ -64,11 +64,7 @@ function displayStoryList(stories) {
         let button = '';
         return `<tr>
             <td>
-                <select story_id="${s.id}" >
-                    <option value="2" ${s.status == 2 ? 'selected=""' : ''}>in my set</option>
-                    <option value="1" ${s.status == 1 ? 'selected=""' : ''}>never read</option>
-                    <option value="0" ${s.status == 0 ? 'selected=""' : ''}>archive</option>
-                </select>
+                <a action="schedule" story_id="${s.id}" href="#">schedule</a>
             </td>
             <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
@@ -88,23 +84,48 @@ function displayStoryList(stories) {
 };
 
 
-storyList.onchange = function (evt) {
+storyList.onclick = function (evt) {
     console.log(evt.target);
 
-    fetch(`/update_story_status`, {
-        method: 'POST',
+    if (evt.target.tagName == 'A') {
+        var storyId = evt.target.getAttribute('story_id');
+        var action = evt.target.getAttribute('action');
+        let story = storiesById[storyId];
+        switch (action) {
+            case 'schedule':
+                evt.preventDefault();
+                scheduleStory(storyId);
+                break;
+            case 'add':
+                evt.preventDefault();
+                story.status = 3;
+                updateStory(story, true);
+                break;
+            case 'remove':
+                evt.preventDefault();
+                story.status = 0;
+                updateStory(story, true);
+                break;
+        }
+    }
+};
+
+function scheduleStory(storyId) {
+    fetch(`/schedule_story/${storyId}`, {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            id: parseInt(evt.target.getAttribute('story_id')),
-            status: parseInt(evt.target.value)
-        })
+        }
     }).then((response) => response.json())
         .then((data) => {
-            getStoryList();
+            getQueuedStories();
         })
         .catch((error) => {
             console.error('Error:', error);
         });
-};
+}
+
+function displayStorySchedule() {
+    // intentionally blank
+}
+

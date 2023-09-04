@@ -3,6 +3,7 @@ body {
     color: #dfdfdf;
     font-size: 130%;
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    overflow-y: scroll;
 }
 
 h3 {
@@ -72,8 +73,8 @@ h3 {
     margin-top: 3em;
 }
 
-#word_results hr { 
-    border: 1px solid #d2d2d2; 
+#word_results hr {
+    border: 1px solid #d2d2d2;
 }
 
 
@@ -289,7 +290,7 @@ h3 {
 
 /* copied from https://www.w3schools.com/howto/howto_js_snackbar.asp
   The snackbar - position it at the bottom and in the middle of the screen */
-  #snackbar {
+#snackbar {
     visibility: hidden;
     /* Hidden by default. Visible on click */
     min-width: 250px;
@@ -401,6 +402,6 @@ h3 {
     color: #429642;
 }
 
-.drill_word .rank > span {
+.drill_word .rank>span {
     font-size: 40%;
 }

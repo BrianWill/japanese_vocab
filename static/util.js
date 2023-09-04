@@ -33,6 +33,21 @@ function splitOnHighPitch(str, pitch) {
     ];
 }
 
+function getQueuedStories(id) {
+    fetch('/get_enqueued_stories', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            displayStorySchedule(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function displayKanji(kanji, word) {
     html = '';
 
