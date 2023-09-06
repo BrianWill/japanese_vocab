@@ -33,21 +33,6 @@ function splitOnHighPitch(str, pitch) {
     ];
 }
 
-function getQueuedStories(id) {
-    fetch('/get_enqueued_stories', {
-        method: 'GET', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            displayStorySchedule(data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
 function displayKanji(kanji, word) {
     html = '';
 
@@ -86,8 +71,6 @@ function displayKanji(kanji, word) {
             }
         }
     }
-
-
 
     kanjiResultsDiv.innerHTML = html;
 }
@@ -217,14 +200,14 @@ function displayEntry(entry) {
             </div>`;
 }
 
-function updateStory(story, refreshList) {
+function updateStoryStatus(story, refreshList) {
     let temp = { ...story };
     delete temp.content;
     delete temp.tokens;
     delete temp.link;
     delete temp.title;
     delete temp.words;
-    fetch(`/update_story`, {
+    fetch(`/update_story_status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -232,9 +215,8 @@ function updateStory(story, refreshList) {
         body: JSON.stringify(temp),
     }).then((response) => response.json())
         .then((data) => {
-            console.log(`Success update_story:`, data);
             if (refreshList) {
-                getStoryList();
+                getStoryList(displayStoryList);
             }
         })
         .catch((error) => {
@@ -242,7 +224,30 @@ function updateStory(story, refreshList) {
         });
 }
 
-function getStoryList() {
+function updateStoryCounts(story, successFn) {
+    story = {
+        id: story.id,
+        countdown: story.countdown,
+        read_count: story.read_count,
+        date_last_read: story.date_last_read
+    };
+    fetch(`/update_story_counts`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(story),
+    }).then((response) => response.json())
+        .then((data) => {
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error marking story:', error);
+        });
+}
+
+
+function getStoryList(successFn) {
     fetch('/stories_list', {
         method: 'GET', // or 'PUT'
         headers: {
@@ -251,7 +256,7 @@ function getStoryList() {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Stories list success:', data);
-            displayStoryList(data);
+            successFn(data);
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -259,6 +264,10 @@ function getStoryList() {
 }
 
 function timeSince(date) {
+    if (date === 0) {
+        return 'never';
+    }
+
     let now = Math.floor(new Date() / 1000);
     let elapsedSeconds = now - date;
     if (elapsedSeconds > 0) {
@@ -325,7 +334,7 @@ function timeSince(date) {
             return `in ${val} ${val == 1 ? 'second' : 'seconds'}`;
         }
     }
-    return 'now';
+    return 'just now';
 }
 
 const DRILL_ALL_CURRENT = -1;

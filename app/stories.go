@@ -553,7 +553,7 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, title, link, status, date_added FROM stories;`)
+	rows, err := sqldb.Query(`SELECT id, title, link, status, date_added, countdown, read_count, date_last_read FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -564,7 +564,8 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	var stories []Story
 	for rows.Next() {
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &story.Status, &story.DateAdded); err != nil {
+		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &story.Status,
+			&story.DateAdded, &story.Countdown, &story.ReadCount, &story.DateLastRead); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -620,11 +621,12 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStory(id int64, sqldb *sql.DB) (Story, error) {
-	row := sqldb.QueryRow(`SELECT title, link, lines, date_added, audio FROM stories WHERE id = $1;`, id)
+	row := sqldb.QueryRow(`SELECT title, link, lines, date_added, audio, countdown, read_count, date_last_read FROM stories WHERE id = $1;`, id)
 
 	var linesJSON string
 	story := Story{ID: id}
-	if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded, &story.Audio); err != nil {
+	if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded,
+		&story.Audio, &story.Countdown, &story.ReadCount, &story.DateLastRead); err != nil {
 		return Story{}, fmt.Errorf("failure to scan story row: " + err.Error())
 	}
 
@@ -661,28 +663,28 @@ func getStory(id int64, sqldb *sql.DB) (Story, error) {
 	return story, nil
 }
 
-func UpdateStoryStatus(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
+func UpdateStoryStatus(w http.ResponseWriter, r *http.Request) {
+	dbPath, redirect, err := GetUserDb(w, r)
 	if redirect || err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
-	response.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
 	var story Story
-	err = json.NewDecoder(request.Body).Decode(&story)
+	err = json.NewDecoder(r.Body).Decode(&story)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 	defer sqldb.Close()
@@ -690,14 +692,14 @@ func UpdateStoryStatus(response http.ResponseWriter, request *http.Request) {
 	// make sure the story actually exists
 	rows, err := sqldb.Query(`SELECT id FROM stories WHERE id = $1;`, story.ID)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
 		return
 	}
 
 	if !rows.Next() {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "story with ID does not exist: " + strconv.FormatInt(story.ID, 10) + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "story with ID does not exist: " + strconv.FormatInt(story.ID, 10) + `"}`))
 		rows.Close()
 		return
 	}
@@ -706,12 +708,65 @@ func UpdateStoryStatus(response http.ResponseWriter, request *http.Request) {
 	_, err = sqldb.Exec(`UPDATE stories SET status = $1 WHERE id = $2;`,
 		story.Status, story.ID)
 	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
 		return
 	}
 
-	json.NewEncoder(response).Encode(bson.M{"status": "success"})
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
+func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
+	dbPath, redirect, err := GetUserDb(w, r)
+	if redirect || err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var story Story
+	err = json.NewDecoder(r.Body).Decode(&story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	// make sure the story actually exists
+	rows, err := sqldb.Query(`SELECT id FROM stories WHERE id = $1;`, story.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return
+	}
+
+	if !rows.Next() {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "story with ID does not exist: " + strconv.FormatInt(story.ID, 10) + `"}`))
+		rows.Close()
+		return
+	}
+	rows.Close()
+
+	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3 WHERE id = $4;`,
+		story.Countdown, story.ReadCount, story.DateLastRead, story.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }
 
 // remove a line and combine its content with the previous line

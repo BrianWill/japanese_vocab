@@ -139,6 +139,7 @@ func main() {
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
 	router.HandleFunc("/update_story_status", UpdateStoryStatus).Methods("POST")
+	router.HandleFunc("/update_story_counts", UpdateStoryCounts).Methods("POST")
 	router.HandleFunc("/create_story", CreateStory).Methods("POST")
 	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
@@ -150,8 +151,8 @@ func main() {
 	router.HandleFunc("/words", WordDrill).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
 	router.HandleFunc("/schedule_story/{storyId}", EnqueueStory).Methods("GET")
-	router.HandleFunc("/get_enqueued_stories", GetEnqueuedStories).Methods("GET")
-	router.HandleFunc("/balance_queue", BalanceQueue).Methods("GET")
+	router.HandleFunc("/get_story_todo", GetStoriesTodo).Methods("GET")
+	router.HandleFunc("/refresh_todo", RefreshQueue).Methods("GET")
 	router.HandleFunc("/log_scheduled_story/{id}/{storyId}", MarkQueuedStory).Methods("GET")
 	router.HandleFunc("/remove_scheduled_story/{id}", RemoveQueuedStory).Methods("GET")
 	router.HandleFunc("/", GetMain).Methods("GET")
@@ -269,6 +270,9 @@ func makeUserDB(userhash string) {
 			lines TEXT,         
 			title	TEXT UNIQUE,
 			link	TEXT UNIQUE,
+			countdown INTEGER,
+			read_count INTEGER,
+			date_last_read INTEGER,
 			status INTEGER NOT NULL,
 			audio	TEXT,
 			date_added INTEGER NOT NULL)`)

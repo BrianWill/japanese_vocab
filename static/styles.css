@@ -19,10 +19,14 @@ h3 {
     line-height: 1.6;
     font-size: 170%;
     padding-left: 1.5em;
-    height: 29em;
+    height: 24em;
     overflow-y: scroll;
     margin-right: 1em;
     padding-right: 1em;
+}
+
+#tokenized_story p:first-child {
+    margin-top: 0em;
 }
 
 #tokenized_story p {
@@ -279,8 +283,7 @@ a {
 
 #player_controls {
     font-size: 70%;
-    display: block;
-    margin: 1em;
+    display: none;
 }
 
 #player_container {
@@ -291,11 +294,8 @@ a {
 }
 
 input[type=number]#player_speed_number {
-    margin-top: 3em;
-    margin-right: 3em;
+    margin-top: 1em;
     width: 3em;
-    height: 30px;
-    font-size: 100%;
 }
 
 .line_timestamp {
@@ -449,6 +449,11 @@ span.verb:hover {
     }
 }
 
+#story_actions {
+    margin-left: 2em;
+    margin-bottom: 1em;
+}
+
 #story_actions a {
     line-height: 2em;
     font-size: 80%;
@@ -457,4 +462,17 @@ span.verb:hover {
 #audio_player {
     padding: 1em;
     display: none;
+}
+
+#stories td {
+    padding-right: 3em;
+}
+
+#stories {
+    margin-left: 2.5em;
+}
+
+
+#stories th {
+    text-align: left;
 }

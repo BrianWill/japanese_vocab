@@ -10,6 +10,10 @@ h3 {
     margin-left: 1em;
 }
 
+#drill_title a {
+    color: white;
+}
+
 .kanji_spelling {
     font-size: 240%;
     white-space: nowrap;

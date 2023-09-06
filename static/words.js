@@ -10,6 +10,7 @@ var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
 var rankSlider = document.getElementById('rank_slider');
 
+
 const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
 
 var drillSet = null;
@@ -210,7 +211,6 @@ document.body.onkeydown = async function (evt) {
     }
 };
 
-
 cardsDiv.onclick = function (evt) {
     evt.preventDefault();
     let ele = evt.target.closest('.drill_word');
@@ -339,7 +339,7 @@ document.body.onload = function (evt) {
                 }
             }
 
-            drillTitleH.innerHTML = `<h3>${titles.join(', ')}</h3>`;
+            drillTitleH.innerHTML = `<a href="/story.html?storyId=${ids}"> ${titles.join(', ')}</a>`;
 
             fetch('words', {
                 method: 'POST', // or 'PUT'

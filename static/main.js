@@ -1,39 +1,18 @@
 var storyTitle = document.getElementById('story_title');
-var wordList = document.getElementById('word_list');
-var definitionsDiv = document.getElementById('definitions');
-var kanjiResultsDiv = document.getElementById('kanji_results');
-var logEvents = document.getElementById('log_events');
-var queuedStoriesDiv = document.getElementById('queued_stories');
-var balanceQueueLink = document.getElementById('balance_queue_link');
+var storiesDiv = document.getElementById('stories');
 
 document.body.onload = function (evt) {
-    getLogEvents();
-    getQueuedStories();
+    getStoryList(displayStoryList);
 };
 
-logEvents.onclick = function(evt) {
-    if (evt.target.tagName == 'A') {
-        var logId = evt.target.getAttribute('log_id');
-        var action = evt.target.getAttribute('action');
-        switch (action) {
-            case 'remove':
-                evt.preventDefault();
-                removeLogEvent(logId);
-                break;
-        }
-    }
-};
 
-queuedStoriesDiv.onclick = function(evt) {
+
+storiesDiv.onclick = function(evt) {
     if (evt.target.tagName == 'A') {
         var logId = evt.target.getAttribute('log_id');
         var storyId = evt.target.getAttribute('story_id');
         var action = evt.target.getAttribute('action');
         switch (action) {
-            case 'remove':
-                evt.preventDefault();
-                removeQueuedStory(logId);
-                break;
             case 'log':
                 evt.preventDefault();
                 logScheduledStory(logId, storyId);
@@ -41,117 +20,6 @@ queuedStoriesDiv.onclick = function(evt) {
         }
     }
 };
-
-balanceQueueLink.onclick = function(evt) {
-    fetch(`/balance_queue`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            getQueuedStories();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-};
-
-function removeLogEvent(logId) {
-    fetch(`/remove_log_event/${logId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            getLogEvents();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-
-function removeQueuedStory(logId) {
-    fetch(`/remove_scheduled_story/${logId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            getQueuedStories();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-
-function logScheduledStory(logId, storyId) {
-    fetch(`/log_scheduled_story/${logId}/${storyId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            getQueuedStories();
-            getLogEvents();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-
-function getLogEvents() {
-    const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
-    var timeOfLastWeek = new Date() - WEEK_IN_SECONDS;
-
-    fetch('/log_events/' + timeOfLastWeek, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            updateLogEvents(data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function displayStorySchedule(scheduledStories) {
-    let html = `<table class="log_table">`;
-    
-    for (let qs of scheduledStories) {
-        html += `<tr>
-            <td><a action="remove" log_id="${qs.id}" href="#">remove</a></td>
-            <td><a action="log" log_id="${qs.id}" story_id="${qs.story_id}"  href="#">log</a></td>
-            <td>${timeSince(qs.date)}</td>
-            <td><a story_id="${qs.story_id}" href="/story.html?storyId=${qs.story_id}">${qs.title}</a></td>
-            </tr>`;        
-    }
-
-    queuedStoriesDiv.innerHTML = html + '</table>';
-}
-
-function updateLogEvents(data) {
-    let html = `<table class="log_table">`;
-    
-    for (let d of data.logEvents) {
-        html += `<tr>
-            <td><a action="remove" log_id="${d.id}" href="#">remove</a></td>
-            <td>${timeSince(d.date)}</td>
-            <td><a story_id="${d.story_id}" href="/story.html?storyId=${d.story_id}">${d.title}</a></td>
-            </tr>`;        
-    }
-
-    logEvents.innerHTML = html + '</table>';
-}
 
 function openStory(id) {
     fetch('/story/' + id, {
@@ -170,4 +38,47 @@ function openStory(id) {
             console.error('Error:', error);
         });
 }
+
+const STORY_COOLDOWN = 60 * 60 * 24;  
+
+function displayStoryList(stories) {
+    stories.sort((a, b) => {
+        return a.date_last_read - b.date_last_read
+    });
+
+    function storyRow(s) {
+        return `<tr>
+            <td>
+                <span title="when this story was last read">${timeSince(s.date_last_read)}</span>
+            </td>    
+            <td>
+               <span title="number of times left to read this story">${s.countdown}</span>
+            </td>
+            <td>
+                <span title="number of times this story has been read">${s.read_count}</span>
+            </td>
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            </tr>`;
+    }
+
+
+    let html = `<table class="story_table">
+        <tr>
+            <th title="when this story was last read">Time last read</th>    
+            <th>Countdown</th>
+            <th title="number of times this story has been read">Total reads</th>
+            <th>Title</th>
+        </tr>`;
+
+    storiesById = {};
+
+    for (let s of stories) {
+        storiesById[s.id] = s;
+        if (s.countdown > 0) {
+            html += storyRow(s);
+        }        
+    }
+
+    storiesDiv.innerHTML = html + '</table>';
+};
 

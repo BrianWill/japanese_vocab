@@ -1,13 +1,11 @@
-
 var storyList = document.getElementById('story_list');
-
 var newStoryText = document.getElementById('new_story_text');
 var newStoryButton = document.getElementById('new_story_button');
 var newStoryTitle = document.getElementById('new_story_title');
 var newStoryLink = document.getElementById('new_story_link');
 
 document.body.onload = function (evt) {
-    getStoryList();
+    getStoryList(displayStoryList);
 };
 
 newStoryButton.onclick = function (evt) {
@@ -29,11 +27,20 @@ newStoryButton.onclick = function (evt) {
         body: JSON.stringify(data),
     }).then((response) => response.json())
         .then((data) => {
-            getStoryList();
+            getStoryList(displayStoryList);
         })
         .catch((error) => {
             console.error('Error:', error);
         });
+};
+
+storyList.onchange = function (evt) {
+    if (evt.target.className.includes('count_spinner')) {
+        let storyId = parseInt(evt.target.getAttribute('story_id'));
+        let story = storiesById[storyId];
+        story.countdown = parseInt(evt.target.value);
+        updateStoryCounts(story, () => { });
+    }
 };
 
 function retokenizeStory(story) {
@@ -45,7 +52,7 @@ function retokenizeStory(story) {
         body: JSON.stringify({ id: story.id }),
     }).then((response) => response.json())
         .then((data) => {
-            getStoryList();
+            getStoryList(displayStoryList);
         })
         .catch((error) => {
             console.error('Error retokenizing:', error);
@@ -61,17 +68,24 @@ function displayStoryList(stories) {
     });
 
     function storyRow(s) {
-        let button = '';
         return `<tr>
             <td>
-                <a action="schedule" story_id="${s.id}" href="#">schedule</a>
+               <input story_id="${s.id}" type="number" class="count_spinner" min="0" max="9" steps="1" value="${s.countdown}">
             </td>
-            <td><a class="story_title status${s.status}" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td>
+                <span title="number of times this story has been read">${s.read_count}</span>
+            </td>
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
     }
 
 
-    let html = `<table class="story_table">`;
+    let html = `<table class="story_table">
+        <tr>
+            <th>TODO</th>
+            <th title="number of times this story has been read">Read count</th>
+            <th>Title</th>
+        </tr>`;
 
     storiesById = {};
 
@@ -82,50 +96,3 @@ function displayStoryList(stories) {
 
     storyList.innerHTML = html + '</table>';
 };
-
-
-storyList.onclick = function (evt) {
-    console.log(evt.target);
-
-    if (evt.target.tagName == 'A') {
-        var storyId = evt.target.getAttribute('story_id');
-        var action = evt.target.getAttribute('action');
-        let story = storiesById[storyId];
-        switch (action) {
-            case 'schedule':
-                evt.preventDefault();
-                scheduleStory(storyId);
-                break;
-            case 'add':
-                evt.preventDefault();
-                story.status = 3;
-                updateStory(story, true);
-                break;
-            case 'remove':
-                evt.preventDefault();
-                story.status = 0;
-                updateStory(story, true);
-                break;
-        }
-    }
-};
-
-function scheduleStory(storyId) {
-    fetch(`/schedule_story/${storyId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            getQueuedStories();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function displayStorySchedule() {
-    // intentionally blank
-}
-

@@ -5,8 +5,10 @@ var definitionsDiv = document.getElementById('definitions');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var playerSpeedNumber = document.getElementById('player_speed_number');
 var drillWordsLink = document.getElementById('drill_words_link');
-var highlightMessage = document.getElementById('highlight_message');
+var highlightLink = document.getElementById('highlight_message');
 var audioPlayer = document.getElementById('audio_player');
+var playerControls = document.getElementById('player_controls');
+var markStory = document.getElementById('mark_story');
 
 var story = null;
 var selectedLineIdx = 0;
@@ -22,6 +24,28 @@ tokenizedStory.onwheel = function (evt) {
             evt.preventDefault();
         }
     }
+};
+
+
+highlightLink.onclick = toggleHighlight;
+
+function toggleHighlight(evt) {
+    evt.preventDefault();
+    tokenizedStory.classList.toggle('highlight_all_words');
+    if (tokenizedStory.classList.contains('highlight_all_words')) {
+        highlightLink.innerHTML = 'Highlighting all rank 1-3 words';
+    } else {
+        highlightLink.innerHTML = 'Highlighting only the rank 1-3 words off cooldown';
+    }
+}
+
+markStory.onclick = function (evt) {
+    evt.preventDefault();
+    let unixTime = Math.floor(Date.now() / 1000);
+    story.date_last_read = unixTime;
+    updateStoryCounts(story, () => {
+        snackbarMessage('marked story as read');
+    });
 };
 
 document.body.onkeydown = async function (evt) {
@@ -92,13 +116,7 @@ document.body.onkeydown = async function (evt) {
     }
 
     if (evt.code === 'KeyC') {
-        evt.preventDefault();
-        tokenizedStory.classList.toggle('highlight_all_words');
-        if (tokenizedStory.classList.contains('highlight_all_words')) {
-            highlightMessage.innerHTML = 'Highlighting all rank 1-3 words';
-        } else {
-            highlightMessage.innerHTML = 'Highlighting only the rank 1-3 words off cooldown';
-        }
+        toggleHighlight(evt);
     } else if (evt.code === 'Space') {
         evt.preventDefault();
         if (selectedWordBaseForm) {
@@ -287,6 +305,10 @@ function openStory(id) {
                 audioPlayer.style.display = 'block';
                 audioPlayer.src = '/audio/' + story.audio;
             }
+
+            if (videoPlayer || audioPlayer) {
+                playerControls.style.display = 'block';
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -303,8 +325,6 @@ playerSpeedNumber.onchange = function (evt) {
 }
 
 function displayStory(story) {
-    //let punctuationTokens = [' ', '。', '、'];
-
     let html = '';
 
     let unixTime = Math.floor(Date.now() / 1000);

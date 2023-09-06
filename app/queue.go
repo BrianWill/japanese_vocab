@@ -58,7 +58,7 @@ func EnqueueStory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("Success enqueuing story")
 }
 
-func GetEnqueuedStories(w http.ResponseWriter, r *http.Request) {
+func GetStoriesTodo(w http.ResponseWriter, r *http.Request) {
 	dbPath, redirect, err := GetUserDb(w, r)
 	if redirect || err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -206,7 +206,7 @@ func RemoveQueuedStory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("Removed queued story entry")
 }
 
-func BalanceQueue(w http.ResponseWriter, r *http.Request) {
+func RefreshQueue(w http.ResponseWriter, r *http.Request) {
 	dbPath, redirect, err := GetUserDb(w, r)
 	if redirect || err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
