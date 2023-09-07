@@ -1,6 +1,6 @@
-# Japanese Vocab trainer
+# Japanese Story Reader and Vocab Trainer
 
-A program for collecting stories (short excerpts of Japanese) and drilling their vocabulary. An instance of the app will be hosted soon at [JapanVocab.com](https://japanvocab.com).
+A program for reading stories (short excerpts of Japanese) and drilling their vocabulary.
 
 ![](./images/story.png)
 
@@ -14,18 +14,17 @@ A program for collecting stories (short excerpts of Japanese) and drilling their
 
 ## Stories
 
-![](./images/stories.png)
+The general idea is to repeat each story you read several times over the course of a week or two, drilling its vocabulary each time before you re-read it.
 
-You can add stories *via* the form on the main page. For example, paste the title of a youtube video, its link, and its Japanese transcript into the form, then click the "Create Story" button.
+Each story has:
 
-You can set the status of each story: 
+- a read count: the total number of times the story has been read
+- a countdown: the number of additional times you plan to read the story
+- a timestamp: the date and time that the story was last read
 
-- "Current": for stories you want to focus on
-- "Read": for stories you want to put aside but revisit later
-- "Never Read": the initial state of new stories
-- "Archive": for stories you are unlikely to revisit
+The main page only displays only the stories that have a countdown greater than 0. The story "catalog" page displays all the stories and allows you to add new stories.
 
-Click a story's title to see its text. Through grammatical analysis, the words of the stories are highlighted based on part of speech:
+Click a story's title to read it. The words are highlighted based on part of speech:
 
 - white words: nouns
 - yellow: particles
@@ -36,23 +35,15 @@ Click a story's title to see its text. Through grammatical analysis, the words o
 - violet: i-adjectives
 - blue: pronouns and determines (such as これ and 何)
 
-Note that the grammatical analysis is not always 100% accurate but is generally quite good.
+(Note that the auto-generated grammatical analysis is not always 100% accurate but is generally quite good.)
 
-Clicking a word selects it and shows its definitions and information about its kanji. Hotkeys:
-
-- 1: sets the selected word's rank to level 1
-- 2: sets the selected word's rank to level 2
-- 3: sets the selected word's rank to level 3
-- 4: sets the selected word's rank to level 4
-- space: marks the selected word as reviewed with the current timestamp
+Click a word in the text to get information about it and its kanji.
 
 ## Drilling
 
 ![](./images/drill.png)
 
-From a story's page, you can click "drill words" to drill its words. Two links at the top of the main page let you drill the words from all stories or the words from all current stories.
-
-In the word list, word rank is displayed on the right. New words start off at Rank 1. Words with higher ranks have longer cooldowns:
+From a story's page, you can click the "drill" link to drill its words. Words have a rank 1 through 4, where higher ranks have longer cooldowns:
 
 - Rank 1 cooldown: 5 hours
 - Rank 2 cooldown: 4 days
@@ -68,10 +59,8 @@ Hotkeys:
 - **3**: sets the selected word's rank to level 3
 - **4**: sets the selected word's rank to level 4
 
-When you exhaust the list, the words you marked wrong will be reshuffled. Keep answering until all words are marked correct.
+Once you mark all words in the list correct or wrong, the words you marked wrong will be reshuffled. Keep answering until all words are marked correct.
 
-When you mark a word correct or wrong, it is put on cooldown.
+Marking a word correct or wrong puts it on cooldown. By default, the drill list only includes words off cooldown, but you can choose to include words on cooldown.
 
-By deafult, the list includes only words off cooldown, but you can choose to include all words or only words *on* cooldown.
-
-Words can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
+Words in the drill list can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.

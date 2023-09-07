@@ -130,15 +130,11 @@ func main() {
 		}
 	}
 
-	router.HandleFunc("/add_log_event/{id}", AddLogEvent).Methods("GET")
-	router.HandleFunc("/remove_log_event/{id}", RemoveLogEvent).Methods("GET")
-	router.HandleFunc("/log_events/{since}", GetLogEvents).Methods("GET")
 	router.HandleFunc("/loginauth", PostLoginAuth).Methods("POST")
 	router.HandleFunc("/logout", PostLogout).Methods("POST")
 	router.HandleFunc("/register", PostRegisterUser).Methods("POST")
 	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
 	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
-	router.HandleFunc("/update_story_status", UpdateStoryStatus).Methods("POST")
 	router.HandleFunc("/update_story_counts", UpdateStoryCounts).Methods("POST")
 	router.HandleFunc("/create_story", CreateStory).Methods("POST")
 	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
@@ -150,11 +146,6 @@ func main() {
 	router.HandleFunc("/kanji", Kanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
-	router.HandleFunc("/schedule_story/{storyId}", EnqueueStory).Methods("GET")
-	router.HandleFunc("/get_story_todo", GetStoriesTodo).Methods("GET")
-	router.HandleFunc("/refresh_todo", RefreshQueue).Methods("GET")
-	router.HandleFunc("/log_scheduled_story/{id}/{storyId}", MarkQueuedStory).Methods("GET")
-	router.HandleFunc("/remove_scheduled_story/{id}", RemoveQueuedStory).Methods("GET")
 	router.HandleFunc("/", GetMain).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
@@ -276,30 +267,6 @@ func makeUserDB(userhash string) {
 			status INTEGER NOT NULL,
 			audio	TEXT,
 			date_added INTEGER NOT NULL)`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := statement.Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS log_events 
-	(id INTEGER PRIMARY KEY, 
-		story INTEGER NOT NULL,
-		date INTEGER NOT NULL,
-		FOREIGN KEY (story) REFERENCES stories (id))`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := statement.Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS queued_stories 
-	(id INTEGER PRIMARY KEY, 
-		story INTEGER NOT NULL,
-		date INTEGER NOT NULL,
-		FOREIGN KEY (story) REFERENCES stories (id))`)
 	if err != nil {
 		log.Fatal(err)
 	}

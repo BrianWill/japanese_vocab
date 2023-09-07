@@ -663,59 +663,6 @@ func getStory(id int64, sqldb *sql.DB) (Story, error) {
 	return story, nil
 }
 
-func UpdateStoryStatus(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if redirect || err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	var story Story
-	err = json.NewDecoder(r.Body).Decode(&story)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	// make sure the story actually exists
-	rows, err := sqldb.Query(`SELECT id FROM stories WHERE id = $1;`, story.ID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
-		return
-	}
-
-	if !rows.Next() {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "story with ID does not exist: " + strconv.FormatInt(story.ID, 10) + `"}`))
-		rows.Close()
-		return
-	}
-	rows.Close()
-
-	_, err = sqldb.Exec(`UPDATE stories SET status = $1 WHERE id = $2;`,
-		story.Status, story.ID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
-		return
-	}
-
-	json.NewEncoder(w).Encode(bson.M{"status": "success"})
-}
-
 func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
 	dbPath, redirect, err := GetUserDb(w, r)
 	if redirect || err != nil {
