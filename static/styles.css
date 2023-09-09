@@ -5,6 +5,7 @@ body {
 
 h3 {
     margin-left: 2em;
+    margin-right: 2em;
 }
 
 #story {
@@ -457,6 +458,7 @@ span.verb:hover {
 #story_actions a {
     line-height: 2em;
     font-size: 80%;
+    padding-right: 1.5em;
 }
 
 #audio_player {

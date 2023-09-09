@@ -39,10 +39,18 @@ function toggleHighlight(evt) {
     }
 }
 
+const STORY_MARK_COOLDOWN = 60 * 60 * 4;
+
 markStory.onclick = function (evt) {
     evt.preventDefault();
     let unixTime = Math.floor(Date.now() / 1000);
+    if (story.date_last_read + STORY_MARK_COOLDOWN > unixTime) {
+        snackbarMessage("story cannot be marked right now because it's on cooldown");
+        return;
+    }
     story.date_last_read = unixTime;
+    story.countdown = Math.max(story.countdown - 1, 0);
+    story.read_count++;
     updateStoryCounts(story, () => {
         snackbarMessage('marked story as read');
     });
@@ -307,7 +315,7 @@ function openStory(id) {
             }
 
             if (videoPlayer || audioPlayer) {
-                playerControls.style.display = 'block';
+                playerControls.style.display = 'inline';
             }
         })
         .catch((error) => {
