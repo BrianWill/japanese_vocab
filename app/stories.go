@@ -219,9 +219,9 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCou
 		return story.ID, newWordCount, nil
 	} else {
 		date := time.Now().Unix()
-		result, err := sqldb.Exec(`INSERT INTO stories (lines, title, link, date_added, status, audio) 
-				VALUES($1, $2, $3, $4, $5, $6);`,
-			linesJson, story.Title, story.Link, date, STORY_INITIAL_STATUS, "")
+		result, err := sqldb.Exec(`INSERT INTO stories (lines, title, link, date_added, status, audio, countdown, read_count, date_last_read) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+			linesJson, story.Title, story.Link, date, STORY_INITIAL_STATUS, "", 0, 0, 0)
 		if err != nil {
 			return 0, 0, fmt.Errorf("failure to insert story: " + err.Error())
 		}

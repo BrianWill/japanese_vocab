@@ -294,14 +294,23 @@ a {
     gap: 0px 0px; 
 }
 
-input[type=number]#player_speed_number {
+input[type=number] {
     margin-top: 1em;
     width: 3em;
 }
 
+#lines_table td {
+    padding-bottom: 0.6em;
+}
+
 .line_timestamp {
-    font-size: 70%;
+    font-size: 60%;
     margin-right: 1em;
+}
+
+.line_timestamp_container {
+    width: 3em;
+    vertical-align: top;
 }
 
 #tokenized_story .line_timestamp:hover {
@@ -477,4 +486,9 @@ span.verb:hover {
 
 #stories th {
     text-align: left;
+}
+
+#story_actions span {
+    font-size: 70%;
+    padding-right: 1.5em;
 }

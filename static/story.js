@@ -9,6 +9,7 @@ var highlightLink = document.getElementById('highlight_message');
 var audioPlayer = document.getElementById('audio_player');
 var playerControls = document.getElementById('player_controls');
 var markStory = document.getElementById('mark_story');
+var countSpinner = document.getElementById('count_spinner');
 
 var story = null;
 var selectedLineIdx = 0;
@@ -167,11 +168,11 @@ document.body.onkeydown = async function (evt) {
     }
 };
 
-
 tokenizedStory.onmousedown = function (evt) {
     if (evt.target.hasAttribute('word_idx_in_line')) {
         if (evt.ctrlKey) {
-            splitLine(evt.target);
+            let lineIdx = parseInt(evt.target.parentNode.parentNode.getAttribute('line_idx'));
+            splitLine(evt.target, lineIdx);
         } else {
             let baseform = evt.target.getAttribute('baseform');
             selectedWordBaseForm = baseform;
@@ -182,8 +183,8 @@ tokenizedStory.onmousedown = function (evt) {
 
     } else if (evt.target.classList.contains('line_timestamp')) {
         evt.preventDefault();
-        if (evt.ctrlKey) {
-            let lineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+        let lineIdx = parseInt(evt.target.parentNode.parentNode.getAttribute('line_idx'));
+        if (evt.ctrlKey) { 
             fetch('/story_consolidate_line', {
                 method: 'POST', // or 'PUT'
                 headers: {
@@ -204,7 +205,7 @@ tokenizedStory.onmousedown = function (evt) {
                 });
         } else if (evt.altKey || (evt.which == 2 || evt.button == 4 )) {
             if (videoPlayer) {
-                selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+                selectedLineIdx = lineIdx;
                 let seconds = videoPlayer.getCurrentTime();
                 seconds -= 0.5;
                 if (seconds < 0) {
@@ -212,7 +213,7 @@ tokenizedStory.onmousedown = function (evt) {
                 }
                 setTimestamp(selectedLineIdx, seconds);
             } else if (audioPlayer) {
-                selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+                selectedLineIdx = lineIdx;
                 let seconds = roundToHalfSecond(audioPlayer.currentTime);
                 seconds -= 0.5;
                 if (seconds < 0) {
@@ -223,12 +224,12 @@ tokenizedStory.onmousedown = function (evt) {
             }
         } else {
             if (videoPlayer) {
-                selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+                selectedLineIdx = lineIdx;
                 let seconds = parseTimestamp(evt.target.innerHTML);
                 videoPlayer.seekTo(seconds);
                 videoPlayer.playVideo();
             } else if (audioPlayer) {
-                selectedLineIdx = parseInt(evt.target.parentNode.getAttribute('line_idx'));
+                selectedLineIdx = lineIdx;
                 let seconds = parseTimestamp(evt.target.innerHTML);
                 audioPlayer.currentTime = seconds;
                 audioPlayer.play();
@@ -237,6 +238,11 @@ tokenizedStory.onmousedown = function (evt) {
     }
 };
 
+
+countSpinner.onchange = function (evt) {
+    story.countdown = parseInt(evt.target.value);
+    updateStoryCounts(story, () => { });
+};
 
 // returns time in seconds
 function parseTimestamp(timestamp) {
@@ -281,6 +287,9 @@ function openStory(id) {
             drillWordsLink.setAttribute('href', `/words.html?storyId=${story.id}`);
             storyTitle.innerHTML = `<a href="${story.link}">${story.title}</a>`;
             console.log(story);
+
+            countSpinner.value = story.countdown;
+
             displayStory(data);
 
             let youtubeId = null;
@@ -333,13 +342,13 @@ playerSpeedNumber.onchange = function (evt) {
 }
 
 function displayStory(story) {
-    let html = '';
+    let html = '<table id="lines_table">';
 
     let unixTime = Math.floor(Date.now() / 1000);
 
     for (let idx in story.lines) {
         let line = story.lines[idx];
-        html += `<p line_idx="${idx}"><a class="line_timestamp">${line.timestamp}</a>`;
+        html += `<tr line_idx="${idx}"><td class="line_timestamp_container"><a class="line_timestamp">${line.timestamp}</a></td><td>`;
         for (let wordIdx in line.words) {
             let word = line.words[wordIdx];
             let wordinfo = story.word_info[word.baseform];
@@ -351,10 +360,10 @@ function displayStory(story) {
                 html += `<span word_idx_in_line="${wordIdx}" class="lineword nonword">${word.surface}</span>`;
             }
         }
-        html += '</p>'
+        html += '</td></tr>'
     }
 
-    tokenizedStory.innerHTML = html;
+    tokenizedStory.innerHTML = html + '</table>';
 }
 
 function isOffCooldown(rank, dateMarked, unixTime) {
@@ -364,8 +373,7 @@ function isOffCooldown(rank, dateMarked, unixTime) {
 
 var selectedWordBaseForm = null;
 
-function splitLine(target) {
-    let lineIdx = parseInt(target.parentNode.getAttribute('line_idx'));
+function splitLine(target, lineIdx) {
     let timestamp = parseTimestamp(story.lines[lineIdx].timestamp);
     if (videoPlayer) {
         timestamp = videoPlayer.getCurrentTime();
