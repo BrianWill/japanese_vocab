@@ -8,7 +8,7 @@ var drillWordsLink = document.getElementById('drill_words_link');
 var highlightLink = document.getElementById('highlight_message');
 var audioPlayer = document.getElementById('audio_player');
 var playerControls = document.getElementById('player_controls');
-var markStory = document.getElementById('mark_story');
+var markStoryLink = document.getElementById('mark_story');
 var countSpinner = document.getElementById('count_spinner');
 
 var story = null;
@@ -16,15 +16,9 @@ var selectedLineIdx = 0;
 var videoPlayer;
 
 tokenizedStory.onwheel = function (evt) {
-    if (evt.wheelDeltaY < 0) {
-        if (tokenizedStory.scrollTop >= tokenizedStory.scrollTopMax) {
-            evt.preventDefault();
-        }
-    } else {
-        if (tokenizedStory.scrollTop <= 0) {
-            evt.preventDefault();
-        }
-    }
+    evt.preventDefault();
+    let scrollDelta = evt.wheelDeltaY * 2;
+    tokenizedStory.scrollTop -= scrollDelta;
 };
 
 
@@ -42,7 +36,7 @@ function toggleHighlight(evt) {
 
 const STORY_MARK_COOLDOWN = 60 * 60 * 4;
 
-markStory.onclick = function (evt) {
+markStoryLink.onclick = function (evt) {
     evt.preventDefault();
     let unixTime = Math.floor(Date.now() / 1000);
     if (story.date_last_read + STORY_MARK_COOLDOWN > unixTime) {
@@ -52,6 +46,7 @@ markStory.onclick = function (evt) {
     story.date_last_read = unixTime;
     story.countdown = Math.max(story.countdown - 1, 0);
     story.read_count++;
+    countSpinner.value = story.countdown;
     updateStoryCounts(story, () => {
         snackbarMessage('marked story as read');
     });
@@ -67,10 +62,10 @@ document.body.onkeydown = async function (evt) {
         let timemark = videoPlayer.getCurrentTime();
         if (evt.code === 'KeyA') {
             evt.preventDefault();
-            videoPlayer.seekTo(timemark - 1.7, true);
+            videoPlayer.seekTo(timemark - 2.1, true);
         } else if (evt.code === 'KeyD') {
             evt.preventDefault();
-            videoPlayer.seekTo(timemark + 1.2, true);
+            videoPlayer.seekTo(timemark + 1.5, true);
         } else if (evt.code === 'KeyQ') {
             evt.preventDefault();
             videoPlayer.seekTo(timemark - 5, true);
@@ -97,10 +92,10 @@ document.body.onkeydown = async function (evt) {
         let timemark = audioPlayer.currentTime;
         if (evt.code === 'KeyA') {
             evt.preventDefault();
-            audioPlayer.currentTime = timemark - 1.7;
+            audioPlayer.currentTime = timemark - 2.1;
         } else if (evt.code === 'KeyD') {
             evt.preventDefault();
-            audioPlayer.currentTime = timemark + 1.2;
+            audioPlayer.currentTime = timemark + 1.5;
         } else if (evt.code === 'KeyQ') {
             evt.preventDefault();
             audioPlayer.currentTime = timemark - 5;
@@ -136,6 +131,10 @@ document.body.onkeydown = async function (evt) {
                 rank: wordInfo.rank,
             }, story.word_info, true);
         }
+    } else if (evt.code === 'KeyM') {
+        evt.preventDefault();
+        let marked = story.lines[selectedLineIdx].marked == true;  // coerce undefined to bool
+        setLineMark(selectedLineIdx, !marked);
     } else if (evt.code === 'Minus') {
         evt.preventDefault();
         let timestamp = story.lines[selectedLineIdx].timestamp;
@@ -203,7 +202,11 @@ tokenizedStory.onmousedown = function (evt) {
                 .catch((error) => {
                     console.error('Error:', error);
                 });
-        } else if (evt.altKey || (evt.which == 2 || evt.button == 4 )) {
+        } else if (evt.which == 2 || evt.button == 4 ) {
+            evt.preventDefault();
+            let marked = story.lines[lineIdx].marked == true;  // coerce undefined to bool
+            setLineMark(lineIdx, !marked);
+        } else if (evt.altKey) {
             if (videoPlayer) {
                 selectedLineIdx = lineIdx;
                 let seconds = videoPlayer.getCurrentTime();
@@ -262,6 +265,28 @@ function setTimestamp(lineIdx, timestamp) {
             story_id: story.id,
             line_idx: lineIdx,
             timestamp: timestamp,
+        }),
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Success:', data);
+            story.lines = data;
+            displayStory(story);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function setLineMark(lineIdx, marked) {
+    fetch('/story_set_mark', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            story_id: story.id,
+            line_idx: lineIdx,
+            marked: marked,
         }),
     }).then((response) => response.json())
         .then((data) => {
@@ -348,7 +373,7 @@ function displayStory(story) {
 
     for (let idx in story.lines) {
         let line = story.lines[idx];
-        html += `<tr line_idx="${idx}"><td class="line_timestamp_container"><a class="line_timestamp">${line.timestamp}</a></td><td>`;
+        html += `<tr line_idx="${idx}"><td class="line_timestamp_container"><a class="line_timestamp ${line.marked ? 'marked_line' : ''}">${line.timestamp}</a></td><td>`;
         for (let wordIdx in line.words) {
             let word = line.words[wordIdx];
             let wordinfo = story.word_info[word.baseform];

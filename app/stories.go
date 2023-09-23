@@ -985,7 +985,7 @@ func SetTimestamp(w http.ResponseWriter, r *http.Request) {
 
 	if setTimestamp.LineIdx < 0 || setTimestamp.LineIdx >= len(lines) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to split must have index of 1 or greater}`))
+		w.Write([]byte(`{ "message: line to set timestamp must have index of 1 or greater}`))
 		return
 	}
 
@@ -1026,4 +1026,73 @@ func secondsToTimestamp(seconds float64) string {
 		s += ".5"
 	}
 	return s
+}
+
+func SetLineMark(w http.ResponseWriter, r *http.Request) {
+	dbPath, redirect, err := GetUserDb(w, r)
+	if redirect || err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var setLineMark SetLineMarkRequest
+	err = json.NewDecoder(r.Body).Decode(&setLineMark)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, setLineMark.StoryID)
+
+	var linesJSON string
+	if err := row.Scan(&linesJSON); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to get story lines": "` + err.Error() + `"}`))
+		return
+	}
+
+	var lines []Line
+	err = json.Unmarshal([]byte(linesJSON), &lines)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to unmarshal story lines JSON": "` + err.Error() + `"}`))
+		return
+	}
+
+	if setLineMark.LineIdx < 0 || setLineMark.LineIdx >= len(lines) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{ "message: line to set mark must have index of 1 or greater}`))
+		return
+	}
+
+	line := &lines[setLineMark.LineIdx]
+	line.Marked = setLineMark.Marked
+
+	linesBytes, err := json.Marshal(lines)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message: failure to JSONify story lines": "` + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, setLineMark.StoryID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
+		return
+	}
+
+	w.Write(linesBytes)
 }

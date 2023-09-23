@@ -30,7 +30,8 @@ type Line struct {
 	Words     []LineWord `json:"words,omitempty"`
 	Timestamp string     `json:"timestamp,omitempty"`
 	//Content   string      `json:"content,omitempty"`
-	Kanji []LineKanji `json:"kanji,omitempty"`
+	Kanji  []LineKanji `json:"kanji,omitempty"`
+	Marked bool        `json:"marked"`
 }
 
 type LineWord struct {
@@ -71,6 +72,12 @@ type SetTimestampRequest struct {
 	Timestamp float64 `json:"timestamp"`
 }
 
+type SetLineMarkRequest struct {
+	StoryID int64 `json:"story_id,omitempty"`
+	LineIdx int   `json:"line_idx"`
+	Marked  bool  `json:"marked"`
+}
+
 type StoryList struct {
 	Stories []Story `json:"stories,omitempty"`
 }
@@ -93,16 +100,11 @@ type EnqueuedStory struct {
 }
 
 type DrillWord struct {
-	ID       int64  `json:"id,omitempty"`
-	BaseForm string `json:"base_form"`
-	Rank     int    `json:"rank"`
-	//DrillCount    int    `json:"drill_count"`
-	//DateLastRead  int64  `json:"date_last_read"`
-	DateMarked int64 `json:"date_marked"`
-	//Definitions   string `json:"definitions"`
-	Category int `json:"category"`
-	//DateLastWrong int64  `json:"date_last_wrong"`
-	//DateAdded     int64  `json:"date_added"`
+	ID         int64  `json:"id,omitempty"`
+	BaseForm   string `json:"base_form"`
+	Rank       int    `json:"rank"`
+	DateMarked int64  `json:"date_marked"`
+	Category   int    `json:"category"`
 }
 
 type WordUpdate struct {

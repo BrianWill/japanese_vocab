@@ -211,7 +211,7 @@ h3 {
 
 .kanji {
     margin-bottom: 1em;
-    margin-right: 0.5em;
+    margin-right: 1em;
     width: 30%;
     flex: 1 1 auto;
 }
@@ -276,21 +276,19 @@ h3 {
     margin-right: 30px;
 }
 
-#top_link {
-    padding: 1em;
-}
-
 #top_link a {
     color: rgb(117, 117, 117);
     padding: 1em;
+}
+
+#top_link .header_link {
+    font-size: 70%;
 }
 
 #rank_slider {
     display: inline-block;
     width: 120px;
 }
-
-
 
 /* copied from https://www.w3schools.com/howto/howto_js_snackbar.asp
   The snackbar - position it at the bottom and in the middle of the screen */

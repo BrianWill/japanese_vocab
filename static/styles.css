@@ -20,7 +20,7 @@ h3 {
     line-height: 1.6;
     font-size: 170%;
     padding-left: 1.5em;
-    height: 24em;
+    height: 28em;
     overflow-y: scroll;
     margin-right: 1em;
     padding-right: 1em;
@@ -150,7 +150,6 @@ a {
 .header_link {
     color: #838383;
     font-size: 70%;
-    margin-left: 2em;
     margin-bottom: 1em;
     font-weight: normal;
 }
@@ -229,12 +228,12 @@ a {
 }
 
 #top_link {
+    display: inline-block;
     padding: 1em;
 }
 
 #top_link a {
     color: rgb(117, 117, 117);
-    padding: 1em;
     text-decoration: none;
 }
 
@@ -287,16 +286,9 @@ a {
     display: none;
 }
 
-#player_container {
-    display: grid; 
-    grid-auto-columns: 1fr; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 0px 0px; 
-}
-
 input[type=number] {
     margin-top: 1em;
-    width: 3em;
+    width: 4em;
 }
 
 #lines_table td {
@@ -314,9 +306,9 @@ input[type=number] {
 }
 
 #tokenized_story .line_timestamp:hover {
-    color: rgb(36, 132, 21);
+    color: white;
     cursor: pointer;
-    text-decoration: rgb(36, 132, 21) solid underline;
+    text-decoration: white solid underline;
     text-underline-offset: 0.2em;
 }
 
@@ -491,4 +483,14 @@ span.verb:hover {
 #story_actions span {
     font-size: 70%;
     padding-right: 1.5em;
+}
+
+.marked_line {
+    color: rgb(255, 251, 0);
+}
+
+
+#tokenized_story .marked_line.line_timestamp:hover {
+    color: rgb(255, 251, 0);
+    text-decoration: rgb(255, 251, 0) solid underline;
 }
