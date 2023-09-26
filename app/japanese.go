@@ -4,11 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"regexp"
-	"sort"
-	"strings"
-	"unicode/utf8"
 
 	"crypto/md5"
 	"encoding/hex"
@@ -35,7 +31,6 @@ var allEntriesByReading map[string][]*JMDictEntry
 var allEntriesByKanjiSpellings map[string][]*JMDictEntry
 
 var definitionsCache map[string][]JMDictEntry // base form to []JMDictEntry
-//var definitionsJSONCache map[string]string    // base form to JSON string of []JMDictEntry
 
 var reHasKanji *regexp.Regexp
 
@@ -202,22 +197,6 @@ func buildEntryMaps() {
 				}
 			}
 		}
-	}
-}
-
-func auth(handlerFunc http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := sessionStore.Get(r, "session")
-		if err != nil {
-			http.Redirect(w, r, "/login.html", http.StatusFound)
-			return
-		}
-
-		if session.IsNew {
-			http.Redirect(w, r, "/login.html", http.StatusFound)
-		}
-
-		handlerFunc.ServeHTTP(w, r)
 	}
 }
 
@@ -461,41 +440,6 @@ func PostRegisterUser(response http.ResponseWriter, request *http.Request) {
 	// http.SetCookie(response, &cookie)
 
 	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
-}
-
-func sortResults(entries []JMDictEntry, hasKanji bool, word string) {
-	// compute shortest readings and kanji spellings
-	// TODO this could be stored in the DB
-	for i := range entries {
-		entries[i].ShortestKanjiSpelling = math.MaxInt32
-		entries[i].ShortestReading = math.MaxInt32
-		for _, ele := range entries[i].KanjiSpellings {
-			if strings.Contains(ele.KanjiSpelling, word) {
-				count := utf8.RuneCountInString(ele.KanjiSpelling)
-				if count < entries[i].ShortestKanjiSpelling {
-					entries[i].ShortestKanjiSpelling = count
-				}
-			}
-		}
-		for _, ele := range entries[i].Readings {
-			if strings.Contains(ele.Reading, word) {
-				count := utf8.RuneCountInString(ele.Reading)
-				if count < entries[i].ShortestReading {
-					entries[i].ShortestReading = count
-				}
-			}
-		}
-	}
-
-	if hasKanji {
-		sort.Slice(entries, func(i, j int) bool {
-			return entries[i].ShortestKanjiSpelling < entries[j].ShortestKanjiSpelling
-		})
-	} else {
-		sort.Slice(entries, func(i, j int) bool {
-			return entries[i].ShortestReading < entries[j].ShortestReading
-		})
-	}
 }
 
 func GetUserDb(response http.ResponseWriter, request *http.Request) (string, bool, error) {
