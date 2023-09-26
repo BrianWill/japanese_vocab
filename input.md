@@ -27,8 +27,8 @@ The selected language material, which we’ll call “stories”, should meet th
 - All stories should be audio monologues or dialogs by native speakers (not text-to-speech).
 - All stories should have accurate transcripts.
 - The stories should explicitly be [“comprehensible input”](https://ellevationeducation.com/blog/teaching-comprehensible-input-definition-examples) for beginners. Later when you feel ready, you can graduate to content for native speakers.
-Overly long stories are too onerous to repeat! Early on, the stories can be very short, say 1-2 minutes long. As you progress, the stories can get longer, but 5 minutes is a good average length. As a compromise, you can break longer stories into 5-10 minute chunks.
-- While most stories you consume should be at your current level, it’s good also to include some stories one step above your level and some stories one or two steps below. Reaching about your level expands your vocabulary and grammar exposure into new territory, while revisiting lower levels helps develop the fluidity with which you can process content.
+- Overly long stories are too onerous to repeat! Early on, the stories can be very short, say 1-2 minutes long. As you progress, the stories can get longer, but 5 minutes is a good average length. As a compromise, you can break longer stories into 5-10 minute chunks.
+- While most stories you consume should be at your current level, it’s good also to include some stories one step above your level and some stories one or two steps below. Reaching above your level expands your vocabulary and grammar exposure into new territory, while revisiting lower levels helps develop the fluidity with which you can process content.
 
 ## Repeating stories
 
@@ -40,14 +40,14 @@ How many times to repeat a given story is up to your discretion, but I generally
 
 There are at least five ways to go through a story:
 
-- **Intensive reading**. In this process, you look up every unknown word and puzzle out how all the words fit together, using grammatical analysis and translation tools. This process can be very time consuming, with the first read through typically taking me 30 minutes for each 5 minutes of story audio! The good news is that subsequent repetitions will go faster.
+- **Intensive reading**. In this process, you look up every unknown word and puzzle out how all the words fit together, using translation tools and grammatical analysis. This process can be very time consuming, with the first read through typically taking me 30 minutes for each 5 minutes of story audio! The good news is that subsequent repetitions will go faster.
 - **Listening and reading along with the transcript**. In this process, you should avoid pausing or rewinding the audio. This exercise develops your ability to follow real-time speech, using the transcript as training wheels. It also helps reinforce your reading of kanji words.
 - **Listening without the transcript or subtitles**. This is a much truer test of listening comprehension, but I generally only do this with stories comfortably below my current level. Especially in the early stages, listening will require intense concentration, and even after repeating a story several times, you may still fail to identify and understand many words let alone understand the complete sentences. This is normal. It can take several months of practice before you begin to understand most of what you hear, and only through repeated practice will the amount of concentration required gradually diminish.
 - **Practice reading and pronunciation by reading the text aloud**. After reading a line, you may want to play the audio to check your pronunciation.
 - **Drilling the words and vocabulary**. This gives you more focus time on the individual words and characters. Be aware, though, that once you’ve drilled a word or kanji a dozen times or more, drilling it further has greatly diminishing returns, so you should drop it from your drill set. Drilling helps make words and kanji *familiar* to you, but full acquisition only comes through repeated exposures in a meaningful context.
 
-## Use your own descretion
+## Use your own discretion
 
 Keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**. For any one story, which combination of the above processes you use in what order is up to you.
 
-The first time through a story will generally require a full intensive read through, but how you proceed with that story from there can highly vary. If the material seems easy enough, you might simply listen to the story and only occasionally check the transcript when you can’t make out a word. For more difficult material, you may need to repeat the intensive process a few more times, and even after several repetitions, you may still require the transcript to follow along while listening. As a compromise, you can do a hybrid process: go sentence-by-sentence, listening first with the transcript then repeating the sentence without.
+The first time through a story will generally require a full intensive read through, but how you proceed with that story from there can highly vary. If the material seems easy enough, you might simply listen to the story and only occasionally check the transcript when you can’t make out a word. For more difficult material, you may need to repeat the intensive process a few more times, and even after several repetitions, you may still require the transcript to follow along while listening. As a compromise, you can do a hybrid process: go sentence-by-sentence, listening first with the transcript then playing it again without looking at the transcript.
