@@ -51,3 +51,21 @@ There are at least five ways to go through a story:
 Keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**. For any one story, which combination of the above processes you use in what order is up to you.
 
 The first time through a story will generally require a full intensive read through, but how you proceed with that story from there can highly vary. If the material seems easy enough, you might simply listen to the story and only occasionally check the transcript when you can’t make out a word. For more difficult material, you may need to repeat the intensive process a few more times, and even after several repetitions, you may still require the transcript to follow along while listening. As a compromise, you can do a hybrid process: go sentence-by-sentence, listening first with the transcript then playing it again without looking at the transcript.
+
+
+## Sources of input
+
+These are some of the best sources I've found of comprehensible input material with transcripts:
+
+- [Comprehensible Japanese](https://cijapanese.com/) (transcripts through Patreon)
+- [Nihongo Picnic](https://nihongopicnic.notion.site/Nihongo-Picnic-Podcast-s-Transcript-e6c923a2d9f34c1fa278bb5e4531ea0f) (free transcripts)
+- [Japanese with Shun](https://www.youtube.com/@JapanesewithShun) (transcripts through Patreon)
+
+These sources lack human-written transcripts in most cases, so you must rely upon Youtube captions or other auto-generated transcription:
+
+- [Bitesize Japanese Podcast](https://www.youtube.com/@the_bitesize_japanese_podcast/videos) 
+- [Haru's Japanese Cafe](https://www.youtube.com/@HarusJapaneseCafe)
+- [Japanese Language Community](https://www.youtube.com/@erikojuku)
+- [Nihongo Con Teppei](https://nihongoconteppei.com/)
+
+

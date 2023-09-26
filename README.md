@@ -76,7 +76,7 @@ Each line of the story has a timestamp:
 
 - clicking a timestamp jumps the player (if present) to that timestamp
 - alt-clicking a line's timestamp will set it to the player's current time.
-- middle-clicking a line's timestamp toggles whether the line is marked, changing the timestamp's color. (Marking lines is simply useful for tracking interseting lines in a story.)
+- middle-clicking a line's timestamp toggles whether the line is marked, changing the timestamp's color, which is useful for tracking interseting lines in a story.
 
 Clicking a timestamp also selects the line, and you can adjust the timestamp of the selected line:
 
