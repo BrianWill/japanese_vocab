@@ -109,6 +109,4 @@ Some hotkeys affect the word at the top of the list:
 
 Once you mark all words in the list correct or incorrect, the words you marked incorrect will be reshuffled for another round of drilling.
 
-
-
 Words in the drill list can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.

@@ -40,7 +40,7 @@ How many times to repeat a given story is up to your discretion, but I generally
 
 There are at least five ways to go through a story:
 
-- **Intensive reading**. In this process, you look up every unknown word and puzzle out how all the words fit together, using translation tools and grammatical analysis. This process can be very time consuming, with the first read through typically taking me 30 minutes for each 5 minutes of story audio! The good news is that subsequent repetitions will go faster.
+- **Intensive reading**. In this process, you look up every unknown word and puzzle out how all the words fit together, using translation tools and grammatical analysis. This process can be very time consuming: the first read through typically takes me 30 minutes for each 5 minutes of story audio! The good news is that subsequent repetitions will go faster.
 - **Listening and reading along with the transcript**. In this process, you should avoid pausing or rewinding the audio. This exercise develops your ability to follow real-time speech, using the transcript as training wheels. It also helps reinforce your reading of kanji words.
 - **Listening without the transcript or subtitles**. This is a much truer test of listening comprehension, but I generally only do this with stories comfortably below my current level. Especially in the early stages, listening will require intense concentration, and even after repeating a story several times, you may still fail to identify and understand many words let alone understand the complete sentences. This is normal. It can take several months of practice before you begin to understand most of what you hear, and only through repeated practice will the amount of concentration required gradually diminish.
 - **Practice reading and pronunciation by reading the text aloud**. After reading a line, you may want to play the audio to check your pronunciation.
@@ -50,7 +50,7 @@ There are at least five ways to go through a story:
 
 Keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**. For any one story, which combination of the above processes you use in what order is up to you.
 
-The first time through a story will generally require a full intensive read through, but how you proceed with that story from there can highly vary. If the material seems easy enough, you might simply listen to the story and only occasionally check the transcript when you can’t make out a word. For more difficult material, you may need to repeat the intensive process a few more times, and even after several repetitions, you may still require the transcript to follow along while listening. As a compromise, you can do a hybrid process: go sentence-by-sentence, listening first with the transcript then playing it again without looking at the transcript.
+The first time through a story will generally require a full intensive read through, but how you proceed with that story from there can highly vary. If the material seems easy enough, you might simply listen to the story and only occasionally check the transcript when you can’t make out a word. For more difficult material, you may need to repeat the intensive process a few more times, and even after several repetitions, you may still require the transcript to follow along while listening. As a compromise, you can do a hybrid process: go sentence-by-sentence, listening first with the transcript then playing the sentence again without looking at the transcript.
 
 
 ## Sources of input
@@ -61,7 +61,7 @@ These are some of the best sources I've found of comprehensible input material w
 - [Nihongo Picnic](https://nihongopicnic.notion.site/Nihongo-Picnic-Podcast-s-Transcript-e6c923a2d9f34c1fa278bb5e4531ea0f) (free transcripts)
 - [Japanese with Shun](https://www.youtube.com/@JapanesewithShun) (transcripts through Patreon)
 - [Sakura Tips](https://sakuratips.com/) (free transcripts)
-- [Japanese with Norko](https://www.japanesewithnoriko.com/) (free transcripts; the podcasts are also posted on youtube, so I include the youtube link when I create a story)
+- [Japanese with Norko](https://www.japanesewithnoriko.com/) (free transcripts; the podcasts are also posted on youtube)
 
 These sources lack human-written transcripts in most cases, so you must rely upon Youtube captions or other auto-generated transcription:
 
