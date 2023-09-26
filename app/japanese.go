@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"regexp"
@@ -66,6 +67,10 @@ const DRILL_CATEGORY_KANJI = 4096
 const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
 	DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU
 
+var devMode bool = false
+
+const SINGLE_USER_DB_PATH = "../users/single.db"
+
 func main() {
 	var err error
 	tok, err = tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
@@ -77,6 +82,7 @@ func main() {
 	sessionStore = sessions.NewCookieStore([]byte(SESSION_KEY)) // todo insecure
 
 	makeMainDB()
+	makeUserDB(SINGLE_USER_DB_PATH)
 	initialize()
 
 	start := time.Now()
@@ -126,15 +132,15 @@ func main() {
 
 	for _, s := range os.Args {
 		if s == "-dev" {
+			devMode = true
 			router.Use(devMiddleware)
+			fmt.Println("In dev mode")
 		}
 	}
 
 	router.HandleFunc("/loginauth", PostLoginAuth).Methods("POST")
 	router.HandleFunc("/logout", PostLogout).Methods("POST")
 	router.HandleFunc("/register", PostRegisterUser).Methods("POST")
-	router.HandleFunc("/word_search", PostWordSearch).Methods("POST")
-	router.HandleFunc("/word_type_search", PostWordTypeSearch).Methods("POST")
 	router.HandleFunc("/update_story_counts", UpdateStoryCounts).Methods("POST")
 	router.HandleFunc("/create_story", CreateStory).Methods("POST")
 	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
@@ -235,8 +241,8 @@ func makeMainDB() {
 
 }
 
-func makeUserDB(userhash string) {
-	sqldb, err := sql.Open("sqlite3", "../users/"+userhash+".db")
+func makeUserDB(path string) {
+	sqldb, err := sql.Open("sqlite3", path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -314,17 +320,12 @@ func getKanji(characters []string) []KanjiCharacter {
 }
 
 func GetMain(response http.ResponseWriter, request *http.Request) {
-
-	session, err := sessionStore.Get(request, "session")
-	if err != nil {
-		http.Error(response, err.Error(), http.StatusInternalServerError)
+	_, redirect, err := GetUserDb(response, request)
+	if redirect || err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-
-	if session.IsNew {
-		http.Redirect(response, request, "/login.html", http.StatusSeeOther)
-	}
-
 	//dbPath := session.Values["user_db_path"]
 
 	http.ServeFile(response, request, "../static/index.html")
@@ -452,117 +453,14 @@ func PostRegisterUser(response http.ResponseWriter, request *http.Request) {
 
 	// create user DB
 	bytes := md5.Sum([]byte(email))
-	makeUserDB(hex.EncodeToString(bytes[:]))
+
+	userhash := hex.EncodeToString(bytes[:])
+	makeUserDB("../users/" + userhash + ".db")
 
 	// var cookie = http.Cookie{Name: "user", Value: "test", Expires: time.Now().Add(365 * 24 * time.Hour)}
 	// http.SetCookie(response, &cookie)
 
 	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
-}
-
-func PostWordSearch(response http.ResponseWriter, request *http.Request) {
-	response.Header().Set("Content-Type", "application/json")
-
-	var wordSearch WordSearch
-	json.NewDecoder(request.Body).Decode(&wordSearch)
-
-	fmt.Printf("\nword search: %v\n", wordSearch.Word)
-
-	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-	kanji := re.FindAllString(wordSearch.Word, -1)
-	hasKanji := len(re.FindStringIndex(wordSearch.Word)) > 0
-
-	reStart := regexp.MustCompile(`^` + wordSearch.Word)
-	entriesStart := make([]JMDictEntry, 0)
-	entriesMid := make([]JMDictEntry, 0)
-
-	if hasKanji { // if has kanji
-		for _, entry := range allEntries.Entries {
-			start := false
-			interior := false
-			for _, kanjiSpelling := range entry.KanjiSpellings {
-				if reStart.MatchString(kanjiSpelling.KanjiSpelling) { // todo regex "^word"
-					start = true
-				} else if strings.Contains(kanjiSpelling.KanjiSpelling, wordSearch.Word) {
-					interior = true
-				}
-			}
-			if start {
-				entriesStart = append(entriesStart, entry)
-			} else if interior {
-				entriesMid = append(entriesMid, entry)
-			}
-		}
-	} else {
-		for _, entry := range allEntries.Entries {
-			start := false
-			interior := false
-			for _, reading := range entry.Readings {
-				if reStart.MatchString(reading.Reading) { // todo regex "^word"
-					start = true
-				} else if strings.Contains(reading.Reading, wordSearch.Word) {
-					interior = true
-				}
-			}
-			if start {
-				entriesStart = append(entriesStart, entry)
-			} else if interior {
-				entriesMid = append(entriesMid, entry)
-			}
-		}
-	}
-
-	kanjiCharacters := getKanji(kanji)
-
-	sortResults(entriesStart, hasKanji, wordSearch.Word)
-	sortResults(entriesMid, hasKanji, wordSearch.Word)
-
-	nEntriesStart := len(entriesStart)
-	if len(entriesStart) > 50 {
-		entriesStart = entriesStart[:50]
-	}
-
-	nEntriesMid := len(entriesMid)
-	if len(entriesMid) > 50 {
-		entriesMid = entriesMid[:50]
-	}
-
-	json.NewEncoder(response).Encode(bson.M{
-		"entries_start": entriesStart,
-		"count_start":   nEntriesStart,
-		"entries_mid":   entriesMid,
-		"count_mid":     nEntriesMid,
-		"kanji":         kanjiCharacters})
-}
-
-func PostWordTypeSearch(response http.ResponseWriter, request *http.Request) {
-	response.Header().Set("Content-Type", "application/json")
-
-	var wordSearch WordSearch
-	json.NewDecoder(request.Body).Decode(&wordSearch)
-
-	entries := make([]JMDictEntry, 0)
-
-	start := time.Now()
-	for _, entry := range allEntries.Entries {
-		for _, sense := range entry.Senses {
-			include := false
-			for _, pos := range sense.Pos {
-				if pos == wordSearch.Word {
-					include = true
-					break
-				}
-			}
-			if include {
-				entries = append(entries, entry)
-				break
-			}
-		}
-	}
-	duration := time.Since(start)
-	fmt.Println("time to search entries: ", duration)
-
-	json.NewEncoder(response).Encode(bson.M{"entries": entries})
 }
 
 func sortResults(entries []JMDictEntry, hasKanji bool, word string) {
@@ -598,4 +496,42 @@ func sortResults(entries []JMDictEntry, hasKanji bool, word string) {
 			return entries[i].ShortestReading < entries[j].ShortestReading
 		})
 	}
+}
+
+func GetUserDb(response http.ResponseWriter, request *http.Request) (string, bool, error) {
+	if !devMode {
+		return SINGLE_USER_DB_PATH, false, nil
+	}
+
+	session, err := sessionStore.Get(request, "session")
+	if err != nil {
+		return "", false, err
+	}
+
+	if session.IsNew {
+		http.Redirect(response, request, "/login.html", http.StatusSeeOther)
+		return "", true, err
+	}
+
+	dbPath, ok := session.Values["user_db_path"].(string)
+	if !ok {
+		return "", false, errors.New("session missing db path")
+	}
+
+	return dbPath, false, nil
+}
+
+func VacuumDb(userDbPath string) error {
+	sqldb, err := sql.Open("sqlite3", userDbPath)
+	if err != nil {
+		return fmt.Errorf("failure to open user db: " + err.Error())
+	}
+	defer sqldb.Close()
+
+	_, err = sqldb.Exec(`VACUUM;`)
+	if err != nil {
+		return fmt.Errorf("failure to vacuum user db: " + err.Error())
+	}
+
+	return nil
 }

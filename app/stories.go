@@ -4,7 +4,6 @@ import (
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -38,6 +37,7 @@ func CreateStory(response http.ResponseWriter, request *http.Request) {
 	if redirect || err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")
@@ -67,6 +67,7 @@ func RetokenizeStory(response http.ResponseWriter, request *http.Request) {
 	if redirect || err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")
@@ -499,40 +500,6 @@ func getVerbCategory(sense JMDictSense) int {
 	return category
 }
 
-func GetUserDb(response http.ResponseWriter, request *http.Request) (string, bool, error) {
-	session, err := sessionStore.Get(request, "session")
-	if err != nil {
-		return "", false, err
-	}
-
-	if session.IsNew {
-		http.Redirect(response, request, "/login.html", http.StatusSeeOther)
-		return "", true, err
-	}
-
-	dbPath, ok := session.Values["user_db_path"].(string)
-	if !ok {
-		return "", false, errors.New("session missing db path")
-	}
-
-	return dbPath, false, nil
-}
-
-func VacuumDb(userDbPath string) error {
-	sqldb, err := sql.Open("sqlite3", userDbPath)
-	if err != nil {
-		return fmt.Errorf("failure to open user db: " + err.Error())
-	}
-	defer sqldb.Close()
-
-	_, err = sqldb.Exec(`VACUUM;`)
-	if err != nil {
-		return fmt.Errorf("failure to vacuum user db: " + err.Error())
-	}
-
-	return nil
-}
-
 func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	dbPath, redirect, err := GetUserDb(response, request)
 	if redirect {
@@ -581,6 +548,7 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	if redirect || err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

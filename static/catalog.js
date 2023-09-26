@@ -64,11 +64,17 @@ var storiesById = {};
 
 function displayStoryList(stories) {
     stories.sort((a, b) => {
-        return b.date_added - a.date_added
+        if (a.date_last_read === b.date_last_read) {
+            return b.date_added - a.date_added
+        }        
+        return a.date_last_read - b.date_last_read
     });
 
     function storyRow(s) {
         return `<tr>
+            <td>
+                <span title="when this story was last read">${timeSince(s.date_last_read)}</span>
+            </td>  
             <td>
                <input story_id="${s.id}" type="number" class="count_spinner" min="0" max="9" steps="1" value="${s.countdown}">
             </td>
@@ -82,6 +88,7 @@ function displayStoryList(stories) {
 
     let html = `<table class="story_table">
         <tr>
+            <th>Time last read</th>
             <th>TODO</th>
             <th title="number of times this story has been read">Read count</th>
             <th>Title</th>
