@@ -1,58 +1,91 @@
-var storyTitle = document.getElementById('story_title');
-var storiesDiv = document.getElementById('stories');
+var storyList = document.getElementById('story_list');
+var newStoryText = document.getElementById('new_story_text');
+var newStoryButton = document.getElementById('new_story_button');
+var newStoryTitle = document.getElementById('new_story_title');
+var newStoryLink = document.getElementById('new_story_link');
+var nonzeroCheckbox = document.getElementById('nonzero_checkbox');
+
+const STORY_COOLDOWN = 60 * 60 * 24;  
 
 document.body.onload = function (evt) {
     getStoryList(displayStoryList);
 };
 
+newStoryButton.onclick = function (evt) {
+    let data = {
+        content: newStoryText.value,
+        title: newStoryTitle.value,
+        link: newStoryLink.value
+    };
 
+    newStoryText.value = '';
+    newStoryTitle.value = '';
+    newStoryLink.value = '';
 
-storiesDiv.onclick = function(evt) {
-    if (evt.target.tagName == 'A') {
-        var logId = evt.target.getAttribute('log_id');
-        var storyId = evt.target.getAttribute('story_id');
-        var action = evt.target.getAttribute('action');
-        switch (action) {
-            case 'log':
-                evt.preventDefault();
-                logScheduledStory(logId, storyId);
-                break;
-        }
-    }
-};
-
-function openStory(id) {
-    fetch('/story/' + id, {
-        method: 'GET', // or 'PUT'
+    fetch('/create_story', {
+        method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify(data),
     }).then((response) => response.json())
         .then((data) => {
-            story = data;
-            storyTitle.innerText = data.title;
-            story.tokens = JSON.parse(story.tokens);
-            displayStory(data);
+            getStoryList(displayStoryList);
         })
         .catch((error) => {
             console.error('Error:', error);
         });
+};
+
+storyList.onchange = function (evt) {
+    if (evt.target.className.includes('count_spinner')) {
+        let storyId = parseInt(evt.target.getAttribute('story_id'));
+        let story = storiesById[storyId];
+        story.countdown = parseInt(evt.target.value);
+        updateStoryCounts(story, () => { });
+    }
+};
+
+nonzeroCheckbox.onchange = function (evt) {
+    displayStoryList(Object.values(storiesById));
+};
+
+function retokenizeStory(story) {
+    fetch('/retokenize_story', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: story.id }),
+    }).then((response) => response.json())
+        .then((data) => {
+            getStoryList(displayStoryList);
+        })
+        .catch((error) => {
+            console.error('Error retokenizing:', error);
+        });
 }
 
-const STORY_COOLDOWN = 60 * 60 * 24;  
+
+var storiesById = {};
 
 function displayStoryList(stories) {
     stories.sort((a, b) => {
+        if (a.date_last_read === b.date_last_read) {
+            return b.date_added - a.date_added
+        }        
         return a.date_last_read - b.date_last_read
     });
+
+    let nonzeroCountdownOnly = nonzeroCheckbox.checked;
 
     function storyRow(s) {
         return `<tr>
             <td>
                 <span title="when this story was last read">${timeSince(s.date_last_read)}</span>
-            </td>    
+            </td>  
             <td>
-               <span title="number of times left to read this story">${s.countdown}</span>
+               <input story_id="${s.id}" type="number" class="count_spinner" min="0" max="9" steps="1" value="${s.countdown}">
             </td>
             <td>
                 <span title="number of times this story has been read">${s.read_count}</span>
@@ -64,9 +97,9 @@ function displayStoryList(stories) {
 
     let html = `<table class="story_table">
         <tr>
-            <th title="when this story was last read">Time last read</th>    
-            <th>Countdown</th>
-            <th title="number of times this story has been read">Total reads</th>
+            <th>Time last read</th>
+            <th title="number of additional times you intend to read this story">Countdown</th>
+            <th title="number of times this story has been read">Read count</th>
             <th>Title</th>
         </tr>`;
 
@@ -74,11 +107,10 @@ function displayStoryList(stories) {
 
     for (let s of stories) {
         storiesById[s.id] = s;
-        if (s.countdown > 0) {
+        if (s.countdown > 0 || !nonzeroCountdownOnly) {
             html += storyRow(s);
         }        
     }
 
-    storiesDiv.innerHTML = html + '</table>';
+    storyList.innerHTML = html + '</table>';
 };
-

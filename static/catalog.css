@@ -16,3 +16,8 @@ body h3 {
 .story_table th {
     text-align: left;
 }
+
+#nonzero_label {
+    font-size: 60%;
+    color: rgb(116, 116, 116);
+}

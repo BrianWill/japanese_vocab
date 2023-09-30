@@ -202,6 +202,14 @@ a {
     padding: 1em 0em 0.2em 2em;
 }
 
+#story_list input[type=number] {
+    background-color: #232323;
+    color: white;
+    font-size: 90%;
+    margin: auto;
+    width: 3em;
+}
+
 #story_list table {
     margin-left: 2em;
 }

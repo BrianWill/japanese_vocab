@@ -5,18 +5,28 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
 
-    <link rel="stylesheet" href="../words.css">
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../catalog.css">
     <title>Japan Vocab</title>
 </head>
 
 <body>
-    <span id="top_link"><a href="/">⬅ &#x1F3E0;</a> <a class="header_link" href="catalog.html">story catalog</a><a class="header_link" href="words.html?storyId=-1">drill all words</a></span>
-    <h3>CURRENT STORIES</h3>
-    <div id="stories"></div>
-    <div id="snackbar"></div>
-</body>
+    <div id="top_link"><a href="/">⬅ &#x1F3E0;</a></div>
+    <h3>CREATE STORY</h3>
+    <div id="create_story_div">
+        <input id="new_story_title" type="text" placeholder="Title">
+        <input id="new_story_link" type="text" placeholder="Link">
+        <textarea id="new_story_text" placeholder="Content"></textarea>
+        <button id="new_story_button">Create Story</button>
+    </div>
 
+    <h3>STORIES
+        &nbsp;&nbsp;
+        <input type="checkbox" checked="true" id="nonzero_checkbox"> 
+        <label id="nonzero_label">Show only stories with a countdown greater than 0</label>
+    </h3>
+    <div id="story_list"></div>
+</body>
 <script src="../util.js"></script>
 <script src="../main.js"></script>
 

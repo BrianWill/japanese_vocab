@@ -179,11 +179,10 @@ tokenizedStory.onmousedown = function (evt) {
             let surface = evt.target.innerHTML;
             displayDefinition(baseform, surface);
         }
-
     } else if (evt.target.classList.contains('line_timestamp')) {
         evt.preventDefault();
         let lineIdx = parseInt(evt.target.parentNode.parentNode.getAttribute('line_idx'));
-        if (evt.ctrlKey) { 
+        if (evt.ctrlKey) {
             fetch('/story_consolidate_line', {
                 method: 'POST', // or 'PUT'
                 headers: {
@@ -202,11 +201,21 @@ tokenizedStory.onmousedown = function (evt) {
                 .catch((error) => {
                     console.error('Error:', error);
                 });
-        } else if (evt.which == 2 || evt.button == 4 ) {
+        } else if (evt.which == 2 || evt.button == 4) {
             evt.preventDefault();
-            let marked = story.lines[lineIdx].marked == true;  // coerce undefined to bool
-            setLineMark(lineIdx, !marked);
+            if (evt.altKey) {
+                var words = story.lines[lineIdx].words;
+                let text = '';
+                for (const word of words) {
+                    text += word.surface;
+                }
+                window.open(`https://translate.google.com/?sl=auto&tl=en&text=${text}&op=translate`);
+            } else {
+                let marked = story.lines[lineIdx].marked == true;  // coerce undefined to bool
+                setLineMark(lineIdx, !marked);
+            }
         } else if (evt.altKey) {
+            evt.preventDefault();
             if (videoPlayer) {
                 selectedLineIdx = lineIdx;
                 let seconds = videoPlayer.getCurrentTime();
@@ -226,6 +235,7 @@ tokenizedStory.onmousedown = function (evt) {
                 setTimestamp(selectedLineIdx, seconds);
             }
         } else {
+            evt.preventDefault();
             if (videoPlayer) {
                 selectedLineIdx = lineIdx;
                 let seconds = parseTimestamp(evt.target.innerHTML);
@@ -237,6 +247,15 @@ tokenizedStory.onmousedown = function (evt) {
                 audioPlayer.currentTime = seconds;
                 audioPlayer.play();
             }
+
+
+            // navigator.clipboard.writeText(text)
+            //     .then(() => {
+            //         console.log('Text copied to clipboard: ' + text);
+            //     })
+            //     .catch((error) => {
+            //         console.error('Error copying text to clipboard:', error);
+            //     });
         }
     }
 };

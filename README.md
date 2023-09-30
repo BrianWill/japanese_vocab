@@ -25,11 +25,7 @@ Each story has:
 
 ## Main page
 
-The main page only displays the stories that have a countdown greater than 0. 
-
-## Catalog page
-
-The "catalog" page displays all the stories and allows you to add new stories.
+The main page displays all the stories and allows you to add new stories. A checkbox toggles whether to show only stories with a countdown greater than 0.
 
 ## Story page
 
