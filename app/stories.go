@@ -555,17 +555,12 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte(`{ "message": "` + "failure to get word ranks: " + err.Error() + `"}`))
 		return
 	}
-	fmt.Println("len word ranks", len(wordRanks))
 
 	for i := range stories {
 		story := &stories[i]
-		fmt.Println("before story", i)
 		story.WordRankCounts = GetStoryWordRankCounts(story.Lines, wordRanks)
-		fmt.Println("after story", i)
 		story.Lines = nil // omit the lines from the returned data
 	}
-
-	fmt.Println("after stories")
 
 	json.NewEncoder(response).Encode(stories)
 }
