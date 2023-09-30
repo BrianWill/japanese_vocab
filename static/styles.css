@@ -273,9 +273,7 @@ a {
     margin: auto;
 }
 
-#new_story_title,
-#new_story_link,
-#new_story_text {
+#create_story_div input, #new_story_text {
     display: block;
     padding: 0.25rem;
     margin-bottom: 0.5rem;

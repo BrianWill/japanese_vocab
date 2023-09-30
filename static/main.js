@@ -3,6 +3,7 @@ var newStoryText = document.getElementById('new_story_text');
 var newStoryButton = document.getElementById('new_story_button');
 var newStoryTitle = document.getElementById('new_story_title');
 var newStoryLink = document.getElementById('new_story_link');
+var newStoryAudio = document.getElementById('new_story_audio');
 var nonzeroCheckbox = document.getElementById('nonzero_checkbox');
 
 const STORY_COOLDOWN = 60 * 60 * 24;  
@@ -15,12 +16,14 @@ newStoryButton.onclick = function (evt) {
     let data = {
         content: newStoryText.value,
         title: newStoryTitle.value,
-        link: newStoryLink.value
+        link: newStoryLink.value,
+        audio: newStoryAudio.value,
     };
 
     newStoryText.value = '';
     newStoryTitle.value = '';
     newStoryLink.value = '';
+    newStoryAudio.value = '';
 
     fetch('/create_story', {
         method: 'POST', // or 'PUT'

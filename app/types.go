@@ -10,7 +10,7 @@ type Story struct {
 	Content      string              `json:"content,omitempty"`
 	Title        string              `json:"title,omitempty"`
 	Link         string              `json:"link,omitempty"`
-	Audio        string              `json:"audio,omitempty"`
+	Audio        string              `json:"audio"`
 	Lines        []Line              `json:"lines,omitempty"`
 	Status       int                 `json:"status"`
 	ReadCount    int                 `json:"read_count"`

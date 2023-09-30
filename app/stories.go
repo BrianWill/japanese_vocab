@@ -20,6 +20,7 @@ import (
 )
 
 const INITIAL_RANK = 1
+const INITIAL_STORY_COUNTDOWN = 3
 
 const DRILL_FILTER_ON_COOLDOWN = "on"
 const DRILL_FILTER_OFF_COOLDOWN = "off"
@@ -135,9 +136,9 @@ func tokenize(content string) ([]*JpToken, []string, error) {
 func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCount int, err error) {
 	if retokenize {
 		var linesJSON string
-		row := sqldb.QueryRow(`SELECT title, link, lines, date_added 
+		row := sqldb.QueryRow(`SELECT title, link, lines, date_added, audio 
 			FROM stories WHERE id = $1;`, story.ID)
-		if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded); err != nil {
+		if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded, &story.Audio); err != nil {
 			return 0, 0, fmt.Errorf("failure to read story: " + err.Error())
 		}
 		err := json.Unmarshal([]byte(linesJSON), &story.Lines)
@@ -220,9 +221,9 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCou
 		return story.ID, newWordCount, nil
 	} else {
 		date := time.Now().Unix()
-		result, err := sqldb.Exec(`INSERT INTO stories (lines, title, link, date_added, status, audio, countdown, read_count, date_last_read) 
+		result, err := sqldb.Exec(`INSERT INTO stories (lines, title, link, audio, date_added, status, countdown, read_count, date_last_read) 
 				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
-			linesJson, story.Title, story.Link, date, STORY_INITIAL_STATUS, "", 0, 0, 0)
+			linesJson, story.Title, story.Link, story.Audio, date, STORY_INITIAL_STATUS, INITIAL_STORY_COUNTDOWN, 0, 0)
 		if err != nil {
 			return 0, 0, fmt.Errorf("failure to insert story: " + err.Error())
 		}

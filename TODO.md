@@ -1,30 +1,5 @@
 # japanese_vocab TODO
 
-Mini Lesson Compilation #5 ミニレッスン集 #5 Complete Beginner Japanese 日本語超初心者 Comprehensible Input	https://www.youtube.com/watch?v=8xsKNluTuo8
-引き出しの中身 What’s in the drawers	https://cijapanese.com/whats-in-the-drawers-members-only/
-日本に関する⚪︎×クイズ Japan Quiz (True or False)	https://cijapanese.com/japan-quiz-true-or-false-members-only/
-学校の教科 School subjects	https://cijapanese.com/school-subjects-members-only/
-夫の１日 A day in the life of my husband	https://cijapanese.com/a-day-in-the-life-of-my-husband-members-only/
-Monster episode 1	https://animelon.com/video/61793101526a1a2df4e2b3c5
-マリオの映画を観に行った話 We went to see the Mario movie	https://cijapanese.com/we-went-to-see-the-mario-movie-members-only/
-足が弱くなって転んでけがをする子どもが増えている	https://www3.nhk.or.jp/news/easy/k10014062771000/k10014062771000.html
-Spot the difference (Mother’s Day) 間違い探し（母の日）	https://cijapanese.com/spot-the-difference-mothers-day-members-only/
-冬 Winter	https://cijapanese.com/winter-members-only/
-消えた息子の靴下 My son’s missing socks	https://cijapanese.com/my-sons-missing-socks-members-only/
-Haru: “行くんですか”跟“行きますか”有什麼不同？問句“～んですか？”的用法和意思！初-中級日語 【台灣學生最常搞錯的日語】 講中文的日本人Haru老師【#28】日文發音，中文字幕	https://www.youtube.com/watch?v=sUy9SrwReyk&list=PL2MpP9BgnjX6GQxUo5YMLdnZl5sALvZ1E&index=1
-Japanese Podcast『日本語って！』第63回　歳をとると「丸くなる」？	https://www.youtube.com/watch?v=UYlHH-2AX6w
-カゴの中身は何でしょう #2 Guess what’s in the basket! #2	https://cijapanese.com/guess-whats-in-the-basket-2-members-only/
-忘れ物の多い息子? My son often forgets to take something to school	https://cijapanese.com/my-son-often-forgets-to-take-something-to-school-members-only/
-#41 Short story / トイレの女の子《A girl in the restroom	https://www.youtube.com/watch?v=i6Mh-Dxv8TI
-#4 早起（はやお）きは三文（さんもん）の徳（とく） // N3 Level	https://www.youtube.com/watch?v=eItP9NIkutM&list=PLL9Szyax7Exw0fhcn04b0DVbpCiff8i4h
-#3 Short story あめだま (amedama) storytelling //N4 Level	https://youtu.be/jDBh7-a92sg
-Japanese Podcast for beginners / Ep15 Common sense (Genki 1 level)	https://www.youtube.com/watch?v=Bt_ibvl-Dtk
-Psycho Pass ep 1	https://animelon.com/video/57986e7c641f6457395b6b22
-Death Note ep 2 (1 of 3)	https://animelon.com/video/571f0854cdec5d5697d3dd28
-Death Note ep 2 (2 of 3)	https://animelon.com/video/571f0854cdec5d5697d3dd28
-Death Note ep 2 (3 of 3)	https://animelon.com/video/571f0854cdec5d5697d3dd28
-
-
 - track verbs by initial sound
 
 - in story list, icon indicating if story is on cooldown
