@@ -6,19 +6,22 @@ import (
 )
 
 type Story struct {
-	ID           int64               `json:"id,omitempty"`
-	Content      string              `json:"content,omitempty"`
-	Title        string              `json:"title,omitempty"`
-	Link         string              `json:"link,omitempty"`
-	Audio        string              `json:"audio"`
-	Lines        []Line              `json:"lines,omitempty"`
-	Status       int                 `json:"status"`
-	ReadCount    int                 `json:"read_count"`
-	Countdown    int                 `json:"countdown"`
-	DateLastRead int64               `json:"date_last_read"`
-	DateAdded    int64               `json:"date_added,omitempty"`
-	WordInfo     map[string]WordInfo `json:"word_info,omitempty"`
+	ID             int64               `json:"id,omitempty"`
+	Content        string              `json:"content,omitempty"`
+	Title          string              `json:"title,omitempty"`
+	Link           string              `json:"link,omitempty"`
+	Audio          string              `json:"audio"`
+	Lines          []Line              `json:"lines,omitempty"`
+	Status         int                 `json:"status"`
+	ReadCount      int                 `json:"read_count"`
+	Countdown      int                 `json:"countdown"`
+	DateLastRead   int64               `json:"date_last_read"`
+	DateAdded      int64               `json:"date_added,omitempty"`
+	WordInfo       map[string]WordInfo `json:"word_info,omitempty"`
+	WordRankCounts WordRankCounts      `json:"word_ranks,omitempty"`
 }
+
+type WordRankCounts [4]int
 
 type WordInfo struct {
 	Rank        int           `json:"rank"`

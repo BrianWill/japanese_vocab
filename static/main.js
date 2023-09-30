@@ -6,7 +6,7 @@ var newStoryLink = document.getElementById('new_story_link');
 var newStoryAudio = document.getElementById('new_story_audio');
 var nonzeroCheckbox = document.getElementById('nonzero_checkbox');
 
-const STORY_COOLDOWN = 60 * 60 * 24;  
+const STORY_COOLDOWN = 60 * 60 * 24;
 
 document.body.onload = function (evt) {
     getStoryList(displayStoryList);
@@ -76,7 +76,7 @@ function displayStoryList(stories) {
     stories.sort((a, b) => {
         if (a.date_last_read === b.date_last_read) {
             return b.date_added - a.date_added
-        }        
+        }
         return a.date_last_read - b.date_last_read
     });
 
@@ -93,6 +93,10 @@ function displayStoryList(stories) {
             <td>
                 <span title="number of times this story has been read">${s.read_count}</span>
             </td>
+            <td>
+                <span title="number of rank 1 and 2 words and kanji. The story also contains ${s.word_ranks[2]} rank 3 kanji.">
+                    ${s.word_ranks[0] + s.word_ranks[1]}</span>
+            </td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
     }
@@ -103,6 +107,7 @@ function displayStoryList(stories) {
             <th>Time last read</th>
             <th title="number of additional times you intend to read this story">Countdown</th>
             <th title="number of times this story has been read">Read count</th>
+            <th title="number of rank 1 and 2 words and kanji">Unknown</th>
             <th>Title</th>
         </tr>`;
 
@@ -112,7 +117,7 @@ function displayStoryList(stories) {
         storiesById[s.id] = s;
         if (s.countdown > 0 || !nonzeroCountdownOnly) {
             html += storyRow(s);
-        }        
+        }
     }
 
     storyList.innerHTML = html + '</table>';

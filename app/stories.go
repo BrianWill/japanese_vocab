@@ -521,7 +521,7 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, title, link, status, date_added, countdown, read_count, date_last_read FROM stories;`)
+	rows, err := sqldb.Query(`SELECT id, title, link, lines, status, date_added, countdown, read_count, date_last_read FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -531,17 +531,76 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 
 	var stories []Story
 	for rows.Next() {
+		var linesJSON string
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &story.Status,
+		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &linesJSON, &story.Status,
 			&story.DateAdded, &story.Countdown, &story.ReadCount, &story.DateLastRead); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
 		}
+
+		err := json.Unmarshal([]byte(linesJSON), &story.Lines)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to unmarshal story lines: " + err.Error() + `"}`))
+			return
+		}
 		stories = append(stories, story)
 	}
 
+	wordRanks, err := GetWordRanks(sqldb)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get word ranks: " + err.Error() + `"}`))
+		return
+	}
+	fmt.Println("len word ranks", len(wordRanks))
+
+	for i := range stories {
+		story := &stories[i]
+		fmt.Println("before story", i)
+		story.WordRankCounts = GetStoryWordRankCounts(story.Lines, wordRanks)
+		fmt.Println("after story", i)
+		story.Lines = nil // omit the lines from the returned data
+	}
+
+	fmt.Println("after stories")
+
 	json.NewEncoder(response).Encode(stories)
+}
+
+func GetStoryWordRankCounts(lines []Line, wordRanks map[string]int) WordRankCounts {
+	var counts WordRankCounts
+	for _, line := range lines {
+		for _, word := range line.Words {
+			if rank, ok := wordRanks[word.BaseForm]; ok {
+				counts[rank-1]++
+			}
+		}
+	}
+	return counts
+}
+
+func GetWordRanks(sqldb *sql.DB) (map[string]int, error) {
+	wordRanks := make(map[string]int)
+
+	rows, err := sqldb.Query(`SELECT id, base_form, rank FROM words;`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var word DrillWord
+		err = rows.Scan(&word.ID, &word.BaseForm, &word.Rank)
+		if err != nil {
+			return nil, err
+		}
+		wordRanks[word.BaseForm] = word.Rank
+	}
+
+	return wordRanks, nil
 }
 
 func GetStory(w http.ResponseWriter, r *http.Request) {
