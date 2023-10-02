@@ -94,8 +94,12 @@ function displayStoryList(stories) {
                 <span title="number of times this story has been read">${s.read_count}</span>
             </td>
             <td>
-                <span title="number of rank 1 and 2 words and kanji. The story also contains ${s.word_ranks[2]} rank 3 kanji.">
-                    ${s.word_ranks[0] + s.word_ranks[1]}</span>
+                <span title="number of rank 1 words and kanji">
+                    ${s.word_ranks[0]}</span>
+            </td>
+            <td>
+                <span title="number of rank 2 words and kanji">
+                    ${s.word_ranks[1]}</span>
             </td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
@@ -107,7 +111,8 @@ function displayStoryList(stories) {
             <th>Time last read</th>
             <th title="number of additional times you intend to read this story">Countdown</th>
             <th title="number of times this story has been read">Read count</th>
-            <th title="number of rank 1 and 2 words and kanji">Unknown</th>
+            <th title="number of rank 1 words and kanji">Unknown</th>
+            <th title="number of rank 2 words and kanji">Weak</th>
             <th>Title</th>
         </tr>`;
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 
@@ -65,6 +64,7 @@ const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU |
 var devMode bool = false
 
 const SINGLE_USER_DB_PATH = "../users/single.db"
+const TEST_USER_DB_PATH = "../users/test.db"
 
 func main() {
 	var err error
@@ -443,26 +443,28 @@ func PostRegisterUser(response http.ResponseWriter, request *http.Request) {
 }
 
 func GetUserDb(response http.ResponseWriter, request *http.Request) (string, bool, error) {
-	if !devMode {
+	if devMode {
+		return TEST_USER_DB_PATH, false, nil
+	} else {
 		return SINGLE_USER_DB_PATH, false, nil
 	}
 
-	session, err := sessionStore.Get(request, "session")
-	if err != nil {
-		return "", false, err
-	}
+	// session, err := sessionStore.Get(request, "session")
+	// if err != nil {
+	// 	return "", false, err
+	// }
 
-	if session.IsNew {
-		http.Redirect(response, request, "/login.html", http.StatusSeeOther)
-		return "", true, err
-	}
+	// if session.IsNew {
+	// 	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
+	// 	return "", true, err
+	// }
 
-	dbPath, ok := session.Values["user_db_path"].(string)
-	if !ok {
-		return "", false, errors.New("session missing db path")
-	}
+	// dbPath, ok := session.Values["user_db_path"].(string)
+	// if !ok {
+	// 	return "", false, errors.New("session missing db path")
+	// }
 
-	return dbPath, false, nil
+	// return dbPath, false, nil
 }
 
 func VacuumDb(userDbPath string) error {
