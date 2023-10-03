@@ -41,7 +41,7 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	baseForms, err := getStoryWords(drillRequest.StoryIds, sqldb)
+	baseForms, err := getStoryWords(drillRequest.StoryId, sqldb)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -67,7 +67,7 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 			gw.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
 			return
 		}
-		if len(drillRequest.StoryIds) == 0 {
+		if drillRequest.StoryId == -1 {
 			words = append(words, word)
 		} else if _, ok := baseForms[word.BaseForm]; ok {
 			words = append(words, word)
@@ -96,67 +96,53 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(gw).Encode(bson.M{"words": words, "wordInfoMap": wordInfoMap})
 }
 
-func getStoryWords(storyIds []int64, sqldb *sql.DB) (map[string]bool, error) {
+func getStoryWords(storyId int64, sqldb *sql.DB) (map[string]bool, error) {
 	baseForms := make(map[string]bool)
 
-	if len(storyIds) == 1 && storyIds[0] == -1 {
-		rows, err := sqldb.Query(`SELECT lines FROM stories WHERE status = $1`, STORY_STATUS_CURRENT)
+	if storyId == -1 {
+		rows, err := sqldb.Query(`SELECT base_form FROM words`)
 		if err != nil {
-			return nil, fmt.Errorf("failure to get story words: " + err.Error())
+			return nil, fmt.Errorf("failure to get words: " + err.Error())
 		}
 		defer rows.Close()
 
 		for rows.Next() {
-			var linesJSON string
-			var lines []Line
-			err = rows.Scan(&linesJSON)
+			var baseForm string
+			err = rows.Scan(&baseForm)
 			if err != nil {
-				return nil, fmt.Errorf("failure to scan story line: " + err.Error())
-			}
-			err := json.Unmarshal([]byte(linesJSON), &lines)
-			if err != nil {
-				return nil, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
+				return nil, fmt.Errorf("failure to scan word base form: " + err.Error())
 			}
 
-			for _, line := range lines {
-				for _, kanji := range line.Kanji {
-					baseForms[kanji.Character] = true
-				}
-				for _, word := range line.Words {
-					baseForms[word.BaseForm] = true
-				}
-			}
+			baseForms[baseForm] = true
 		}
 
 		return baseForms, nil
 	}
 
-	for _, id := range storyIds {
-		rows, err := sqldb.Query(`SELECT lines FROM stories WHERE id = $1`, id)
+	rows, err := sqldb.Query(`SELECT lines FROM stories WHERE id = $1`, storyId)
+	if err != nil {
+		return nil, fmt.Errorf("failure to get story words: " + err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var linesJSON string
+		var lines []Line
+		err = rows.Scan(&linesJSON)
 		if err != nil {
-			return nil, fmt.Errorf("failure to get story words: " + err.Error())
+			return nil, fmt.Errorf("failure to scan story line: " + err.Error())
 		}
-		defer rows.Close()
+		err := json.Unmarshal([]byte(linesJSON), &lines)
+		if err != nil {
+			return nil, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
+		}
 
-		for rows.Next() {
-			var linesJSON string
-			var lines []Line
-			err = rows.Scan(&linesJSON)
-			if err != nil {
-				return nil, fmt.Errorf("failure to scan story line: " + err.Error())
+		for _, line := range lines {
+			for _, kanji := range line.Kanji {
+				baseForms[kanji.Character] = true
 			}
-			err := json.Unmarshal([]byte(linesJSON), &lines)
-			if err != nil {
-				return nil, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
-			}
-
-			for _, line := range lines {
-				for _, kanji := range line.Kanji {
-					baseForms[kanji.Character] = true
-				}
-				for _, word := range line.Words {
-					baseForms[word.BaseForm] = true
-				}
+			for _, word := range line.Words {
+				baseForms[word.BaseForm] = true
 			}
 		}
 	}

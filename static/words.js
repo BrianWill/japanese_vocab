@@ -316,30 +316,17 @@ document.body.onload = function (evt) {
 
             storyIds = {};
             var url = new URL(window.location.href);
-            if (url.searchParams && url.searchParams.has("storyId")) {
-                let storyIdsList = url.searchParams.get("storyId").split(',');
-                for (let idStr of storyIdsList) {
-                    var id = parseInt(idStr.trim());
-                    storyIds[id] = true;
-                }
-            }
+            let storyId = parseInt(url.searchParams.get("storyId"));
 
-            var titles = [];
+            var title = 'ALL STORIES';
 
-            let ids = Object.keys(storyIds).map(x => parseInt(x));
-            if (ids.includes(-1)) {
-                titles.push('ALL CURRENT STORIES');
-            }
-            if (ids.includes(0)) {
-                titles.push('ALL STORIES');
-            }
             for (let story of stories) {
-                if (ids.includes(story.id)) {
-                    titles.push(story.title);
+                if (storyId === story.id) {
+                    title = story.title;
                 }
-            }
+            }           
 
-            drillTitleH.innerHTML = `<a href="/story.html?storyId=${ids}"> ${titles.join(', ')}</a>`;
+            drillTitleH.innerHTML = `<a href="/story.html?storyId=${storyId}"> ${title}</a>`;
 
             fetch('words', {
                 method: 'POST', // or 'PUT'
@@ -347,7 +334,7 @@ document.body.onload = function (evt) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    story_ids: ids,
+                    story_id: storyId,
                 })
             }).then((response) => response.json())
                 .then((data) => {

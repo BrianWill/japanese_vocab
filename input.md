@@ -61,7 +61,7 @@ These are some of the best sources I've found of comprehensible input material w
 - [Nihongo Picnic](https://nihongopicnic.notion.site/Nihongo-Picnic-Podcast-s-Transcript-e6c923a2d9f34c1fa278bb5e4531ea0f) (free transcripts)
 - [Japanese with Shun](https://www.youtube.com/@JapanesewithShun) (transcripts through Patreon)
 - [Sakura Tips](https://sakuratips.com/) (free transcripts)
-- [Japanese with Norko](https://www.japanesewithnoriko.com/) (free transcripts; the podcasts are also posted on youtube)
+- [Japanese with Noriko](https://www.japanesewithnoriko.com/) (free transcripts; the podcasts are also posted on youtube)
 
 These sources lack human-written transcripts in most cases, so you must rely upon Youtube captions or other auto-generated transcription:
 

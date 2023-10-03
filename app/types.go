@@ -86,7 +86,7 @@ type StoryList struct {
 }
 
 type DrillRequest struct {
-	StoryIds []int64 `json:"story_ids,omitempty"`
+	StoryId int64 `json:"story_id"`
 }
 
 type EnqueueRequest struct {
