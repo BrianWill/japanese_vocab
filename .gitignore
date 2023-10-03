@@ -1,5 +1,5 @@
 # Binaries for programs and plugins
-*.exe
+
 *.exe~
 *.dll
 *.so
@@ -18,5 +18,5 @@
 ignore/*
 app/air_errors.log
 app/tmp/air_errors.log
-static/audio/ignore/*
+static/audio/*
 users/test.db
