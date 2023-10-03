@@ -7,10 +7,14 @@ A program for [learning Japanese through input](input.md) by reading stories and
 
 ## Running the program
 
+For Windows, you can just clone the repo and run `app/japanese.exe`, then go to `localhost:8080` in a web browser.
+
+For other platforms, you'll need to build the executable:
+
 1. [Install Go](https://go.dev/doc/install), version 1.15 or later.
-1. At the command line, in the `app` directory, use `go build` to make the executable.
-1. Run the executable.
-1. In a web browser, go to `localhost:8080`
+1. At the command line, switch to the `app` directory.
+1. Run `go get` to fetch the package dependencies.
+1. Run `go build` to build the executable.
 
 ## Stories
 
