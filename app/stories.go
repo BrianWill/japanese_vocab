@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	//"unicode/utf8"
 
 	"github.com/gorilla/mux"
@@ -50,6 +51,7 @@ func CreateStory(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
 	}
 	defer sqldb.Close()
 
@@ -61,6 +63,37 @@ func CreateStory(response http.ResponseWriter, request *http.Request) {
 	}
 	fmt.Println("total new words added:", newWordCount)
 	json.NewEncoder(response).Encode("Success adding story")
+}
+
+func DeleteStory(response http.ResponseWriter, request *http.Request) {
+	dbPath, redirect, err := GetUserDb(response, request)
+	if redirect || err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+
+	var story Story
+	json.NewDecoder(request.Body).Decode(&story)
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	err = removeStory(story.ID, sqldb)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(response).Encode("Success removing story")
 }
 
 func RetokenizeStory(response http.ResponseWriter, request *http.Request) {
@@ -233,6 +266,14 @@ func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCou
 		}
 		return id, newWordCount, nil
 	}
+}
+
+func removeStory(storyId int64, sqldb *sql.DB) (err error) {
+	_, err = sqldb.Exec(`DELETE FROM stories WHERE id = $1;`, storyId)
+	if err != nil {
+		return fmt.Errorf("failure to insert story: " + err.Error())
+	}
+	return nil
 }
 
 func getTokenPOS(token *JpToken, priorToken *JpToken) string {
