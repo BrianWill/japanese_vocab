@@ -55,11 +55,16 @@ markStoryLink.onclick = function (evt) {
 
 deleteStoryLink.onclick = function (evt) {
     evt.preventDefault();
+
+    if (!confirm('Do you want to delete this story?')) {
+        return;
+    }
+
     let url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
-    let data = { ID: storyId };
+    let data = { ID: storyId };   
 
-    console.log(data.ID)
+    console.log("deleting story", data.ID);
 
     fetch('/delete_story', {
         method: 'DELETE',
