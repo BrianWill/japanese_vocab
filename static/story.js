@@ -9,6 +9,7 @@ var highlightLink = document.getElementById('highlight_message');
 var audioPlayer = document.getElementById('audio_player');
 var playerControls = document.getElementById('player_controls');
 var markStoryLink = document.getElementById('mark_story');
+var deleteStoryLink = document.getElementById('delete_story');
 var countSpinner = document.getElementById('count_spinner');
 
 var story = null;
@@ -51,6 +52,29 @@ markStoryLink.onclick = function (evt) {
         snackbarMessage('marked story as read');
     });
 };
+
+deleteStoryLink.onclick = function (evt) {
+    evt.preventDefault();
+    let url = new URL(window.location.href);
+    let storyId = parseInt(url.searchParams.get("storyId"));
+    let data = { ID: storyId };
+
+    console.log(data.ID)
+
+    fetch('/delete_story', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    }).then((response) => {
+        if (response.status === 200)
+            window.location.replace('/');
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
 
 document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
