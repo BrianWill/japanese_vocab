@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -52,4 +53,60 @@
 <script src="../util.js"></script>
 <script src="../story.js"></script>
 
+=======
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
+
+    <link rel="stylesheet" href="../words.css">
+    <link rel="stylesheet" href="../styles.css">
+    <title>Japan Vocab</title>
+</head>
+
+<body>
+    <span id="top_link"><a href="/">⬅ &#x1F3E0;</a></span> 
+    <div id="story_container">
+        <div id="answer">
+            <div id="player_container">
+                <div id="player">
+                    <audio id="audio_player" controls></audio>
+                </div>
+            </div>
+            <div id="kanji_results"></div>
+            <div id="definitions"></div>
+        </div>
+        <div>
+            <h3 id="story_title">Story</h3>
+            <div id="story_actions">
+                <a id="drill_words_link" href="/words.html?storyId=0">Drill the words of this story</a>&nbsp;
+                <a id="mark_story" href="#">Mark story as read</a>&nbsp;
+                <a id="delete_story" href="/">Delete story</a>&nbsp;
+                <a id="highlight_message" href="#" class="hidden">Highlighting only the rank 1-3 words off cooldown</a>
+                <br>
+                <span id="player_controls">
+                    <label>Playback speed:</label>&nbsp;
+                    <input type="number" id="player_speed_number" value="1" min="0.4" max="1.6" step="0.05"
+                        class="playerspeed" name="playerspeed">
+                </span>
+                <span id="countdown_span">
+                    <label title="the number of more times you plan to read this story">Read countdown:</label>&nbsp;
+                    <input type="number" id="count_spinner" class="count_spinner" min="0" max="9" steps="1"
+                        value="0">
+                </span>
+            </div>
+            <div id="tokenized_story"></div>
+        </div>
+    </div>
+    <div id="word_list_container">
+        <table id="word_list"></table>
+    </div>
+    <div id="snackbar"></div>
+</body>
+<script src="../util.js"></script>
+<script src="../story.js"></script>
+
+>>>>>>> e3e6ad8ef60413f02adbc4527064186de1e7fffb
 </html>
