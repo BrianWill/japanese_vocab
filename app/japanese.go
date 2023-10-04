@@ -138,6 +138,7 @@ func main() {
 	router.HandleFunc("/register", PostRegisterUser).Methods("POST")
 	router.HandleFunc("/update_story_counts", UpdateStoryCounts).Methods("POST")
 	router.HandleFunc("/create_story", CreateStory).Methods("POST")
+	router.HandleFunc("/delete_story", DeleteStory).Methods("DELETE")
 	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/story_consolidate_line", ConsolidateLine).Methods("POST")
