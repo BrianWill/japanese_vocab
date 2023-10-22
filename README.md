@@ -13,6 +13,7 @@ For other platforms, you'll need to build the executable:
 
 1. [Install Go](https://go.dev/doc/install), version 1.15 or later.
 1. At the command line, switch to the `app` directory.
+1. If on Linux, you may need to run `sudo apt install build-essential` (or equivalent for your distribution)
 1. Run `go get` to fetch the package dependencies.
 1. Run `go build` to build the executable.
 

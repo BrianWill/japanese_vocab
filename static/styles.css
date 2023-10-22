@@ -473,6 +473,11 @@ span.verb:hover {
     display: none;
 }
 
+#video_player {
+    width: 100%;
+    display: none;
+}
+
 #stories td {
     padding-right: 3em;
 }
@@ -499,4 +504,8 @@ span.verb:hover {
 #tokenized_story .marked_line.line_timestamp:hover {
     color: rgb(255, 251, 0);
     text-decoration: rgb(255, 251, 0) solid underline;
+}
+
+#tokenized_story {
+    cursor: default;
 }

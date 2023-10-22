@@ -392,8 +392,18 @@ function openStory(id) {
                     }
                 });
             } else if (story.audio) {
-                audioPlayer.style.display = 'block';
-                audioPlayer.src = '/audio/' + story.audio;
+                if (story.audio.endsWith('.mp4')) {
+                    const video = document.createElement("video");
+                    audioPlayer.replaceWith(video);
+                    audioPlayer = video;
+                    audioPlayer.setAttribute('id', 'video_player');
+                    audioPlayer.setAttribute('controls', 'true');
+                    audioPlayer.src = '/audio/' + story.audio;
+                    audioPlayer.style.display = 'block';
+                } else {
+                    audioPlayer.style.display = 'block';
+                    audioPlayer.src = '/audio/' + story.audio;
+                }
             }
 
             if (videoPlayer || audioPlayer) {
