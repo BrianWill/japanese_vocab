@@ -1,5 +1,49 @@
 # japanese_vocab TODO
 
+autoplay drill mode
+    show the word very large, play the audio, short pause before next word
+        (only play cards with audio? maybe an option)
+
+story importer for podcasts:
+    nihongo picnic
+    sakura tips
+    japanese with shuntod
+    japanese with norico
+    cj (how to enable download from patreon?)
+
+    a way to get browse in the app? or just provide a URL / podcast number?
+
+store audio link with timestamps
+    anyway to capture from stories with youtube audio? probably not
+
+import Enlgish and Japanese from transcript files
+    display the subtitles simultenously together on the video
+
+oscilloscope for selecting audio range for a word
+
+<audio id="audio" src="test.mp3"></audio>
+<script type="text/javascript">
+    var context = new webkitAudioContext;
+    var el = document.getElementById('audio');
+    var source = context.createMediaElementSource(el);
+    source.connect(context.destination);
+    el.play();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 - highlighting for proper names
     - filter out of vocab? or just make it a word category you can filter for?
 

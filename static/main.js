@@ -74,10 +74,10 @@ let levelNameMap = {
 };
 
 storyList.onclick = function(evt) {
-    evt.preventDefault();
     if (!evt.target.classList.contains('level')) {
         return;
     }
+    evt.preventDefault();
     var storyId = evt.target.getAttribute('story_id');
     var level = parseInt(evt.target.getAttribute('level'));
 
@@ -134,7 +134,7 @@ function displayStoryList(stories) {
 
 
     let html = `
-        <h3>Current Stories <a class="drill_link" title="vocab and kanji from stories with a countdown greater than zero" href="vocab.html?set=current">drill</a></h3>` 
+        <h3>Current Stories <a class="drill_link" title="vocab and kanji from stories with a countdown greater than zero" href="words.html?set=current">drill</a></h3>` 
         + tableHeader;
 
     storiesById = {};
@@ -147,7 +147,7 @@ function displayStoryList(stories) {
     }
 
     html += `</table>
-    <h3>Active Stories <a class="drill_link" title="vocab and kanji from stories with a countdown equal to zero" href="vocab.html?set=active">drill</a></h3>` 
+    <h3>Active Stories <a class="drill_link" title="vocab and kanji from stories with a countdown equal to zero" href="words.html?set=active">drill</a></h3>` 
     + tableHeader;
 
     for (let s of stories) {
@@ -158,7 +158,7 @@ function displayStoryList(stories) {
     }
 
     html += `</table>
-    <h3>Archived Stories <a class="drill_link" title="vocab and kanji from stories with a countdown less than zero" href="vocab.html?set=archived">drill</a></h3>` 
+    <h3>Archived Stories <a class="drill_link" title="vocab and kanji from stories with a countdown less than zero" href="words.html?set=archived">drill</a></h3>` 
     + tableHeader;
 
     for (let s of stories) {

@@ -317,16 +317,20 @@ document.body.onload = function (evt) {
             storyIds = {};
             var url = new URL(window.location.href);
             let storyId = parseInt(url.searchParams.get("storyId"));
+            let set = url.searchParams.get("set");
 
-            var title = 'ALL STORIES';
+            if (set !== null) {
+                drillTitleH.innerHTML = `${set}`;
+            } else {
+                let title = 'ALL STORIES';
+                for (let story of stories) {
+                    if (storyId === story.id) {
+                        title = story.title;
+                    }
+                }           
 
-            for (let story of stories) {
-                if (storyId === story.id) {
-                    title = story.title;
-                }
-            }           
-
-            drillTitleH.innerHTML = `<a href="/story.html?storyId=${storyId}"> ${title}</a>`;
+                drillTitleH.innerHTML = `<a href="/story.html?storyId=${storyId}"> ${title}</a>`;
+            }
 
             fetch('words', {
                 method: 'POST', // or 'PUT'
@@ -335,10 +339,10 @@ document.body.onload = function (evt) {
                 },
                 body: JSON.stringify({
                     story_id: storyId,
+                    set: set,
                 })
             }).then((response) => response.json())
                 .then((data) => {
-                    //console.log('Words retrieved:', data);
                     words = data.words;
                     wordInfoMap = data.wordInfoMap;
 

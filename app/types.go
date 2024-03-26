@@ -87,7 +87,8 @@ type StoryList struct {
 }
 
 type DrillRequest struct {
-	StoryId int64 `json:"story_id"`
+	StoryId int64  `json:"story_id"`
+	Set     string `json:"set"`
 }
 
 type EnqueueRequest struct {

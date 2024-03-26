@@ -32,7 +32,7 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	baseForms, err := getStoryWords(drillRequest.StoryId, sqldb)
+	baseForms, err := getStoryWords(drillRequest.StoryId, drillRequest.Set, sqldb)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -87,7 +87,7 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(gw).Encode(bson.M{"words": words, "wordInfoMap": wordInfoMap})
 }
 
-func getStoryWords(storyId int64, sqldb *sql.DB) (map[string]bool, error) {
+func getStoryWords(storyId int64, set string, sqldb *sql.DB) (map[string]bool, error) {
 	baseForms := make(map[string]bool)
 
 	if storyId == -1 {
@@ -110,7 +110,20 @@ func getStoryWords(storyId int64, sqldb *sql.DB) (map[string]bool, error) {
 		return baseForms, nil
 	}
 
-	rows, err := sqldb.Query(`SELECT lines FROM stories WHERE id = $1`, storyId)
+	var rows *sql.Rows
+	var err error
+
+	switch set {
+	case "current":
+		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown > 0`)
+	case "active":
+		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown = 0`)
+	case "archived":
+		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown < 0`)
+	default:
+		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE id = $1`, storyId)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failure to get story words: " + err.Error())
 	}
