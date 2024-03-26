@@ -13,6 +13,7 @@ type Story struct {
 	Audio          string              `json:"audio"`
 	Lines          []Line              `json:"lines,omitempty"`
 	Status         int                 `json:"status"`
+	Level          int                 `json:"level"`
 	ReadCount      int                 `json:"read_count"`
 	Countdown      int                 `json:"countdown"`
 	DateLastRead   int64               `json:"date_last_read"`

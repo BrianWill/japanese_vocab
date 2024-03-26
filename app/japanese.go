@@ -77,7 +77,7 @@ func main() {
 	sessionStore = sessions.NewCookieStore([]byte(SESSION_KEY)) // todo insecure
 
 	makeMainDB()
-	makeUserDB(SINGLE_USER_DB_PATH)
+	makeUserDB(GetUserDb())
 	initialize()
 
 	start := time.Now()
@@ -110,9 +110,7 @@ func main() {
 
 	start = time.Now()
 	buildEntryMaps()
-	if err != nil {
-		panic(err)
-	}
+
 	duration = time.Since(start)
 	fmt.Println("time to build entry maps: ", duration)
 
@@ -252,6 +250,7 @@ func makeUserDB(path string) {
 			read_count INTEGER,
 			date_last_read INTEGER,
 			status INTEGER NOT NULL,
+			level INTEGER NOT NULL,
 			audio	TEXT,
 			date_added INTEGER NOT NULL)`)
 	if err != nil {
@@ -300,14 +299,6 @@ func getKanji(characters []string) []KanjiCharacter {
 }
 
 func GetMain(response http.ResponseWriter, request *http.Request) {
-	_, redirect, err := GetUserDb(response, request)
-	if redirect || err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	//dbPath := session.Values["user_db_path"]
-
 	http.ServeFile(response, request, "../static/index.html")
 }
 
@@ -443,29 +434,12 @@ func PostRegisterUser(response http.ResponseWriter, request *http.Request) {
 	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
 }
 
-func GetUserDb(response http.ResponseWriter, request *http.Request) (string, bool, error) {
+func GetUserDb() string {
 	if devMode {
-		return TEST_USER_DB_PATH, false, nil
+		return TEST_USER_DB_PATH
 	} else {
-		return SINGLE_USER_DB_PATH, false, nil
+		return SINGLE_USER_DB_PATH
 	}
-
-	// session, err := sessionStore.Get(request, "session")
-	// if err != nil {
-	// 	return "", false, err
-	// }
-
-	// if session.IsNew {
-	// 	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
-	// 	return "", true, err
-	// }
-
-	// dbPath, ok := session.Values["user_db_path"].(string)
-	// if !ok {
-	// 	return "", false, errors.New("session missing db path")
-	// }
-
-	// return dbPath, false, nil
 }
 
 func VacuumDb(userDbPath string) error {

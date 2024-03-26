@@ -229,6 +229,7 @@ function updateStoryCounts(story, successFn) {
         id: story.id,
         countdown: story.countdown,
         read_count: story.read_count,
+        level: story.level,
         date_last_read: story.date_last_read
     };
     fetch(`/update_story_counts`, {

@@ -13,22 +13,13 @@ import (
 )
 
 func WordDrill(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if redirect {
-		return
-	}
+	dbPath := GetUserDb()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("content-encoding", "gzip")
 
 	gw := gzip.NewWriter(w)
 	defer gw.Close()
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
 
 	var drillRequest DrillRequest
 	json.NewDecoder(r.Body).Decode(&drillRequest)
@@ -151,15 +142,7 @@ func getStoryWords(storyId int64, sqldb *sql.DB) (map[string]bool, error) {
 }
 
 func UpdateWord(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	if redirect {
-		return
-	}
+	dbPath := GetUserDb()
 
 	w.Header().Set("Content-Type", "application/json")
 

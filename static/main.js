@@ -4,7 +4,6 @@ var newStoryButton = document.getElementById('new_story_button');
 var newStoryTitle = document.getElementById('new_story_title');
 var newStoryLink = document.getElementById('new_story_link');
 var newStoryAudio = document.getElementById('new_story_audio');
-var nonzeroCheckbox = document.getElementById('nonzero_checkbox');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
@@ -49,10 +48,6 @@ storyList.onchange = function (evt) {
     }
 };
 
-nonzeroCheckbox.onchange = function (evt) {
-    displayStoryList(Object.values(storiesById));
-};
-
 function retokenizeStory(story) {
     fetch('/retokenize_story', {
         method: 'POST', // or 'PUT'
@@ -72,6 +67,39 @@ function retokenizeStory(story) {
 
 var storiesById = {};
 
+let levelNameMap = {
+    1: 'Low',
+    2: 'Medium',
+    3: 'High',
+};
+
+storyList.onclick = function(evt) {
+    evt.preventDefault();
+    if (!evt.target.classList.contains('level')) {
+        return;
+    }
+    var storyId = evt.target.getAttribute('story_id');
+    var level = parseInt(evt.target.getAttribute('level'));
+
+    let maxLevel = Object.keys(levelNameMap).length;
+    
+    let newLevel = level + 1;
+    if (newLevel > maxLevel) {
+        newLevel = 1;
+    }
+
+    evt.target.setAttribute('level', newLevel);
+    evt.target.className = `level ${levelNameMap[newLevel]}`;
+    evt.target.innerText = levelNameMap[newLevel];
+
+    console.log(`some level ${level} newlevel ${newLevel} id ${storyId}`);
+
+    // update db
+    let story = storiesById[storyId];
+    story.level = newLevel;
+    updateStoryCounts(story, () => { });
+};
+
 function displayStoryList(stories) {
     stories.sort((a, b) => {
         if (a.date_last_read === b.date_last_read) {
@@ -80,7 +108,6 @@ function displayStoryList(stories) {
         return a.date_last_read - b.date_last_read
     });
 
-    let nonzeroCountdownOnly = nonzeroCheckbox.checked;
 
     function storyRow(s) {
         return `<tr>
@@ -88,39 +115,55 @@ function displayStoryList(stories) {
                 <span title="when this story was last read">${timeSince(s.date_last_read)}</span>
             </td>  
             <td>
-               <input story_id="${s.id}" type="number" class="count_spinner" min="0" max="9" steps="1" value="${s.countdown}">
+               <input story_id="${s.id}" type="number" class="count_spinner" min="-1" max="9" steps="1" value="${s.countdown}">
             </td>
             <td>
-                <span title="number of times this story has been read">${s.read_count}</span>
-            </td>
-            <td>
-                <span title="number of rank 1 words and kanji">
-                    ${s.word_ranks[0]}</span>
-            </td>
-            <td>
-                <span title="number of rank 2 words and kanji">
-                    ${s.word_ranks[1]}</span>
+                <span story_id="${s.id}" level="${s.level}" class="level ${levelNameMap[s.level]}" title="difficulty level of this story">${levelNameMap[s.level]}</span>
             </td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
     }
 
+    let tableHeader = `<table class="story_table">
+    <tr>
+        <th>Time last read</th>
+        <th title="number of additional times you intend to read this story">Countdown</th>
+        <th title="difficulty level of this story">Level</th>
+        <th>Title</th>
+    </tr>`;
 
-    let html = `<table class="story_table">
-        <tr>
-            <th>Time last read</th>
-            <th title="number of additional times you intend to read this story">Countdown</th>
-            <th title="number of times this story has been read">Read count</th>
-            <th title="number of rank 1 words and kanji">Unknown</th>
-            <th title="number of rank 2 words and kanji">Weak</th>
-            <th>Title</th>
-        </tr>`;
+
+    let html = `
+        <h3>Current Stories <a class="drill_link" title="vocab and kanji from stories with a countdown greater than zero" href="vocab.html?set=current">drill</a></h3>` 
+        + tableHeader;
 
     storiesById = {};
 
     for (let s of stories) {
         storiesById[s.id] = s;
-        if (s.countdown > 0 || !nonzeroCountdownOnly) {
+        if (s.countdown > 0) {
+            html += storyRow(s);
+        }
+    }
+
+    html += `</table>
+    <h3>Active Stories <a class="drill_link" title="vocab and kanji from stories with a countdown equal to zero" href="vocab.html?set=active">drill</a></h3>` 
+    + tableHeader;
+
+    for (let s of stories) {
+        storiesById[s.id] = s;
+        if (s.countdown == 0) {
+            html += storyRow(s);
+        }
+    }
+
+    html += `</table>
+    <h3>Archived Stories <a class="drill_link" title="vocab and kanji from stories with a countdown less than zero" href="vocab.html?set=archived">drill</a></h3>` 
+    + tableHeader;
+
+    for (let s of stories) {
+        storiesById[s.id] = s;
+        if (s.countdown < 0) {
             html += storyRow(s);
         }
     }

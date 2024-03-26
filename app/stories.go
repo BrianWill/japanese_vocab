@@ -34,12 +34,7 @@ const STORY_INITIAL_STATUS = STORY_STATUS_NEVER_READ
 const STORY_LOG_COOLDOWN = 60 * 60 * 8 // 8 hour cooldown (in seconds)
 
 func CreateStory(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
-	if redirect || err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	response.Header().Set("Content-Type", "application/json")
 
@@ -65,12 +60,7 @@ func CreateStory(response http.ResponseWriter, request *http.Request) {
 }
 
 func DeleteStory(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
-	if redirect || err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	response.Header().Set("Content-Type", "application/json")
 
@@ -96,12 +86,7 @@ func DeleteStory(response http.ResponseWriter, request *http.Request) {
 }
 
 func RetokenizeStory(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
-	if redirect || err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	response.Header().Set("Content-Type", "application/json")
 
@@ -542,14 +527,7 @@ func getVerbCategory(sense JMDictSense) int {
 }
 
 func GetStoriesList(response http.ResponseWriter, request *http.Request) {
-	dbPath, redirect, err := GetUserDb(response, request)
-	if redirect {
-		return
-	}
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	}
+	dbPath := GetUserDb()
 
 	response.Header().Set("Content-Type", "application/json")
 
@@ -561,7 +539,7 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, title, link, lines, status, date_added, countdown, read_count, date_last_read FROM stories;`)
+	rows, err := sqldb.Query(`SELECT id, title, link, lines, status, level, date_added, countdown, read_count, date_last_read FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -573,7 +551,7 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var linesJSON string
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &linesJSON, &story.Status,
+		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &linesJSON, &story.Status, &story.Level,
 			&story.DateAdded, &story.Countdown, &story.ReadCount, &story.DateLastRead); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
@@ -639,12 +617,7 @@ func GetWordRanks(sqldb *sql.DB) (map[string]int, error) {
 }
 
 func GetStory(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if redirect || err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("content-encoding", "gzip")
@@ -727,17 +700,12 @@ func getStory(id int64, sqldb *sql.DB) (Story, error) {
 }
 
 func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if redirect || err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	w.Header().Set("Content-Type", "application/json")
 
 	var story Story
-	err = json.NewDecoder(r.Body).Decode(&story)
+	err := json.NewDecoder(r.Body).Decode(&story)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -768,8 +736,8 @@ func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3 WHERE id = $4;`,
-		story.Countdown, story.ReadCount, story.DateLastRead, story.ID)
+	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3, level = $4 WHERE id = $5;`,
+		story.Countdown, story.ReadCount, story.DateLastRead, story.Level, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
@@ -781,12 +749,7 @@ func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
 
 // remove a line and combine its content with the previous line
 func ConsolidateLine(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if redirect || err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -878,12 +841,7 @@ func ConsolidateLine(w http.ResponseWriter, r *http.Request) {
 }
 
 func SplitLine(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if redirect || err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -1004,12 +962,7 @@ func SplitLine(w http.ResponseWriter, r *http.Request) {
 }
 
 func SetTimestamp(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if redirect || err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -1092,12 +1045,7 @@ func secondsToTimestamp(seconds float64) string {
 }
 
 func SetLineMark(w http.ResponseWriter, r *http.Request) {
-	dbPath, redirect, err := GetUserDb(w, r)
-	if redirect || err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
+	dbPath := GetUserDb()
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {

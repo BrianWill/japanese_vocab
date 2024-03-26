@@ -6,6 +6,7 @@ var kanjiResultsDiv = document.getElementById('kanji_results');
 var playerSpeedNumber = document.getElementById('player_speed_number');
 var drillWordsLink = document.getElementById('drill_words_link');
 var highlightLink = document.getElementById('highlight_message');
+var highlightPOSLink = document.getElementById('highlight_pos_message');
 var audioPlayer = document.getElementById('audio_player');
 var playerControls = document.getElementById('player_controls');
 var markStoryLink = document.getElementById('mark_story');
@@ -32,6 +33,18 @@ function toggleHighlight(evt) {
         highlightLink.innerHTML = 'Highlighting all rank 1-3 words';
     } else {
         highlightLink.innerHTML = 'Highlighting only the rank 1-3 words off cooldown';
+    }
+}
+
+highlightPOSLink.onclick = togglePOS;
+
+function togglePOS(evt) {
+    evt.preventDefault();
+    tokenizedStory.classList.toggle('highlight_pos');
+    if (tokenizedStory.classList.contains('highlight_pos')) {
+        highlightPOSLink.innerHTML = 'Highlighting parts of speech';
+    } else {
+        highlightPOSLink.innerHTML = 'Not highlighting parts of speech';
     }
 }
 

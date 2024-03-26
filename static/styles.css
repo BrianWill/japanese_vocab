@@ -60,55 +60,57 @@ h3 {
     padding-left: 0.0em;
 } */
 
-span.noun,
-tr.noun {
+/* pos highlighting */
+
+.highlight_pos span.noun,
+.highlight_pos tr.noun {
     color: #bac4cd;
 }
 
-span.counter,
-tr.counter {
+.highlight_pos span.counter,
+.highlight_pos tr.counter {
     color: #5798d0;
 }
 
-span.particle,
-span.conjunction,
-tr.particle,
-tr.conjunction {
+.highlight_pos span.particle,
+.highlight_pos span.conjunction,
+.highlight_pos tr.particle,
+.highlight_pos tr.conjunction {
     color: rgb(192, 191, 33);
 }
 
-span.connecting_particle,
-tr.connecting_particle {
+.highlight_pos span.connecting_particle,
+.highlight_pos tr.connecting_particle {
     color: rgb(127, 124, 4);
 }
 
-span.verb_auxiliary,
-tr.verb_auxiliary {
+.highlight_pos span.verb_auxiliary,
+.highlight_pos tr.verb_auxiliary {
     color: #9a6565;
     ;
 }
 
-span.adverb,
-tr.adverb {
+.highlight_pos span.adverb,
+.highlight_pos tr.adverb {
     color: #458159;
     ;
 }
 
-span.verb,
-tr.verb {
+.highlight_pos span.verb,
+.highlight_pos tr.verb {
 
     color: #b64747;
 }
 
-span.i_adjective,
-tr.i_adjective {
+.highlight_pos span.i_adjective,
+.highlight_pos tr.i_adjective {
     color: #b170be;
 }
 
-span.pronoun,
-span.admoninal_adjective,
-tr.pronoun,
-tr.admoninal_adjective {
+.highlight_pos span.pronoun,
+.highlight_pos span.admoninal_adjective,
+.highlight_pos tr.pronoun,
+.highlight_pos tr.admoninal_adjective {
     color: #5782a9;
 }
 
@@ -508,4 +510,28 @@ span.verb:hover {
 
 #tokenized_story {
     cursor: default;
+}
+
+.drill_link {
+    font-size: 60%;
+    margin-left: 1em;
+}
+
+.level {
+    border-radius: 2px;
+    padding: 0.3em;
+    cursor: pointer;
+    user-select: none;
+}
+
+.Low {
+    background-color: green;
+}
+
+.Medium {
+    background-color: blue;
+}
+
+.High {
+    background-color: red;
 }
