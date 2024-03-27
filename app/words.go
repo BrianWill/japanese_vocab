@@ -72,9 +72,9 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 			Definitions: getDefinitions(word.BaseForm),
 		}
 
-		row := sqldb.QueryRow(`SELECT rank, date_marked FROM words WHERE base_form = $1;`, word.BaseForm)
+		row := sqldb.QueryRow(`SELECT rank, date_marked, audio, audio_start, audio_end FROM words WHERE base_form = $1;`, word.BaseForm)
 
-		err = row.Scan(&wordInfo.Rank, &wordInfo.DateMarked)
+		err = row.Scan(&wordInfo.Rank, &wordInfo.DateMarked, &wordInfo.Audio, &wordInfo.AudioStart, &wordInfo.AudioEnd)
 		if err != nil && err != sql.ErrNoRows {
 			w.WriteHeader(http.StatusInternalServerError)
 			gw.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))
@@ -184,8 +184,8 @@ func UpdateWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE words SET rank = $1, date_marked = $2 WHERE base_form = $3;`,
-		word.Rank, word.DateMarked, word.BaseForm)
+	_, err = sqldb.Exec(`UPDATE words SET rank = $1, date_marked = $2, audio = $3, audio_start = $4, audio_end = $5, WHERE base_form = $6;`,
+		word.Rank, word.DateMarked, word.Audio, word.AudioStart, word.AudioEnd, word.BaseForm)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update word: " + err.Error() + `"}`))

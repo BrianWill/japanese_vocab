@@ -28,6 +28,9 @@ type WordInfo struct {
 	Rank        int           `json:"rank"`
 	Definitions []JMDictEntry `json:"definitions,omitempty"`
 	DateMarked  int64         `json:"date_marked"`
+	Audio       string        `json:"audio"`
+	AudioStart  float32       `json:"audio_start"`
+	AudioEnd    float32       `json:"audio_end"`
 }
 
 type Line struct {
@@ -113,10 +116,15 @@ type DrillWord struct {
 }
 
 type WordUpdate struct {
-	BaseForm   string `json:"base_form"`
-	Rank       int    `json:"rank"`
-	DateMarked int64  `json:"date_marked"`
+	BaseForm   string  `json:"base_form"`
+	Rank       int     `json:"rank"`
+	DateMarked int64   `json:"date_marked"`
+	Audio      string  `json:"audio"`
+	AudioStart float32 `json:"audio_start"`
+	AudioEnd   float32 `json:"audio_end"`
 }
+
+/* TOKENIZATION */
 
 type JpToken struct {
 	Surface          string `json:"surface,omitempty" bson:"surface,omitempty"`

@@ -230,7 +230,11 @@ func makeUserDB(path string) {
 		(id INTEGER PRIMARY KEY,
 			base_form TEXT NOT NULL UNIQUE,
 			drill_count INTEGER NOT NULL,
+			drill_countdown INTEGER NOT NULL,
 			category INTEGER NOT NULL,
+			audio TEXT NOT NULL,
+			audio_start REAL NOT NULL,
+			audio_end REAL NOT NULL,
 			date_marked INTEGER NOT NULL,
 			date_added INTEGER NOT NULL,
 			rank INTEGER NOT NULL)`)

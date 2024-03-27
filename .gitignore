@@ -19,4 +19,7 @@ ignore/*
 app/air_errors.log
 app/tmp/air_errors.log
 static/audio/ignore/*
+static/audio/*
 users/test.db
+app/scrape/node_modules
+app/scrape/Nihongo Picnic Podcast

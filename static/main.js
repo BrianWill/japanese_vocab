@@ -105,7 +105,7 @@ function displayStoryList(stories) {
         if (a.date_last_read === b.date_last_read) {
             return b.date_added - a.date_added
         }
-        return a.date_last_read - b.date_last_read
+        return b.date_last_read - a.date_last_read
     });
 
 
@@ -134,7 +134,9 @@ function displayStoryList(stories) {
 
 
     let html = `
-        <h3>Current Stories <a class="drill_link" title="vocab and kanji from stories with a countdown greater than zero" href="words.html?set=current">drill</a></h3>` 
+        <h3><a class="drill_link" title="vocab and kanji from stories with a countdown greater than zero" href="words.html?set=current">drill countdown &gt; 0</a>
+        <a class="drill_link" title="vocab and kanji from stories with a countdown equal to zero" href="words.html?set=active">drill countdown = 0</a>
+        <a class="drill_link" title="vocab and kanji from stories with a countdown less than zero" href="words.html?set=archived">drill countdown &lt; 0</a></h3>` 
         + tableHeader;
 
     storiesById = {};
@@ -146,9 +148,7 @@ function displayStoryList(stories) {
         }
     }
 
-    html += `</table>
-    <h3>Active Stories <a class="drill_link" title="vocab and kanji from stories with a countdown equal to zero" href="words.html?set=active">drill</a></h3>` 
-    + tableHeader;
+    html += `</table> <hr>` + tableHeader;
 
     for (let s of stories) {
         storiesById[s.id] = s;
@@ -157,9 +157,7 @@ function displayStoryList(stories) {
         }
     }
 
-    html += `</table>
-    <h3>Archived Stories <a class="drill_link" title="vocab and kanji from stories with a countdown less than zero" href="words.html?set=archived">drill</a></h3>` 
-    + tableHeader;
+    html += `</table> <hr>` + tableHeader;
 
     for (let s of stories) {
         storiesById[s.id] = s;

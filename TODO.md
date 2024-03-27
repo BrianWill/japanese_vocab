@@ -1,8 +1,13 @@
 # japanese_vocab TODO
 
+use puppeteer to scrape for transcripts and meta info
+use podcast-dl (https://www.npmjs.com/package/podcast-dl/v/7.0.0-async.1) to get audio files
+
 autoplay drill mode
     show the word very large, play the audio, short pause before next word
         (only play cards with audio? maybe an option)
+
+words need a drill countdown
 
 story importer for podcasts:
     nihongo picnic

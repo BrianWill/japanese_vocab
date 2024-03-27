@@ -398,9 +398,9 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, rank, drill_count) 
+			date_added, category, rank, drill_count, audio, audio_start, audio_end) 
 			VALUES($1, $2, $3, $4, $5, $6);`,
-			lineWord.BaseForm, 0, unixtime, lineWord.Category, INITIAL_RANK, 0)
+			lineWord.BaseForm, 0, unixtime, lineWord.Category, INITIAL_RANK, 0, "", 0, 0)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
 		}
@@ -439,9 +439,9 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 
 	for _, lk := range kanjiToInsert {
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, rank, drill_count) 
+			date_added, category, rank, drill_count, audio, audio_start, audio_end) 
 			VALUES($1, $2, $3, $4, $5, $6);`,
-			lk.Character, 0, unixtime, DRILL_CATEGORY_KANJI, INITIAL_RANK, 0)
+			lk.Character, 0, unixtime, DRILL_CATEGORY_KANJI, INITIAL_RANK, 0, "", 0, 0)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("failure to insert kanji: " + err.Error())
 		}
