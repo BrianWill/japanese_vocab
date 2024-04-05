@@ -1,5 +1,23 @@
 # japanese_vocab TODO
 
+subtitles: 
+    english: https://subscene.com/   https://www.opensubtitles.org/en/search/subs   https://www.podnapisi.net
+    japanese: https://kitsunekko.net/dirlist.php?dir=subtitles%2Fjapanese%2F 
+
+how to convert .ass to .srt?
+
+for a word, track all sentences that include the word
+
+x nihongo picnic
+x sakura
+x japanese with noriko
+x cj
+japanese with shun (pdfs?)
+
+
+ffmpeg -i [input] -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]
+
+
 use puppeteer to scrape for transcripts and meta info
 use podcast-dl (https://www.npmjs.com/package/podcast-dl/v/7.0.0-async.1) to get audio files
 
@@ -8,6 +26,22 @@ autoplay drill mode
         (only play cards with audio? maybe an option)
 
 words need a drill countdown
+
+story importer from json file
+
+[
+    {
+        title: "",   
+        date: "",
+        episodeNumber: "",
+        audio: "",   // path or url?
+        video: "",   // path or url?
+        link: "",    // url of source
+        content: "",  // transcript
+        contentFormat: "",  // "text" or "srt"
+    }
+
+]
 
 story importer for podcasts:
     nihongo picnic

@@ -1,10 +1,9 @@
 var storyTitle = document.getElementById('story_title');
-var tokenizedStory = document.getElementById('tokenized_story');
+var storyLines = document.getElementById('story_lines');
 var wordList = document.getElementById('word_list');
-var definitionsDiv = document.getElementById('definitions');
-var kanjiResultsDiv = document.getElementById('kanji_results');
 var playerSpeedNumber = document.getElementById('player_speed_number');
 var drillWordsLink = document.getElementById('drill_words_link');
+var editLink = document.getElementById('edit_story');
 var highlightLink = document.getElementById('highlight_message');
 var highlightPOSLink = document.getElementById('highlight_pos_message');
 var audioPlayer = document.getElementById('audio_player');
@@ -17,10 +16,10 @@ var story = null;
 var selectedLineIdx = 0;
 var videoPlayer;
 
-tokenizedStory.onwheel = function (evt) {
+storyLines.onwheel = function (evt) {
     evt.preventDefault();
     let scrollDelta = evt.wheelDeltaY * 2;
-    tokenizedStory.scrollTop -= scrollDelta;
+    storyLines.scrollTop -= scrollDelta;
 };
 
 
@@ -28,8 +27,8 @@ highlightLink.onclick = toggleHighlight;
 
 function toggleHighlight(evt) {
     evt.preventDefault();
-    tokenizedStory.classList.toggle('highlight_all_words');
-    if (tokenizedStory.classList.contains('highlight_all_words')) {
+    storyLines.classList.toggle('highlight_all_words');
+    if (storyLines.classList.contains('highlight_all_words')) {
         highlightLink.innerHTML = 'Highlighting all rank 1-3 words';
     } else {
         highlightLink.innerHTML = 'Highlighting only the rank 1-3 words off cooldown';
@@ -40,8 +39,8 @@ highlightPOSLink.onclick = togglePOS;
 
 function togglePOS(evt) {
     evt.preventDefault();
-    tokenizedStory.classList.toggle('highlight_pos');
-    if (tokenizedStory.classList.contains('highlight_pos')) {
+    storyLines.classList.toggle('highlight_pos');
+    if (storyLines.classList.contains('highlight_pos')) {
         highlightPOSLink.innerHTML = 'Highlighting parts of speech';
     } else {
         highlightPOSLink.innerHTML = 'Not highlighting parts of speech';
@@ -209,17 +208,11 @@ document.body.onkeydown = async function (evt) {
     }
 };
 
-tokenizedStory.onmousedown = function (evt) {
+storyLines.onmousedown = function (evt) {
     if (evt.target.hasAttribute('word_idx_in_line')) {
         if (evt.ctrlKey) {
             let lineIdx = parseInt(evt.target.parentNode.parentNode.getAttribute('line_idx'));
             splitLine(evt.target, lineIdx);
-        } else {
-            let baseform = evt.target.getAttribute('baseform');
-            selectedWordBaseForm = baseform;
-            console.log('baseform', baseform);
-            let surface = evt.target.innerHTML;
-            displayDefinition(baseform, surface);
         }
     } else if (evt.target.classList.contains('line_timestamp')) {
         evt.preventDefault();
@@ -371,6 +364,7 @@ function openStory(id) {
         .then((data) => {
             story = data;
             drillWordsLink.setAttribute('href', `/words.html?storyId=${story.id}`);
+            editLink.setAttribute('href', `/edit.html?storyId=${story.id}`);
             storyTitle.innerHTML = `<a href="${story.link}">${story.title}</a>`;
             console.log(story);
 
@@ -459,7 +453,7 @@ function displayStory(story) {
         html += '</td></tr>'
     }
 
-    tokenizedStory.innerHTML = html + '</table>';
+    storyLines.innerHTML = html + '</table>';
 }
 
 function isOffCooldown(rank, dateMarked, unixTime) {
@@ -509,18 +503,6 @@ function splitLine(target, lineIdx) {
 
 function roundToHalfSecond(seconds) {
     return Math.round(seconds * 2) / 2;
-}
-
-function displayDefinition(baseform, surface) {
-    getKanji(baseform + surface);
-    html = '';
-    let wordInfo = story.word_info[baseform];
-    if (wordInfo && wordInfo.definitions) {
-        for (let entry of wordInfo.definitions) {
-            html += displayEntry(entry);
-        }
-    }
-    definitionsDiv.innerHTML = html;
 }
 
 // loads the IFrame Player API code asynchronously.

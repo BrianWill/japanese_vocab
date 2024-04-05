@@ -137,6 +137,7 @@ func main() {
 	router.HandleFunc("/update_story_counts", UpdateStoryCounts).Methods("POST")
 	router.HandleFunc("/create_story", CreateStory).Methods("POST")
 	router.HandleFunc("/delete_story", DeleteStory).Methods("DELETE")
+	router.HandleFunc("/update_story/{id}", UpdateStory).Methods("POST")
 	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/story_consolidate_line", ConsolidateLine).Methods("POST")
@@ -245,9 +246,28 @@ func makeUserDB(path string) {
 		log.Fatal(err)
 	}
 
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "catalog_stories" 
+		("id" INTEGER PRIMARY KEY,
+			"title" TEXT NOT NULL,
+			"date" TEXT,
+			"link" TEXT,
+			"episode_number" TEXT,
+			"audio" TEXT,
+			"video" TEXT,
+			"content" TEXT,
+			"content_format" TEXT);`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
 	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS stories 
 		(id INTEGER PRIMARY KEY, 
-			lines TEXT,         
+			lines TEXT,   
+			lines_en TEXT,
+			lines_jp TEXT,
 			title	TEXT UNIQUE,
 			link	TEXT UNIQUE,
 			countdown INTEGER,

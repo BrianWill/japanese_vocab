@@ -111,7 +111,7 @@ function updateWord(word, wordInfoMap, marking) {
 }
 
 function updateWordInfo(word, wordInfoMap, marking) {
-    let tokenizedStory = document.getElementById('tokenized_story');
+    let tokenizedStory = document.getElementById('story_lines');
     if (tokenizedStory) {
         let wordSpans = tokenizedStory.querySelectorAll(`span[baseform="${word.base_form}"]`);
         console.log('updating word info', word.base_form, word.rank, word.date_marked, 'found spans', wordSpans.length);

@@ -1,0 +1,14 @@
+body {
+    overflow-y: hidden;
+}
+
+#audio_player {
+    width: 100%;
+    padding: 1em;
+    display: none;
+}
+
+#video_player {
+    width: 100%;
+    display: none;
+}

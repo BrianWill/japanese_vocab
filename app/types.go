@@ -12,6 +12,8 @@ type Story struct {
 	Link           string              `json:"link,omitempty"`
 	Audio          string              `json:"audio"`
 	Lines          []Line              `json:"lines,omitempty"`
+	LinesJP        []Line              `json:"lines_jp,omitempty"`
+	LinesEN        []Line              `json:"lines_en,omitempty"`
 	Status         int                 `json:"status"`
 	Level          int                 `json:"level"`
 	ReadCount      int                 `json:"read_count"`

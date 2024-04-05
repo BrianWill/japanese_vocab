@@ -1,9 +1,9 @@
 var storyList = document.getElementById('story_list');
-var newStoryText = document.getElementById('new_story_text');
-var newStoryButton = document.getElementById('new_story_button');
-var newStoryTitle = document.getElementById('new_story_title');
-var newStoryLink = document.getElementById('new_story_link');
-var newStoryAudio = document.getElementById('new_story_audio');
+var storyText = document.getElementById('new_story_text');
+var updateStoryButton = document.getElementById('new_story_button');
+var storyTitle = document.getElementById('new_story_title');
+var storyLink = document.getElementById('new_story_link');
+var storyAudio = document.getElementById('new_story_audio');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
@@ -11,18 +11,18 @@ document.body.onload = function (evt) {
     getStoryList(displayStoryList);
 };
 
-newStoryButton.onclick = function (evt) {
+updateStoryButton.onclick = function (evt) {
     let data = {
-        content: newStoryText.value,
-        title: newStoryTitle.value,
-        link: newStoryLink.value,
-        audio: newStoryAudio.value,
+        content: storyText.value,
+        title: storyTitle.value,
+        link: storyLink.value,
+        audio: storyAudio.value,
     };
 
-    newStoryText.value = '';
-    newStoryTitle.value = '';
-    newStoryLink.value = '';
-    newStoryAudio.value = '';
+    storyText.value = '';
+    storyTitle.value = '';
+    storyLink.value = '';
+    storyAudio.value = '';
 
     fetch('/create_story', {
         method: 'POST', // or 'PUT'

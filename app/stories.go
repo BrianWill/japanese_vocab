@@ -59,6 +59,32 @@ func CreateStory(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode("Success adding story")
 }
 
+func UpdateStory(response http.ResponseWriter, request *http.Request) {
+	dbPath := GetUserDb()
+
+	response.Header().Set("Content-Type", "application/json")
+
+	var story Story
+	json.NewDecoder(request.Body).Decode(&story)
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	_, err = sqldb.Exec(`UPDATE stories SET title = $1, link = $2, audio = $3 WHERE id = $4;`,
+		story.Title, story.Link, story.Audio, story.ID)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": " failure to update story:` + err.Error() + `"}`))
+		return
+	}
+	json.NewEncoder(response).Encode("Success updating story")
+}
+
 func DeleteStory(response http.ResponseWriter, request *http.Request) {
 	dbPath := GetUserDb()
 

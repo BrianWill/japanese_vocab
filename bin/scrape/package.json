@@ -1,0 +1,16 @@
+{
+  "name": "scrape-jp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "podcast-dl": "^7.0.0-async.1",
+    "puppeteer": "^22.6.1"
+  }
+}
