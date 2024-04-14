@@ -24,6 +24,27 @@ type Story struct {
 	WordRankCounts WordRankCounts      `json:"word_ranks,omitempty"`
 }
 
+type StoryImport struct {
+	Title              string `json:"title,omitempty"`
+	Source             string `json:"source,omitempty"`
+	Date               string `json:"date,omitempty"`
+	EpisodeNumber      string `json:"episode_number,omitempty"`
+	Content            string `json:"content,omitempty"`
+	ContentFormat      string `json:"content_format,omitempty"`
+	Link               string `json:"link,omitempty"`
+	Audio              string `json:"audio,omitempty"`
+	Video              string `json:"video,omitempty"`
+	TranscriptEN       string `json:"transcript_en,omitempty"`
+	TranscriptJP       string `json:"transcript_jp,omitempty"`
+	TranscriptENFormat string `json:"transcript_en_format,omitempty"`
+	TranscriptJPFormat string `json:"transcript_jp_format,omitempty"`
+}
+
+type StoryImportJSON struct {
+	Defaults StoryImport   `json:"defaults,omitempty"`
+	Stories  []StoryImport `json:"stories,omitempty"`
+}
+
 type WordRankCounts [4]int
 
 type WordInfo struct {

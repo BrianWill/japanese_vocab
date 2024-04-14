@@ -20,5 +20,6 @@ app/air_errors.log
 app/tmp/air_errors.log
 static/audio/ignore/*
 static/audio/*
+users/main.db
 users/test.db
 bin/scrape/node_modules

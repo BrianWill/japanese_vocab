@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"regexp"
 
-	"crypto/md5"
-	"encoding/hex"
 	"log"
 	"net/http"
 	"os"
@@ -16,10 +14,8 @@ import (
 
 	"github.com/ikawaha/kagome-dict/ipa"
 	"github.com/ikawaha/kagome/v2/tokenizer"
-	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -32,8 +28,6 @@ var allEntriesByKanjiSpellings map[string][]*JMDictEntry
 var definitionsCache map[string][]JMDictEntry // base form to []JMDictEntry
 
 var reHasKanji *regexp.Regexp
-
-var sessionStore *sessions.CookieStore
 
 const SESSION_KEY = "supersecret" // todo insecure; use env variable instead
 
@@ -64,7 +58,9 @@ const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU |
 var devMode bool = false
 
 const SINGLE_USER_DB_PATH = "../users/single.db"
-const TEST_USER_DB_PATH = "../users/test.db"
+
+// const MAIN_USER_DB_PATH = "../users/main.db"
+const MAIN_USER_DB_PATH = "../users/test.db"
 
 func main() {
 	var err error
@@ -72,9 +68,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	//cookieStore = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
-	sessionStore = sessions.NewCookieStore([]byte(SESSION_KEY)) // todo insecure
 
 	makeMainDB()
 	makeUserDB(GetUserDb())
@@ -114,6 +107,19 @@ func main() {
 	duration = time.Since(start)
 	fmt.Println("time to build entry maps: ", duration)
 
+	if len(os.Args) > 1 && os.Args[1] == "import" {
+		if len(os.Args) < 3 {
+			log.Fatalln("expected json file path arg")
+			return
+		}
+		devMode = true
+		err := importStories(GetUserDb(), os.Args[2])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		return
+	}
+
 	// [START setting_port]
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -124,16 +130,13 @@ func main() {
 	router := mux.NewRouter()
 
 	for _, s := range os.Args {
-		if s == "-dev" {
+		if s == "dev" {
 			devMode = true
 			router.Use(devMiddleware)
 			fmt.Println("In dev mode")
 		}
 	}
 
-	router.HandleFunc("/loginauth", PostLoginAuth).Methods("POST")
-	router.HandleFunc("/logout", PostLogout).Methods("POST")
-	router.HandleFunc("/register", PostRegisterUser).Methods("POST")
 	router.HandleFunc("/update_story_counts", UpdateStoryCounts).Methods("POST")
 	router.HandleFunc("/create_story", CreateStory).Methods("POST")
 	router.HandleFunc("/delete_story", DeleteStory).Methods("DELETE")
@@ -230,6 +233,7 @@ func makeUserDB(path string) {
 	statement, err := sqldb.Prepare(`CREATE TABLE IF NOT EXISTS words 
 		(id INTEGER PRIMARY KEY,
 			base_form TEXT NOT NULL UNIQUE,
+			status TEXT NOT NULL,
 			drill_count INTEGER NOT NULL,
 			drill_countdown INTEGER NOT NULL,
 			category INTEGER NOT NULL,
@@ -248,14 +252,21 @@ func makeUserDB(path string) {
 
 	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "catalog_stories" 
 		("id" INTEGER PRIMARY KEY,
-			"title" TEXT NOT NULL,
-			"date" TEXT,
-			"link" TEXT,
-			"episode_number" TEXT,
-			"audio" TEXT,
-			"video" TEXT,
-			"content" TEXT,
-			"content_format" TEXT);`)
+			title TEXT NOT NULL,
+			source TEXT NOT NULL,
+			status TEXT NOT NULL,
+			date TEXT,
+			link TEXT,
+			episode_number TEXT,
+			audio TEXT,
+			video TEXT,
+			repetitions_remaining INTEGER,
+			transcript_en TEXT,
+			transcript_en_format TEXT,
+			transcript_jp TEXT,
+			transcript_jp_format TEXT,
+			content TEXT,
+			content_format TEXT);`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -326,141 +337,9 @@ func GetMain(response http.ResponseWriter, request *http.Request) {
 	http.ServeFile(response, request, "../static/index.html")
 }
 
-func PostLoginAuth(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "could not parse login form: " + err.Error() + `"}`))
-		return
-	}
-	email := r.FormValue("email")
-
-	sqldb, err := sql.Open("sqlite3", SQL_USERS_FILE)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	row := sqldb.QueryRow(`SELECT passwordHash FROM users WHERE email = ?;`, email)
-	var passwordHash string
-	err = row.Scan(&passwordHash)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to access password for user; user may not exist" + `"}`))
-		return
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(r.FormValue("password")+SALT))
-	if err != nil {
-		http.Redirect(w, r, "/login.html", http.StatusSeeOther)
-		return
-	}
-
-	session, err := sessionStore.Get(r, "session")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	session.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   86400 * 7, // 7 days
-		HttpOnly: true,
-	}
-	session.Values["email"] = email
-	hash := md5.Sum([]byte(email))
-	userDbPath := "../users/" + hex.EncodeToString(hash[:]) + ".db"
-	session.Values["user_db_path"] = userDbPath
-
-	err = session.Save(r, w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// vacuuming the db will compact it to free up wasted space
-	err = VacuumDb(userDbPath)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-func PostLogout(response http.ResponseWriter, request *http.Request) {
-	session, _ := sessionStore.Get(request, "session")
-
-	delete(session.Values, "userId")
-	session.Save(request, response)
-
-	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
-}
-
-func PostRegisterUser(response http.ResponseWriter, request *http.Request) {
-	err := request.ParseForm()
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "could not parse login form: " + err.Error() + `"}`))
-		return
-	}
-	email := request.FormValue("email")
-
-	sqldb, err := sql.Open("sqlite3", SQL_USERS_FILE)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	row := sqldb.QueryRow(`SELECT passwordHash FROM users WHERE email = ?;`, email)
-	var hash string
-	err = row.Scan(&hash)
-	if err == nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "user with that email already exists" + `"}`))
-		return
-	}
-
-	password := request.FormValue("password")
-	if password != request.FormValue("password2") {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "the typed passwords do not match: " + `"}`))
-		return
-	}
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password+SALT), 8) // 8 is arbitrarily chosen cost
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to hash password: " + err.Error() + `"}`))
-		return
-	}
-
-	_, err = sqldb.Exec(`INSERT INTO users (email, passwordHash) VALUES($1, $2);`, email, string(passwordHash))
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to insert user: " + err.Error() + `"}`))
-		return
-	}
-
-	// create user DB
-	bytes := md5.Sum([]byte(email))
-
-	userhash := hex.EncodeToString(bytes[:])
-	makeUserDB("../users/" + userhash + ".db")
-
-	// var cookie = http.Cookie{Name: "user", Value: "test", Expires: time.Now().Add(365 * 24 * time.Hour)}
-	// http.SetCookie(response, &cookie)
-
-	http.Redirect(response, request, "/login.html", http.StatusSeeOther)
-}
-
 func GetUserDb() string {
 	if devMode {
-		return TEST_USER_DB_PATH
+		return MAIN_USER_DB_PATH
 	} else {
 		return SINGLE_USER_DB_PATH
 	}
