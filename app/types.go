@@ -24,11 +24,34 @@ type Story struct {
 	WordRankCounts WordRankCounts      `json:"word_ranks,omitempty"`
 }
 
+type CatalogStory struct {
+	ID                   int64   `json:"id,omitempty"`
+	Title                string  `json:"title,omitempty"`
+	Source               string  `json:"source,omitempty"`
+	Status               string  `json:"status,omitempty"`
+	Date                 string  `json:"date,omitempty"`
+	DateMarked           int     `json:"date_marked,omitempty"`
+	EpisodeNumber        int     `json:"episode_number,omitempty"`
+	Level                string  `json:"level,omitempty"`
+	Content              string  `json:"content,omitempty"`
+	ContentFormat        string  `json:"content_format,omitempty"`
+	Link                 string  `json:"link,omitempty"`
+	Audio                string  `json:"audio,omitempty"`
+	Video                string  `json:"video,omitempty"`
+	TranscriptEN         string  `json:"transcript_en,omitempty"`
+	TranscriptJP         string  `json:"transcript_jp,omitempty"`
+	TranscriptENFormat   string  `json:"transcript_en_format,omitempty"`
+	TranscriptJPFormat   string  `json:"transcript_jp_format,omitempty"`
+	RepetitionsRemaining int64   `json:"repetitions_remaining,omitempty"`
+	Words                []int64 `json:"words,omitempty"`
+}
+
 type StoryImport struct {
 	Title              string `json:"title,omitempty"`
 	Source             string `json:"source,omitempty"`
 	Date               string `json:"date,omitempty"`
 	EpisodeNumber      string `json:"episode_number,omitempty"`
+	Level              string `json:"level,omitempty"`
 	Content            string `json:"content,omitempty"`
 	ContentFormat      string `json:"content_format,omitempty"`
 	Link               string `json:"link,omitempty"`
@@ -41,8 +64,9 @@ type StoryImport struct {
 }
 
 type StoryImportJSON struct {
-	Defaults StoryImport   `json:"defaults,omitempty"`
-	Stories  []StoryImport `json:"stories,omitempty"`
+	Source        string        `json:"source,omitempty"`
+	ContentFormat string        `json:"content_format,omitempty"`
+	Stories       []StoryImport `json:"stories,omitempty"`
 }
 
 type WordRankCounts [4]int

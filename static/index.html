@@ -11,14 +11,12 @@
 </head>
 
 <body>
-    <h3>CREATE STORY</h3>
-    <div id="create_story_div">
-        <input id="new_story_title" type="text" placeholder="Title">
-        <input id="new_story_link" type="text" placeholder="Link">
-        <input id="new_story_audio" type="text" placeholder='Audio file path (relative to the "static/audio" directory)'>
-        <textarea id="new_story_text" placeholder="Content"></textarea>
-        <button id="new_story_button">Create Story</button>
+    <div>
+        <h3><select id="source_select"></select>
+            <a class="drill_link" href="words.html?set=in_progress">drill vocab and kanji from stories in progress</a>
+        </h3> 
     </div>
+    
     <div id="story_list"></div>
 </body>
 <script src="../util.js"></script>

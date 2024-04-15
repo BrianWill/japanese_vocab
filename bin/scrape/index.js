@@ -27,10 +27,12 @@ async function scrapeAll(browserInstance) {
 
         let scrapedData;
 
-        // // nihongo picnic
-        // let scrapedData = await picnicScraperObject.scraper(browser);
+        // get all enclosures from RSS with `npx podcast-dl --url <PODCAST_RSS_URL>`
+
+        // nihongo picnic
+        // scrapedData = await picnicScraperObject.scraper(browser);
         // await browser.close();
-        // fs.writeFile("nihongo-data.json", JSON.stringify(scrapedData), 'utf8', function (err) {
+        // fs.writeFile("nihongo-picnic-data.json", JSON.stringify(scrapedData), 'utf8', function (err) {
         //     if (err) {
         //         return console.log(err);
         //     }
@@ -50,22 +52,22 @@ async function scrapeAll(browserInstance) {
         // // noriko
         // scrapedData = await norikoScraperObject.scraper(browser);
         // await browser.close();
-        // fs.writeFile("noriko-season2-data.json", JSON.stringify(scrapedData), 'utf8', function (err) {
+        // fs.writeFile("noriko-season1-data.json", JSON.stringify(scrapedData), 'utf8', function (err) {
         //     if (err) {
         //         return console.log(err);
         //     }
         //     console.log("The data has been scraped and saved successfully! View it at './noriko-data.json'");
         // });
 
-        // cj
-        scrapedData = await cjScraperObject.scraper(browser);
-        await browser.close();
-        fs.writeFile("cj-data.json", JSON.stringify(scrapedData), 'utf8', function (err) {
-            if (err) {
-                return console.log(err);
-            }
-            console.log("The data has been scraped and saved successfully! View it at './cj-data.json'");
-        });
+        // // cj
+        // scrapedData = await cjScraperObject.scraper(browser);
+        // await browser.close();
+        // fs.writeFile("cj-data.json", JSON.stringify(scrapedData), 'utf8', function (err) {
+        //     if (err) {
+        //         return console.log(err);
+        //     }
+        //     console.log("The data has been scraped and saved successfully! View it at './cj-data.json'");
+        // });
 
     }
     catch (err) {
@@ -87,7 +89,7 @@ const cjScraperObject = {
 
         await page.click('.level-tabs-container div:last-child');
 
-        
+
 
         // get links
 
@@ -162,13 +164,13 @@ const cjScraperObject = {
                 } catch (ex) {
 
                 }
-                
+
                 try {
                     audioUrl = await page.$eval('audio', x => x.src);
                 } catch (ex) {
 
                 }
-                
+
                 date = date.replace('Published on ', '');
 
                 let transcript = 'no transcript';
@@ -199,8 +201,43 @@ const cjScraperObject = {
 }
 
 const norikoScraperObject = {
-    url: 'https://www.japanesewithnoriko.com/season-2-transcription',
+    url: 'https://www.japanesewithnoriko.com/season-1-archive',
     async scraper(browser) {
+
+        
+        const audioFolder = '../../static/audio/Learn Japanese with Noriko - Season 1';
+
+        let audioFilesByEpisodeNumber = {};
+
+        const regex = /-(\d*)\./gm;
+        fs.readdirSync(audioFolder).forEach(file => {
+            
+            let m;
+
+            let isMatch = false;
+
+            while ((m = regex.exec(file)) !== null) {
+                // This is necessary to avoid infinite loops with zero-width matches
+                if (m.index === regex.lastIndex) {
+                    regex.lastIndex++;
+                }
+
+                var group = m[1];
+                if (!group) {
+                    console.log('could not parse episode number for: ', file);
+                } else {
+                    isMatch = true;
+                    audioFilesByEpisodeNumber[group] = 'SAKURA TIPS｜Listen to Japanese/' + file;
+                }
+            }
+
+            if (!isMatch) {
+                console.log('no match: ', file);
+            }
+        });
+
+       // console.log(audioFilesByEpisodeNumber);
+
         let page = await browser.newPage();
 
         let episodes = [];
@@ -226,13 +263,18 @@ const norikoScraperObject = {
             let content = await page.$eval('.sqs-html-content', content => content.textContent.trim());
             let date = await page.$eval('time span', el => el.textContent.trim())
 
-            episodes.push({
-                url: link,
+            let ep = {
+                link: link,
                 title: title,
                 date: date,
                 episodeNumber: epNumber,
-                content: content
-            });
+                content: content,
+                contentFormat: 'text',
+                audio: audioFilesByEpisodeNumber[epNumber]
+            };
+            console.log(ep);
+
+            episodes.push(ep);
         }
 
         return episodes;
@@ -240,21 +282,50 @@ const norikoScraperObject = {
 }
 
 const sakuraScraperObject = {
-    // to get page 3 https://sakuratips.com/category/pod-cast/page/3/
-    // pages go up to 52
-
-    // episode list: document.getElementsByClassName('post-list-meta')
-
-    // get date and episode number from the url
-
-    // title: document.getElementsByClassName('cps-post-title')[0].textContent.trim()
-
-    // trasncript: document.getElementsByClassName('cps-post-main')[0].textContent.trim()
-
-
     url: 'https://sakuratips.com/category/pod-cast/page/',   // base url
     async scraper(browser) {
+        
+
+        const audioFolder = '../../static/audio/SAKURA TIPS｜Listen to Japanese';
+
+        let audioFilesByEpisodeNumber = {};
+
+        const regex = /-(\d*)\./gm;
+        fs.readdirSync(audioFolder).forEach(file => {
+            
+            let m;
+
+            while ((m = regex.exec(file)) !== null) {
+                // This is necessary to avoid infinite loops with zero-width matches
+                if (m.index === regex.lastIndex) {
+                    regex.lastIndex++;
+                }
+
+                var group = m[1];
+                if (!group) {
+                    console.log('could not parse episode number for: ', file);
+                } else {
+                    audioFilesByEpisodeNumber[group] = 'SAKURA TIPS｜Listen to Japanese/' + file;
+                }
+            }
+        });
+
+        //console.log(audioFilesByEpisodeNumber);
+
         let page = await browser.newPage();
+
+
+        // e.g. to get page 3 https://sakuratips.com/category/pod-cast/page/3/
+        // pages go up to 52
+
+        // episode list: document.getElementsByClassName('post-list-meta')
+
+        // get date and episode number from the url
+
+        // title: document.getElementsByClassName('cps-post-title')[0].textContent.trim()
+
+        // trasncript: document.getElementsByClassName('cps-post-main')[0].textContent.trim()
+
 
         let episodes = [];
 
@@ -278,12 +349,18 @@ const sakuraScraperObject = {
                 let title = await page.$eval('.cps-post-title', title => title.textContent.trim());
                 let content = await page.$eval('.cps-post-main', content => content.textContent.trim());
 
+                let epNumber = components[components.length - 2];
+
+                console.log('adding ep with audio: ' + audioFilesByEpisodeNumber[epNumber]);
+
                 episodes.push({
-                    url: link,
+                    linke: link,
                     title: title,
                     date: components.slice(-5, -2).join('/'),
-                    episodeNumber: components[components.length - 2],
-                    content: content
+                    episodeNumber: epNumber,
+                    content: content,
+                    contentFormat: 'text',
+                    audio: audioFilesByEpisodeNumber[epNumber]
                 });
             }
         }
@@ -298,6 +375,16 @@ const sakuraScraperObject = {
 const picnicScraperObject = {
     url: 'https://nihongopicnic.notion.site/Nihongo-Picnic-Podcast-s-Transcript-e6c923a2d9f34c1fa278bb5e4531ea0f',
     async scraper(browser) {
+
+        const audioFolder = '../../static/audio/Nihongo Picnic Podcast';
+
+        let audioFiles = [];
+
+        fs.readdirSync(audioFolder).forEach(file => {
+            //console.log(file);
+            audioFiles.push(file);
+        });
+
         let page = await browser.newPage();
         console.log(`Navigating to ${this.url}...`);
         // Navigate to the selected page
@@ -328,7 +415,7 @@ const picnicScraperObject = {
                     return element.href;
                 });
                 return {
-                    epNumber: text[0],
+                    episodeNumber: text[0],
                     title: text[1],
                     date: text[2],
                     level: text[3].trim(),
@@ -345,6 +432,20 @@ const picnicScraperObject = {
             let newPage = await browser.newPage();
             await newPage.goto(ep.link, { waitUntil: 'networkidle0' });
             ep.content = await newPage.$eval('.notion-page-content', text => text.textContent);
+            ep.contentFormat = 'text';
+
+            let matches = [];
+            let epString = ' ' + ep.episodeNumber + '. ';
+            for (var f of audioFiles) {
+                if (f.includes(epString)) {
+                    ep.audio = 'Nihongo Picnic Podcast/' + f;
+                    matches.push(f);
+                }
+            }
+            if (matches.length != 1) {
+                console.log(ep.episodeNumber, matches);
+            }
+
             resolve(ep);
             await newPage.close();
         });
@@ -356,78 +457,15 @@ const picnicScraperObject = {
             scrapedData[i] = await episodePromise(episodes[i]);
         }
 
+        // rss: https://anchor.fm/s/2e08a010/podcast/rss
+        // `<title><![CDATA[`   <epnumber><dot> <title>`]]></title>
+
+        // find the rss entry that has the rss file
+
+
         page.close();
 
         return scrapedData;
-
-        // const [response] = await Promise.all([
-        //     page.waitForNavigation(waitOptions),
-        //     page.click(selector, clickOptions),
-        //   ]);
-
-
-
-        // Wait for the required DOM to be rendered
-        async function scrapeCurrentPage() {
-
-            // await page.waitForSelector('.page_inner');
-            // // Get the link to all the required books
-            // let urls = await page.$$eval('section ol > li', links => {
-            //     // Make sure the book to be scraped is in stock
-            //     links = links.filter(link => link.querySelector('.instock.availability > i').textContent !== "In stock")
-            //     // Extract the links from the data
-            //     links = links.map(el => el.querySelector('h3 > a').href)
-            //     return links;
-            // });
-
-            // Loop through each of those links, open a new page instance and get the relevant data from them
-            let pagePromise = (link) => new Promise(async (resolve, reject) => {
-                let dataObj = {};
-                let newPage = await browser.newPage();
-                await newPage.goto(link);
-                dataObj['bookTitle'] = await newPage.$eval('.product_main > h1', text => text.textContent);
-                dataObj['bookPrice'] = await newPage.$eval('.price_color', text => text.textContent);
-                dataObj['noAvailable'] = await newPage.$eval('.instock.availability', text => {
-                    // Strip new line and tab spaces
-                    text = text.textContent.replace(/(\r\n\t|\n|\r|\t)/gm, "");
-                    // Get the number of stock available
-                    let regexp = /^.*\((.*)\).*$/i;
-                    let stockAvailable = regexp.exec(text)[1].split(' ')[0];
-                    return stockAvailable;
-                });
-                dataObj['imageUrl'] = await newPage.$eval('#product_gallery img', img => img.src);
-                dataObj['bookDescription'] = await newPage.$eval('#product_description', div => div.nextSibling.nextSibling.textContent);
-                dataObj['upc'] = await newPage.$eval('.table.table-striped > tbody > tr > td', table => table.textContent);
-                resolve(dataObj);
-                await newPage.close();
-            });
-
-            for (link in urls) {
-                let currentPageData = await pagePromise(urls[link]);
-                scrapedData.push(currentPageData);
-                // console.log(currentPageData);
-            }
-            // When all the data on this page is done, click the next button and start the scraping of the next page
-            // You are going to check if this button exist first, so you know if there really is a next page.
-            let nextButtonExist = false;
-            try {
-                const nextButton = await page.$eval('.next > a', a => a.textContent);
-                nextButtonExist = true;
-            }
-            catch (err) {
-                nextButtonExist = false;
-            }
-            if (nextButtonExist) {
-                await page.click('.next > a');
-                return scrapeCurrentPage(); // Call this function recursively
-            }
-            await page.close();
-            return scrapedData;
-        }
-        // let data = await scrapeCurrentPage();
-        // console.log(data);
-        data = 'foo'
-        return data;
     }
 };
 

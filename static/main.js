@@ -1,43 +1,17 @@
 var storyList = document.getElementById('story_list');
-var storyText = document.getElementById('new_story_text');
-var updateStoryButton = document.getElementById('new_story_button');
-var storyTitle = document.getElementById('new_story_title');
-var storyLink = document.getElementById('new_story_link');
-var storyAudio = document.getElementById('new_story_audio');
+var sourceSelect = document.getElementById('source_select');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
 document.body.onload = function (evt) {
-    getStoryList(displayStoryList);
+    //getStoryList(displayStoryList);
+    getCatalogStories(processStories);
 };
 
-updateStoryButton.onclick = function (evt) {
-    let data = {
-        content: storyText.value,
-        title: storyTitle.value,
-        link: storyLink.value,
-        audio: storyAudio.value,
-    };
 
-    storyText.value = '';
-    storyTitle.value = '';
-    storyLink.value = '';
-    storyAudio.value = '';
-
-    fetch('/create_story', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    }).then((response) => response.json())
-        .then((data) => {
-            getStoryList(displayStoryList);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-};
+sourceSelect.onchange = function (evt) {
+    displayStories();
+}
 
 storyList.onchange = function (evt) {
     if (evt.target.className.includes('count_spinner')) {
@@ -48,24 +22,9 @@ storyList.onchange = function (evt) {
     }
 };
 
-function retokenizeStory(story) {
-    fetch('/retokenize_story', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: story.id }),
-    }).then((response) => response.json())
-        .then((data) => {
-            getStoryList(displayStoryList);
-        })
-        .catch((error) => {
-            console.error('Error retokenizing:', error);
-        });
-}
-
-
 var storiesById = {};
+var storiesBySource = {};
+var stories = [];
 
 let levelNameMap = {
     1: 'Low',
@@ -73,7 +32,7 @@ let levelNameMap = {
     3: 'High',
 };
 
-storyList.onclick = function(evt) {
+storyList.onclick = function (evt) {
     if (!evt.target.classList.contains('level')) {
         return;
     }
@@ -82,7 +41,7 @@ storyList.onclick = function(evt) {
     var level = parseInt(evt.target.getAttribute('level'));
 
     let maxLevel = Object.keys(levelNameMap).length;
-    
+
     let newLevel = level + 1;
     if (newLevel > maxLevel) {
         newLevel = 1;
@@ -100,25 +59,61 @@ storyList.onclick = function(evt) {
     updateStoryCounts(story, () => { });
 };
 
-function displayStoryList(stories) {
-    stories.sort((a, b) => {
-        if (a.date_last_read === b.date_last_read) {
-            return b.date_added - a.date_added
+function processStories(storyData) {
+    stories = storyData;
+    console.log(stories);
+
+    for (let s of stories) {
+        if (s.repetitions_remaining === undefined) {
+            s.repetitions_remaining = 0;
         }
-        return b.date_last_read - a.date_last_read
+
+        if (s.date_marked === undefined) {
+            s.date_marked = 0;
+        }
+    }
+
+    stories.sort((a, b) => {
+        return b.date_marked - a.date_marked
     });
 
+    storiesById = {};
+    storiesBySource = {};
 
+    for (let s of stories) {
+        storiesById[s.id] = s;
+        let list = storiesBySource[s.source];
+        if (list === undefined) {
+            list = storiesBySource[s.source] = [];
+        }
+        list.push(s);
+    }
+
+
+    let selectOptionsHTML = `<option value="in progress">In Progress</option>`;
+    let i = 1;
+    for (let source in storiesBySource) {
+        selectOptionsHTML += `<option value="${i}">${source}</option>`
+        i++;
+    }
+    sourceSelect.innerHTML = selectOptionsHTML;
+
+    displayStories();
+};
+
+
+
+function displayStories() {
     function storyRow(s) {
         return `<tr>
             <td>
-                <span title="when this story was last read">${timeSince(s.date_last_read)}</span>
+                <span title="when this story was last read">${timeSince(s.date_marked)}</span>
             </td>  
             <td>
-               <input story_id="${s.id}" type="number" class="count_spinner" min="-1" max="9" steps="1" value="${s.countdown}">
+               <input story_id="${s.id}" type="number" class="count_spinner" min="-1" max="9" steps="1" value="${s.repetitions_remaining}">
             </td>
             <td>
-                <span story_id="${s.id}" level="${s.level}" class="level ${levelNameMap[s.level]}" title="difficulty level of this story">${levelNameMap[s.level]}</span>
+                <span story_id="${s.id}" level="${s.level}" class="level ${s.level}" title="difficulty level of this story">${s.level}</span>
             </td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
@@ -132,39 +127,30 @@ function displayStoryList(stories) {
         <th>Title</th>
     </tr>`;
 
+    let html = tableHeader;
 
-    let html = `
-        <h3><a class="drill_link" title="vocab and kanji from stories with a countdown greater than zero" href="words.html?set=current">drill countdown &gt; 0</a>
-        <a class="drill_link" title="vocab and kanji from stories with a countdown equal to zero" href="words.html?set=active">drill countdown = 0</a>
-        <a class="drill_link" title="vocab and kanji from stories with a countdown less than zero" href="words.html?set=archived">drill countdown &lt; 0</a></h3>` 
-        + tableHeader;
+    let source = sourceSelect.options[sourceSelect.selectedIndex].text;
 
-    storiesById = {};
+    if (source == 'In Progress') {
+        // in progress
+        for (let s of stories) {
+            if (s.status != 'catalog') {
+                console.log('in progress', s);
+                html += storyRow(s);
+            }
+        }
 
-    for (let s of stories) {
-        storiesById[s.id] = s;
-        if (s.countdown > 0) {
+        html += `</table>`
+    } else {
+        // display by source
+        let list = storiesBySource[source];
+        html += `<hr><h2>${source}</h2>` + tableHeader;
+        for (let s of list) {
             html += storyRow(s);
         }
+        html += `</table>`;
     }
 
-    html += `</table> <hr>` + tableHeader;
-
-    for (let s of stories) {
-        storiesById[s.id] = s;
-        if (s.countdown == 0) {
-            html += storyRow(s);
-        }
-    }
-
-    html += `</table> <hr>` + tableHeader;
-
-    for (let s of stories) {
-        storiesById[s.id] = s;
-        if (s.countdown < 0) {
-            html += storyRow(s);
-        }
-    }
-
-    storyList.innerHTML = html + '</table>';
+    storyList.innerHTML = html;
 };
+

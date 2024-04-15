@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "fast-xml-parser": "^4.3.6",
     "podcast-dl": "^7.0.0-async.1",
     "puppeteer": "^22.6.1"
   }

@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/gorilla/mux v1.8.0
-	github.com/gorilla/sessions v1.2.1
 	github.com/ikawaha/kagome-dict/ipa v1.0.9
 	github.com/ikawaha/kagome/v2 v2.9.0
 	//github.com/kr/pretty v0.1.0 // indirect

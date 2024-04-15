@@ -264,6 +264,22 @@ function getStoryList(successFn) {
         });
 }
 
+function getCatalogStories(successFn) {
+    fetch('/catalog_stories', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Stories list success:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function timeSince(date) {
     if (date === 0) {
         return 'never';

@@ -113,6 +113,7 @@ func main() {
 			return
 		}
 		devMode = true
+		fmt.Println("db: ", GetUserDb())
 		err := importStories(GetUserDb(), os.Args[2])
 		if err != nil {
 			log.Fatalln(err)
@@ -137,6 +138,8 @@ func main() {
 		}
 	}
 
+	fmt.Println("db: ", GetUserDb())
+
 	router.HandleFunc("/update_story_counts", UpdateStoryCounts).Methods("POST")
 	router.HandleFunc("/create_story", CreateStory).Methods("POST")
 	router.HandleFunc("/delete_story", DeleteStory).Methods("DELETE")
@@ -148,6 +151,7 @@ func main() {
 	router.HandleFunc("/story_set_timestamp", SetTimestamp).Methods("POST")
 	router.HandleFunc("/story_set_mark", SetLineMark).Methods("POST")
 	router.HandleFunc("/stories_list", GetStoriesList).Methods("GET")
+	router.HandleFunc("/catalog_stories", GetCatalogStories).Methods("GET")
 	router.HandleFunc("/kanji", Kanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
@@ -257,6 +261,7 @@ func makeUserDB(path string) {
 			status TEXT NOT NULL,
 			date TEXT,
 			link TEXT,
+			level TEXT,
 			episode_number TEXT,
 			audio TEXT,
 			video TEXT,

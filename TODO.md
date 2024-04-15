@@ -82,7 +82,8 @@ CATALOG_STORIES
     transcript_en_format    (subtitle file)
     transcript_jp_format    (subtitle file)
     words                   (json text list of ids of all the words contained in the story; empty if the story has never yet been marked IN PROGRESS)
-    
+
+Maybe get rid of date? Do users care when the story was published?
 
 WORDS
 
