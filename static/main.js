@@ -17,8 +17,15 @@ storyList.onchange = function (evt) {
     if (evt.target.className.includes('count_spinner')) {
         let storyId = parseInt(evt.target.getAttribute('story_id'));
         let story = storiesById[storyId];
-        story.countdown = parseInt(evt.target.value);
-        updateStoryCounts(story, () => { });
+        story.repetitions_remaining = parseInt(evt.target.value);
+        updateStoryStats(story, () => { });
+    }
+
+    if (evt.target.className.includes('status_select')) {
+        let storyId = parseInt(evt.target.getAttribute('story_id'));
+        let story = storiesById[storyId];
+        story.status = evt.target.value;
+        updateStoryStats(story, () => { });
     }
 };
 
@@ -56,7 +63,7 @@ storyList.onclick = function (evt) {
     // update db
     let story = storiesById[storyId];
     story.level = newLevel;
-    updateStoryCounts(story, () => { });
+    updateStoryStats(story, () => { });
 };
 
 function processStories(storyData) {
@@ -107,13 +114,25 @@ function displayStories() {
     function storyRow(s) {
         return `<tr>
             <td>
+                <select class="status_select" story_id="${s.id}">
+                    <option ${(s.status == 'catalog') ? 'selected' : ''} value="catalog">catalog</option>
+                    <option ${(s.status == 'in progress') ? 'selected' : ''} value="in progress">in progress</option>
+                    <option ${(s.status == 'backlog') ? 'selected' : ''} value="backlog">backlog</option>
+                    <option ${(s.status == 'archived') ? 'selected' : ''} value="archived">archived</option>
+                </select>
+            </td>
+            <td>
                 <span title="when this story was last read">${timeSince(s.date_marked)}</span>
             </td>  
             <td>
-               <input story_id="${s.id}" type="number" class="count_spinner" min="-1" max="9" steps="1" value="${s.repetitions_remaining}">
+               <input story_id="${s.id}" type="number" class="count_spinner" min="0" max="9" steps="1" value="${s.repetitions_remaining}">
             </td>
             <td>
-                <span story_id="${s.id}" level="${s.level}" class="level ${s.level}" title="difficulty level of this story">${s.level}</span>
+                <select class="level_select" story_id="${s.id}" title="difficulty level of this story">
+                    <option ${(s.level == 'low') ? 'selected' : ''} value="low">low</option>
+                    <option ${(s.level == 'medium') ? 'selected' : ''} value="medium">medium</option>
+                    <option ${(s.level == 'high') ? 'selected' : ''} value="high">high</option>
+                </select>
             </td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;
@@ -121,21 +140,22 @@ function displayStories() {
 
     let tableHeader = `<table class="story_table">
     <tr>
+        <th title="number of additional times you intend to read this story">Status</th>
         <th>Time last read</th>
-        <th title="number of additional times you intend to read this story">Countdown</th>
+        <th title="number of additional times you intend to read this story">Remaining<br>Repetitions</th>
         <th title="difficulty level of this story">Level</th>
         <th>Title</th>
     </tr>`;
 
-    let html = tableHeader;
+    let html = '';
 
     let source = sourceSelect.options[sourceSelect.selectedIndex].text;
 
     if (source == 'In Progress') {
         // in progress
+        html = tableHeader;
         for (let s of stories) {
             if (s.status != 'catalog') {
-                console.log('in progress', s);
                 html += storyRow(s);
             }
         }

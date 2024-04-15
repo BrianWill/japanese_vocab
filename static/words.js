@@ -8,7 +8,6 @@ var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
-var rankSlider = document.getElementById('rank_slider');
 
 
 const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
@@ -17,7 +16,6 @@ var drillSet = null;
 var answeredSet = [];
 var stories;
 var words;
-var wordInfoMap;
 
 function newDrill() {
     let includeOffCooldown = true;
@@ -32,7 +30,6 @@ function newDrill() {
     }
 
     let categoryMask = getCategoryMask(categorySelect.value);
-    let [minRank, maxRank] = rankSlider.noUiSlider.get();
     let unixTime = Math.floor(Date.now() / 1000);
 
     let countsByRank = [0, 0, 0, 0, 0];
@@ -50,14 +47,12 @@ function newDrill() {
         // filter
         if (categorySelect.value === 'all' || (word.category & categoryMask) != 0) {
             let wordInfo = wordInfoMap[word.base_form];
-            if (wordInfo.rank >= minRank && wordInfo.rank <= maxRank) {
-                if ((includeOffCooldown && includeOnCooldown) ||
-                    (includeOffCooldown && offcooldown) ||
-                    (includeOnCooldown && !offcooldown)
-                ) {
-                    word.answered = false;
-                    drillSet.push(word);
-                }
+            if ((includeOffCooldown && includeOnCooldown) ||
+                (includeOffCooldown && offcooldown) ||
+                (includeOnCooldown && !offcooldown)
+            ) {
+                word.answered = false;
+                drillSet.push(word);
             }
         }
     }
@@ -154,38 +149,6 @@ document.body.onkeydown = async function (evt) {
         if (evt.code === 'KeyS') {
             evt.preventDefault();
             // showWord();
-        } else if (evt.code === 'Digit1') {
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.rank = 1;
-                updateWord(word, wordInfoMap);
-                displayWords();
-            }
-        } else if (evt.code === 'Digit2') {
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.rank = 2;
-                updateWord(word, wordInfoMap);
-                displayWords();
-            }
-        } else if (evt.code === 'Digit3') {
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.rank = 3;
-                updateWord(word, wordInfoMap);
-                displayWords();
-            }
-        } else if (evt.code === 'Digit4') {
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.rank = 4;
-                updateWord(word, wordInfoMap);
-                displayWords();
-            }
         } else if (evt.code === 'KeyA') {  // mark wrong and swap top two words
             evt.preventDefault();
             word.wrong = true;
@@ -273,84 +236,24 @@ function showWord() {
 document.body.onload = function (evt) {
     console.log('on page load');
 
-    noUiSlider.create(rankSlider, {
-        start: [1, 4],
-        step: 1,
-        connect: true,
-        pips: {
-            mode: 'count',
-            values: 4,
-            density: 1,
-            stepped: true
-        },
-        range: {
-            'min': 1,
-            'max': 4
-        },
-        format: {
-            // 'to' the formatted value. Receives a number.
-            to: function (value) {
-                return value;
-            },
-            // 'from' the formatted value.
-            // Receives a string, should return a number.
-            from: function (value) {
-                return value;
-            }
-        }
-    });
+    var url = new URL(window.location.href);
+    let storyId = parseInt(url.searchParams.get("storyId"));
+    let set = url.searchParams.get("set");
 
-    function sliderUpdate(values, handle, unencoded, tap, positions, noUiSlider) {
-        newDrill();
-    }
-
-    fetch('/stories_list', {
-        method: 'GET', // or 'PUT'
+    fetch('words', {
+        method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({
+            story_id: storyId,
+            set: set,
+        })
     }).then((response) => response.json())
         .then((data) => {
-            //console.log('Stories list success:', data);
-            stories = data;
-
-            storyIds = {};
-            var url = new URL(window.location.href);
-            let storyId = parseInt(url.searchParams.get("storyId"));
-            let set = url.searchParams.get("set");
-
-            if (set !== null) {
-                drillTitleH.innerHTML = `${set}`;
-            } else {
-                let title = 'ALL STORIES';
-                for (let story of stories) {
-                    if (storyId === story.id) {
-                        title = story.title;
-                    }
-                }           
-
-                drillTitleH.innerHTML = `<a href="/story.html?storyId=${storyId}"> ${title}</a>`;
-            }
-
-            fetch('words', {
-                method: 'POST', // or 'PUT'
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    story_id: storyId,
-                    set: set,
-                })
-            }).then((response) => response.json())
-                .then((data) => {
-                    words = data.words;
-                    wordInfoMap = data.wordInfoMap;
-
-                    rankSlider.noUiSlider.on('update', sliderUpdate);  // calls newDrill upon registration
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
+            words = data.words;
+            drillTitleH.innerHTML = `<a href="/story.html?storyId=${storyId}"> ${data.story_title}</a>`;
+            displayWords();
         })
         .catch((error) => {
             console.error('Error:', error);

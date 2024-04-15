@@ -4,7 +4,6 @@ import (
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 
 	// "math"
 	"net/http"
@@ -32,126 +31,42 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	baseForms, err := getStoryWords(drillRequest.StoryId, drillRequest.Set, sqldb)
+	var story_title string
+	var wordIdsJson string
+	var wordIds []int64
+
+	row := sqldb.QueryRow(`SELECT title, words FROM catalog_stories WHERE id = $1;`, drillRequest.StoryId)
+	err = row.Scan(&story_title, &wordIdsJson)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
-	rows, err := sqldb.Query(`SELECT id, base_form, rank, date_marked, category FROM words;`)
+	err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		gw.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-	defer rows.Close()
 
-	words := make([]DrillWord, 0)
-	for rows.Next() {
-		var word DrillWord
-		err = rows.Scan(&word.ID, &word.BaseForm,
-			&word.Rank, &word.DateMarked,
-			&word.Category)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			gw.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
-			return
-		}
-		if drillRequest.StoryId == -1 {
-			words = append(words, word)
-		} else if _, ok := baseForms[word.BaseForm]; ok {
-			words = append(words, word)
-		}
-	}
+	words := make([]DrillWord, len(wordIds))
 
-	wordInfoMap := make(map[string]WordInfo)
+	for i, id := range wordIds {
+		word := &words[i]
 
-	for _, word := range words {
-		wordInfo := WordInfo{
-			Definitions: getDefinitions(word.BaseForm),
-		}
+		row := sqldb.QueryRow(`SELECT base_form, date_marked, 
+				audio, audio_start, audio_end FROM words WHERE id = $1;`, id)
 
-		row := sqldb.QueryRow(`SELECT rank, date_marked, audio, audio_start, audio_end FROM words WHERE base_form = $1;`, word.BaseForm)
-
-		err = row.Scan(&wordInfo.Rank, &wordInfo.DateMarked, &wordInfo.Audio, &wordInfo.AudioStart, &wordInfo.AudioEnd)
+		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Audio, &word.AudioStart, &word.AudioEnd)
 		if err != nil && err != sql.ErrNoRows {
 			w.WriteHeader(http.StatusInternalServerError)
 			gw.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))
 			return
 		}
-
-		wordInfoMap[word.BaseForm] = wordInfo
 	}
 
-	json.NewEncoder(gw).Encode(bson.M{"words": words, "wordInfoMap": wordInfoMap})
-}
-
-func getStoryWords(storyId int64, set string, sqldb *sql.DB) (map[string]bool, error) {
-	baseForms := make(map[string]bool)
-
-	if storyId == -1 {
-		rows, err := sqldb.Query(`SELECT base_form FROM words`)
-		if err != nil {
-			return nil, fmt.Errorf("failure to get words: " + err.Error())
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var baseForm string
-			err = rows.Scan(&baseForm)
-			if err != nil {
-				return nil, fmt.Errorf("failure to scan word base form: " + err.Error())
-			}
-
-			baseForms[baseForm] = true
-		}
-
-		return baseForms, nil
-	}
-
-	var rows *sql.Rows
-	var err error
-
-	switch set {
-	case "current":
-		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown > 0`)
-	case "active":
-		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown = 0`)
-	case "archived":
-		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown < 0`)
-	default:
-		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE id = $1`, storyId)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("failure to get story words: " + err.Error())
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var linesJSON string
-		var lines []Line
-		err = rows.Scan(&linesJSON)
-		if err != nil {
-			return nil, fmt.Errorf("failure to scan story line: " + err.Error())
-		}
-		err := json.Unmarshal([]byte(linesJSON), &lines)
-		if err != nil {
-			return nil, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
-		}
-
-		for _, line := range lines {
-			for _, kanji := range line.Kanji {
-				baseForms[kanji.Character] = true
-			}
-			for _, word := range line.Words {
-				baseForms[word.BaseForm] = true
-			}
-		}
-	}
-
-	return baseForms, nil
+	json.NewEncoder(gw).Encode(bson.M{"words": words, "story_title": story_title})
 }
 
 func UpdateWord(w http.ResponseWriter, r *http.Request) {

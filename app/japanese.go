@@ -73,6 +73,83 @@ func main() {
 	makeUserDB(GetUserDb())
 	initialize()
 
+	if len(os.Args) > 1 && os.Args[1] == "import" {
+		if len(os.Args) < 3 {
+			log.Fatalln("expected json file path arg")
+			return
+		}
+		devMode = true
+
+		loadDictionary()
+
+		fmt.Println("db: ", GetUserDb())
+		err := importStories(GetUserDb(), os.Args[2])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		return
+	}
+
+	// [START setting_port]
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("Defaulting to port %s", port)
+	}
+
+	router := mux.NewRouter()
+
+	for _, s := range os.Args {
+		if s == "dev" {
+			devMode = true
+			router.Use(devMiddleware)
+			fmt.Println("In dev mode")
+		}
+	}
+
+	fmt.Println("db: ", GetUserDb())
+
+	router.HandleFunc("/update_story_stats", UpdateStoryStats).Methods("POST")
+	router.HandleFunc("/create_story", CreateStory).Methods("POST")
+	router.HandleFunc("/delete_story", DeleteStory).Methods("DELETE")
+	router.HandleFunc("/update_story/{id}", UpdateStory).Methods("POST")
+	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
+	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
+	router.HandleFunc("/story_consolidate_line", ConsolidateLine).Methods("POST")
+	router.HandleFunc("/story_split_line", SplitLine).Methods("POST")
+	router.HandleFunc("/story_set_timestamp", SetTimestamp).Methods("POST")
+	router.HandleFunc("/story_set_mark", SetLineMark).Methods("POST")
+	router.HandleFunc("/catalog_stories", GetCatalogStories).Methods("GET")
+	router.HandleFunc("/kanji", Kanji).Methods("POST")
+	router.HandleFunc("/words", WordDrill).Methods("POST")
+	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
+	router.HandleFunc("/", GetMain).Methods("GET")
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
+
+	log.Printf("Running on port: %s", port)
+	if err := http.ListenAndServe(":"+port, router); err != nil {
+		log.Fatal(err)
+	}
+
+	//exec.Command("open", "http://localhost:8080/").Run()
+	// [END setting_port]
+}
+
+func devMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+		h.ServeHTTP(w, r)
+	})
+}
+
+// everything requiring init for production and testing
+func initialize() {
+	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	definitionsCache = make(map[string][]JMDictEntry)
+	//definitionsJSONCache = make(map[string]string)
+}
+
+func loadDictionary() {
 	start := time.Now()
 	bytes, err := unzipSource("../kanji.zip")
 	if err != nil {
@@ -106,79 +183,6 @@ func main() {
 
 	duration = time.Since(start)
 	fmt.Println("time to build entry maps: ", duration)
-
-	if len(os.Args) > 1 && os.Args[1] == "import" {
-		if len(os.Args) < 3 {
-			log.Fatalln("expected json file path arg")
-			return
-		}
-		devMode = true
-		fmt.Println("db: ", GetUserDb())
-		err := importStories(GetUserDb(), os.Args[2])
-		if err != nil {
-			log.Fatalln(err)
-		}
-		return
-	}
-
-	// [START setting_port]
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-		log.Printf("Defaulting to port %s", port)
-	}
-
-	router := mux.NewRouter()
-
-	for _, s := range os.Args {
-		if s == "dev" {
-			devMode = true
-			router.Use(devMiddleware)
-			fmt.Println("In dev mode")
-		}
-	}
-
-	fmt.Println("db: ", GetUserDb())
-
-	router.HandleFunc("/update_story_counts", UpdateStoryCounts).Methods("POST")
-	router.HandleFunc("/create_story", CreateStory).Methods("POST")
-	router.HandleFunc("/delete_story", DeleteStory).Methods("DELETE")
-	router.HandleFunc("/update_story/{id}", UpdateStory).Methods("POST")
-	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
-	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
-	router.HandleFunc("/story_consolidate_line", ConsolidateLine).Methods("POST")
-	router.HandleFunc("/story_split_line", SplitLine).Methods("POST")
-	router.HandleFunc("/story_set_timestamp", SetTimestamp).Methods("POST")
-	router.HandleFunc("/story_set_mark", SetLineMark).Methods("POST")
-	router.HandleFunc("/stories_list", GetStoriesList).Methods("GET")
-	router.HandleFunc("/catalog_stories", GetCatalogStories).Methods("GET")
-	router.HandleFunc("/kanji", Kanji).Methods("POST")
-	router.HandleFunc("/words", WordDrill).Methods("POST")
-	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
-	router.HandleFunc("/", GetMain).Methods("GET")
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
-
-	log.Printf("Running on port: %s", port)
-	if err := http.ListenAndServe(":"+port, router); err != nil {
-		log.Fatal(err)
-	}
-
-	//exec.Command("open", "http://localhost:8080/").Run()
-	// [END setting_port]
-}
-
-func devMiddleware(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-		h.ServeHTTP(w, r)
-	})
-}
-
-// everything requiring init for production and testing
-func initialize() {
-	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-	definitionsCache = make(map[string][]JMDictEntry)
-	//definitionsJSONCache = make(map[string]string)
 }
 
 func buildEntryMaps() {

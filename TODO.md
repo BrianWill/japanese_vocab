@@ -1,5 +1,13 @@
 # japanese_vocab TODO
 
+Maybe get rid of story date? Do users care when the story was published?
+
+remove word rank (convert all 4's to archived, all 1's to unknown, all 2's and 3's to "in progress" and set their repetitions_remaining)
+
+
+marking a story IN PROGRESS will mark all UNKNOWN words as IN PROGRESS and sets the drill count
+
+
 story status:
 
     CATALOG            (initial state; never read before)
@@ -7,12 +15,6 @@ story status:
         "repetitions remaining" countdown to zero: how many times to repeat the story. When reaches zero, story is put in backlog
     BACKLOG        (read before and maybe want to come back to it)
     ARCHIVED       (never want to see it again)
-
-when a story is added into catalog, all words are put in the catalog
-
-marking a story IN PROGRESS will mark all UNKNOWN words as IN PROGRESS and sets the drill count
-
-when looking at a story, see list of its words sorted by status
 
 word status:
 
@@ -25,20 +27,11 @@ word status:
 
 a kanji is just a word entry marked as being just a kanji
 
+when a word is added to dictionary, store its definition with the word
 
 MAIN page
 
-    - shows only IN PROGRESS stories
-
-STORY CATALOG page
-
-    - a page that show all stories
-        - sorted by source or status (toggle option at top of page)
-        - also can sort by level?
-
-STORY PAGE
-
-    - shows text of story
+    - option to show stories by level?
 
 STORY VOCAB PAGE
 
@@ -47,78 +40,16 @@ STORY VOCAB PAGE
 
 DRILL page
 
-    - words selected from IN PROGRESS set
-    - shows the list of words to drill in right sidebar
-    - displays current word / kanji on the left
+    - shows all words from a particular story or...
+        - "in_progress" shows all words from all stories in progress
+    - make current word at top of list much bigger
+    - instead of rank, show countdown
     - hit key to mark word as drilled and move on to the next
     - in auto play mode:
         - show a word with its definition (and play audio?) for n seconds, then automatically move to the next
         - words auto drilled will be temporarily marked
         - when done with the drill, button to decrement counter for all words that were temporarily marked
 
-IMPORTING STORIES
-
-    - command line? or page with file open dialog?
-    - add set of stories through json
-    - stories are uniquely identified by source + title
-        - during import, if story already exists, it is updated (except for status)
-
-
-CATALOG_STORIES
-
-    title
-    source          (e.g. Nihongo Picnic)
-    status          (unknown, in progress, backlog, archived)   string?
-    countdown       (planned repetitions remaining)
-    date
-    link
-    episode_number
-    audio
-    video
-    content
-    content_format
-    transcript_en           (subtitle file)
-    transcript_jp           (subtitle file)
-    transcript_en_format    (subtitle file)
-    transcript_jp_format    (subtitle file)
-    words                   (json text list of ids of all the words contained in the story; empty if the story has never yet been marked IN PROGRESS)
-
-Maybe get rid of date? Do users care when the story was published?
-
-WORDS
-
-    words identified by base_form
-
-    base_form
-    drill_count                 (total number of times word has been drilled)
-    drill_countdown             (times remaining to drill the word)
-    date_marked                 (last time the word was drilled)
-    category                    (bit flags: kanji, ichidan verb, godan verb)
-    status                      (unknown, in progress, backlog, archived)
-    audio                       (link to audio file that contains the word)
-    audio_start                 (float in seconds)
-    audio_end
-    
-
-    to remove:
-        rank
-
-
-story JSON format:
-
-    title
-    source          (e.g. Nihongo Picnic)
-    date
-    link
-    episode_number
-    audio
-    video
-    content
-    content_format
-    transcript_en           (subtitle file)
-    transcript_jp           (subtitle file)
-    transcript_en_format    (subtitle file)
-    transcript_jp_format    (subtitle file)
 
 subtitles: 
     english: https://subscene.com/   https://www.opensubtitles.org/en/search/subs   https://www.podnapisi.net

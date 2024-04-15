@@ -72,7 +72,6 @@ type StoryImportJSON struct {
 type WordRankCounts [4]int
 
 type WordInfo struct {
-	Rank        int           `json:"rank"`
 	Definitions []JMDictEntry `json:"definitions,omitempty"`
 	DateMarked  int64         `json:"date_marked"`
 	Audio       string        `json:"audio"`
@@ -155,11 +154,14 @@ type EnqueuedStory struct {
 }
 
 type DrillWord struct {
-	ID         int64  `json:"id,omitempty"`
-	BaseForm   string `json:"base_form"`
-	Rank       int    `json:"rank"`
-	DateMarked int64  `json:"date_marked"`
-	Category   int    `json:"category"`
+	ID          int64         `json:"id,omitempty"`
+	BaseForm    string        `json:"base_form"`
+	DateMarked  int64         `json:"date_marked"`
+	Category    int           `json:"category"`
+	Definitions []JMDictEntry `json:"definitions,omitempty"`
+	Audio       string        `json:"audio,omitempty"`
+	AudioStart  float32       `json:"audio_start,omitempty"`
+	AudioEnd    float32       `json:"audio_end,omitempty"`
 }
 
 type WordUpdate struct {

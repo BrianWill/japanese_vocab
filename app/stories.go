@@ -564,63 +564,6 @@ func getVerbCategory(sense JMDictSense) int {
 	return category
 }
 
-func GetStoriesList(response http.ResponseWriter, request *http.Request) {
-	dbPath := GetUserDb()
-
-	response.Header().Set("Content-Type", "application/json")
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	rows, err := sqldb.Query(`SELECT id, title, link, lines, status, level, date_added, countdown, read_count, date_last_read FROM stories;`)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
-		return
-	}
-	defer rows.Close()
-
-	var stories []Story
-	for rows.Next() {
-		var linesJSON string
-		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &linesJSON, &story.Status, &story.Level,
-			&story.DateAdded, &story.Countdown, &story.ReadCount, &story.DateLastRead); err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
-			return
-		}
-
-		err := json.Unmarshal([]byte(linesJSON), &story.Lines)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to unmarshal story lines: " + err.Error() + `"}`))
-			return
-		}
-		stories = append(stories, story)
-	}
-
-	wordRanks, err := GetWordRanks(sqldb)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get word ranks: " + err.Error() + `"}`))
-		return
-	}
-
-	for i := range stories {
-		story := &stories[i]
-		story.WordRankCounts = GetStoryWordRankCounts(story.Lines, wordRanks)
-		story.Lines = nil // omit the lines from the returned data
-	}
-
-	json.NewEncoder(response).Encode(stories)
-}
-
 func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	dbPath := GetUserDb()
 
@@ -670,26 +613,26 @@ func GetStoryWordRankCounts(lines []Line, wordRanks map[string]int) WordRankCoun
 	return counts
 }
 
-func GetWordRanks(sqldb *sql.DB) (map[string]int, error) {
-	wordRanks := make(map[string]int)
+// func GetWordRanks(sqldb *sql.DB) (map[string]int, error) {
+// 	wordRanks := make(map[string]int)
 
-	rows, err := sqldb.Query(`SELECT id, base_form, rank FROM words;`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// 	rows, err := sqldb.Query(`SELECT id, base_form, rank FROM words;`)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	for rows.Next() {
-		var word DrillWord
-		err = rows.Scan(&word.ID, &word.BaseForm, &word.Rank)
-		if err != nil {
-			return nil, err
-		}
-		wordRanks[word.BaseForm] = word.Rank
-	}
+// 	for rows.Next() {
+// 		var word DrillWord
+// 		err = rows.Scan(&word.ID, &word.BaseForm, &word.Rank)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		wordRanks[word.BaseForm] = word.Rank
+// 	}
 
-	return wordRanks, nil
-}
+// 	return wordRanks, nil
+// }
 
 func GetStory(w http.ResponseWriter, r *http.Request) {
 	dbPath := GetUserDb()
@@ -716,7 +659,19 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	story, err := getStory(int64(id), sqldb)
+	row := sqldb.QueryRow(`SELECT title, source, link, content, date, audio, repetitions_remaining, 
+		level, words, date_marked FROM catalog_stories WHERE id = $1;`, id)
+
+	var words string
+	story := CatalogStory{ID: int64(id)}
+	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date, &story.Audio, &story.RepetitionsRemaining,
+		&story.Level, &words, &story.DateMarked); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
+		return
+	}
+
+	err = json.Unmarshal([]byte(words), &story.Words)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -731,55 +686,12 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getStory(id int64, sqldb *sql.DB) (Story, error) {
-	row := sqldb.QueryRow(`SELECT title, link, lines, date_added, audio, countdown, read_count, date_last_read FROM stories WHERE id = $1;`, id)
-
-	var linesJSON string
-	story := Story{ID: id}
-	if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded,
-		&story.Audio, &story.Countdown, &story.ReadCount, &story.DateLastRead); err != nil {
-		return Story{}, fmt.Errorf("failure to scan story row: " + err.Error())
-	}
-
-	err := json.Unmarshal([]byte(linesJSON), &story.Lines)
-	if err != nil {
-		return Story{}, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
-	}
-
-	wordInfo := make(map[string]WordInfo)
-
-	for _, line := range story.Lines {
-		for _, word := range line.Words {
-			wordInfo[word.BaseForm] = WordInfo{
-				Definitions: getDefinitions(word.BaseForm),
-			}
-		}
-	}
-
-	story.WordInfo = wordInfo
-
-	for baseForm := range story.WordInfo {
-		wordInfo := story.WordInfo[baseForm]
-
-		row := sqldb.QueryRow(`SELECT rank, date_marked FROM words WHERE base_form = $1;`, baseForm)
-
-		err = row.Scan(&wordInfo.Rank, &wordInfo.DateMarked)
-		if err != nil && err != sql.ErrNoRows {
-			return Story{}, fmt.Errorf("failure to get word info: " + err.Error())
-		}
-
-		story.WordInfo[baseForm] = wordInfo
-	}
-
-	return story, nil
-}
-
-func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
+func UpdateStoryStats(w http.ResponseWriter, r *http.Request) {
 	dbPath := GetUserDb()
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var story Story
+	var story CatalogStory
 	err := json.NewDecoder(r.Body).Decode(&story)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -796,7 +708,7 @@ func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	// make sure the story actually exists
-	rows, err := sqldb.Query(`SELECT id FROM stories WHERE id = $1;`, story.ID)
+	rows, err := sqldb.Query(`SELECT id FROM catalog_stories WHERE id = $1;`, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -811,8 +723,8 @@ func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3, level = $4 WHERE id = $5;`,
-		story.Countdown, story.ReadCount, story.DateLastRead, story.Level, story.ID)
+	_, err = sqldb.Exec(`UPDATE catalog_stories SET repetitions_remaining = $1, date_marked = $2, level = $3 WHERE id = $4;`,
+		story.RepetitionsRemaining, story.DateMarked, story.Level, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))

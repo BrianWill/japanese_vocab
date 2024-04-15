@@ -224,15 +224,14 @@ function updateStoryStatus(story, refreshList) {
         });
 }
 
-function updateStoryCounts(story, successFn) {
+function updateStoryStats(story, successFn) {
     story = {
         id: story.id,
-        countdown: story.countdown,
-        read_count: story.read_count,
+        repetitions_remaining: story.repetitions_remaining,
         level: story.level,
-        date_last_read: story.date_last_read
+        date_marked: story.date_marked
     };
-    fetch(`/update_story_counts`, {
+    fetch(`/update_story_stats`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

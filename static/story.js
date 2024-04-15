@@ -3,13 +3,9 @@ var storyLines = document.getElementById('story_lines');
 var wordList = document.getElementById('word_list');
 var playerSpeedNumber = document.getElementById('player_speed_number');
 var drillWordsLink = document.getElementById('drill_words_link');
-var editLink = document.getElementById('edit_story');
-var highlightLink = document.getElementById('highlight_message');
-var highlightPOSLink = document.getElementById('highlight_pos_message');
 var audioPlayer = document.getElementById('audio_player');
 var playerControls = document.getElementById('player_controls');
 var markStoryLink = document.getElementById('mark_story');
-var deleteStoryLink = document.getElementById('delete_story');
 var countSpinner = document.getElementById('count_spinner');
 
 var story = null;
@@ -22,31 +18,6 @@ storyLines.onwheel = function (evt) {
     storyLines.scrollTop -= scrollDelta;
 };
 
-
-highlightLink.onclick = toggleHighlight;
-
-function toggleHighlight(evt) {
-    evt.preventDefault();
-    storyLines.classList.toggle('highlight_all_words');
-    if (storyLines.classList.contains('highlight_all_words')) {
-        highlightLink.innerHTML = 'Highlighting all rank 1-3 words';
-    } else {
-        highlightLink.innerHTML = 'Highlighting only the rank 1-3 words off cooldown';
-    }
-}
-
-highlightPOSLink.onclick = togglePOS;
-
-function togglePOS(evt) {
-    evt.preventDefault();
-    storyLines.classList.toggle('highlight_pos');
-    if (storyLines.classList.contains('highlight_pos')) {
-        highlightPOSLink.innerHTML = 'Highlighting parts of speech';
-    } else {
-        highlightPOSLink.innerHTML = 'Not highlighting parts of speech';
-    }
-}
-
 const STORY_MARK_COOLDOWN = 60 * 60 * 4;
 
 markStoryLink.onclick = function (evt) {
@@ -57,41 +28,13 @@ markStoryLink.onclick = function (evt) {
         return;
     }
     story.date_last_read = unixTime;
-    story.countdown = Math.max(story.countdown - 1, 0);
+    story.repetitions_remaining = Math.max(story.repetitions_remaining - 1, 0);
     story.read_count++;
-    countSpinner.value = story.countdown;
-    updateStoryCounts(story, () => {
+    countSpinner.value = story.repetitions_remaining;
+    updateStoryStats(story, () => {
         snackbarMessage('marked story as read');
     });
 };
-
-deleteStoryLink.onclick = function (evt) {
-    evt.preventDefault();
-
-    if (!confirm('Do you want to delete this story?')) {
-        return;
-    }
-
-    let url = new URL(window.location.href);
-    let storyId = parseInt(url.searchParams.get("storyId"));
-    let data = { ID: storyId };   
-
-    console.log("deleting story", data.ID);
-
-    fetch('/delete_story', {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    }).then((response) => {
-        if (response.status === 200)
-            window.location.replace('/');
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
 
 document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
@@ -160,52 +103,23 @@ document.body.onkeydown = async function (evt) {
         }
     }
 
-    if (evt.code === 'KeyC') {
-        toggleHighlight(evt);
-    } else if (evt.code === 'Space') {
-        evt.preventDefault();
-        if (selectedWordBaseForm) {
-            let wordInfo = story.word_info[selectedWordBaseForm];
-            updateWord({
-                base_form: selectedWordBaseForm,
-                date_marked: Math.floor(Date.now() / 1000),
-                rank: wordInfo.rank,
-            }, story.word_info, true);
-        }
-    } else if (evt.code === 'KeyM') {
-        evt.preventDefault();
-        let marked = story.lines[selectedLineIdx].marked == true;  // coerce undefined to bool
-        setLineMark(selectedLineIdx, !marked);
-    } else if (evt.code === 'Minus') {
-        evt.preventDefault();
-        let timestamp = story.lines[selectedLineIdx].timestamp;
-        let seconds = parseTimestamp(timestamp) - 0.5;
-        if (seconds < 0) {
-            return;
-        }
-        setTimestamp(selectedLineIdx, seconds);
-    } else if (evt.code === 'Equal') {
-        evt.preventDefault();
-        let timestamp = story.lines[selectedLineIdx].timestamp;
-        let seconds = parseTimestamp(timestamp) + 0.5;
-        setTimestamp(selectedLineIdx, seconds);
-    } else if (evt.code.startsWith('Digit')) {
-        evt.preventDefault();
-        let digit = parseInt(evt.code.slice(-1));
-        if (!evt.altKey) {
-            if (digit < 1 || digit > 4) {
-                return;
-            }
-            if (selectedWordBaseForm) {
-                let wordInfo = story.word_info[selectedWordBaseForm];
-                updateWord({
-                    base_form: selectedWordBaseForm,
-                    date_marked: wordInfo.date_marked,
-                    rank: digit,
-                }, story.word_info);
-            }
-        }
-    }
+    // if (evt.code.startsWith('Digit')) {
+    //     evt.preventDefault();
+    //     let digit = parseInt(evt.code.slice(-1));
+    //     if (!evt.altKey) {
+    //         if (digit < 1 || digit > 4) {
+    //             return;
+    //         }
+    //         if (selectedWordBaseForm) {
+    //             let wordInfo = story.word_info[selectedWordBaseForm];
+    //             updateWord({
+    //                 base_form: selectedWordBaseForm,
+    //                 date_marked: wordInfo.date_marked,
+    //                 rank: digit,
+    //             }, story.word_info);
+    //         }
+    //     }
+    // }
 };
 
 storyLines.onmousedown = function (evt) {
@@ -297,8 +211,8 @@ storyLines.onmousedown = function (evt) {
 
 
 countSpinner.onchange = function (evt) {
-    story.countdown = parseInt(evt.target.value);
-    updateStoryCounts(story, () => { });
+    story.repetitions_remaining = parseInt(evt.target.value);
+    updateStoryStats(story, () => { });
 };
 
 // returns time in seconds
@@ -364,11 +278,10 @@ function openStory(id) {
         .then((data) => {
             story = data;
             drillWordsLink.setAttribute('href', `/words.html?storyId=${story.id}`);
-            editLink.setAttribute('href', `/edit.html?storyId=${story.id}`);
-            storyTitle.innerHTML = `<a href="${story.link}">${story.title}</a>`;
+            storyTitle.innerHTML = `${story.source}<br><hr><a href="${story.link}">${story.title}</a>`;
             console.log(story);
 
-            countSpinner.value = story.countdown;
+            countSpinner.value = story.repetitions_remaining;
 
             displayStory(data);
 
@@ -432,28 +345,30 @@ playerSpeedNumber.onchange = function (evt) {
 }
 
 function displayStory(story) {
-    let html = '<table id="lines_table">';
 
-    let unixTime = Math.floor(Date.now() / 1000);
+    // let html = '<table id="lines_table">';
 
-    for (let idx in story.lines) {
-        let line = story.lines[idx];
-        html += `<tr line_idx="${idx}"><td class="line_timestamp_container"><a class="line_timestamp ${line.marked ? 'marked_line' : ''}">${line.timestamp}</a></td><td>`;
-        for (let wordIdx in line.words) {
-            let word = line.words[wordIdx];
-            let wordinfo = story.word_info[word.baseform];
-            if (word.id) {
-                let offCooldown = isOffCooldown(wordinfo.rank, wordinfo.date_marked, unixTime);
-                html += `<span word_idx_in_line="${wordIdx}" word_id="${word.id || ''}" baseform="${word.baseform || ''}" 
-                    class="lineword rank${wordinfo.rank} ${offCooldown ? 'offcooldown' : ''} ${word.pos || ''}">${word.surface}</span>`;
-            } else {
-                html += `<span word_idx_in_line="${wordIdx}" class="lineword nonword">${word.surface}</span>`;
-            }
-        }
-        html += '</td></tr>'
-    }
+    // let unixTime = Math.floor(Date.now() / 1000);
 
-    storyLines.innerHTML = html + '</table>';
+    // for (let idx in story.lines) {
+    //     let line = story.lines[idx];
+    //     html += `<tr line_idx="${idx}"><td class="line_timestamp_container"><a class="line_timestamp ${line.marked ? 'marked_line' : ''}">${line.timestamp}</a></td><td>`;
+    //     for (let wordIdx in line.words) {
+    //         let word = line.words[wordIdx];
+    //         let wordinfo = story.word_info[word.baseform];
+    //         if (word.id) {
+    //             let offCooldown = isOffCooldown(wordinfo.rank, wordinfo.date_marked, unixTime);
+    //             html += `<span word_idx_in_line="${wordIdx}" word_id="${word.id || ''}" baseform="${word.baseform || ''}" 
+    //                 class="lineword rank${wordinfo.rank} ${offCooldown ? 'offcooldown' : ''} ${word.pos || ''}">${word.surface}</span>`;
+    //         } else {
+    //             html += `<span word_idx_in_line="${wordIdx}" class="lineword nonword">${word.surface}</span>`;
+    //         }
+    //     }
+    //     html += '</td></tr>'
+    // }
+
+    // storyLines.innerHTML = html + '</table>';
+    storyLines.innerHTML = `<div>${story.content}</div>`;
 }
 
 function isOffCooldown(rank, dateMarked, unixTime) {
