@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -29,12 +28,7 @@ var definitionsCache map[string][]JMDictEntry // base form to []JMDictEntry
 
 var reHasKanji *regexp.Regexp
 
-const SESSION_KEY = "supersecret" // todo insecure; use env variable instead
-
 var tok *tokenizer.Tokenizer
-
-const SQL_USERS_FILE = "../users.db"
-const SALT = "QWOpVRp6SObKeO6bBth5"
 
 const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 24 * 1000 // 1000 days in seconds
 const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 30   // 30 days in seconds
@@ -55,10 +49,6 @@ const DRILL_CATEGORY_KANJI = 4096
 const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
 	DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU
 
-var devMode bool = false
-
-const SINGLE_USER_DB_PATH = "../users/single.db"
-
 // const MAIN_USER_DB_PATH = "../users/main.db"
 const MAIN_USER_DB_PATH = "../users/test.db"
 
@@ -69,21 +59,36 @@ func main() {
 		panic(err)
 	}
 
-	makeMainDB()
-	makeUserDB(GetUserDb())
-	initialize()
+	makeUserDB(MAIN_USER_DB_PATH)
+	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	definitionsCache = make(map[string][]JMDictEntry)
+
+	if len(os.Args) > 1 && os.Args[1] == "definitions" {
+		loadDictionary()
+
+		sqldb, err := sql.Open("sqlite3", MAIN_USER_DB_PATH)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer sqldb.Close()
+
+		err = updateDefinitions(sqldb)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 
 	if len(os.Args) > 1 && os.Args[1] == "import" {
 		if len(os.Args) < 3 {
 			log.Fatalln("expected json file path arg")
 			return
 		}
-		devMode = true
 
 		loadDictionary()
 
-		fmt.Println("db: ", GetUserDb())
-		err := importStories(GetUserDb(), os.Args[2])
+		fmt.Println("db: ", MAIN_USER_DB_PATH)
+		err := importStories(MAIN_USER_DB_PATH, os.Args[2])
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -101,26 +106,17 @@ func main() {
 
 	for _, s := range os.Args {
 		if s == "dev" {
-			devMode = true
 			router.Use(devMiddleware)
 			fmt.Println("In dev mode")
 		}
 	}
 
-	fmt.Println("db: ", GetUserDb())
+	fmt.Println("db: ", MAIN_USER_DB_PATH)
 
 	router.HandleFunc("/update_story_stats", UpdateStoryStats).Methods("POST")
-	router.HandleFunc("/create_story", CreateStory).Methods("POST")
-	router.HandleFunc("/delete_story", DeleteStory).Methods("DELETE")
-	router.HandleFunc("/update_story/{id}", UpdateStory).Methods("POST")
-	router.HandleFunc("/retokenize_story", RetokenizeStory).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
-	router.HandleFunc("/story_consolidate_line", ConsolidateLine).Methods("POST")
-	router.HandleFunc("/story_split_line", SplitLine).Methods("POST")
-	router.HandleFunc("/story_set_timestamp", SetTimestamp).Methods("POST")
-	router.HandleFunc("/story_set_mark", SetLineMark).Methods("POST")
 	router.HandleFunc("/catalog_stories", GetCatalogStories).Methods("GET")
-	router.HandleFunc("/kanji", Kanji).Methods("POST")
+	router.HandleFunc("/kanji", GetKanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
 	router.HandleFunc("/", GetMain).Methods("GET")
@@ -140,13 +136,6 @@ func devMiddleware(h http.Handler) http.Handler {
 		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
 		h.ServeHTTP(w, r)
 	})
-}
-
-// everything requiring init for production and testing
-func initialize() {
-	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-	definitionsCache = make(map[string][]JMDictEntry)
-	//definitionsJSONCache = make(map[string]string)
 }
 
 func loadDictionary() {
@@ -211,26 +200,6 @@ func buildEntryMaps() {
 	}
 }
 
-func makeMainDB() {
-	sqldb, err := sql.Open("sqlite3", SQL_USERS_FILE)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer sqldb.Close()
-
-	statement, err := sqldb.Prepare(`CREATE TABLE IF NOT EXISTS users 
-	(id INTEGER PRIMARY KEY,
-		email TEXT NOT NULL, 
-		passwordHash TEXT NOT NULL)`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := statement.Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-}
-
 func makeUserDB(path string) {
 	sqldb, err := sql.Open("sqlite3", path)
 	if err != nil {
@@ -245,10 +214,10 @@ func makeUserDB(path string) {
 			drill_count INTEGER NOT NULL,
 			drill_countdown INTEGER NOT NULL,
 			category INTEGER NOT NULL,
-			audio TEXT NOT NULL,
-			audio_start REAL NOT NULL,
-			audio_end REAL NOT NULL,
-			date_marked INTEGER NOT NULL,
+			audio TEXT NOT NULL DEFAULT '',
+			audio_start REAL NOT NULL DEFAULT 0,
+			audio_end REAL NOT NULL DEFAULT 0,
+			date_marked INTEGER NOT NULL DEFAULT 0,
 			date_added INTEGER NOT NULL,
 			rank INTEGER NOT NULL)`)
 	if err != nil {
@@ -266,6 +235,7 @@ func makeUserDB(path string) {
 			date TEXT,
 			link TEXT,
 			level TEXT,
+			definitions TEXT,
 			episode_number TEXT,
 			audio TEXT,
 			video TEXT,
@@ -309,49 +279,8 @@ func makeUserDB(path string) {
 
 // [START indexHandler]
 
-func Kanji(response http.ResponseWriter, request *http.Request) {
-	response.Header().Set("Content-Type", "application/json")
-
-	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// defer cancel()
-
-	var str string
-	json.NewDecoder(request.Body).Decode(&str)
-
-	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-	kanji := re.FindAllString(str, -1)
-
-	json.NewEncoder(response).Encode(bson.M{"kanji": getKanji(kanji)})
-}
-
-func getKanji(characters []string) []KanjiCharacter {
-	kanjiSet := make(map[string]KanjiCharacter)
-	for _, ch := range characters {
-		for _, k := range allKanji.Characters {
-			if k.Literal == ch {
-				kanjiSet[ch] = k
-				break
-			}
-		}
-	}
-
-	kanji := make([]KanjiCharacter, 0)
-	for _, k := range kanjiSet {
-		kanji = append(kanji, k)
-	}
-	return kanji
-}
-
 func GetMain(response http.ResponseWriter, request *http.Request) {
 	http.ServeFile(response, request, "../static/index.html")
-}
-
-func GetUserDb() string {
-	if devMode {
-		return MAIN_USER_DB_PATH
-	} else {
-		return SINGLE_USER_DB_PATH
-	}
 }
 
 func VacuumDb(userDbPath string) error {

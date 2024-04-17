@@ -6,22 +6,21 @@ import (
 )
 
 type Story struct {
-	ID             int64               `json:"id,omitempty"`
-	Content        string              `json:"content,omitempty"`
-	Title          string              `json:"title,omitempty"`
-	Link           string              `json:"link,omitempty"`
-	Audio          string              `json:"audio"`
-	Lines          []Line              `json:"lines,omitempty"`
-	LinesJP        []Line              `json:"lines_jp,omitempty"`
-	LinesEN        []Line              `json:"lines_en,omitempty"`
-	Status         int                 `json:"status"`
-	Level          int                 `json:"level"`
-	ReadCount      int                 `json:"read_count"`
-	Countdown      int                 `json:"countdown"`
-	DateLastRead   int64               `json:"date_last_read"`
-	DateAdded      int64               `json:"date_added,omitempty"`
-	WordInfo       map[string]WordInfo `json:"word_info,omitempty"`
-	WordRankCounts WordRankCounts      `json:"word_ranks,omitempty"`
+	ID           int64               `json:"id,omitempty"`
+	Content      string              `json:"content,omitempty"`
+	Title        string              `json:"title,omitempty"`
+	Link         string              `json:"link,omitempty"`
+	Audio        string              `json:"audio"`
+	Lines        []Line              `json:"lines,omitempty"`
+	LinesJP      []Line              `json:"lines_jp,omitempty"`
+	LinesEN      []Line              `json:"lines_en,omitempty"`
+	Status       int                 `json:"status"`
+	Level        int                 `json:"level"`
+	ReadCount    int                 `json:"read_count"`
+	Countdown    int                 `json:"countdown"`
+	DateLastRead int64               `json:"date_last_read"`
+	DateAdded    int64               `json:"date_added,omitempty"`
+	WordInfo     map[string]WordInfo `json:"word_info,omitempty"`
 }
 
 type CatalogStory struct {
@@ -68,8 +67,6 @@ type StoryImportJSON struct {
 	ContentFormat string        `json:"content_format,omitempty"`
 	Stories       []StoryImport `json:"stories,omitempty"`
 }
-
-type WordRankCounts [4]int
 
 type WordInfo struct {
 	Definitions []JMDictEntry `json:"definitions,omitempty"`
@@ -154,19 +151,21 @@ type EnqueuedStory struct {
 }
 
 type DrillWord struct {
-	ID          int64         `json:"id,omitempty"`
-	BaseForm    string        `json:"base_form"`
-	DateMarked  int64         `json:"date_marked"`
-	Category    int           `json:"category"`
-	Definitions []JMDictEntry `json:"definitions,omitempty"`
-	Audio       string        `json:"audio,omitempty"`
-	AudioStart  float32       `json:"audio_start,omitempty"`
-	AudioEnd    float32       `json:"audio_end,omitempty"`
+	ID             int64   `json:"id,omitempty"`
+	BaseForm       string  `json:"base_form"`
+	Status         string  `json:"status"`
+	DateMarked     int64   `json:"date_marked"`
+	Category       int     `json:"category"`
+	Definitions    string  `json:"definitions,omitempty"`
+	Audio          string  `json:"audio,omitempty"`
+	AudioStart     float32 `json:"audio_start,omitempty"`
+	AudioEnd       float32 `json:"audio_end,omitempty"`
+	DrillCountdown int     `json:"drill_countdown,omitempty"`
 }
 
 type WordUpdate struct {
 	BaseForm   string  `json:"base_form"`
-	Rank       int     `json:"rank"`
+	Status     string  `json:"status"`
 	DateMarked int64   `json:"date_marked"`
 	Audio      string  `json:"audio"`
 	AudioStart float32 `json:"audio_start"`
@@ -214,6 +213,11 @@ type WordSearch struct {
 type JMDict struct {
 	XMLName xml.Name      `xml:"JMDict"`
 	Entries []JMDictEntry `xml:"entry" json:"entries"`
+}
+
+type Definition struct {
+	Entries        []JMDictEntry   `bson:"entries, omitempty" json:"entries,omitempty"`
+	KanjiCharacter *KanjiCharacter `bson:"kanji_character, omitempty" json:"kanji_character,omitempty"`
 }
 
 type JMDictEntry struct {

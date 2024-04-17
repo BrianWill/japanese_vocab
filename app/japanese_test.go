@@ -40,7 +40,7 @@ func setup(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	initialize()
+	//initialize()
 	makeUserDB(USERHASH)
 }
 

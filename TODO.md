@@ -1,11 +1,26 @@
 # japanese_vocab TODO
 
+addWords():
+
+    update the definitions to new format, make sure to set KanjiDefinition for inserted kanji
+
+fetching words:
+    response should be gzipped
+    include kanji data
+        per word, store array of ids to each kanji word
+
+drill page:
+    story title should match the 
+    
+make the drill page look like the story page? (put story title and options in right side bar)
+    make all the selects multiple (they'll fit OK in sidebar)
+
 Maybe get rid of story date? Do users care when the story was published?
 
-remove word rank (convert all 4's to archived, all 1's to unknown, all 2's and 3's to "in progress" and set their repetitions_remaining)
+remove word rank (convert all 4's to archived, all 1's to catalog, all 2's and 3's to "in progress" and set their repetitions_remaining)
 
 
-marking a story IN PROGRESS will mark all UNKNOWN words as IN PROGRESS and sets the drill count
+marking a story IN PROGRESS will mark all CATALOG words as IN PROGRESS and sets the drill count
 
 
 story status:

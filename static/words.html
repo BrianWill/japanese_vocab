@@ -10,31 +10,48 @@
 </head>
 
 <body>
-    <span id="top_link"><a href="/">⬅ &#x1F3E0;</a></span> 
-    <h3 id="drill_title"></h3>
-    <h3 id="drill_info"></h3>
-    &nbsp;&nbsp;
-    <select id="category" name="category">
-        <option value="all">words of all kinds</option>
-        <option value="kanji">kanji characters</option>
-        <option value="katakana">katakana words</option>
-        <option value="ichidan">ichidan verbs</option>
-        <option value="godan">godan verbs</option>
-    </select>
-    <select id="filter_select">
-        <option value="off" selected>words off cooldown</option>
-        <option value="on">words on cooldown</option>
-        <option value="all">words on or off cooldown</option>
-    </select>
-    <label>Rank:</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div id="rank_slider"></div>
-    <br>
     <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
-    <div id="results">
-        <div id="answer">
-            <div id="kanji_results"></div>
-            <div id="definitions"></div>
+    <div id="words_container">
+        <div id="definition">
+            <div id="results">
+                <div id="answer">
+                    <div id="kanji_results"></div>
+                    <div id="definitions"></div>
+                </div>
+            </div>
         </div>
-        <div id="cards"></div>
+        <div id="words">
+            <div id="cards"></div>
+        </div>
+        <div id="right_sidebar">
+            <div id="home_link"><a href="/">home</a></div>
+            <h3 id="drill_title"></h3>
+            <h3 id="drill_info"></h3>
+            <div>
+                <select id="category" name="category">
+                    <option value="all">words of all kinds</option>
+                    <option value="kanji">kanji characters</option>
+                    <option value="katakana">katakana words</option>
+                    <option value="ichidan">ichidan verbs</option>
+                    <option value="godan">godan verbs</option>
+                </select>
+            </div>
+            <div>
+                <select id="filter_select">
+                    <option value="off" selected>words off cooldown</option>
+                    <option value="on">words on cooldown</option>
+                    <option value="all">words on or off cooldown</option>
+                </select>
+            </div>
+            <div>
+                <select size="4" multiple id="status_select">
+                    <option value='catalog'>Catalog</option>
+                    <option selected value='in progress'>In Progress</option>
+                    <option value='backlog'>Backlog</option>
+                    <option value='archived'>Archived</option>
+                </select>
+            </div>
+        </div>
     </div>
     <div id="snackbar"></div>
 </body>

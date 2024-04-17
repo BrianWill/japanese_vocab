@@ -33,34 +33,36 @@ function splitOnHighPitch(str, pitch) {
     ];
 }
 
-function displayKanji(kanji, word) {
+function displayKanji(defsByKanji, word) {
+    console.log(defsByKanji);
     html = '';
 
-    if (!kanji || kanji.length === 0) {
+    if (!defsByKanji || defsByKanji.length === 0) {
         kanjiResultsDiv.innerHTML = '';
         return;
     }
 
     for (let ch of new Set(word.split(''))) {
-        for (let k of kanji) {
-            if (k.literal === ch) {
-                for (let group of k.readingmeaning.group) {
+        for (let k in defsByKanji) {
+            let def = defsByKanji[k].kanji_character;
+            if (def.literal === ch) {
+                for (let group of def.readingmeaning.group) {
                     onyomi = group.reading.filter(x => x.type === 'ja_on').map(x => `<span class="kanji_reading">${x.value}</span>`);
                     kunyomi = group.reading.filter(x => x.type === 'ja_kun').map(x => `<span class="kanji_reading">${x.value}</span>`);
 
                     var meanings = group.meaning.filter(x => !x.language).map(x => x.value);
 
                     var misc = '';
-                    if (k.misc.stroke_count) {
-                        misc += `<span class="strokes">strokes: ${k.misc.stroke_count}</span>`;
+                    if (def.misc.stroke_count) {
+                        misc += `<span class="strokes">strokes: ${def.misc.stroke_count}</span>`;
                     }
-                    if (k.misc.frequency) {
-                        misc += `<span class="frequency">frequency: ${k.misc.frequency}</span>`;
+                    if (def.misc.frequency) {
+                        misc += `<span class="frequency">frequency: ${def.misc.frequency}</span>`;
                     }
 
                     html += `<div class="kanji">
                             <div>
-                            <span class="literal">${k.literal}</span>
+                            <span class="literal">${def.literal}</span>
                             <div><span class="onyomi_readings">${onyomi.join('')}</span></div>
                             <div><span class="kunyomi_readings">${kunyomi.join('')}</span></div>
                             </div>
@@ -84,13 +86,16 @@ function getKanji(str) {
         body: JSON.stringify(str),
     }).then((response) => response.json()
     ).then((data) => {
-        displayKanji(data.kanji, str);
+        for (let ch in data) {
+            data[ch] = JSON.parse(data[ch]);
+        }
+        displayKanji(data, str);
     }).catch((error) => {
         console.error('Error:', error);
     });
 }
 
-function updateWord(word, wordInfoMap, marking) {
+function updateWord(word, marking) {
     fetch('/update_word', {
         method: 'POST', // or 'PUT'
         headers: {
@@ -104,30 +109,9 @@ function updateWord(word, wordInfoMap, marking) {
         } else {
             snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to rank ${data.rank}`);
         }
-        updateWordInfo(data, wordInfoMap, marking);
     }).catch((error) => {
         console.error('Error:', error);
     });
-}
-
-function updateWordInfo(word, wordInfoMap, marking) {
-    let tokenizedStory = document.getElementById('story_lines');
-    if (tokenizedStory) {
-        let wordSpans = tokenizedStory.querySelectorAll(`span[baseform="${word.base_form}"]`);
-        console.log('updating word info', word.base_form, word.rank, word.date_marked, 'found spans', wordSpans.length);
-        let unixTime = Math.floor(Date.now() / 1000);
-        for (let span of wordSpans) {
-            span.classList.remove('rank1', 'rank2', 'rank3', 'rank4');
-            span.classList.add('rank' + word.rank);
-            if (marking) {
-                span.classList.remove('offcooldown');
-            }
-        }
-    }
-
-    var wordInfo = wordInfoMap[word.base_form];
-    wordInfo.rank = word.rank;
-    wordInfo.date_marked = word.date_marked;
 }
 
 var snackebarTimeoutHandle = null;

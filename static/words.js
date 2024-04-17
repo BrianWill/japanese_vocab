@@ -8,18 +8,43 @@ var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
+var statusSelect = document.getElementById('status_select');
 
+const COOLDOWN_TIME = 60 * 60 * 3 // 3 hours (in seconds)
 
-const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
-
-var drillSet = null;
+var drillSet = [];
 var answeredSet = [];
-var stories;
 var words;
+
+statusSelect.onchange = function (evt) {
+    newDrill();
+};
 
 function newDrill() {
     let includeOffCooldown = true;
     let includeOnCooldown = true;
+
+    let includeCatalog = false;
+    let includeInProgress = false;
+    let includeBacklog = false;
+    let includeArchived = false;
+    for (option of statusSelect.selectedOptions) {
+        switch (option.value) {
+            case 'catalog':
+                includeCatalog = true;
+                break;
+            case 'in progress':
+                includeInProgress = true;
+                break;
+            case 'backlog':
+                includeBacklog = true;
+                break;
+            case 'archived':
+                includeArchived = true;
+                break;
+        }
+    }
+
     switch (filterSelect.value) {
         case 'off':
             includeOnCooldown = false;
@@ -29,44 +54,44 @@ function newDrill() {
             break;
     }
 
+
     let categoryMask = getCategoryMask(categorySelect.value);
     let unixTime = Math.floor(Date.now() / 1000);
 
-    let countsByRank = [0, 0, 0, 0, 0];
-    let onCooldownCountsByRank = [0, 0, 0, 0, 0];
+    let countOffCooldown = 0;
 
     drillSet = [];
     for (let word of words) {
-        let wordInfo = wordInfoMap[word.base_form];
-        let offcooldown = (unixTime - wordInfo.date_marked) > cooldownsByRank[wordInfo.rank];
-        countsByRank[wordInfo.rank]++;
+        let offcooldown = (unixTime - word.date_marked) > COOLDOWN_TIME;
         if (offcooldown) {
-            onCooldownCountsByRank[wordInfo.rank]++;
+            countOffCooldown++;
         }
 
-        // filter
-        if (categorySelect.value === 'all' || (word.category & categoryMask) != 0) {
-            let wordInfo = wordInfoMap[word.base_form];
-            if ((includeOffCooldown && includeOnCooldown) ||
-                (includeOffCooldown && offcooldown) ||
-                (includeOnCooldown && !offcooldown)
-            ) {
-                word.answered = false;
-                drillSet.push(word);
-            }
+        let categoryFilter = categorySelect.value === 'all' || (word.category & categoryMask) != 0
+
+        let cooldownFilter = (includeOffCooldown && includeOnCooldown) ||
+            (includeOffCooldown && offcooldown) ||
+            (includeOnCooldown && !offcooldown);
+
+        let statusFilter = (includeCatalog && word.status == 'catalog') ||
+            (includeInProgress && word.status == 'in progress') ||
+            (includeBacklog && word.status == 'backlog') ||
+            (includeArchived && word.status == 'archived');
+
+        if (!categoryFilter || !cooldownFilter || !statusFilter) {
+            continue;
         }
+
+        word.answered = false;
+        drillSet.push(word);
     }
 
     drillComlpeteDiv.style.display = 'none';
     shuffle(drillSet);
     answeredSet = [];
 
-    drillInfoH.innerHTML = `
-                        ${words.length} words in story &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number">Rank 1:</span> ${countsByRank[1]} words <span class="cooldown">(${onCooldownCountsByRank[1]} off cooldown)</span> &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number">Rank 2:</span> ${countsByRank[2]} words <span class="cooldown">(${onCooldownCountsByRank[2]} off cooldown)</span> &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number">Rank 3:</span> ${countsByRank[3]} words <span class="cooldown">(${onCooldownCountsByRank[3]} off cooldown)</span> &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number">Rank 4:</span> ${countsByRank[4]} words <span class="cooldown">(${onCooldownCountsByRank[4]} off cooldown)</span>`;
+    drillInfoH.innerHTML = `${words.length} words in story &nbsp;&nbsp;&nbsp;
+                        <span class="rank_number"></span> ${countOffCooldown} words off cooldown</span>`;
     displayWords();
 }
 
@@ -106,7 +131,7 @@ function displayWords() {
     function wordInfo(word, idx, answered) {
         return `<div index="${idx}" class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
-                    <div class="rank rank${word.rank}"><span>rank</span> ${word.rank}</div>
+                    <div class="rank rank${word.status}">${word.status}</div>
                 </div>`;
     }
 
@@ -130,7 +155,7 @@ function displayWords() {
     cardsDiv.innerHTML = html;
 
     if (drillSet[0]) {
-        loadWordDefinition(drillSet[0].base_form)
+        loadWordDefinition(drillSet[0])
     }
 }
 
@@ -145,7 +170,6 @@ document.body.onkeydown = async function (evt) {
     if (drillSet && drillSet.length > 0) {
         var word = drillSet[0];
         let unixtime = Math.floor(Date.now() / 1000); // in seconds
-        //console.log(evt.code);
         if (evt.code === 'KeyS') {
             evt.preventDefault();
             // showWord();
@@ -161,8 +185,12 @@ document.body.onkeydown = async function (evt) {
             word.answered = true;
             if (unixtime - word.date_marked > COOLDOWN_TIME) {
                 word.date_marked = unixtime;
+                word.drill_countdown--;
+                if (word.drill_countdown < 0) {
+                    word.drill_countdown = 0;
+                }
                 word.drill_count++;
-                updateWord(word, wordInfoMap);
+                updateWord(word);
             }
             drillSet.shift();
             answeredSet.unshift(word);
@@ -212,20 +240,16 @@ function nextRound() {
     shuffle(drillSet);
 }
 
-function loadWordDefinition(baseForm) {
-    getKanji(baseForm); // get all possibly relevant kanji
+function loadWordDefinition(word) {
+    getKanji(word.base_form); // get all possibly relevant kanji
 
-    let wordInfo = wordInfoMap[baseForm];
-    if (wordInfo) {
-        let defs = wordInfo.definitions;
-        html = '';
-        if (defs) {
-            for (let def of defs) {
-                html += displayEntry(def);
-            }
+    html = '';
+    if (word.definitions) {
+        for (let def of word.definitions) {
+            html += displayEntry(def);
         }
-        definitionsDiv.innerHTML = html;
     }
+    definitionsDiv.innerHTML = html;
 }
 
 function showWord() {
@@ -238,7 +262,7 @@ document.body.onload = function (evt) {
 
     var url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
-    let set = url.searchParams.get("set");
+    let set = url.searchParams.get("set");    
 
     fetch('words', {
         method: 'POST', // or 'PUT'
@@ -252,8 +276,12 @@ document.body.onload = function (evt) {
     }).then((response) => response.json())
         .then((data) => {
             words = data.words;
-            drillTitleH.innerHTML = `<a href="/story.html?storyId=${storyId}"> ${data.story_title}</a>`;
-            displayWords();
+            for (w of words) {
+                w.definitions = JSON.parse(w.definitions);
+            }
+            drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="${data.story_link}">${data.story_title}</a>`;
+            //`<a href="/story.html?storyId=${storyId}"> ${data.story_title}</a>`;
+            newDrill();
         })
         .catch((error) => {
             console.error('Error:', error);

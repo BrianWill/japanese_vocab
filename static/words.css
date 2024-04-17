@@ -81,12 +81,6 @@ h3 {
     border: 1px solid #d2d2d2;
 }
 
-
-#cards {
-    margin-left: 2em;
-    margin-top: 3em;
-}
-
 #interior_link {
     text-decoration: none;
 }
@@ -96,18 +90,13 @@ h3 {
 }
 
 #results {
-    margin-top: 3em;
-    margin-bottom: 2em;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
-    gap: 0px 0px;
+    background-color: rgb(36, 41, 55);
+    border-top-right-radius: 90px;
+    height: 100%;
 }
 
 #answer {
-    background-color: rgb(36, 41, 55);
     font-size: 130%;
-    border-top-right-radius: 90px;
     gap: 0px 0px;
 }
 
@@ -137,8 +126,8 @@ h3 {
 .rank {
     margin-left: auto;
     margin-right: 20px;
-    font-size: 50%;
-    color: #3b3b3b;
+    font-size: 25%;
+    color: #2b2b2b;
 }
 
 #drill_info {
@@ -272,7 +261,6 @@ h3 {
 }
 
 #current_drill_count {
-    text-align: right;
     margin-right: 30px;
 }
 
@@ -406,4 +394,37 @@ h3 {
 
 .drill_word .rank>span {
     font-size: 40%;
+}
+
+#words_container {
+    height: 98vh;
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+
+    grid-auto-columns: 1fr; 
+    grid-template-areas: 
+      "definition words sidebar"; 
+}
+
+#right_sidebar {
+    grid-area: sidebar;
+}
+
+#definition {
+    grid-area: definition;
+}
+
+#words {
+    grid-area: words;
+}
+
+#home_link {
+    
+    text-align: right;
+}
+
+#home_link a {
+    color: #838383;
 }
