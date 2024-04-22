@@ -236,28 +236,15 @@ h3 {
     width: 12em;
 }
 
-#category {
+#right_sidebar select {
     font-size: 100%;
     margin: 5px;
     width: 12em;
+    overflow: hidden;
 }
 
-#filter_select {
-    font-size: 100%;
-    margin: 5px;
-    width: 14em;
-}
-
-#drill_filter {
-    font-size: 100%;
-    margin: 5px;
-    width: 18em;
-}
-
-#drill_wrong {
-    font-size: 100%;
-    margin: 5px;
-    width: 12em;
+#right_sidebar select option:checked {
+    background-color: rgb(122, 129, 150);
 }
 
 #current_drill_count {
@@ -403,9 +390,9 @@ h3 {
     grid-template-rows: 1fr;
     gap: 0px 0px;
 
-    grid-auto-columns: 1fr; 
-    grid-template-areas: 
-      "definition words sidebar"; 
+    grid-auto-columns: 1fr;
+    grid-template-areas:
+        "definition words sidebar";
 }
 
 #right_sidebar {
@@ -421,7 +408,7 @@ h3 {
 }
 
 #home_link {
-    
+
     text-align: right;
 }
 

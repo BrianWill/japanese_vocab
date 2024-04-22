@@ -337,9 +337,6 @@ function timeSince(date) {
     return 'just now';
 }
 
-const DRILL_ALL_CURRENT = -1;
-const DRILL_ALL = 0;
-
 function addLogEvent(storyId) {
     fetch(`/add_log_event/${storyId}`, {
         method: 'GET',

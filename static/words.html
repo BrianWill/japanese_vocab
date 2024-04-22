@@ -28,27 +28,26 @@
             <h3 id="drill_title"></h3>
             <h3 id="drill_info"></h3>
             <div>
-                <select id="category" name="category">
-                    <option value="all">words of all kinds</option>
-                    <option value="kanji">kanji characters</option>
-                    <option value="katakana">katakana words</option>
-                    <option value="ichidan">ichidan verbs</option>
-                    <option value="godan">godan verbs</option>
+                <select id="category" name="category" size="5" multiple>
+                    <option selected value="kanji">kanji characters</option>
+                    <option selected value="katakana">katakana words</option>
+                    <option selected value="ichidan">ichidan verbs</option>
+                    <option selected value="godan">godan verbs</option>
+                    <option selected value="other">other</option>
                 </select>
             </div>
             <div>
-                <select id="filter_select">
-                    <option value="off" selected>words off cooldown</option>
-                    <option value="on">words on cooldown</option>
-                    <option value="all">words on or off cooldown</option>
+                <select id="filter_select" size="2" multiple>
+                    <option selected value="off">off cooldown</option>
+                    <option value="on">on cooldown</option>
                 </select>
             </div>
             <div>
                 <select size="4" multiple id="status_select">
-                    <option value='catalog'>Catalog</option>
-                    <option selected value='in progress'>In Progress</option>
-                    <option value='backlog'>Backlog</option>
-                    <option value='archived'>Archived</option>
+                    <option value='catalog'>catalog</option>
+                    <option selected value='in progress'>in progress</option>
+                    <option value='backlog'>backlog</option>
+                    <option value='archived'>archived</option>
                 </select>
             </div>
         </div>

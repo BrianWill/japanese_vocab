@@ -37,7 +37,7 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	if drillRequest.Set == "in_progress" {
 
 		rows, err := sqldb.Query(`SELECT base_form, date_marked, status, audio, audio_start, 
-				audio_end, drill_countdown, definitions FROM words WHERE status = $1;`, "in progress")
+				audio_end, category, drill_countdown, definitions FROM words WHERE status = $1;`, "in progress")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -49,7 +49,7 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 		for rows.Next() {
 			word := DrillWord{}
 			if err := rows.Scan(&word.BaseForm, &word.DateMarked, &word.Status, &word.Audio,
-				&word.AudioStart, &word.AudioEnd, &word.DrillCountdown, &word.Definitions); err != nil {
+				&word.AudioStart, &word.AudioEnd, &word.Category, &word.DrillCountdown, &word.Definitions); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 			}
@@ -87,10 +87,10 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 		word := &words[i]
 
 		row := sqldb.QueryRow(`SELECT base_form, date_marked, status,
-				audio, audio_start, audio_end, drill_countdown, definitions FROM words WHERE id = $1;`, id)
+				audio, audio_start, audio_end, category, drill_countdown, definitions FROM words WHERE id = $1;`, id)
 
 		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Status, &word.Audio,
-			&word.AudioStart, &word.AudioEnd, &word.DrillCountdown, &word.Definitions)
+			&word.AudioStart, &word.AudioEnd, &word.Category, &word.DrillCountdown, &word.Definitions)
 		if err != nil && err != sql.ErrNoRows {
 			w.WriteHeader(http.StatusInternalServerError)
 			gw.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))

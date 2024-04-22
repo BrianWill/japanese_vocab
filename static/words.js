@@ -12,6 +12,22 @@ var statusSelect = document.getElementById('status_select');
 
 const COOLDOWN_TIME = 60 * 60 * 3 // 3 hours (in seconds)
 
+const DRILL_CATEGORY_KATAKANA = 1;
+const DRILL_CATEGORY_ICHIDAN = 2;
+const DRILL_CATEGORY_GODAN_SU = 8;
+const DRILL_CATEGORY_GODAN_RU = 16;
+const DRILL_CATEGORY_GODAN_U = 32;
+const DRILL_CATEGORY_GODAN_TSU = 64;
+const DRILL_CATEGORY_GODAN_KU = 128;
+const DRILL_CATEGORY_GODAN_GU = 256;
+const DRILL_CATEGORY_GODAN_MU = 512;
+const DRILL_CATEGORY_GODAN_BU = 1024;
+const DRILL_CATEGORY_GODAN_NU = 2048;
+const DRILL_CATEGORY_KANJI = 4096;
+const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
+    DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU;
+const DRILL_ALL = DRILL_CATEGORY_GODAN | DRILL_CATEGORY_ICHIDAN | DRILL_CATEGORY_KANJI | DRILL_CATEGORY_KATAKANA;
+
 var drillSet = [];
 var answeredSet = [];
 var words;
@@ -21,14 +37,11 @@ statusSelect.onchange = function (evt) {
 };
 
 function newDrill() {
-    let includeOffCooldown = true;
-    let includeOnCooldown = true;
-
     let includeCatalog = false;
     let includeInProgress = false;
     let includeBacklog = false;
     let includeArchived = false;
-    for (option of statusSelect.selectedOptions) {
+    for (let option of statusSelect.selectedOptions) {
         switch (option.value) {
             case 'catalog':
                 includeCatalog = true;
@@ -45,17 +58,41 @@ function newDrill() {
         }
     }
 
-    switch (filterSelect.value) {
-        case 'off':
-            includeOnCooldown = false;
-            break;
-        case 'on':
-            includeOffCooldown = false;
-            break;
+    let includeOffCooldown = false;
+    let includeOnCooldown = false;
+    for (let option of filterSelect.selectedOptions) {
+        switch (option.value) {
+            case 'off':
+                includeOffCooldown = true;
+                break;
+            case 'on':
+                includeOnCooldown = true;
+                break;
+        }
     }
 
+    let categoryMask = 0;
+    let includeOther = false;
+    for (let option of categorySelect.selectedOptions) {
+        switch (option.value) {
+            case 'kanji':
+                categoryMask |= DRILL_CATEGORY_KANJI;
+                break;
+            case 'katakana':
+                categoryMask |= DRILL_CATEGORY_KATAKANA;
+                break;
+            case 'godan':
+                categoryMask |= DRILL_CATEGORY_GODAN;
+                break;
+            case 'ichidan':
+                categoryMask |= DRILL_CATEGORY_ICHIDAN;
+                break;
+            case 'other':
+                includeOther = true;
+                break;
+        }
+    }
 
-    let categoryMask = getCategoryMask(categorySelect.value);
     let unixTime = Math.floor(Date.now() / 1000);
 
     let countOffCooldown = 0;
@@ -67,7 +104,9 @@ function newDrill() {
             countOffCooldown++;
         }
 
-        let categoryFilter = categorySelect.value === 'all' || (word.category & categoryMask) != 0
+        let isOther = (word.category & DRILL_ALL) == 0;
+        let isCategoryMatch = (word.category & categoryMask) != 0;
+        let categoryFilter = isCategoryMatch || (includeOther && isOther);
 
         let cooldownFilter = (includeOffCooldown && includeOnCooldown) ||
             (includeOffCooldown && offcooldown) ||
@@ -90,38 +129,9 @@ function newDrill() {
     shuffle(drillSet);
     answeredSet = [];
 
-    drillInfoH.innerHTML = `${words.length} words in story &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number"></span> ${countOffCooldown} words off cooldown</span>`;
+    drillInfoH.innerHTML = `${words.length} words in story <br>
+                        ${countOffCooldown} words off cooldown`;
     displayWords();
-}
-
-const DRILL_CATEGORY_KATAKANA = 1;
-const DRILL_CATEGORY_ICHIDAN = 2;
-const DRILL_CATEGORY_GODAN_SU = 8;
-const DRILL_CATEGORY_GODAN_RU = 16;
-const DRILL_CATEGORY_GODAN_U = 32;
-const DRILL_CATEGORY_GODAN_TSU = 64;
-const DRILL_CATEGORY_GODAN_KU = 128;
-const DRILL_CATEGORY_GODAN_GU = 256;
-const DRILL_CATEGORY_GODAN_MU = 512;
-const DRILL_CATEGORY_GODAN_BU = 1024;
-const DRILL_CATEGORY_GODAN_NU = 2048;
-const DRILL_CATEGORY_KANJI = 4096;
-const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
-    DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU;
-
-function getCategoryMask(category) {
-    switch (category) {
-        case 'kanji':
-            return DRILL_CATEGORY_KANJI;
-        case 'katakana':
-            return DRILL_CATEGORY_KATAKANA;
-        case 'godan':
-            return DRILL_CATEGORY_GODAN;
-        case 'ichidan':
-            return DRILL_CATEGORY_ICHIDAN;
-    }
-    return -1;
 }
 
 categorySelect.onchange = newDrill;
@@ -262,7 +272,7 @@ document.body.onload = function (evt) {
 
     var url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
-    let set = url.searchParams.get("set");    
+    let set = url.searchParams.get("set");
 
     fetch('words', {
         method: 'POST', // or 'PUT'

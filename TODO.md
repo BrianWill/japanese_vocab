@@ -6,21 +6,14 @@ addWords():
 
 fetching words:
     response should be gzipped
-    include kanji data
-        per word, store array of ids to each kanji word
 
 drill page:
-    story title should match the 
-    
-make the drill page look like the story page? (put story title and options in right side bar)
+
     make all the selects multiple (they'll fit OK in sidebar)
 
 Maybe get rid of story date? Do users care when the story was published?
 
-remove word rank (convert all 4's to archived, all 1's to catalog, all 2's and 3's to "in progress" and set their repetitions_remaining)
-
-
-marking a story IN PROGRESS will mark all CATALOG words as IN PROGRESS and sets the drill count
+in story menu, link that sets all words in the story to 'in progress' and give them a positive repetition count
 
 
 story status:
@@ -40,18 +33,13 @@ word status:
     ARCHIVED        (never want to see it again)
     DISCARD         (word that is malformed or maybe not even a word, etc.)
 
-a kanji is just a word entry marked as being just a kanji
-
-when a word is added to dictionary, store its definition with the word
 
 MAIN page
 
-    - option to show stories by level?
 
 STORY VOCAB PAGE
 
     - displays all the words in a story, sorted by status
-    - option to drill the words just of that story?
 
 DRILL page
 
