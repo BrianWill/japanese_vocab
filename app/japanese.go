@@ -63,7 +63,7 @@ func main() {
 	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	definitionsCache = make(map[string][]JMDictEntry)
 
-	if len(os.Args) > 1 && os.Args[1] == "definitions" {
+	if len(os.Args) > 1 && os.Args[1] == "kanji" {
 		loadDictionary()
 
 		sqldb, err := sql.Open("sqlite3", MAIN_USER_DB_PATH)
@@ -72,7 +72,7 @@ func main() {
 		}
 		defer sqldb.Close()
 
-		err = updateDefinitions(sqldb)
+		err = updateKanjiDefs(sqldb)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -219,6 +219,8 @@ func makeUserDB(path string) {
 			audio_end REAL NOT NULL DEFAULT 0,
 			date_marked INTEGER NOT NULL DEFAULT 0,
 			date_added INTEGER NOT NULL,
+			definitions TEXT,
+			kanji TEXT,
 			rank INTEGER NOT NULL)`)
 	if err != nil {
 		log.Fatal(err)
@@ -235,7 +237,6 @@ func makeUserDB(path string) {
 			date TEXT,
 			link TEXT,
 			level TEXT,
-			definitions TEXT,
 			episode_number TEXT,
 			audio TEXT,
 			video TEXT,

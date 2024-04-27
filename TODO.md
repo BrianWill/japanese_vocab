@@ -1,15 +1,16 @@
 # japanese_vocab TODO
 
-addWords():
+test new word importing
 
-    update the definitions to new format, make sure to set KanjiDefinition for inserted kanji
+GetKanji should return 'kanji' field
 
 fetching words:
     response should be gzipped
 
 drill page:
 
-    make all the selects multiple (they'll fit OK in sidebar)
+    'Other' category should include Kanji that are also words (len(definition entries) is > 0?)
+    
 
 Maybe get rid of story date? Do users care when the story was published?
 

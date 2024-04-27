@@ -149,7 +149,7 @@ func processStoryWords(story StoryImport, sqldb *sql.DB) (newWordCount int, word
 		return 0, "", fmt.Errorf("failure to tokenize story: " + err.Error())
 	}
 
-	_, _, newWordIds, newWordCount, err := addWords(tokens, kanjiSet, sqldb)
+	newWordIds, newWordCount, err := addWords(tokens, kanjiSet, sqldb)
 	if err != nil {
 		return 0, "", fmt.Errorf("failure to add words: " + err.Error())
 	}

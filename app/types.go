@@ -216,8 +216,7 @@ type JMDict struct {
 }
 
 type Definition struct {
-	Entries        []JMDictEntry   `bson:"entries, omitempty" json:"entries,omitempty"`
-	KanjiCharacter *KanjiCharacter `bson:"kanji_character, omitempty" json:"kanji_character,omitempty"`
+	Entries []JMDictEntry `bson:"entries, omitempty" json:"entries,omitempty"`
 }
 
 type JMDictEntry struct {

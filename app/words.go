@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"regexp"
 
 	// "math"
@@ -181,4 +182,59 @@ func GetKanji(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(kanjiDefinitions)
+}
+
+func updateKanjiDefs(sqldb *sql.DB) error {
+	wordMap, err := getWordMap(sqldb)
+	if err != nil {
+		return err
+	}
+
+	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+
+	fmt.Println("before first word")
+	for id, word := range wordMap {
+		baseForm := word.BaseForm
+		category := word.Category
+
+		def := KanjiCharacter{}
+
+		isKanji := len([]rune(baseForm)) == 1 && reHasKanji.FindStringIndex(baseForm) != nil
+		if isKanji {
+			for _, ch := range allKanji.Characters {
+				if ch.Literal == baseForm {
+					def = ch
+					break
+				}
+			}
+
+			category |= DRILL_CATEGORY_KANJI
+		}
+
+		if def == (KanjiCharacter{}) {
+			continue
+		}
+
+		defJSON, err := json.Marshal(def)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("kanji: ", baseForm, len(defJSON))
+
+		result, err := sqldb.Exec(`UPDATE words SET kanji = $1, category = $2 WHERE id = $3;`, defJSON, category, id)
+		if err != nil {
+			return err
+		}
+		nAffected, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if nAffected != 1 {
+			return fmt.Errorf("could not update word with id %d", id)
+		}
+	}
+	fmt.Println("after last word")
+
+	return nil
 }

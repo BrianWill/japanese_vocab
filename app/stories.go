@@ -150,7 +150,7 @@ func extractKanji(tokens []*JpToken) ([]string, error) {
 	return kanji, nil
 }
 
-func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, []LineKanji, []int64, int, error) {
+func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]int64, int, error) {
 	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
 	var reHasKana = regexp.MustCompile(`[ア-ンァ-ヴぁ-ゔ]`)
@@ -160,87 +160,50 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 
 	wordIds := make([]int64, 0)
 
-	kanjiToInsert := make(map[string]*LineKanji)
+	keptTokens := make([]*JpToken, 0)
 
-	// must insert kanji first to make sure they are properly marked as kanji
-	// todo get kanji defs
-
-	lineKanji := make([]LineKanji, len(kanjiSet))
-	for i, kanji := range kanjiSet {
-		if _, ok := kanjiToInsert[kanji]; ok {
-			continue // early out
-		}
-
-		lk := &lineKanji[i]
-		lk.Character = kanji
-
-		var id int64
-		err := sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1;`, lk.Character).Scan(&id)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, nil, nil, 0, err
-		}
-		if err == nil {
-			lk.ID = id // kanji already exists
-			wordIds = append(wordIds, id)
-			continue
-		}
-
-		kanjiToInsert[kanji] = lk
-	}
-
-	for _, lk := range kanjiToInsert {
-		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, rank, drill_count, drill_countdown, status) 
-			VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-			lk.Character, 0, unixtime, DRILL_CATEGORY_KANJI, INITIAL_RANK, 0, 0, "catalog")
-		if err != nil {
-			return nil, nil, nil, 0, fmt.Errorf("failure to insert kanji: " + err.Error())
-		}
-
-		id, err := insertResult.LastInsertId()
-		if err != nil {
-			return nil, nil, nil, 0, fmt.Errorf("failure to get id of inserted kanji: " + err.Error())
-		}
-
-		fmt.Println("inserted kanji: ", lk.Character, id)
-
-		newWordCount++
-		lk.ID = id
-		wordIds = append(wordIds, id)
-	}
-
-	lineWords := make([]LineWord, len(tokens))
+	// filter out tokens that have no part of speech
 	for i, token := range tokens {
 		priorToken := &JpToken{}
 		if i > 0 {
 			priorToken = tokens[i-1]
 		}
 
-		lineWord := &lineWords[i]
-		lineWord.Surface = token.Surface
-		lineWord.BaseForm = token.BaseForm
-		lineWord.POS = getTokenPOS(token, priorToken)
+		pos := getTokenPOS(token, priorToken)
+		if pos == "" {
+			continue
+		}
+
+		keptTokens = append(keptTokens, token)
+	}
+
+	words := make(map[string]bool)
+	for _, t := range keptTokens {
+		words[t.BaseForm] = true
+	}
+
+	for _, k := range kanjiSet {
+		words[k] = true
+	}
+
+	for baseForm, _ := range words {
+		hasKatakana := len(reHasKatakana.FindStringIndex(baseForm)) > 0
+		hasKana := len(reHasKana.FindStringIndex(baseForm)) > 0
+		hasKanji := len(reHasKanji.FindStringIndex(baseForm)) > 0
+		isKanji := len([]rune(baseForm)) == 1 && reHasKanji.FindStringIndex(baseForm) != nil
+
+		if !hasKana && !hasKanji { // not a valid word
+			continue
+		}
 
 		category := 0
-
-		if lineWord.POS == "" { // not a vocab word
-			continue
-		}
-
-		hasKatakana := len(reHasKatakana.FindStringIndex(token.BaseForm)) > 0
-		hasKana := len(reHasKana.FindStringIndex(token.BaseForm)) > 0
-		hasKanji := len(reHasKanji.FindStringIndex(token.BaseForm)) > 0
-
-		if !hasKana && !hasKanji {
-			continue
-		}
 
 		// has katakana
 		if hasKatakana {
 			category |= DRILL_CATEGORY_KATAKANA
 		}
 
-		entries := getDefinitions(token.BaseForm)
+		entries := getDefinitions(baseForm)
 		for _, entry := range entries {
 			for _, sense := range entry.Senses {
 				category |= getVerbCategory(sense)
@@ -249,43 +212,57 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, 
 
 		entriesJSON, err := json.Marshal(entries)
 		if err != nil {
-			return nil, nil, nil, 0, err
+			return nil, 0, err
 		}
 
-		lineWord.Category = category
+		kanjiDef := KanjiCharacter{}
+
+		if isKanji {
+			for _, ch := range allKanji.Characters {
+				if ch.Literal == baseForm {
+					kanjiDef = ch
+					break
+				}
+			}
+
+			category |= DRILL_CATEGORY_KANJI
+		}
+
+		kanjiDefJSON, err := json.Marshal(kanjiDef)
+		if err != nil {
+			return nil, 0, err
+		}
 
 		var id int64
-		err = sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1`, token.BaseForm).Scan(&id)
+		err = sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1`, baseForm).Scan(&id)
 		if err != nil && err != sql.ErrNoRows {
-			return nil, nil, nil, 0, err
+			return nil, 0, err
 		}
 		if err == nil {
-			lineWord.ID = id // word already exists
 			wordIds = append(wordIds, id)
 			continue
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
 			date_added, category, rank, drill_count, drill_countdown, status, definitions) 
-			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
-			lineWord.BaseForm, 0, unixtime, lineWord.Category, INITIAL_RANK, 0, 0, "catalog", entriesJSON)
+			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
+			baseForm, 0, unixtime, category, INITIAL_RANK, 0, 0, "catalog", entriesJSON, kanjiDefJSON)
 		if err != nil {
-			return nil, nil, nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
+			return nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
 		}
 
 		id, err = insertResult.LastInsertId()
 		if err != nil {
-			return nil, nil, nil, 0, fmt.Errorf("failure to get id of inserted word: " + err.Error())
+			return nil, 0, fmt.Errorf("failure to get id of inserted word: " + err.Error())
 		}
 
-		fmt.Println("inserted word: ", lineWord.BaseForm, id)
+		fmt.Println("inserted word: ", baseForm, id)
 
 		newWordCount++
-		lineWord.ID = id
 		wordIds = append(wordIds, id)
 	}
 
-	return lineWords, lineKanji, wordIds, newWordCount, nil
+	return wordIds, newWordCount, nil
 }
 
 func getDefinitions(baseForm string) []JMDictEntry {
@@ -310,73 +287,19 @@ func getDefinitions(baseForm string) []JMDictEntry {
 	return entries
 }
 
-func updateDefinitions(sqldb *sql.DB) error {
-	wordMap, err := getWordMap(sqldb)
-	if err != nil {
-		return err
-	}
-
-	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
-
-	fmt.Println("before first word")
-	for id, word := range wordMap {
-		baseForm := word.BaseForm
-		category := word.Category
-
-		def := Definition{}
-
-		isKanji := len([]rune(baseForm)) == 1 && reHasKanji.FindStringIndex(baseForm) != nil
-		if isKanji {
-			def.KanjiCharacter = nil
-			for _, ch := range allKanji.Characters {
-				if ch.Literal == baseForm {
-					def.KanjiCharacter = &ch
-					break
-				}
-			}
-
-			category |= DRILL_CATEGORY_KANJI
-		}
-
-		entries := getDefinitions(baseForm)
-
-		defJSON, err := json.Marshal(def)
-		if err != nil {
-			return err
-		}
-
-		fmt.Println(len(entries), " entries for ", baseForm)
-
-		result, err := sqldb.Exec(`UPDATE words SET definitions = $1, category = $2 WHERE id = $2;`, defJSON, category, id)
-		if err != nil {
-			return err
-		}
-		nAffected, err := result.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if nAffected != 1 {
-			return fmt.Errorf("could not update word with id %d", id)
-		}
-	}
-	fmt.Println("after last word")
-
-	return nil
-}
-
-type BaseCategoryPair struct {
+type BaseFormCategoryPair struct {
 	BaseForm string
 	Category int
 }
 
-func getWordMap(sqldb *sql.DB) (map[int64]BaseCategoryPair, error) {
+func getWordMap(sqldb *sql.DB) (map[int64]BaseFormCategoryPair, error) {
 	rows, err := sqldb.Query(`SELECT id, base_form, category FROM words;`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	wordMap := make(map[int64]BaseCategoryPair)
+	wordMap := make(map[int64]BaseFormCategoryPair)
 
 	for rows.Next() {
 		var id int64
@@ -387,7 +310,7 @@ func getWordMap(sqldb *sql.DB) (map[int64]BaseCategoryPair, error) {
 			return nil, err
 		}
 
-		wordMap[id] = BaseCategoryPair{baseForm, category}
+		wordMap[id] = BaseFormCategoryPair{baseForm, category}
 	}
 
 	return wordMap, nil
