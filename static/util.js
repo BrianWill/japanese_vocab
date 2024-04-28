@@ -33,34 +33,31 @@ function splitOnHighPitch(str, pitch) {
     ];
 }
 
-function displayKanji(defsByKanji, word) {
-    console.log(defsByKanji);
+function displayKanji(kanjiDefs, word) {
     html = '';
 
-    if (!defsByKanji || defsByKanji.length === 0) {
+    if (!kanjiDefs || kanjiDefs.length === 0) {
         kanjiResultsDiv.innerHTML = '';
         return;
     }
 
-    for (let ch of new Set(word.split(''))) {
-        for (let k in defsByKanji) {
-            let def = defsByKanji[k].kanji_character;
-            if (def.literal === ch) {
-                for (let group of def.readingmeaning.group) {
-                    onyomi = group.reading.filter(x => x.type === 'ja_on').map(x => `<span class="kanji_reading">${x.value}</span>`);
-                    kunyomi = group.reading.filter(x => x.type === 'ja_kun').map(x => `<span class="kanji_reading">${x.value}</span>`);
 
-                    var meanings = group.meaning.filter(x => !x.language).map(x => x.value);
+    for (let def of kanjiDefs) {
+        for (let group of def.readingmeaning.group) {
+            onyomi = group.reading.filter(x => x.type === 'ja_on').map(x => `<span class="kanji_reading">${x.value}</span>`);
+            kunyomi = group.reading.filter(x => x.type === 'ja_kun').map(x => `<span class="kanji_reading">${x.value}</span>`);
 
-                    var misc = '';
-                    if (def.misc.stroke_count) {
-                        misc += `<span class="strokes">strokes: ${def.misc.stroke_count}</span>`;
-                    }
-                    if (def.misc.frequency) {
-                        misc += `<span class="frequency">frequency: ${def.misc.frequency}</span>`;
-                    }
+            var meanings = group.meaning.filter(x => !x.language).map(x => x.value);
 
-                    html += `<div class="kanji">
+            var misc = '';
+            if (def.misc.stroke_count) {
+                misc += `<span class="strokes">strokes: ${def.misc.stroke_count}</span>`;
+            }
+            if (def.misc.frequency) {
+                misc += `<span class="frequency">frequency: ${def.misc.frequency}</span>`;
+            }
+
+            html += `<div class="kanji">
                             <div>
                             <span class="literal">${def.literal}</span>
                             <div><span class="onyomi_readings">${onyomi.join('')}</span></div>
@@ -69,8 +66,6 @@ function displayKanji(defsByKanji, word) {
                             <div class="kanji_meanings">${meanings.join(';  &nbsp;&nbsp;')}</div>
                             <div class="kanji_misc">${misc}</div>
                             </div>`;
-                }
-            }
         }
     }
 
@@ -86,9 +81,10 @@ function getKanji(str) {
         body: JSON.stringify(str),
     }).then((response) => response.json()
     ).then((data) => {
-        for (let ch in data) {
-            data[ch] = JSON.parse(data[ch]);
+        for (let i in data) {
+            data[i] = JSON.parse(data[i]);
         }
+        //console.log('kanji response:', data);
         displayKanji(data, str);
     }).catch((error) => {
         console.error('Error:', error);

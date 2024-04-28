@@ -2,7 +2,6 @@
 
 test new word importing
 
-GetKanji should return 'kanji' field
 
 fetching words:
     response should be gzipped

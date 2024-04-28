@@ -158,14 +158,23 @@ func GetKanji(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	kanjiSet := make(map[string]bool)
+	// remove duplicate kanji but maintain original order
+	kanjiSet := make([]string, 0)
+outer:
 	for _, ch := range kanjiStrings {
-		kanjiSet[ch] = true
+		for _, k := range kanjiSet {
+			if k == ch {
+				continue outer
+			}
+		}
+		kanjiSet = append(kanjiSet, ch)
 	}
 
-	kanjiDefinitions := make(map[string]string)
-	for ch := range kanjiSet {
-		row := sqldb.QueryRow(`SELECT definitions FROM words WHERE base_form = $1;`, ch)
+	//fmt.Println("kanji set", kanjiSet)
+
+	kanjiDefs := make([]string, 0)
+	for _, ch := range kanjiSet {
+		row := sqldb.QueryRow(`SELECT kanji FROM words WHERE base_form = $1;`, ch)
 		var def string
 		err = row.Scan(&def)
 		if err != nil {
@@ -178,12 +187,13 @@ func GetKanji(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{ "message": "` + "error looking up kanji: " + err.Error() + `"}`))
 			return
 		}
-		kanjiDefinitions[ch] = def
+		kanjiDefs = append(kanjiDefs, def)
 	}
 
-	json.NewEncoder(w).Encode(kanjiDefinitions)
+	json.NewEncoder(w).Encode(kanjiDefs)
 }
 
+// was created to fix words that were badly imported; shouldn't be needed in future
 func updateKanjiDefs(sqldb *sql.DB) error {
 	wordMap, err := getWordMap(sqldb)
 	if err != nil {

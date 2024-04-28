@@ -215,9 +215,12 @@ document.body.onkeydown = async function (evt) {
 cardsDiv.onclick = function (evt) {
     evt.preventDefault();
     let ele = evt.target.closest('.drill_word');
+    if (!ele) {
+        return;
+    }
     var idx = parseInt(ele.getAttribute('index'));
     if (idx && idx < drillSet.length - 1) {
-        console.log("clicked card", idx);
+        //console.log("clicked card", idx);
         var front = drillSet.slice(0, idx);
         var back = drillSet.slice(idx);
         drillSet = back;
