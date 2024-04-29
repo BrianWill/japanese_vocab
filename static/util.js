@@ -209,7 +209,8 @@ function updateStoryStats(story, successFn) {
         id: story.id,
         repetitions_remaining: story.repetitions_remaining,
         level: story.level,
-        date_marked: story.date_marked
+        date_marked: story.date_marked,
+        lifetime_repetitions: story.lifetime_repetitions
     };
     fetch(`/update_story_stats`, {
         method: 'POST',

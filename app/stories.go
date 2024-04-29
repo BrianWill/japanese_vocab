@@ -442,8 +442,9 @@ func UpdateStoryStats(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	_, err = sqldb.Exec(`UPDATE catalog_stories SET repetitions_remaining = $1, date_marked = $2, level = $3 WHERE id = $4;`,
-		story.RepetitionsRemaining, story.DateMarked, story.Level, story.ID)
+	_, err = sqldb.Exec(`UPDATE catalog_stories SET repetitions_remaining = $1, 
+			date_marked = $2, level = $3, lifetime_repetitions = $4 WHERE id = $5;`,
+		story.RepetitionsRemaining, story.DateMarked, story.Level, story.LifetimeRepetitions, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))

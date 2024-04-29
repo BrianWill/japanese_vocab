@@ -2,9 +2,16 @@
 
 test new word importing
 
+fix "mark as read" to affect catalog_stories
 
-fetching words:
-    response should be gzipped
+set player tracks from the transcript_jp and transcript_en fields
+    do I need to manually create the TextTrack and TextTrackCues?
+    
+convert other formats to web vtt
+
+way to mark individual words of a story
+link to mark all words of a story
+
 
 drill page:
 
@@ -85,19 +92,6 @@ words need a drill countdown
 
 story importer from json file
 
-[
-    {
-        title: "",   
-        date: "",
-        episodeNumber: "",
-        audio: "",   // path or url?
-        video: "",   // path or url?
-        link: "",    // url of source
-        content: "",  // transcript
-        contentFormat: "",  // "text" or "srt"
-    }
-
-]
 
 story importer for podcasts:
     nihongo picnic
@@ -105,8 +99,6 @@ story importer for podcasts:
     japanese with shuntod
     japanese with norico
     cj (how to enable download from patreon?)
-
-    a way to get browse in the app? or just provide a URL / podcast number?
 
 store audio link with timestamps
     anyway to capture from stories with youtube audio? probably not

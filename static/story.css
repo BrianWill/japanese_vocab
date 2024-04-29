@@ -11,4 +11,44 @@ body {
 #video_player {
     width: 100%;
     display: none;
+    height: 100%;
+    width: 100%;
+}
+
+#captions_en > span {
+    background-color: black;
+    line-height: 2em;
+    padding: 0.2em;
+}
+
+#captions_en {
+    display: none;
+    position: fixed;
+    color: white;
+    font-size: 130%;
+    transform: translateY(3em);
+    /*transform: translateY(calc(var(--plyr-control-spacing, 10px)*-4));*/
+}
+
+#captions_ja > span {
+    background-color: black;
+    line-height: 2em;
+    padding: 0.2em;
+}
+
+#captions_ja {
+    display: none;
+    position: fixed;
+    color: white;
+    font-size: 130%;
+    transform: translateY(-6em);
+    /*transform: translateY(calc(var(--plyr-control-spacing, 10px)*-4));*/
+}
+
+::cue {
+    opacity: 0%;   /* we want to hide the default subtitles */
+}
+
+.story_info {
+    font-size: 80%;
 }

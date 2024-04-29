@@ -28,7 +28,7 @@ type CatalogStory struct {
 	Title                string  `json:"title,omitempty"`
 	Source               string  `json:"source,omitempty"`
 	Status               string  `json:"status,omitempty"`
-	Date                 string  `json:"date,omitempty"`
+	Date                 string  `json:"date"`
 	DateMarked           int     `json:"date_marked,omitempty"`
 	EpisodeNumber        int     `json:"episode_number,omitempty"`
 	Level                string  `json:"level,omitempty"`
@@ -41,7 +41,8 @@ type CatalogStory struct {
 	TranscriptJP         string  `json:"transcript_jp,omitempty"`
 	TranscriptENFormat   string  `json:"transcript_en_format,omitempty"`
 	TranscriptJPFormat   string  `json:"transcript_jp_format,omitempty"`
-	RepetitionsRemaining int64   `json:"repetitions_remaining,omitempty"`
+	RepetitionsRemaining int64   `json:"repetitions_remaining"`
+	LifetimeRepetitions  int64   `json:"lifetime_repetitions"`
 	Words                []int64 `json:"words,omitempty"`
 }
 

@@ -4,7 +4,6 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
-
     <link rel="stylesheet" href="../words.css">
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="../story.css">
@@ -16,7 +15,12 @@
         <div id="media">
             <div id="player_container">
                 <div id="player">
-                    <audio id="audio_player" controls></audio>
+                    <div id="captions_en"></div>
+                    <video id="video_player" controls>
+                        <track id="track_ja" kind="subtitles" src="../sample.vtt" srclang="ja" default />
+                        <track id="track_en" kind="subtitles" src="../sample_en.vtt" srclang="en" default />
+                    </video>
+                    <div id="captions_ja"></div>
                 </div>
             </div>
         </div>
@@ -24,18 +28,28 @@
             <div id="home_link"><a href="/">home</a></div>
             <h3 id="story_title">Story</h3>
             <div id="story_actions">
-                <div><a id="drill_words_link" href="/words.html?storyId=0">Drill the words of this story</a></div>
+                <div class="story_info" id="source_info"></div>
+                <div class="story_info" id="date_info"></div>
+                <div class="story_info" id="lifetime_repetitions_info"></div>
+                <div>
+                    <span id="countdown_span">
+                        <label title="the number of more times you plan to read this story">Repetitions remaining:</label>&nbsp;
+                        <input type="number" id="count_spinner" class="count_spinner" min="0" max="9" steps="1"
+                            value="0">
+                    </span>
+                </div>
                 <div><a id="mark_story" href="#">Mark story as read</a></div>
                 <br>
-                <span id="player_controls">
-                    <label>Playback speed:</label>&nbsp;
-                    <input type="number" id="player_speed_number" value="1" min="0.4" max="1.6" step="0.05"
-                        class="playerspeed" name="playerspeed">
-                </span>
-                <span id="countdown_span">
-                    <label title="the number of more times you plan to read this story">Read countdown:</label>&nbsp;
-                    <input type="number" id="count_spinner" class="count_spinner" min="0" max="9" steps="1" value="0">
-                </span>
+                <div>
+                    <span id="player_controls">
+                        <label>Playback speed:</label>&nbsp;
+                        <input type="number" id="player_speed_number" value="1" min="0.4" max="1.6" step="0.05"
+                            class="playerspeed" name="playerspeed">
+                    </span>
+                </div>
+                <div><a id="drill_words_link" href="/words.html?storyId=0">Drill the words of this story</a></div>                
+                
+                
             </div>
         </div>
         <div id="story_lines"></div>

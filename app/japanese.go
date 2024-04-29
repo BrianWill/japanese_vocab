@@ -113,6 +113,8 @@ func main() {
 
 	fmt.Println("db: ", MAIN_USER_DB_PATH)
 
+	//router.Use(middleware)
+
 	router.HandleFunc("/update_story_stats", UpdateStoryStats).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/catalog_stories", GetCatalogStories).Methods("GET")
@@ -137,6 +139,13 @@ func devMiddleware(h http.Handler) http.Handler {
 		h.ServeHTTP(w, r)
 	})
 }
+
+// func middleware(h http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		w.Header().Set("Permissions-Policy", "fullscreen=self")
+// 		h.ServeHTTP(w, r)
+// 	})
+// }
 
 func loadDictionary() {
 	start := time.Now()
@@ -241,6 +250,7 @@ func makeUserDB(path string) {
 			audio TEXT,
 			video TEXT,
 			repetitions_remaining INTEGER,
+			lifetime_repetitions INTEGER,
 			transcript_en TEXT,
 			transcript_en_format TEXT,
 			transcript_jp TEXT,

@@ -135,6 +135,7 @@ function displayStories() {
                 </select>
             </td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td><span class="story_source">${s.source}</span></td>
             </tr>`;
     }
 
@@ -145,6 +146,7 @@ function displayStories() {
         <th title="number of additional times you intend to read this story">Remaining<br>Repetitions</th>
         <th title="difficulty level of this story">Level</th>
         <th>Title</th>
+        <th>Source</th>
     </tr>`;
 
     let html = '';
