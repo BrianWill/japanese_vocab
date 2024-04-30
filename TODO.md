@@ -1,64 +1,58 @@
 # japanese_vocab TODO
 
 test new word importing
-
-fix "mark as read" to affect catalog_stories
-
-set player tracks from the transcript_jp and transcript_en fields
-    do I need to manually create the TextTrack and TextTrackCues?
     
 convert other formats to web vtt
 
+audit for dead code
+
+add text field under word in which we can paste any text (serves as quick def)
+    html edit content
+    gets saved automatically in new words db column
+
+    only shown for top word? or shown for all? maybe a toggle button
+
+deduplicate the word ids in words field of catalog_stories
+
+How to set repetitions_remaining for words already in progress?
+
+story page action link: "Mark all backlog words as in progress"
+
+on drill page: link to set the current word's status (or select?)
+
+
+drilling:
+    clicking a word in drill should just bring it to the top, not dismiss it
+
+drill auto play mode
+    - show a word with its definition (and play audio?) for n seconds, then automatically move to the next
+    - words auto drilled will be temporarily marked
+    - when done with the drill, button to decrement counter for all words that were temporarily marked
+
+
 way to mark individual words of a story
-link to mark all words of a story
 
+    for story, include token list with story content? but what about subtitles?
 
+    what about selecting kanji within a word?
+
+    clicking text in content or subtitle may match a word
+        (not all cursor points in text correspond to word, so need some kind of error to make this clear. Snackbar message?)
+
+    need a IdentifyWord endpoint: send a string (whole sentence or the whole subtitle cue containing the word) plus the click point.
+        Does grammatical analysis to identify the baseword clicked (if any)
+
+    or tokenize story for story page
+    
+    clicking a db word shows it in sidebar, with info there about word status and options to set its repetitions and status
+
+ 
 drill page:
 
     'Other' category should include Kanji that are also words (len(definition entries) is > 0?)
     
 
 Maybe get rid of story date? Do users care when the story was published?
-
-in story menu, link that sets all words in the story to 'in progress' and give them a positive repetition count
-
-
-story status:
-
-    CATALOG            (initial state; never read before)
-    IN PROGRESS    (currently repeating)
-        "repetitions remaining" countdown to zero: how many times to repeat the story. When reaches zero, story is put in backlog
-    BACKLOG        (read before and maybe want to come back to it)
-    ARCHIVED       (never want to see it again)
-
-word status:
-
-    CATALOG         (never studied before)
-    IN PROGRESS     (currently drilling)
-        "repetitions remaining" countdown to zero: how many times to drill. When reaches zero, word is put in backlog
-    BACKLOG         (drilled before but currently set aside)
-    ARCHIVED        (never want to see it again)
-    DISCARD         (word that is malformed or maybe not even a word, etc.)
-
-
-MAIN page
-
-
-STORY VOCAB PAGE
-
-    - displays all the words in a story, sorted by status
-
-DRILL page
-
-    - shows all words from a particular story or...
-        - "in_progress" shows all words from all stories in progress
-    - make current word at top of list much bigger
-    - instead of rank, show countdown
-    - hit key to mark word as drilled and move on to the next
-    - in auto play mode:
-        - show a word with its definition (and play audio?) for n seconds, then automatically move to the next
-        - words auto drilled will be temporarily marked
-        - when done with the drill, button to decrement counter for all words that were temporarily marked
 
 
 subtitles: 
@@ -69,15 +63,8 @@ how to convert .ass to .srt?
 
 for a word, track all sentences that include the word
 
-x nihongo picnic
-x sakura
-x japanese with noriko
-x cj
-japanese with shun (pdfs?)
-
 
 ffmpeg -i [input] -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]
-
 
 
 use puppeteer to scrape for transcripts and meta info
@@ -88,23 +75,9 @@ autoplay drill mode
     show the word very large, play the audio, short pause before next word
         (only play cards with audio? maybe an option)
 
-words need a drill countdown
-
-story importer from json file
-
-
-story importer for podcasts:
-    nihongo picnic
-    sakura tips
-    japanese with shuntod
-    japanese with norico
-    cj (how to enable download from patreon?)
 
 store audio link with timestamps
-    anyway to capture from stories with youtube audio? probably not
-
-import Enlgish and Japanese from transcript files
-    display the subtitles simultenously together on the video
+    any way to capture from stories with youtube audio? probably not
 
 oscilloscope for selecting audio range for a word
 
@@ -133,15 +106,11 @@ oscilloscope for selecting audio range for a word
 
 - highlighting for proper names
     - filter out of vocab? or just make it a word category you can filter for?
-
-- display error when user attempts to add story with same title as existing story
   
 - definition for transitive / intransitive verb pairs should always show its pair
 
 - in absence of baseform, maybe should NOT use surface? investigate "引き出し", "飛べる", "鬼滅の" -> "滅"
     - potential form should not count as verb base form: e.g. 飛べる should be added only as 飛ぶ, not as 飛べる
-
-- should the word id's for each story be in sorted order?
 
 - reload entries bson only when needed by request rather than keeping in memory?
     - strip out unneeded parts of dictionaries

@@ -10,7 +10,7 @@ var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
 var statusSelect = document.getElementById('status_select');
 
-const COOLDOWN_TIME = 60 * 60 * 3 // 3 hours (in seconds)
+const WORD_COOLDOWN_TIME = 60 * 60 * 3 // 3 hours (in seconds)
 
 const DRILL_CATEGORY_KATAKANA = 1;
 const DRILL_CATEGORY_ICHIDAN = 2;
@@ -38,16 +38,12 @@ statusSelect.onchange = function (evt) {
 
 function newDrill() {
     let includeCatalog = false;
-    let includeInProgress = false;
     let includeBacklog = false;
     let includeArchived = false;
     for (let option of statusSelect.selectedOptions) {
         switch (option.value) {
             case 'catalog':
                 includeCatalog = true;
-                break;
-            case 'in progress':
-                includeInProgress = true;
                 break;
             case 'backlog':
                 includeBacklog = true;
@@ -99,7 +95,7 @@ function newDrill() {
 
     drillSet = [];
     for (let word of words) {
-        let offcooldown = (unixTime - word.date_marked) > COOLDOWN_TIME;
+        let offcooldown = (unixTime - word.date_marked) > WORD_COOLDOWN_TIME;
         if (offcooldown) {
             countOffCooldown++;
         }
@@ -113,7 +109,6 @@ function newDrill() {
             (includeOnCooldown && !offcooldown);
 
         let statusFilter = (includeCatalog && word.status == 'catalog') ||
-            (includeInProgress && word.status == 'in progress') ||
             (includeBacklog && word.status == 'backlog') ||
             (includeArchived && word.status == 'archived');
 
@@ -141,11 +136,15 @@ function displayWords() {
     function wordInfo(word, idx, answered) {
         return `<div index="${idx}" class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
-                    <div class="rank rank${word.status}">${word.status}</div>
+                    <div class="rank rank${word.status}">
+                        ${word.status}<br>
+                        remaining: ${word.repetitions_remaining}<br>
+                        lifetime: ${word.lifetime_repetitions}
+                    </div>
                 </div>`;
     }
 
-    html = `<h3 id="current_drill_count">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
+    html = `<h3 id="current_lifetime_repetitions">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
 
     idx = 0;
     for (let word of drillSet) {
@@ -193,13 +192,13 @@ document.body.onkeydown = async function (evt) {
         } else if (evt.code === 'KeyD') {  // mark answered
             evt.preventDefault();
             word.answered = true;
-            if (unixtime - word.date_marked > COOLDOWN_TIME) {
+            if (unixtime - word.date_marked > WORD_COOLDOWN_TIME) {
                 word.date_marked = unixtime;
-                word.drill_countdown--;
-                if (word.drill_countdown < 0) {
-                    word.drill_countdown = 0;
+                word.repetitions_remaining = Math.max(0, word.repetitions_remaining - 1)
+                if (word.status == 'catalog' && word.repetitions_remaining == 0) {
+                    word.status = 'backlog';
                 }
-                word.drill_count++;
+                word.lifetime_repetitions++;
                 updateWord(word);
             }
             drillSet.shift();
@@ -220,14 +219,10 @@ cardsDiv.onclick = function (evt) {
     }
     var idx = parseInt(ele.getAttribute('index'));
     if (idx && idx < drillSet.length - 1) {
-        //console.log("clicked card", idx);
+        //console.log("clicked card", idx); 
         var front = drillSet.slice(0, idx);
-        var back = drillSet.slice(idx);
-        drillSet = back;
-        answeredSet = front.concat(answeredSet);
-        for (let word of answeredSet) {
-            word.answered = true;
-        }
+        var back = drillSet.slice(idx + 1);
+        drillSet = [drillSet[idx]].concat(front, back);
         displayWords();
     }
 };
@@ -289,9 +284,11 @@ document.body.onload = function (evt) {
     }).then((response) => response.json())
         .then((data) => {
             words = data.words;
+            console.log(words);
             for (w of words) {
                 w.definitions = JSON.parse(w.definitions);
             }
+
             drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="${data.story_link}">${data.story_title}</a>`;
             //`<a href="/story.html?storyId=${storyId}"> ${data.story_title}</a>`;
             newDrill();

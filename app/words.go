@@ -34,64 +34,85 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	var wordIds []int64
-
-	if drillRequest.Set == "in_progress" {
-
-		rows, err := sqldb.Query(`SELECT base_form, date_marked, status, audio, audio_start, 
-				audio_end, category, drill_countdown, definitions FROM words WHERE status = $1;`, "in progress")
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-			return
-		}
-		defer rows.Close()
-
-		words := make([]DrillWord, 0)
-		for rows.Next() {
-			word := DrillWord{}
-			if err := rows.Scan(&word.BaseForm, &word.DateMarked, &word.Status, &word.Audio,
-				&word.AudioStart, &word.AudioEnd, &word.Category, &word.DrillCountdown, &word.Definitions); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-			}
-
-			words = append(words, word)
-		}
-
-		json.NewEncoder(gw).Encode(bson.M{"words": words, "story_link": "", "story_title": "", "story_source": "All Stories In Progress"})
-		return
-	}
+	wordIdMap := make(map[int64]bool)
 
 	var story_title string
 	var story_source string
 	var story_link string
 	var wordIdsJson string
 
-	row := sqldb.QueryRow(`SELECT title, source, link, words FROM catalog_stories WHERE id = $1;`, drillRequest.StoryId)
-	err = row.Scan(&story_title, &story_source, &story_link, &wordIdsJson)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
+	if drillRequest.Set == "in_progress" {
+		// get all stories that are in progress
+		rows, err := sqldb.Query(`SELECT words WHERE status = $1;`, IN_PROGRESS)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+			return
+		}
+
+		for rows.Next() {
+			err = rows.Scan(&wordIdsJson)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+				return
+			}
+			defer rows.Close()
+
+			err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+				return
+			}
+
+			for _, id := range wordIds {
+				wordIdMap[id] = true
+			}
+		}
+
+		story_title = ""
+		story_link = ""
+		story_source = "All Stories In Progress"
+	} else {
+		row := sqldb.QueryRow(`SELECT title, source, link, words FROM catalog_stories WHERE id = $1;`, drillRequest.StoryId)
+		err = row.Scan(&story_title, &story_source, &story_link, &wordIdsJson)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+			return
+		}
+
+		err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+			return
+		}
+
+		for _, id := range wordIds {
+			wordIdMap[id] = true
+		}
 	}
 
-	err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
+	wordIds = make([]int64, len(wordIdMap))
+	i := 0
+	for id := range wordIdMap {
+		wordIds[i] = id
+		i++
 	}
 
 	words := make([]DrillWord, len(wordIds))
 
 	for i, id := range wordIds {
 		word := &words[i]
-
+		word.ID = id
 		row := sqldb.QueryRow(`SELECT base_form, date_marked, status,
-				audio, audio_start, audio_end, category, drill_countdown, definitions FROM words WHERE id = $1;`, id)
-
+				audio, audio_start, audio_end, category, repetitions_remaining, 
+				lifetime_repetitions, definitions FROM words WHERE id = $1;`, id)
 		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Status, &word.Audio,
-			&word.AudioStart, &word.AudioEnd, &word.Category, &word.DrillCountdown, &word.Definitions)
+			&word.AudioStart, &word.AudioEnd, &word.Category, &word.RepetitionsRemaining,
+			&word.LifetimeRepetitions, &word.Definitions)
 		if err != nil && err != sql.ErrNoRows {
 			w.WriteHeader(http.StatusInternalServerError)
 			gw.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))
@@ -130,7 +151,8 @@ func UpdateWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE words SET status = $1, date_marked = $2, audio = $3, audio_start = $4, audio_end = $5 WHERE base_form = $6;`,
+	_, err = sqldb.Exec(`UPDATE words SET status = $1, date_marked = $2, audio = $3, audio_start = $4, 
+			audio_end = $5 WHERE base_form = $6;`,
 		word.Status, word.DateMarked, word.Audio, word.AudioStart, word.AudioEnd, word.BaseForm)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

@@ -186,7 +186,9 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]int64, int
 		words[k] = true
 	}
 
-	for baseForm, _ := range words {
+	wordIdsMap := make(map[int64]bool)
+
+	for baseForm := range words {
 		hasKatakana := len(reHasKatakana.FindStringIndex(baseForm)) > 0
 		hasKana := len(reHasKana.FindStringIndex(baseForm)) > 0
 		hasKanji := len(reHasKanji.FindStringIndex(baseForm)) > 0
@@ -239,14 +241,17 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]int64, int
 			return nil, 0, err
 		}
 		if err == nil {
-			wordIds = append(wordIds, id)
+			if _, ok := wordIdsMap[id]; !ok {
+				wordIdsMap[id] = true
+				wordIds = append(wordIds, id)
+			}
 			continue
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, rank, drill_count, drill_countdown, status, definitions) 
+			date_added, category, rank, lifetime_repetitions, repetitions_remaining, status, definitions) 
 			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
-			baseForm, 0, unixtime, category, INITIAL_RANK, 0, 0, "catalog", entriesJSON, kanjiDefJSON)
+			baseForm, 0, unixtime, category, INITIAL_RANK, 0, DEFAULT_REPETITIONS, "catalog", entriesJSON, kanjiDefJSON)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
 		}
@@ -260,6 +265,7 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]int64, int
 
 		newWordCount++
 		wordIds = append(wordIds, id)
+		wordIdsMap[id] = true
 	}
 
 	return wordIds, newWordCount, nil
@@ -379,12 +385,12 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, content, date, audio, repetitions_remaining, 
-		level, words, date_marked FROM catalog_stories WHERE id = $1;`, id)
+		level, words, date_marked, status FROM catalog_stories WHERE id = $1;`, id)
 
 	var words string
 	story := CatalogStory{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date, &story.Audio, &story.RepetitionsRemaining,
-		&story.Level, &words, &story.DateMarked); err != nil {
+		&story.Level, &words, &story.DateMarked, &story.Status); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
@@ -405,7 +411,7 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateStoryStats(w http.ResponseWriter, r *http.Request) {
+func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 
 	w.Header().Set("Content-Type", "application/json")
@@ -426,6 +432,16 @@ func UpdateStoryStats(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
+	// // when setting a story to IN_PROGRESS, all catalog words should be updated to IN_PROGRESS
+	// if story.Status == IN_PROGRESS {
+	// 	err = updateStoryWordsStatus(sqldb, story.ID, CATALOG, IN_PROGRESS)
+	// 	if err != nil {
+	// 		w.WriteHeader(http.StatusInternalServerError)
+	// 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+	// 		return
+	// 	}
+	// }
+
 	// make sure the story actually exists
 	rows, err := sqldb.Query(`SELECT id FROM catalog_stories WHERE id = $1;`, story.ID)
 	if err != nil {
@@ -443,8 +459,8 @@ func UpdateStoryStats(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	_, err = sqldb.Exec(`UPDATE catalog_stories SET repetitions_remaining = $1, 
-			date_marked = $2, level = $3, lifetime_repetitions = $4 WHERE id = $5;`,
-		story.RepetitionsRemaining, story.DateMarked, story.Level, story.LifetimeRepetitions, story.ID)
+			date_marked = $2, level = $3, lifetime_repetitions = $4, status = $5 WHERE id = $6;`,
+		story.RepetitionsRemaining, story.DateMarked, story.Level, story.LifetimeRepetitions, story.Status, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))

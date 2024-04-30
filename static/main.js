@@ -18,14 +18,14 @@ storyList.onchange = function (evt) {
         let storyId = parseInt(evt.target.getAttribute('story_id'));
         let story = storiesById[storyId];
         story.repetitions_remaining = parseInt(evt.target.value);
-        updateStoryStats(story, () => { });
+        updateStoryInfo(story, () => { });
     }
 
     if (evt.target.className.includes('status_select')) {
         let storyId = parseInt(evt.target.getAttribute('story_id'));
         let story = storiesById[storyId];
         story.status = evt.target.value;
-        updateStoryStats(story, () => { });
+        updateStoryInfo(story, () => { });
     }
 };
 
@@ -63,7 +63,7 @@ storyList.onclick = function (evt) {
     // update db
     let story = storiesById[storyId];
     story.level = newLevel;
-    updateStoryStats(story, () => { });
+    updateStoryInfo(story, () => { });
 };
 
 function processStories(storyData) {

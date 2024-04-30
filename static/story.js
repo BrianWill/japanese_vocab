@@ -7,6 +7,7 @@ var trackJa = document.getElementById('track_ja');
 var trackEn = document.getElementById('track_en');
 var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
+var statusSelect = document.getElementById('status_select');
 
 var playerControls = document.getElementById('player_controls');
 var markStoryLink = document.getElementById('mark_story');
@@ -16,20 +17,21 @@ var story = null;
 var selectedLineIdx = 0;
 var youtubePlayer;
 
-var enableEnSubs = true;
-var enableJaSubs = true;
+
+statusSelect.onchange = function (evt) {
+    story.status = statusSelect.value;
+    updateStoryInfo(story, () => { console.log('updated story info success') });
+};
+
+// only way to detect enter vs exit is whether the number of active increases (enter) or decreases (exit)
 
 trackJa.track.addEventListener('cuechange', function (evt) {
-    if (!enableJaSubs) {
+    if (!document.getElementById('transcript_ja_checkbox').checked) {
+        captionsJa.style.display = 'none';
         return;
     }
 
     let cues = trackJa.track.activeCues;
-
-    // only way to detect enter vs exit is whether the number of active increases (enter) or decreases (exit)
-
-    //console.log('ja cue');
-
     let html = '<span>';
 
     // because of overlap, more than one cue can be active
@@ -50,16 +52,12 @@ trackJa.track.addEventListener('cuechange', function (evt) {
 });
 
 trackEn.track.addEventListener('cuechange', function (evt) {
-    if (!enableEnSubs) {
+    if (!document.getElementById('transcript_en_checkbox').checked) {
+        captionsEn.style.display = 'none';
         return;
     }
 
     let cues = trackEn.track.activeCues;
-
-    // only way to detect enter vs exit is whether the number of active increases (enter) or decreases (exit)
-
-    //console.log('en cue');
-
     let html = '<span>';
 
     // because of overlap, more than one cue can be active
@@ -98,7 +96,7 @@ markStoryLink.onclick = function (evt) {
     story.repetitions_remaining = Math.max(story.repetitions_remaining - 1, 0);
     story.lifetime_repetitions++;
     countSpinner.value = story.repetitions_remaining;
-    updateStoryStats(story, () => {
+    updateStoryInfo(story, () => {
         displayStoryInfo(story);
         snackbarMessage('marked story as read');
     });
@@ -255,15 +253,6 @@ storyLines.onmousedown = function (evt) {
                 player.currentTime = seconds;
                 player.play();
             }
-
-
-            // navigator.clipboard.writeText(text)
-            //     .then(() => {
-            //         console.log('Text copied to clipboard: ' + text);
-            //     })
-            //     .catch((error) => {
-            //         console.error('Error copying text to clipboard:', error);
-            //     });
         }
     }
 };
@@ -271,7 +260,7 @@ storyLines.onmousedown = function (evt) {
 
 countSpinner.onchange = function (evt) {
     story.repetitions_remaining = parseInt(evt.target.value);
-    updateStoryStats(story, () => { });
+    updateStoryInfo(story, () => { });
 };
 
 // returns time in seconds
@@ -347,7 +336,9 @@ function openStory(id) {
     }).then((response) => response.json())
         .then((data) => {
             story = data;
-            
+
+            statusSelect.value = story.status;
+
             displayStoryInfo(data);
             displayStory(data);
 
@@ -390,9 +381,16 @@ function openStory(id) {
                     player.style.display = 'block';
                     player.src = '/audio/' + story.audio;
 
-                    for (let t of player.textTracks) {
-                        t.mode = 'showing';
+                    if (story.transcript_en_format == 'webvtt') {
+                        trackEn.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_en);
                     }
+
+                    if (story.transcript_jp_format == 'webvtt') {
+                        trackJa.track.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_jp);
+                    }
+
+                    trackEn.track.mode = 'hidden';
+                    trackJa.track.mode = 'hidden';
                 }
             }
 

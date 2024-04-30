@@ -49,6 +49,12 @@ const DRILL_CATEGORY_KANJI = 4096
 const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
 	DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU
 
+const CATALOG = "catalog"
+const IN_PROGRESS = "in progress"
+const BACKLOG = "backlog"
+const ARCHIVED = "archived"
+const DEFAULT_REPETITIONS = 6
+
 // const MAIN_USER_DB_PATH = "../users/main.db"
 const MAIN_USER_DB_PATH = "../users/test.db"
 
@@ -115,7 +121,7 @@ func main() {
 
 	//router.Use(middleware)
 
-	router.HandleFunc("/update_story_stats", UpdateStoryStats).Methods("POST")
+	router.HandleFunc("/update_story_info", UpdateStoryInfo).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/catalog_stories", GetCatalogStories).Methods("GET")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
@@ -220,8 +226,8 @@ func makeUserDB(path string) {
 		(id INTEGER PRIMARY KEY,
 			base_form TEXT NOT NULL UNIQUE,
 			status TEXT NOT NULL,
-			drill_count INTEGER NOT NULL,
-			drill_countdown INTEGER NOT NULL,
+			lifetime_repetitions INTEGER NOT NULL,
+			repetitions_remaining INTEGER NOT NULL,
 			category INTEGER NOT NULL,
 			audio TEXT NOT NULL DEFAULT '',
 			audio_start REAL NOT NULL DEFAULT 0,

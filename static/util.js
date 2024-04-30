@@ -100,11 +100,11 @@ function updateWord(word, marking) {
         body: JSON.stringify(word),
     }).then((response) => response.json()
     ).then((data) => {
-        if (marking) {
-            snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
-        } else {
-            snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to rank ${data.rank}`);
-        }
+        // if (marking) {
+        //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
+        // } else {
+        //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to status: ${data.status}`);
+        // }
     }).catch((error) => {
         console.error('Error:', error);
     });
@@ -180,39 +180,16 @@ function displayEntry(entry) {
             </div>`;
 }
 
-function updateStoryStatus(story, refreshList) {
-    let temp = { ...story };
-    delete temp.content;
-    delete temp.tokens;
-    delete temp.link;
-    delete temp.title;
-    delete temp.words;
-    fetch(`/update_story_status`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(temp),
-    }).then((response) => response.json())
-        .then((data) => {
-            if (refreshList) {
-                getStoryList(displayStoryList);
-            }
-        })
-        .catch((error) => {
-            console.error('Error marking story:', error);
-        });
-}
-
-function updateStoryStats(story, successFn) {
+function updateStoryInfo(story, successFn) {
     story = {
         id: story.id,
         repetitions_remaining: story.repetitions_remaining,
         level: story.level,
         date_marked: story.date_marked,
-        lifetime_repetitions: story.lifetime_repetitions
+        lifetime_repetitions: story.lifetime_repetitions,
+        status: story.status
     };
-    fetch(`/update_story_stats`, {
+    fetch(`/update_story_info`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

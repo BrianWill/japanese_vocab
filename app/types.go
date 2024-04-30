@@ -5,24 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Story struct {
-	ID           int64               `json:"id,omitempty"`
-	Content      string              `json:"content,omitempty"`
-	Title        string              `json:"title,omitempty"`
-	Link         string              `json:"link,omitempty"`
-	Audio        string              `json:"audio"`
-	Lines        []Line              `json:"lines,omitempty"`
-	LinesJP      []Line              `json:"lines_jp,omitempty"`
-	LinesEN      []Line              `json:"lines_en,omitempty"`
-	Status       int                 `json:"status"`
-	Level        int                 `json:"level"`
-	ReadCount    int                 `json:"read_count"`
-	Countdown    int                 `json:"countdown"`
-	DateLastRead int64               `json:"date_last_read"`
-	DateAdded    int64               `json:"date_added,omitempty"`
-	WordInfo     map[string]WordInfo `json:"word_info,omitempty"`
-}
-
 type CatalogStory struct {
 	ID                   int64   `json:"id,omitempty"`
 	Title                string  `json:"title,omitempty"`
@@ -37,10 +19,10 @@ type CatalogStory struct {
 	Link                 string  `json:"link,omitempty"`
 	Audio                string  `json:"audio,omitempty"`
 	Video                string  `json:"video,omitempty"`
-	TranscriptEN         string  `json:"transcript_en,omitempty"`
-	TranscriptJP         string  `json:"transcript_jp,omitempty"`
-	TranscriptENFormat   string  `json:"transcript_en_format,omitempty"`
-	TranscriptJPFormat   string  `json:"transcript_jp_format,omitempty"`
+	TranscriptEN         string  `json:"transcript_en"`
+	TranscriptJP         string  `json:"transcript_jp"`
+	TranscriptENFormat   string  `json:"transcript_en_format"`
+	TranscriptJPFormat   string  `json:"transcript_jp_format"`
 	RepetitionsRemaining int64   `json:"repetitions_remaining"`
 	LifetimeRepetitions  int64   `json:"lifetime_repetitions"`
 	Words                []int64 `json:"words,omitempty"`
@@ -77,12 +59,10 @@ type WordInfo struct {
 	AudioEnd    float32       `json:"audio_end"`
 }
 
-type Line struct {
-	Words     []LineWord `json:"words,omitempty"`
-	Timestamp string     `json:"timestamp,omitempty"`
-	//Content   string      `json:"content,omitempty"`
-	Kanji  []LineKanji `json:"kanji,omitempty"`
-	Marked bool        `json:"marked"`
+type StoryWordStatusUpdateRequest struct {
+	ID        int64  `json:"id,omitempty"`
+	OldStatus string `json:"old_status"`
+	NewStatus string `json:"new_status"`
 }
 
 type LineWord struct {
@@ -129,10 +109,6 @@ type SetLineMarkRequest struct {
 	Marked  bool  `json:"marked"`
 }
 
-type StoryList struct {
-	Stories []Story `json:"stories,omitempty"`
-}
-
 type DrillRequest struct {
 	StoryId int64  `json:"story_id"`
 	Set     string `json:"set"`
@@ -152,16 +128,17 @@ type EnqueuedStory struct {
 }
 
 type DrillWord struct {
-	ID             int64   `json:"id,omitempty"`
-	BaseForm       string  `json:"base_form"`
-	Status         string  `json:"status"`
-	DateMarked     int64   `json:"date_marked"`
-	Category       int     `json:"category"`
-	Definitions    string  `json:"definitions,omitempty"`
-	Audio          string  `json:"audio,omitempty"`
-	AudioStart     float32 `json:"audio_start,omitempty"`
-	AudioEnd       float32 `json:"audio_end,omitempty"`
-	DrillCountdown int     `json:"drill_countdown,omitempty"`
+	ID                   int64   `json:"id,omitempty"`
+	BaseForm             string  `json:"base_form"`
+	Status               string  `json:"status"`
+	DateMarked           int64   `json:"date_marked"`
+	Category             int     `json:"category"`
+	Definitions          string  `json:"definitions,omitempty"`
+	Audio                string  `json:"audio,omitempty"`
+	AudioStart           float32 `json:"audio_start,omitempty"`
+	AudioEnd             float32 `json:"audio_end,omitempty"`
+	RepetitionsRemaining int     `json:"repetitions_remaining"`
+	LifetimeRepetitions  int     `json:"lifetime_repetitions"`
 }
 
 type WordUpdate struct {

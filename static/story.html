@@ -17,8 +17,8 @@
                 <div id="player">
                     <div id="captions_en"></div>
                     <video id="video_player" controls>
-                        <track id="track_ja" kind="subtitles" src="../sample.vtt" srclang="ja" default />
-                        <track id="track_en" kind="subtitles" src="../sample_en.vtt" srclang="en" default />
+                        <track id="track_ja" kind="subtitles" srclang="ja" default />
+                        <track id="track_en" kind="subtitles" srclang="en" default />
                     </video>
                     <div id="captions_ja"></div>
                 </div>
@@ -30,10 +30,19 @@
             <div id="story_actions">
                 <div class="story_info" id="source_info"></div>
                 <div class="story_info" id="date_info"></div>
+                <div>
+                    <select id="status_select" class="status_select" story_id="${s.id}">
+                        <option value="catalog">catalog</option>
+                        <option value="in progress">in progress</option>
+                        <option value="backlog">backlog</option>
+                        <option value="archived">archived</option>
+                    </select>
+                </div>
                 <div class="story_info" id="lifetime_repetitions_info"></div>
                 <div>
                     <span id="countdown_span">
-                        <label title="the number of more times you plan to read this story">Repetitions remaining:</label>&nbsp;
+                        <label title="the number of more times you plan to read this story">Repetitions
+                            remaining:</label>&nbsp;
                         <input type="number" id="count_spinner" class="count_spinner" min="0" max="9" steps="1"
                             value="0">
                     </span>
@@ -47,9 +56,14 @@
                             class="playerspeed" name="playerspeed">
                     </span>
                 </div>
-                <div><a id="drill_words_link" href="/words.html?storyId=0">Drill the words of this story</a></div>                
-                
-                
+                <input type="checkbox" id="transcript_en_checkbox" name="transcript_en">
+                <label class="story_info" for="transcript_en">English subtitles</label><br>
+                <input type="checkbox" checked id="transcript_ja_checkbox" name="transcript_ja">
+                <label class="story_info" for="transcript_ja">Japanese subtitles</label><br>
+                <br>
+                <div><a id="drill_words_link" href="/words.html?storyId=0">Drill the words of this story</a></div>
+
+
             </div>
         </div>
         <div id="story_lines"></div>
