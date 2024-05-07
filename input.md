@@ -1,59 +1,73 @@
 # Learning Japanese through input
 
-## Extensive Input
+There are two key milestones on the path to acquiring a second language:
 
-Wikipedia describes Extensive Reading as:
+1. You are able to consume interesting content (text, audio, video, etc.) in the language with a reasonable degree of understanding and fluidity.
+2. You have sufficient listening skills and vocabulary to attempt non-trivial spoken communication. (This milestone generally depends upon the first because speaking rests upon a foundation of listening.)
 
-> …the process of reading longer easier texts for an extended period of time without a breakdown of comprehension, feeling overwhelmed, or the need to take breaks. It stands in contrast to intensive or academic reading, which is focused on a close reading of dense shorter texts, typically not read for pleasure.
+How long it takes to reach these milestones depends upon the distance between your own language and the target language. For a Spanish speaker learning Italian or *vice versa*, this might be as short as a few months. For an English speaker learning Japanese or *vice versa*, this easliy takes two years or even more. (For the special case of living in country with daily immersion, you can reach basic functional spoken Japanese in several months, but there will be large holes in your skills, especially with the written language. Besides, this pathway is unrealistic for the vast majority of learners.)
 
-> …Students read as much as possible. Reading materials are well within the reader's grammatical and vocabulary competence. The material should be varied in subject matter and character. 
+Once you reach these milestones, the path forward is clear: consume tons of content and do lots of speaking practice. But how do you reach these milestones? That's the hard question, especially for languages that take longer to acquire.
 
-The Extensive Reading Foundation sums it up in a couple slides: 
+To tackle this problem, I've developed a system from personal experience which has three core kinds of practice:
 
-![](./images/extensive_reading.png)
+- Listening practice
+- Reading practice
+- Vocab drilling
 
-As a way to learn foreign languages, there’s an obvious problem with Extensive Reading: content that is enjoyable yet also easy to consume for beginners is at best extremely rare if not non-existent. Only until the learner has already acquired a minimum comfort level with a significant chunk of the vocabulary, grammar, and writing system can a learner properly use Extensive Reading as a technique to progress. This is true for all languages but particularly acute for languages with complex writing systems, Japanese first among them.
+## Listening practice
 
-## Intensive input
+In listening practice, you repeatedly listen to a video or piece of audio until you fullly understand it, with the goal of improving your listening comprehension. 
 
-As long as the language itself distracts you from focusing on the content of what you read and hear, your content consumption will be *intensive* rather than extensive. This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and pondering how the words fit together, a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day.
+The selected audio or video material, which we’ll call “stories”, should meet these criteria:
 
-Still, **intensive reading and listening should be a beginner’s primary learning activity**. If you practice stories intensively as described below for several hours a week, you’ll eventually get reasonably comfortable with native level content. When you reach that point, you can start to incorporate more and more extensive reading into your routine until eventually that can take over as your main activity.
+- The stories should be monologues or dialogs by native speakers (not text-to-speech).
+- The stories should have accurate transcripts.
+- The stories should be [“comprehensible input”](https://ellevationeducation.com/blog/teaching-comprehensible-input-definition-examples), meaning content targeted for non-native speakers.
+- The stories should range from 2 to 10 minutes long. 5 minutes is a good average. If you want to use longer content, break it into 5-10 minute chunks.
+- The stories should be sufficiently within your level that you understand at least 70-80% on your first listen. Generally this means each story will have no more than a handful of new words.
 
-## Selecting stories
+On average, a story should be repeated about 5 times, with the repetitions spaced out by a few days (so taking about 2 weeks in total for 5 repetitions).
 
-The selected language material, which we’ll call “stories”, should meet these criteria:
+After each repetition, you can look at the transcript if you need to verify your understanding and fill in gaps: lookup any unknown words, analyze the grammar, use machine translation, or whatever else it takes to fully understand the text.
 
-- All stories should be audio monologues or dialogs by native speakers (not text-to-speech).
-- All stories should have accurate transcripts.
-- The stories should explicitly be [“comprehensible input”](https://ellevationeducation.com/blog/teaching-comprehensible-input-definition-examples) for beginners. Later when you feel ready, you can graduate to content for native speakers.
-- Overly long stories are too onerous to repeat! Early on, the stories can be very short, say 1-2 minutes long. As you progress, the stories can get longer, but 5 minutes is a good average length. As a compromise, you can break longer stories into 5-10 minute chunks.
-- While most stories you consume should be at your current level, it’s good also to include some stories one step above your level and some stories one or two steps below. Reaching above your level expands your vocabulary and grammar exposure into new territory, while revisiting lower levels helps develop the fluidity with which you can process content.
+If after 5 or so repetitions, you still can't fully understand the story, the story was probably too difficult for listening practice. If it takes only 1 or 2 repetitions, it was probably too easy.
 
-## Repeating stories
+## Reading practice
 
-To get multiple exposures to the vocabulary and grammar encountered, **each story should be repeated at least a few times over the course of a week or two**. (The repetitions should be spread out, so multiple repetitions in a single day count as just one repetition.) 
+In reading practice, you repeatedly read the transcript of an audio or video story to get contextual exposure to new words, kanji, and language patterns. As you read, you look up every unknown word and puzzle out how all the words fit together, using translation tools and grammatical analysis or any other means necessary.
 
-How many times to repeat a given story is up to your discretion, but I generally find it’s more effective to repeat a story only a few times, then wait several weeks before repeating it a couple times more. Feel free to drop a story at any time because it’s too hard, too easy, too boring, or you just feel like doing something else.
+Rather than constantly pause and rewind the audio or video, you may prefer to let it play once through, follow the transcript as best you can, and then afterwards go back to the start to closely read the full transcript.
 
-## How to read a story
+Like with listening practice, you should repeat each story about 5 times spread out over about 2 weeks, and the stories selected for reading practice should generally be comprehensible input and average 5 minutes long (as read by a native speaker).
 
-There are at least five ways to go through a story:
+Unlike with listening practice, the stories should be significantly above your current level such that they include a good number of words and language patterns that you've never encountered before. For a 5 minute story, you roughly want 20-40 new words (and however many new kanji occur in those words).
 
-- **Intensive reading**. In this process, you look up every unknown word and puzzle out how all the words fit together, using translation tools and grammatical analysis. This process can be very time consuming: the first read through typically takes me 30 minutes for each 5 minutes of story audio! The good news is that subsequent repetitions will go faster.
-- **Listening and reading along with the transcript**. In this process, you should avoid pausing or rewinding the audio. This exercise develops your ability to follow real-time speech, using the transcript as training wheels. It also helps reinforce your reading of kanji words.
-- **Listening without the transcript or subtitles**. This is a much truer test of listening comprehension, but I generally only do this with stories comfortably below my current level. Especially in the early stages, listening will require intense concentration, and even after repeating a story several times, you may still fail to identify and understand many words let alone understand the complete sentences. This is normal. It can take several months of practice before you begin to understand most of what you hear, and only through repeated practice will the amount of concentration required gradually diminish.
-- **Practice reading and pronunciation by reading the text aloud**. After reading a line, you may want to play the audio to check your pronunciation.
-- **Drilling the words and vocabulary**. This gives you more focus time on the individual words and characters. Be aware, though, that once you’ve drilled a word or kanji a dozen times or more, drilling it further has greatly diminishing returns, so you should drop it from your drill set. Drilling helps make words and kanji *familiar* to you, but full acquisition only comes through repeated exposures in a meaningful context.
+Because you are studying the text rather than naturally reading it, reading practice is a slow process. For a story that is 5 minutes of audio, it often may take more than 30 minutes to get through, especially for the first repetition. The good news is that subsequent repetitions will go faster.
 
-## Use your own discretion
+For both reading and listening practice, feel free to drop a story at any time because it’s too hard, too easy, too boring, or you just feel like doing something else. Keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**.
 
-Keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**. For any one story, which combination of the above processes you use in what order is up to you.
+## Vocab drilling
 
-The first time through a story will generally require a full intensive read through, but how you proceed with that story from there can highly vary. If the material seems easy enough, you might simply listen to the story and only occasionally check the transcript when you can’t make out a word. For more difficult material, you may need to repeat the intensive process a few more times, and even after several repetitions, you may still require the transcript to follow along while listening. As a compromise, you can do a hybrid process: go sentence-by-sentence, listening first with the transcript then playing the sentence again without looking at the transcript.
+Follow three rules for drilling:
 
+1. Drill only words encountered recently in your listening and reading practice. For words and kanji with multiple meanings and pronunciations, focus only on the meanings and pronunciations you've encountered in stories.
+2. Do not test yourself on the words: drilling is an opportunity to get systematic repeated exposure, so just seeing and hearing the word with its definition is sufficient.
+3. Drill an individual word no more than 10-20 times total. In fact, dropping a word from your drills after 5 to 10 repetitions may be the optimum. You most likely won't master a word after just 5 drills or even 20 drills, but the goal of vocab drilling should not be to master words but rather to make the words more familiar.
 
-## Sources of input
+Real mastery of words only comes through encounters in meaningful context, but by drilling words to a certain level of familiarity, each individual contextual encounter that follows becomes much more impactful. In other words, drilling a word 'primes' you for when you later encounter it in your listening and reading practice or in the wild.
+
+## Expectations
+
+It's important to have the right expectations:
+
+- For a long time, you wont undertsand most of what you encounter, and that which you do understand will often require conscious effort. “Natural” (automatic) understanding comes slowly and in pieces.
+- Comfort with a particular topic and style of content doesn’t necessarily translate to comfort with other topics or styles.
+- Accept that it will typically require many exposures before a word is fully memorized. Instead of consciously trying to force memorization, you should lean heavily on tools that make it quick and easy to look up words and kanji. Focus on reminders, not memorization.
+- A single aspect of a language cannot be truly mastered in isolation, and attempting to do so is generally inefficient. So don’t try to master one aspect or “level” of the language before moving on to others.
+- As long as the language itself distracts you from focusing on the content of what you read and hear, your content consumption will be [*intensive* rather than *extensive*](https://en.wikipedia.org/wiki/Extensive_reading). This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and pondering how the words fit together, a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day.
+
+## Sources of comprehensible input
 
 These are some of the best sources I've found of comprehensible input material with transcripts:
 
@@ -70,5 +84,91 @@ These sources lack human-written transcripts in most cases, so you must rely upo
 - [Haru's Japanese Cafe](https://www.youtube.com/@HarusJapaneseCafe)
 - [Japanese Language Community](https://www.youtube.com/@erikojuku)
 - [Nihongo Con Teppei](https://nihongoconteppei.com/)
+
+## Kana and Kanji
+
+- Romaji is at best a temporary crutch. Within a few weeks, a beginner should be comfortable enough with hiragana to avoid romaji entirely.
+- Katakana often remains troublesome for multiple years:
+  - Several pairs of katakana characters are hard to distinguish because they look very similar.
+  - Many Western import words spelt in katakana are considerably longer than most native Japanese words or Chinese import words.
+  - Import words spelt in katakana often contain sequences of syllables that occur infrequently or not at all in native Japanese or Chinese import words.
+  - The sounds of English import words are often distorted in surprising, inconsistent ways, making them strangely difficult for English speakers to read.
+- Reading a word does not require “knowing” its kanji! In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. Instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn.
+- There are tens of thousands of kanji that have existed throughout history, but only ~6000 kanji are used in modern Japanese with any frequency, and most native Japanese do not know all of these 6000. An educated native speaker can reliably read perhaps 3000-4000 kanji in the context of words and names, but the number of kanji they can recognize and define as isolated characters is somewhat smaller, and the number of kanji they can write by hand from memory is even smaller (say, perhaps 2500 on the high end).
+- The most frequently used 1500-2000 kanji cover 99%+ of the kanji that occur in most modern Japanese writing. An additional 1000-1500 kanji cover most of the remaining 1%.
+- In theory, writing kanji by hand can help you memorize the characters, but whether this works in practice is debateable, and hand writting practice is very slow and tedious. Most people today rarely write any language by hand, including English, so learning to handwrite Japanese is probably not worth the effort unless you have a great interest in calligraphy.
+- Like with words, you should learn kanji spellings of names as they come up. Don't try to systematically memorize nanori or the [jinmeiyou kanji](https://en.wikipedia.org/wiki/Jinmeiy%C5%8D_kanji).
+- Recognizing kana and kanji in calligraphy and other stylized forms itself takes practice. Until you reach the stage where you can fludily consume native content, trying to read calligraphy will just slow you down. Likewise, reading vertical text can induce mental overhead, so it's best avoided while you're still in beginner and intermediate stages.
+
+# Additional practices
+
+## Random practice
+
+Because  goal: volume of exposure and branching out to new parts of the language
+
+
+In random practice, you consume audio, video, or text of various kinds and a variety of levels. The content is not repeated, and for the most part, you should let anything you don't understand pass you by. Depending on the level, you may understand anywhere from 10% to 100% of what you consume. Reaching above your level expands your vocabulary and grammar exposure into new territory, while revisiting lower levels helps develop the fluidity with which you can process content.
+
+## Language partners
+
+- Two people trying to learn each other’s languages
+- Each half of each session in each language
+- Undirected conversation? Or prepared topics?
+
+A language exchange, but both people only speak their own language
+- Some game or activity that requires them to communicate
+E.g. one person reads a story in their native language while the other attempts to translate
+
+
+## Using TV and movies
+
+Most movies and TV use advanced language
+
+- Very expansive vocabulary
+- Shouting, whispering, murmuring, mumbling
+- Crosstalk
+- Loud music and sound effects
+- Slang and colloquial speech
+- Accents and speech quirks
+- Archaic and formal speech
+
+
+Japanese subtitles not very useful for beginners
+- Can’t follow the story
+- Too many unknown kanji
+
+English subtitles distract from the Japanese audio
+
+- Extra difficult to process two languages at once
+- Corresponding words / phrases tend to occur in reverse order
+- Translators take liberties
+
+
+## Grammar study
+
+Cons:
+
+- Knowing grammar and naturally processing grammar are not the same thing
+- Grammar rules tend to have many quirky edge cases
+- Accurate, complete grammar information is scarce
+
+Pros: 
+
+- Grammar helps you understand things above your current natural level
+- Grammar is interesting and comforting
+- Grammar knowledge useful for writing
+- Many of the most common words in a language have functions instead of meanings
+
+Useful:
+
+- Understand a grammatical concept
+
+Futile:
+
+- Memorize grammatical facts and tables
+- Practice points of grammar
+
+
+
 
 

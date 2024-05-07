@@ -1,5 +1,8 @@
 # japanese_vocab TODO
 
+link from story drill back to the story? could just use back though
+(maybe link to external site should be a separate link that is labeld as such)
+
 test new word importing
     
 convert other formats to web vtt
@@ -12,17 +15,15 @@ add text field under word in which we can paste any text (serves as quick def)
 
     only shown for top word? or shown for all? maybe a toggle button
 
+    or maybe just first part of def
+
 deduplicate the word ids in words field of catalog_stories
 
-How to set repetitions_remaining for words already in progress?
+on drill page: 
+    link to set the current word's status (or select?)
+    change repetitions_remaining for current word (or all words in story?)
 
 story page action link: "Mark all backlog words as in progress"
-
-on drill page: link to set the current word's status (or select?)
-
-
-drilling:
-    clicking a word in drill should just bring it to the top, not dismiss it
 
 drill auto play mode
     - show a word with its definition (and play audio?) for n seconds, then automatically move to the next
@@ -47,10 +48,6 @@ way to mark individual words of a story
     clicking a db word shows it in sidebar, with info there about word status and options to set its repetitions and status
 
  
-drill page:
-
-    'Other' category should include Kanji that are also words (len(definition entries) is > 0?)
-    
 
 Maybe get rid of story date? Do users care when the story was published?
 
