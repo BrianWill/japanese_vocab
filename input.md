@@ -21,7 +21,7 @@ In listening practice, you repeatedly listen to a video or piece of audio until 
 
 The selected audio or video material, which we’ll call “stories”, should meet these criteria:
 
-- The stories should be monologues or dialogs by native speakers (not text-to-speech).
+- The stories should be monologues or dialogues by native speakers (not text-to-speech).
 - The stories should have accurate transcripts.
 - The stories should be [“comprehensible input”](https://ellevationeducation.com/blog/teaching-comprehensible-input-definition-examples), meaning content targeted for non-native speakers.
 - The stories should range from 2 to 10 minutes long. 5 minutes is a good average. If you want to use longer content, break it into 5-10 minute chunks.
@@ -87,6 +87,8 @@ These sources lack human-written transcripts in most cases, so you must rely upo
 
 ## Kana and Kanji
 
+Notes about how to approach the writing system:
+
 - Romaji is at best a temporary crutch. Within a few weeks, a beginner should be comfortable enough with hiragana to avoid romaji entirely.
 - Katakana often remains troublesome for multiple years:
   - Several pairs of katakana characters are hard to distinguish because they look very similar.
@@ -94,55 +96,55 @@ These sources lack human-written transcripts in most cases, so you must rely upo
   - Import words spelt in katakana often contain sequences of syllables that occur infrequently or not at all in native Japanese or Chinese import words.
   - The sounds of English import words are often distorted in surprising, inconsistent ways, making them strangely difficult for English speakers to read.
 - Reading a word does not require “knowing” its kanji! In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. Instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn.
-- There are tens of thousands of kanji that have existed throughout history, but only ~6000 kanji are used in modern Japanese with any frequency, and most native Japanese do not know all of these 6000. An educated native speaker can reliably read perhaps 3000-4000 kanji in the context of words and names, but the number of kanji they can recognize and define as isolated characters is somewhat smaller, and the number of kanji they can write by hand from memory is even smaller (say, perhaps 2500 on the high end).
+- There are tens of thousands of kanji that have been used throughout Japanese history, but only ~6000 kanji are used in modern Japanese with any frequency, and most native Japanese do not know all of these 6000. A typical educated native speaker can reliably read perhaps 3000-4000 kanji in the context of words and names, but the number of kanji they can recognize and define as isolated characters is somewhat smaller, and the number of kanji they can write by hand from memory is even smaller (say, perhaps, 2500 on the high end).
 - The most frequently used 1500-2000 kanji cover 99%+ of the kanji that occur in most modern Japanese writing. An additional 1000-1500 kanji cover most of the remaining 1%.
 - In theory, writing kanji by hand can help you memorize the characters, but whether this works in practice is debateable, and hand writting practice is very slow and tedious. Most people today rarely write any language by hand, including English, so learning to handwrite Japanese is probably not worth the effort unless you have a great interest in calligraphy.
 - Like with words, you should learn kanji spellings of names as they come up. Don't try to systematically memorize nanori or the [jinmeiyou kanji](https://en.wikipedia.org/wiki/Jinmeiy%C5%8D_kanji).
-- Recognizing kana and kanji in calligraphy and other stylized forms itself takes practice. Until you reach the stage where you can fludily consume native content, trying to read calligraphy will just slow you down. Likewise, reading vertical text can induce mental overhead, so it's best avoided while you're still in beginner and intermediate stages.
-
-# Additional practices
+- Recognizing kana and kanji in calligraphy and other stylized forms takes its practice. Until you reach the stage where you can fludily consume native content, trying to read calligraphy will just slow you down. Likewise, reading vertical text can induce mental overhead, so it's best avoided while you're still in beginner and intermediate stages.
 
 ## Random practice
 
-Because  goal: volume of exposure and branching out to new parts of the language
+In addition to systematic listening and reading practice, it's also good to consume content non-systematically with the goal of branching out and familiarizing yourself with parts of the language not usually found in comprehensible input.
 
+So for random practice, you should consume audio, video, or text of various kinds and a variety of levels. Reaching above your level exposes you to new vocabulary and grammar, while revisiting lower levels helps develop your fluidity of processing the language. Depending on the level, you may understand anywhere from 10% to 100% of what you consume. 
 
-In random practice, you consume audio, video, or text of various kinds and a variety of levels. The content is not repeated, and for the most part, you should let anything you don't understand pass you by. Depending on the level, you may understand anywhere from 10% to 100% of what you consume. Reaching above your level expands your vocabulary and grammar exposure into new territory, while revisiting lower levels helps develop the fluidity with which you can process content.
-
-## Language partners
-
-- Two people trying to learn each other’s languages
-- Each half of each session in each language
-- Undirected conversation? Or prepared topics?
-
-A language exchange, but both people only speak their own language
-- Some game or activity that requires them to communicate
-E.g. one person reads a story in their native language while the other attempts to translate
-
+You needn't repeat the content, and for the most part, you should let anything you don't understand pass you by.
 
 ## Using TV and movies
 
-Most movies and TV use advanced language
+In theory, TV shows and movies are a very appealing way to learn a language, but in practice, most TV and movies are inhospitable for beginner and intermediate learners due to several factors:
 
-- Very expansive vocabulary
-- Shouting, whispering, murmuring, mumbling
-- Crosstalk
-- Loud music and sound effects
-- Slang and colloquial speech
+- Use of expansive vocabulary
+- Use of advanced grammar
+- Use of slang and colloquial speech
 - Accents and speech quirks
 - Archaic and formal speech
+- Shouting, whispering, murmuring, mumbling
+- Crosstalk
+- Loud music and sound effects over dialogue
 
+Subtitles alone are not a sufficient solution:
 
-Japanese subtitles not very useful for beginners
-- Can’t follow the story
-- Too many unknown kanji
+- A beginner or intermediate learner often won't know enough vocabulary or kanji to get even the gist of the story from Japanese subtitles.
+- It's hard to concentrate on the Japanese audio while reading English (processing two languages at once is extremely difficult even if you already have mastered both languages). Furthermore, to the extent parts of a Japanese and English sentence correspond, they tend to do so in reverse order, so for longer sentences, the part of the dialogue currently displayed on screen often doesn't match what is currently being said. On top of this, translators often take large liberties, such that the subtitltes do not accurately convey the original meaning or the way in which the original meaning was expressed.
+- Most video sources don't provide the option of displaying Japanese and English subtitles simulteously, and besides, processing two written languages adds even more mental overhead that distracts from listening.
 
-English subtitles distract from the Japanese audio
+Turning off subtitles isn't a solution either because a beginner or intermediate learner watching without subtitles would usually miss most of what is being said and wouldn't be able to follow the story.
 
-- Extra difficult to process two languages at once
-- Corresponding words / phrases tend to occur in reverse order
-- Translators take liberties
+Sadly then, you can't just watch TV and movies as normal to get much language value from them.
 
+What you can do, though, is use ~5 minute excerpts from shows and movies as stories for repeated practice. The excerpts should generally have these qualities:
+
+- Avoid the adverse factors listed above: heavy accents, use of slang, shouting, dialogue drowned out in the sound mix, *etc.*
+- Accurate subtitles should be available in both Japanese and English, preferably in a form where both can be displayed simultaneously and where you can scan the transcripts.
+- Look for extended dialogue scenes where the characters calmly take turns saying their lines.
+- It helps if the dialogue scenes have a modicum of visual interest. The images don't actually have to relate directly to what's being said: rather, they just need to provide visual cues that help you track where you are in the conversation. Even just regular camera cuts between the characters can help a great deal.
+
+Unfortunately, the TV and movies that fit these criteria may not be your favorites or even in your preferred genres. Particularly in anime, there's almost an inverse relationship between quality and appropriateness for learners: the better the anime, often the harder it is to understand due to diverse, complex dialogue, extended action set pieces, and other adverse qualities. So until you reach an advanced level, you may have to venture outside of your normal zone of interest to find appropriate content.
+
+Because TV and movies are "native" content rather than "comprehensible input" designed explicitly for learners, they do not fit exactly in the listening and reading practice dichotomy. Even the easiest TV and movie content will generally have many new words and phrases for a beginner or intermediate learner, so you probably will need to fully analyze the transcript a few times to fully understand it. However, the whole point of using this content is for listening, so you should also watch each excerpted story multiple times without subtitles.
+
+Full understanding may require more repetitions than normal listening practice, but feel free to drop a story once it bores you, even if you never fully "master" the content. For example, if you only understand 30% of a story on your first listen, maybe you'll understand 70-80% after several repetitions, but reaching 100% may require dozens of additional repetitions. Rather than bang your head against this wall, you're probably better off moving on to other content. Don't worry: the exercise still has great value even when you fall short of full understanding.
 
 ## Grammar study
 
@@ -155,7 +157,7 @@ Cons:
 Pros: 
 
 - Grammar helps you understand things above your current natural level
-- Grammar is interesting and comforting
+- Grammar is interesting and provides confidence / comfort
 - Grammar knowledge useful for writing
 - Many of the most common words in a language have functions instead of meanings
 
@@ -168,7 +170,15 @@ Futile:
 - Memorize grammatical facts and tables
 - Practice points of grammar
 
+## Language partners
 
+- Two people trying to learn each other’s languages
+- Each half of each session in each language
+- Undirected conversation? Or prepared topics?
+
+A language exchange, but both people only speak their own language
+- Some game or activity that requires them to communicate
+E.g. one person reads a story in their native language while the other attempts to translate
 
 
 
