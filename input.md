@@ -166,7 +166,8 @@ There are many possible exercises or games that might work well for this, but pr
 
 This 'listening only' approach would have at least a few key advantages over conversation practice:
 
-- Removing the requirement to speak the target language makes the activity more accessible at lower levels, and for many people it would probably induce less anxiety Finding a language partner is quite difficult, but lowering the skill requirements of both parties should make it considerably easier.
+- Removing the requirement to speak the target language makes the activity more accessible at lower levels, and for many people it would induce less anxiety.
+- Finding a language partner is quite difficult, but lowering the skill requirements of both parties should make it considerably easier.
 - Both participants get practice throughout the whole session, not just when the conversation switches to their target language. Even when my partner reads my story in Japanese, they are getting English input from me when I give my translation and ask them questions. Hopefully then they're less liable to feel impatient waiting for me to read their story in English.
 
 
