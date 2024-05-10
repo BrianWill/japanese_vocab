@@ -156,8 +156,8 @@ The value of explicit grammar knowledge in acquiring a language is highly debate
 
 On the plus side: 
 
-- Grammar helps you understand things above your current "natural" comprehension level.
-- Grammar can help you (deliberately) construct valid sentences. This is not terribly useful when speaking but can help when writing.
+- Grammar can help you understand things above your current "natural" comprehension level.
+- Grammar can help you construct valid sentences above your "natural" speaking level. This is not terribly useful when speaking but can help when writing.
 - Knowing enough about grammar can give you comfort or even confidence by putting rational bounds on the language. Without any knowledge of grammar, a language seems choatic and untamable...which is partly true but by no means completely so.
 - Many of the most common words in a language have *functions* more than *meanings*. For example in English, the articles "a" and "the" do not refer to any person, place, or thing like a noun, nor any action like a verb, nor even any manner or context of action like an adverb, and many other languages have no equivalents or near equivalents. So good luck explaining these words without describing how they are used. To describe the functions of words is to explain grammar, so in some sense, at least basic grammar knowledge is inescapable.
 
