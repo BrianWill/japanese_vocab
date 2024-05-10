@@ -161,27 +161,25 @@ On the plus side:
 - Knowing enough about grammar can give you comfort or even confidence by putting rational bounds on the language. Without any knowledge of grammar, a language seems choatic and untamable...which is partly true but by no means completely so.
 - Many of the most common words in a language have *functions* more than *meanings*. For example in English, the articles "a" and "the" do not refer to any person, place, or thing like a noun, nor any action like a verb, nor even any manner or context of action like an adverb, and many other languages have no equivalents or near equivalents. So good luck explaining these words without describing how they are used. To describe the functions of words is to explain grammar, so in some sense, at least basic grammar knowledge is inescapable.
 
-My recommendation, then, is:
+My recommendation then is:
 
 - DO learn grammatical concepts
-
-...but:
-
 - do NOT memorize grammatical facts and tables
 - do NOT practice points of grammar
 
-In other words, its useful to understand grammar as best you can, but attempting to memorize and practice gramar, such as verb conjugations, is more frustrating than helpful. Instead, you want to internalize grammar patterns through lots of repeated exposure to real language, i.e. lots of input. Only this kind of internalization will actually help you put grammar into practice.
+In other words, its useful to understand grammar as best you can, but attempting to memorize and practice gramar, such as verb conjugations, is more frustrating than helpful. Instead, you want to internalize grammar patterns through lots of repeated exposure to real language, *i.e.* lots of input. Only this kind of internalization will help you actually put grammar into practice.
 
 ## Language partners
 
 An increasingly popular practice in recent years is pairing up with a "language partner", a native speaker of your target language who is also learning your native language. The usual idea is that language partners will meet (perhaps in person but more commonly online) on a regular basis and take turns holding a conversation in each other's languages.
 
-This is surely a great way to practice speaking, but as discussed at the start, beginning and intermediate learners generally lack the required vocabulary and listening comprehension and so generally aren't ready for attempting conversations.
+This is surely a great way to practice speaking, but as discussed at the start, beginning and intermediate learners generally lack the required vocabulary and listening comprehension skills and so generally aren't ready for attempting conversations.
 
-An interesting question then is what else beginner and intermediate learners could do with a language partner that might be effective. An idea I've had, though it's not something I've tried and tested, is that language partners, rather than holding conversations, could instead do some kind of game or exercise that prompts them to communicate, but both people would stick to speaking their own native language. So rather than practice speaking, the goal would be to just practice listening.
+An interesting question then is what else beginner and intermediate learners could do with a language partner that might be effective. An idea I've had&mdash;though it's not something I've tried and tested&mdash;is that, rather than holding conversations, language partners could instead do some kind of exercise or game that prompts them to communicate, but with both people only speaking their own native language. So rather than practicing speaking, the goal would be to just practice listening.
 
-There are many possible games or exercises that might work well, but probably the simplest would be if both parties brought a story for the other person to read aloud. For example, if I bring my partner a story in Japanese, they would read it aloud to me sentence-by-sentence, and after each sentence, I would attempt to give them my translation in English. Both my partner and I could ask each other questions and prompt each other for clarification, but I would stick to speaking English while they speak Japanese, except perhaps when we prompt each other about specific words, e.g. 'What does X mean?'. Before moving on to the next sentence, we would check a proper translation to make sure we both understood correctly.
+There are many possible exercises or games that might work well, but probably the simplest would be if both parties brought a story for the other person to read aloud. For example, if I bring my partner a story in Japanese, they would read it aloud to me sentence-by-sentence, and after each sentence, I would attempt to give them my translation in English. Both my partner and I could ask each other questions and prompt each other for clarification, but I would stick to speaking English while they speak Japanese, except perhaps when we prompt each other about specific words, *e.g.* 'What does X mean?'. Before moving on to the next sentence, we would check a proper translation to make sure we both understood correctly.
 
-Removing the requirement to speak the target language makes the activity more accessible at lower levels, and for many people it would probably induce less anxiety.
+This would have at least a few key advantages over conversation practice:
 
-Another advantage this would have over conversation practice is that both participants get practice throughout the whole session, not just when the conversation switches to their target language. Even when my partner reads my story in Japanese, they are getting English input from me when I give my translation and ask them questions, so they're less liable to feel impatient waiting for me to read their story in English.
+- Removing the requirement to speak the target language makes the activity more accessible at lower levels, and for many people it would probably induce less anxiety Finding a language partner is quite difficult, but lowering the skill requirements of both parties should make it considerably easier.
+- Both participants get practice throughout the whole session, not just when the conversation switches to their target language. Even when my partner reads my story in Japanese, they are getting English input from me when I give my translation and ask them questions. Hopefully then they're less liable to feel impatient waiting for me to read their story in English.
