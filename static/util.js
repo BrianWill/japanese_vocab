@@ -237,8 +237,9 @@ function getCatalogStories(successFn) {
         });
 }
 
+
 function timeSince(date) {
-    if (date === 0) {
+    if (date <= 1) {
         return 'never';
     }
 

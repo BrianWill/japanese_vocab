@@ -336,7 +336,7 @@ func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, audio, video, 
-			status, level, date, date_marked, repetitions_remaining FROM catalog_stories;`)
+			status, level, date, date_marked, repetitions_remaining, lifetime_repetitions FROM catalog_stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -348,7 +348,7 @@ func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story CatalogStory
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber, &story.Audio, &story.Video,
-			&story.Status, &story.Level, &story.Date, &story.DateMarked, &story.RepetitionsRemaining); err != nil {
+			&story.Status, &story.Level, &story.Date, &story.DateMarked, &story.RepetitionsRemaining, &story.LifetimeRepetitions); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return

@@ -55,8 +55,7 @@ const BACKLOG = "backlog"
 const ARCHIVED = "archived"
 const DEFAULT_REPETITIONS = 6
 
-// const MAIN_USER_DB_PATH = "../users/main.db"
-const MAIN_USER_DB_PATH = "../users/test.db"
+const MAIN_USER_DB_PATH = "../data.db"
 
 func main() {
 	var err error
@@ -256,7 +255,7 @@ func makeUserDB(path string) {
 			audio TEXT,
 			video TEXT,
 			repetitions_remaining INTEGER,
-			lifetime_repetitions INTEGER,
+			lifetime_repetitions INTEGER NOT NULL,
 			transcript_en TEXT,
 			transcript_en_format TEXT,
 			transcript_jp TEXT,

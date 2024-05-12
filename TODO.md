@@ -1,5 +1,12 @@
 # japanese_vocab TODO
 
+import video sources:
+    if content is blank, use transcript_jp as content (needed to scrape the words)
+
+    need a way to split/extract shorter stories from full episodes
+        in json episode, have list of substories with title, start_time, end_time?
+
+
 link from story drill back to the story? could just use back though
 (maybe link to external site should be a separate link that is labeld as such)
 

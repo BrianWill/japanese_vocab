@@ -68,7 +68,6 @@ storyList.onclick = function (evt) {
 
 function processStories(storyData) {
     stories = storyData;
-    console.log(stories);
 
     for (let s of stories) {
         if (s.repetitions_remaining === undefined) {
@@ -108,10 +107,9 @@ function processStories(storyData) {
     displayStories();
 };
 
-
-
 function displayStories() {
     function storyRow(s) {
+        console.log(s);
         return `<tr>
             <td>
                 <select class="status_select" story_id="${s.id}">
@@ -123,6 +121,9 @@ function displayStories() {
             </td>
             <td>
                 <span title="when this story was last read">${timeSince(s.date_marked)}</span>
+            </td>
+            <td>
+                ${s.lifetime_repetitions}
             </td>  
             <td>
                <input story_id="${s.id}" type="number" class="count_spinner" min="0" max="9" steps="1" value="${s.repetitions_remaining}">
@@ -143,6 +144,7 @@ function displayStories() {
     <tr>
         <th title="number of additional times you intend to read this story">Status</th>
         <th>Time last read</th>
+        <th>Total<br>repetitions</th>
         <th title="number of additional times you intend to read this story">Remaining<br>Repetitions</th>
         <th title="difficulty level of this story">Level</th>
         <th>Title</th>
