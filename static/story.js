@@ -381,11 +381,11 @@ function openStory(id) {
                     player.style.display = 'block';
                     player.src = '/audio/' + story.audio;
 
-                    if (story.transcript_en_format == 'webvtt') {
+                    if (story.transcript_en) {
                         trackEn.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_en);
                     }
 
-                    if (story.transcript_jp_format == 'webvtt') {
+                    if (story.transcript_jp) {
                         trackJa.track.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_jp);
                     }
 

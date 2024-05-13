@@ -21,28 +21,24 @@ type CatalogStory struct {
 	Video                string  `json:"video,omitempty"`
 	TranscriptEN         string  `json:"transcript_en"`
 	TranscriptJP         string  `json:"transcript_jp"`
-	TranscriptENFormat   string  `json:"transcript_en_format"`
-	TranscriptJPFormat   string  `json:"transcript_jp_format"`
 	RepetitionsRemaining int64   `json:"repetitions_remaining"`
 	LifetimeRepetitions  int64   `json:"lifetime_repetitions"`
 	Words                []int64 `json:"words,omitempty"`
 }
 
 type StoryImport struct {
-	Title              string `json:"title,omitempty"`
-	Source             string `json:"source,omitempty"`
-	Date               string `json:"date,omitempty"`
-	EpisodeNumber      string `json:"episode_number,omitempty"`
-	Level              string `json:"level,omitempty"`
-	Content            string `json:"content,omitempty"`
-	ContentFormat      string `json:"content_format,omitempty"`
-	Link               string `json:"link,omitempty"`
-	Audio              string `json:"audio,omitempty"`
-	Video              string `json:"video,omitempty"`
-	TranscriptEN       string `json:"transcript_en,omitempty"`
-	TranscriptJP       string `json:"transcript_jp,omitempty"`
-	TranscriptENFormat string `json:"transcript_en_format,omitempty"`
-	TranscriptJPFormat string `json:"transcript_jp_format,omitempty"`
+	Title         string `json:"title,omitempty"`
+	Source        string `json:"source,omitempty"`
+	Date          string `json:"date,omitempty"`
+	EpisodeNumber string `json:"episode_number,omitempty"`
+	Level         string `json:"level,omitempty"`
+	Content       string `json:"content,omitempty"`
+	ContentFormat string `json:"content_format,omitempty"`
+	Link          string `json:"link,omitempty"`
+	Audio         string `json:"audio,omitempty"`
+	Video         string `json:"video,omitempty"`
+	TranscriptEN  string `json:"transcript_en,omitempty"`
+	TranscriptJP  string `json:"transcript_jp,omitempty"`
 }
 
 type StoryImportJSON struct {

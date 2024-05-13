@@ -150,15 +150,15 @@ func extractKanji(tokens []*JpToken) ([]string, error) {
 	return kanji, nil
 }
 
-func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]int64, int, error) {
+func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []int64, newWordCount int, err error) {
 	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
 	var reHasKana = regexp.MustCompile(`[ア-ンァ-ヴぁ-ゔ]`)
 
-	newWordCount := 0
+	newWordCount = 0
 	unixtime := time.Now().Unix()
 
-	wordIds := make([]int64, 0)
+	wordIds = make([]int64, 0)
 
 	keptTokens := make([]*JpToken, 0)
 
@@ -249,9 +249,9 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]int64, int
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, rank, lifetime_repetitions, repetitions_remaining, status, definitions) 
-			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
-			baseForm, 0, unixtime, category, INITIAL_RANK, 0, DEFAULT_REPETITIONS, "catalog", entriesJSON, kanjiDefJSON)
+			date_added, category, lifetime_repetitions, repetitions_remaining, status, definitions, kanji) 
+			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+			baseForm, 0, unixtime, category, 0, DEFAULT_REPETITIONS, "catalog", entriesJSON, kanjiDefJSON)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
 		}
@@ -431,16 +431,6 @@ func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer sqldb.Close()
-
-	// // when setting a story to IN_PROGRESS, all catalog words should be updated to IN_PROGRESS
-	// if story.Status == IN_PROGRESS {
-	// 	err = updateStoryWordsStatus(sqldb, story.ID, CATALOG, IN_PROGRESS)
-	// 	if err != nil {
-	// 		w.WriteHeader(http.StatusInternalServerError)
-	// 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	// 		return
-	// 	}
-	// }
 
 	// make sure the story actually exists
 	rows, err := sqldb.Query(`SELECT id FROM catalog_stories WHERE id = $1;`, story.ID)

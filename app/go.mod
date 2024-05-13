@@ -3,6 +3,7 @@ module japanese
 go 1.15
 
 require (
+	github.com/asticode/go-astisub v0.26.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/ikawaha/kagome-dict/ipa v1.0.9
 	github.com/ikawaha/kagome/v2 v2.9.0

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/asticode/go-astisub"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -67,8 +69,130 @@ func importStories(dbPath string, jsonPath string) error {
 	return nil
 }
 
-func isUrl(s string) bool {
-	return strings.HasPrefix(s, "http")
+func importSources(dbPath string) error {
+	fmt.Println("importing sources...")
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		panic(err)
+	}
+	defer sqldb.Close()
+
+	const SOURCES_PATH = "../static/sources/"
+
+	entries, err := os.ReadDir(SOURCES_PATH)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, e := range entries {
+		if e.IsDir() {
+			err = importSource(SOURCES_PATH, e.Name(), sqldb)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func importSource(sourcePath string, source string, sqldb *sql.DB) error {
+	entries, err := os.ReadDir(sourcePath + source)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storyMap := make(map[int]*StoryImport) // episode number to
+
+	for _, entry := range entries {
+		name := entry.Name()
+		components := strings.Split(name, ".")
+		if len(components) < 2 {
+			return fmt.Errorf("malformed file name in source: %s", name)
+		}
+
+		epNumber, err := strconv.Atoi(components[len(components)-2])
+		if err != nil {
+			return fmt.Errorf("malformed episode number in file: %s", name)
+		}
+
+		story, ok := storyMap[epNumber]
+		if !ok {
+			story = &StoryImport{}
+			storyMap[epNumber] = story
+		}
+		numStr := strconv.Itoa(epNumber)
+		story.EpisodeNumber = numStr
+		story.Title = source + " - ep " + numStr
+		story.Source = source
+		story.Level = "medium"
+		story.ContentFormat = "text"
+
+		extension := components[len(components)-1]
+		isVideo := extension == "mkv" || extension == "mp4"
+		if isVideo {
+			story.Video = name
+		}
+		isSubtitle := extension == "vtt" || extension == "ass" || extension == "srt"
+		if isSubtitle {
+			if len(components) < 3 {
+				return fmt.Errorf("subtitle file does not specify language")
+			}
+			lang := components[len(components)-3]
+			switch lang {
+			case "en":
+				story.TranscriptEN, story.Content, err = getSubtitles(sourcePath + source + "/" + name)
+				if err != nil {
+					return err
+				}
+			case "ja":
+				story.TranscriptJP, story.Content, err = getSubtitles(sourcePath + source + "/" + name)
+				if err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("subtitle file language is invalid: %s", name)
+			}
+		}
+	}
+
+	for _, s := range storyMap {
+		if s.Video == "" {
+			continue
+		}
+
+		err = importStory(*s, sqldb)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func getSubtitles(path string) (newSubtitles string, content string, err error) {
+	subs, err := astisub.OpenFile(path)
+	if err != nil {
+		return "", "", err
+	}
+
+	var sb strings.Builder
+	for _, item := range subs.Items {
+		for _, line := range item.Lines {
+			for _, lineItem := range line.Items {
+				sb.WriteString(lineItem.Text)
+			}
+			sb.WriteString("\n")
+		}
+	}
+
+	var buf = &bytes.Buffer{}
+	err = subs.WriteToWebVTT(buf)
+	if err != nil {
+		return "", "", err
+	}
+	return buf.String(), sb.String(), nil
 }
 
 func storyExists(story StoryImport, sqldb *sql.DB) bool {
@@ -115,11 +239,11 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 		_, err := sqldb.Exec(`UPDATE catalog_stories SET 
 				date = $1, link = $2, episode_number = $3, audio = $4, video = $5, 
 				content = $6, content_format = $7, transcript_en = $8, 
-				transcript_en_format = $9, transcript_jp = $10, transcript_jp_format = $11, words = $12 
-				WHERE title = $13 and source = $14;`,
+				transcript_jp = $9, words = $10 
+				WHERE title = $11 and source = $12;`,
 			story.Date, story.Link, epNum, story.Audio, story.Video,
 			story.Content, story.ContentFormat, story.TranscriptEN,
-			story.TranscriptENFormat, story.TranscriptJP, story.TranscriptJPFormat, wordIdsJson,
+			story.TranscriptJP, wordIdsJson,
 			story.Title, story.Source)
 		return err
 	}
@@ -127,12 +251,12 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
 	_, err = sqldb.Exec(`INSERT INTO catalog_stories (title, source, date, link, episode_number, audio, video, 
-				content, content_format, status, transcript_en, transcript_en_format, transcript_jp, transcript_jp_format, 
-				words, repetitions_remaining, date_marked, level) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18);`,
+				content, content_format, status, transcript_en, transcript_jp, 
+				words, repetitions_remaining, lifetime_repetitions, date_marked, level) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17);`,
 		story.Title, story.Source, story.Date, story.Link, epNum,
 		story.Audio, story.Video, story.Content, story.ContentFormat, "catalog",
-		story.TranscriptEN, story.TranscriptENFormat, story.TranscriptJP, story.TranscriptJPFormat, wordIdsJson, 0, 0, story.Level)
+		story.TranscriptEN, story.TranscriptJP, wordIdsJson, 0, DEFAULT_REPETITIONS, 0, story.Level)
 	return err
 }
 
@@ -151,7 +275,7 @@ func processStoryWords(story StoryImport, sqldb *sql.DB) (newWordCount int, word
 
 	newWordIds, newWordCount, err := addWords(tokens, kanjiSet, sqldb)
 	if err != nil {
-		return 0, "", fmt.Errorf("failure to add words: " + err.Error())
+		return 0, "", err
 	}
 
 	wordIdsJsonBytes, err := json.Marshal(newWordIds)

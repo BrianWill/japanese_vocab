@@ -1,10 +1,9 @@
 # japanese_vocab TODO
 
-import video sources:
-    if content is blank, use transcript_jp as content (needed to scrape the words)
+subtitle offset? how to specify in sources? json file?
 
-    need a way to split/extract shorter stories from full episodes
-        in json episode, have list of substories with title, start_time, end_time?
+way to split/extract shorter stories from full episodes
+    in json episode, have list of substories with title, start_time, end_time?
 
 
 link from story drill back to the story? could just use back though
@@ -12,8 +11,6 @@ link from story drill back to the story? could just use back though
 
 test new word importing
     
-convert other formats to web vtt
-
 audit for dead code
 
 add text field under word in which we can paste any text (serves as quick def)
@@ -68,7 +65,7 @@ how to convert .ass to .srt?
 for a word, track all sentences that include the word
 
 
-ffmpeg -i [input] -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]
+ffmpeg -i [input] -c:a copy -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]
 
 
 use puppeteer to scrape for transcripts and meta info

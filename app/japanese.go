@@ -53,7 +53,7 @@ const CATALOG = "catalog"
 const IN_PROGRESS = "in progress"
 const BACKLOG = "backlog"
 const ARCHIVED = "archived"
-const DEFAULT_REPETITIONS = 6
+const DEFAULT_REPETITIONS = 5
 
 const MAIN_USER_DB_PATH = "../data.db"
 
@@ -68,21 +68,21 @@ func main() {
 	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	definitionsCache = make(map[string][]JMDictEntry)
 
-	if len(os.Args) > 1 && os.Args[1] == "kanji" {
-		loadDictionary()
+	// if len(os.Args) > 1 && os.Args[1] == "kanji" {
+	// 	loadDictionary()
 
-		sqldb, err := sql.Open("sqlite3", MAIN_USER_DB_PATH)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer sqldb.Close()
+	// 	sqldb, err := sql.Open("sqlite3", MAIN_USER_DB_PATH)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	defer sqldb.Close()
 
-		err = updateKanjiDefs(sqldb)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
+	// 	err = updateKanjiDefs(sqldb)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	return
+	// }
 
 	if len(os.Args) > 1 && os.Args[1] == "import" {
 		if len(os.Args) < 3 {
@@ -94,6 +94,17 @@ func main() {
 
 		fmt.Println("db: ", MAIN_USER_DB_PATH)
 		err := importStories(MAIN_USER_DB_PATH, os.Args[2])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "import_sources" {
+		loadDictionary()
+
+		fmt.Println("db: ", MAIN_USER_DB_PATH)
+		err := importSources(MAIN_USER_DB_PATH)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -257,9 +268,7 @@ func makeUserDB(path string) {
 			repetitions_remaining INTEGER,
 			lifetime_repetitions INTEGER NOT NULL,
 			transcript_en TEXT,
-			transcript_en_format TEXT,
 			transcript_jp TEXT,
-			transcript_jp_format TEXT,
 			content TEXT,
 			content_format TEXT);`)
 	if err != nil {
