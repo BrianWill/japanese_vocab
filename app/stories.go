@@ -384,13 +384,14 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	row := sqldb.QueryRow(`SELECT title, source, link, content, date, audio, repetitions_remaining, 
-		level, words, date_marked, status FROM catalog_stories WHERE id = $1;`, id)
+	row := sqldb.QueryRow(`SELECT title, source, link, content, date, audio, video, repetitions_remaining, 
+		level, words, date_marked, status, transcript_en, transcript_ja FROM catalog_stories WHERE id = $1;`, id)
 
 	var words string
 	story := CatalogStory{ID: int64(id)}
-	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date, &story.Audio, &story.RepetitionsRemaining,
-		&story.Level, &words, &story.DateMarked, &story.Status); err != nil {
+	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
+		&story.Audio, &story.Video, &story.RepetitionsRemaining,
+		&story.Level, &words, &story.DateMarked, &story.Status, &story.TranscriptEN, &story.TranscriptJA); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
@@ -449,8 +450,8 @@ func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	_, err = sqldb.Exec(`UPDATE catalog_stories SET repetitions_remaining = $1, 
-			date_marked = $2, level = $3, lifetime_repetitions = $4, status = $5 WHERE id = $6;`,
-		story.RepetitionsRemaining, story.DateMarked, story.Level, story.LifetimeRepetitions, story.Status, story.ID)
+			date_marked = $2, level = $3, lifetime_repetitions = $4, status = $5, transcript_en = $6, transcript_ja = $7 WHERE id = $8;`,
+		story.RepetitionsRemaining, story.DateMarked, story.Level, story.LifetimeRepetitions, story.Status, story.TranscriptEN, story.TranscriptJA, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))

@@ -17,6 +17,7 @@ var story = null;
 var selectedLineIdx = 0;
 var youtubePlayer;
 
+const TEXT_TRACK_TIMING_ADJUSTMENT = 0.25;
 
 statusSelect.onchange = function (evt) {
     story.status = statusSelect.value;
@@ -25,13 +26,28 @@ statusSelect.onchange = function (evt) {
 
 // only way to detect enter vs exit is whether the number of active increases (enter) or decreases (exit)
 
-trackJa.track.addEventListener('cuechange', function (evt) {
-    if (!document.getElementById('transcript_ja_checkbox').checked) {
-        captionsJa.style.display = 'none';
-        return;
+trackJa.track.addEventListener('cuechange', displayCurrentCues);
+
+trackEn.track.addEventListener('cuechange', displayCurrentCues);
+
+function displayCurrentCues() {
+    if (document.getElementById('transcript_en_checkbox').checked) {
+        captionsEn.style.display = 'flex';
+    } else {
+        captionsEn.style.display = 'none';
     }
 
-    let cues = trackJa.track.activeCues;
+    if (document.getElementById('transcript_ja_checkbox').checked) {
+        captionsJa.style.display = 'flex';
+    } else {
+        captionsJa.style.display = 'none';
+    }
+
+    displayCues(trackEn.track.activeCues, captionsEn);
+    displayCues(trackJa.track.activeCues, captionsJa);
+}
+
+function displayCues(cues, target) {
     let html = '<span>';
 
     // because of overlap, more than one cue can be active
@@ -43,39 +59,13 @@ trackJa.track.addEventListener('cuechange', function (evt) {
     html += '</span>';
 
     if (cues.length == 0) {
-        captionsJa.style.display = 'none';
+        target.style.visibility = 'hidden';
     } else {
-        captionsJa.style.display = 'block';
+        target.style.visibility = 'visible';
     }
 
-    captionsJa.innerHTML = html;
-});
-
-trackEn.track.addEventListener('cuechange', function (evt) {
-    if (!document.getElementById('transcript_en_checkbox').checked) {
-        captionsEn.style.display = 'none';
-        return;
-    }
-
-    let cues = trackEn.track.activeCues;
-    let html = '<span>';
-
-    // because of overlap, more than one cue can be active
-    for (let i = 0; i < cues.length; i++) {
-        let cue = cues[i];
-        html += cue.text + '\n';
-    }
-
-    html += '</span>';
-
-    if (cues.length == 0) {
-        captionsEn.style.display = 'none';
-    } else {
-        captionsEn.style.display = 'block';
-    }
-
-    captionsEn.innerHTML = html;
-});
+    target.innerHTML = html;
+}
 
 storyLines.onwheel = function (evt) {
     evt.preventDefault();
@@ -101,6 +91,8 @@ markStoryLink.onclick = function (evt) {
         snackbarMessage('marked story as read');
     });
 };
+
+var timeoutHandle = 0;
 
 document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
@@ -152,28 +144,66 @@ document.body.onkeydown = async function (evt) {
         } else if (evt.code === 'KeyA') {
             evt.preventDefault();
             player.currentTime = timemark - 2.1;
+            displayCurrentCues();
         } else if (evt.code === 'KeyD') {
             evt.preventDefault();
             player.currentTime = timemark + 1.5;
+            displayCurrentCues();
         } else if (evt.code === 'KeyQ') {
             evt.preventDefault();
             player.currentTime = timemark - 5;
+            displayCurrentCues();
         } else if (evt.code === 'KeyE') {
             evt.preventDefault();
             player.currentTime = timemark + 4;
+            displayCurrentCues();
         } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
             evt.preventDefault();
             if (player.paused) {  // playing
                 player.play();
+                displayCurrentCues();
             } else {
                 player.pause();
             }
+        } else if (evt.code === 'Equal' || evt.code === 'Minus') {
+            evt.preventDefault();
+
+            let adjustment = (evt.code === 'Equal') ? TEXT_TRACK_TIMING_ADJUSTMENT : -TEXT_TRACK_TIMING_ADJUSTMENT;
+            let lang = ''
+
+            if (evt.altKey) {
+                lang = 'English';
+                adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
+                story.transcript_en = textTrackToString(trackEn.track);
+                let cues = findCues(trackEn.track, player.currentTime);
+                displayCues(cues, captionsEn);
+                
+            } else {
+                lang = 'Japanese';
+                adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
+                story.transcript_ja = textTrackToString(trackJa.track);
+                let cues = findCues(trackJa.track, player.currentTime);
+                displayCues(cues, captionsJa);
+            }
+
+//            console.log(`updated ${lang} cues: ${adjustment}`);
+
+            clearTimeout(timeoutHandle);
+            timeoutHandle = setTimeout(
+                function() {
+                    updateStoryInfo(story, () => {
+                        snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment}`);
+                    });
+                },
+                1000
+            );
         } else if (evt.code.startsWith('Digit')) {
             if (evt.altKey) {
                 evt.preventDefault();
                 let digit = parseInt(evt.code.slice(-1));
                 let duration = player.duration;
                 player.currentTime = duration * (digit / 10);
+                displayCurrentCues();
             }
         }
     }
@@ -344,11 +374,11 @@ function openStory(id) {
 
             let youtubeId = null;
 
-            if (data.link.startsWith('https://www.youtube.com/watch?v=')) {
+            if (data.link && data.link.startsWith('https://www.youtube.com/watch?v=')) {
                 youtubeId = data.link.split('https://www.youtube.com/watch?v=')[1];
             }
 
-            if (data.link.startsWith('https://youtu.be/')) {
+            if (data.link && data.link.startsWith('https://youtu.be/')) {
                 youtubeId = data.link.split('https://youtu.be/')[1];
             }
 
@@ -368,35 +398,45 @@ function openStory(id) {
                         //'onPlaybackRateChange': onPlaybackRateChange
                     }
                 });
-            } else if (story.audio) {
-                if (story.audio.endsWith('.mp4')) {
-                    const video = document.createElement("video");
-                    player.replaceWith(video);
-                    player = video;
-                    player.setAttribute('id', 'video_player');
-                    player.setAttribute('controls', 'true');
-                    player.src = '/audio/' + story.audio;
-                    player.style.display = 'block';
-                } else {
-                    player.style.display = 'block';
-                    player.src = '/audio/' + story.audio;
 
-                    if (story.transcript_en) {
-                        trackEn.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_en);
-                    }
-
-                    if (story.transcript_jp) {
-                        trackJa.track.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_jp);
-                    }
-
-                    trackEn.track.mode = 'hidden';
-                    trackJa.track.mode = 'hidden';
-                }
-            }
-
-            if (youtubePlayer || player) {
                 playerControls.style.display = 'inline';
+
+                return;
             }
+
+            if (story.audio && story.audio.endsWith('.mp4')) {
+                // todo why did I create a new video element?
+                const video = document.createElement("video");
+                player.replaceWith(video);
+                player = video;
+                player.setAttribute('id', 'video_player');
+                player.setAttribute('controls', 'true');
+
+                player.src = '/audio/' + story.audio;
+                player.style.display = 'block';
+            } else if (story.video) {
+                player.style.display = 'block';
+                player.setAttribute('type', 'video/mp4');
+                player.src = '/sources/' + story.source + "/" + story.video;
+
+                console.log("src", player.src);
+            } else if (story.audio) {
+                player.style.display = 'block';
+                player.src = '/audio/' + story.audio;
+            }
+
+            if (story.transcript_en) {
+                trackEn.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_en);
+            }
+
+            if (story.transcript_ja) {
+                trackJa.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_ja);
+            }
+
+            trackEn.track.mode = 'hidden';
+            trackJa.track.mode = 'hidden';
+
+            playerControls.style.display = 'inline';
         })
         .catch((error) => {
             console.error('Error:', error);

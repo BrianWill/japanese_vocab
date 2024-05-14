@@ -130,7 +130,7 @@ func importSource(sourcePath string, source string, sqldb *sql.DB) error {
 		story.ContentFormat = "text"
 
 		extension := components[len(components)-1]
-		isVideo := extension == "mkv" || extension == "mp4"
+		isVideo := extension == "mp4"
 		if isVideo {
 			story.Video = name
 		}
@@ -147,7 +147,7 @@ func importSource(sourcePath string, source string, sqldb *sql.DB) error {
 					return err
 				}
 			case "ja":
-				story.TranscriptJP, story.Content, err = getSubtitles(sourcePath + source + "/" + name)
+				story.TranscriptJA, story.Content, err = getSubtitles(sourcePath + source + "/" + name)
 				if err != nil {
 					return err
 				}
@@ -239,11 +239,11 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 		_, err := sqldb.Exec(`UPDATE catalog_stories SET 
 				date = $1, link = $2, episode_number = $3, audio = $4, video = $5, 
 				content = $6, content_format = $7, transcript_en = $8, 
-				transcript_jp = $9, words = $10 
+				transcript_ja = $9, words = $10 
 				WHERE title = $11 and source = $12;`,
 			story.Date, story.Link, epNum, story.Audio, story.Video,
 			story.Content, story.ContentFormat, story.TranscriptEN,
-			story.TranscriptJP, wordIdsJson,
+			story.TranscriptJA, wordIdsJson,
 			story.Title, story.Source)
 		return err
 	}
@@ -251,12 +251,12 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
 	_, err = sqldb.Exec(`INSERT INTO catalog_stories (title, source, date, link, episode_number, audio, video, 
-				content, content_format, status, transcript_en, transcript_jp, 
+				content, content_format, status, transcript_en, transcript_ja, 
 				words, repetitions_remaining, lifetime_repetitions, date_marked, level) 
 				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17);`,
 		story.Title, story.Source, story.Date, story.Link, epNum,
 		story.Audio, story.Video, story.Content, story.ContentFormat, "catalog",
-		story.TranscriptEN, story.TranscriptJP, wordIdsJson, 0, DEFAULT_REPETITIONS, 0, story.Level)
+		story.TranscriptEN, story.TranscriptJA, wordIdsJson, 0, DEFAULT_REPETITIONS, 0, story.Level)
 	return err
 }
 

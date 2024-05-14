@@ -20,7 +20,7 @@ type CatalogStory struct {
 	Audio                string  `json:"audio,omitempty"`
 	Video                string  `json:"video,omitempty"`
 	TranscriptEN         string  `json:"transcript_en"`
-	TranscriptJP         string  `json:"transcript_jp"`
+	TranscriptJA         string  `json:"transcript_ja"`
 	RepetitionsRemaining int64   `json:"repetitions_remaining"`
 	LifetimeRepetitions  int64   `json:"lifetime_repetitions"`
 	Words                []int64 `json:"words,omitempty"`
@@ -38,7 +38,7 @@ type StoryImport struct {
 	Audio         string `json:"audio,omitempty"`
 	Video         string `json:"video,omitempty"`
 	TranscriptEN  string `json:"transcript_en,omitempty"`
-	TranscriptJP  string `json:"transcript_jp,omitempty"`
+	TranscriptJA  string `json:"transcript_ja,omitempty"`
 }
 
 type StoryImportJSON struct {

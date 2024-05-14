@@ -17,31 +17,40 @@ body {
 
 #captions_en > span {
     background-color: black;
-    line-height: 2em;
     padding: 0.2em;
 }
 
+#caption_container {
+    display: flex;
+    transform: translateY(-10em);
+    width: 100%;
+    gap: 10%;
+}
+
 #captions_en {
+    flex: 1;
     display: none;
-    position: fixed;
+    visibility: hidden;
+    justify-content: center;
     color: white;
-    font-size: 130%;
-    transform: translateY(3em);
+    font-size: 140%;
+    /* transform: translateY(-10em); */
     /*transform: translateY(calc(var(--plyr-control-spacing, 10px)*-4));*/
 }
 
 #captions_ja > span {
     background-color: black;
-    line-height: 2em;
     padding: 0.2em;
 }
 
 #captions_ja {
     display: none;
-    position: fixed;
+    flex: 1;
+    visibility: hidden;
+    justify-content: center;
     color: white;
-    font-size: 130%;
-    transform: translateY(-6em);
+    font-size: 200%;
+    /* transform: translateY(-6em); */
     /*transform: translateY(calc(var(--plyr-control-spacing, 10px)*-4));*/
 }
 

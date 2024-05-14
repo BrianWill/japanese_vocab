@@ -187,7 +187,9 @@ function updateStoryInfo(story, successFn) {
         level: story.level,
         date_marked: story.date_marked,
         lifetime_repetitions: story.lifetime_repetitions,
-        status: story.status
+        status: story.status,
+        transcript_ja: story.transcript_ja,
+        transcript_en: story.transcript_en
     };
     fetch(`/update_story_info`, {
         method: 'POST',
@@ -326,6 +328,55 @@ function addLogEvent(storyId) {
         .catch((error) => {
             console.error('Error:', error);
         });
-
 }
 
+// todo test with negative time
+function formatTrackTime(time) {
+    let seconds = Math.trunc(time);
+    
+    let fractionStr = '000';
+    let arr = String(time).split('.');
+    if (arr.length > 1) {
+        fractionStr = arr[1].substring(0, 3).padEnd(3, '0');
+    }
+
+    let secondsStr = String(seconds % 60).padStart(2, '0');
+    let minutesStr = String(Math.trunc(seconds / 60) % 60).padStart(2, '0');
+    let hoursStr = String(Math.trunc(seconds / (60 * 60))).padStart(2, '0');
+
+    return `${hoursStr}:${minutesStr}:${secondsStr}.${fractionStr}`;
+}
+
+function textTrackToString(track) {
+    let vtt = 'WEBVTT\n\n';
+
+    for (let cue of track.cues) {
+        vtt += `${cue.id}
+${formatTrackTime(cue.startTime)} --> ${formatTrackTime(cue.endTime)}
+${cue.text}\n\n`;
+    }
+
+    return vtt;
+}
+
+
+// add adjustment to every start and end timing, but only those >= afterTime
+function adjustTextTrackTimings(track, afterTime, adjustment) {
+    for (let cue of track.cues) {
+        if (cue.endTime > afterTime) {
+            cue.startTime += adjustment;
+            cue.endTime += adjustment;
+        }
+    }
+}
+
+// find all cues for which time is between the start and end
+function findCues(track, time) {
+    let cues = [];
+    for (let cue of track.cues) {
+        if (cue.startTime <= time && time <= cue.endTime) {
+            cues.push(cue);
+        }
+    }
+    return cues;
+}

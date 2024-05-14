@@ -1,7 +1,5 @@
 # japanese_vocab TODO
 
-subtitle offset? how to specify in sources? json file?
-
 way to split/extract shorter stories from full episodes
     in json episode, have list of substories with title, start_time, end_time?
 
