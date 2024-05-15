@@ -1,5 +1,13 @@
 # japanese_vocab TODO
 
+
+drills: hotkeys to set status of a word
+
+test subtitle adjustment
+
+
+hotkey to open the current japanese subtitle in google translate
+
 way to split/extract shorter stories from full episodes
     in json episode, have list of substories with title, start_time, end_time?
 

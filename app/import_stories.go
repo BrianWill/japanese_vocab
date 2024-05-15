@@ -238,8 +238,10 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 
 		_, err := sqldb.Exec(`UPDATE catalog_stories SET 
 				date = $1, link = $2, episode_number = $3, audio = $4, video = $5, 
-				content = $6, content_format = $7, transcript_en = $8, 
-				transcript_ja = $9, words = $10 
+				content = $6, content_format = $7, 
+				transcript_en = CASE WHEN transcript_en = '' THEN $8 ELSE transcript_en END,
+				transcript_ja = CASE WHEN transcript_ja = '' THEN $8 ELSE transcript_ja END,
+				words = $10 
 				WHERE title = $11 and source = $12;`,
 			story.Date, story.Link, epNum, story.Audio, story.Video,
 			story.Content, story.ContentFormat, story.TranscriptEN,

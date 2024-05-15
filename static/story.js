@@ -48,15 +48,16 @@ function displayCurrentCues() {
 }
 
 function displayCues(cues, target) {
-    let html = '<span>';
+    let html = '';
 
     // because of overlap, more than one cue can be active
     for (let i = 0; i < cues.length; i++) {
         let cue = cues[i];
-        html += cue.text + '\n';
+        let lines = cue.text.split('\n');
+        for (let line of lines) {
+            html += `<div>${line}</div>`;
+        }
     }
-
-    html += '</span>';
 
     if (cues.length == 0) {
         target.style.visibility = 'hidden';
@@ -143,11 +144,11 @@ document.body.onkeydown = async function (evt) {
 
         } else if (evt.code === 'KeyA') {
             evt.preventDefault();
-            player.currentTime = timemark - 2.1;
+            player.currentTime = timemark - 1.2;
             displayCurrentCues();
         } else if (evt.code === 'KeyD') {
             evt.preventDefault();
-            player.currentTime = timemark + 1.5;
+            player.currentTime = timemark + 1;
             displayCurrentCues();
         } else if (evt.code === 'KeyQ') {
             evt.preventDefault();
@@ -171,14 +172,18 @@ document.body.onkeydown = async function (evt) {
             let adjustment = (evt.code === 'Equal') ? TEXT_TRACK_TIMING_ADJUSTMENT : -TEXT_TRACK_TIMING_ADJUSTMENT;
             let lang = ''
 
-            if (evt.altKey) {
+            let english = document.getElementById('transcript_en_checkbox').checked;
+            let japanese = document.getElementById('transcript_ja_checkbox').checked;
+
+            if (english) {
                 lang = 'English';
                 adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
                 story.transcript_en = textTrackToString(trackEn.track);
                 let cues = findCues(trackEn.track, player.currentTime);
                 displayCues(cues, captionsEn);
-                
-            } else {
+            }
+            
+            if (japanese)
                 lang = 'Japanese';
                 adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
                 story.transcript_ja = textTrackToString(trackJa.track);
@@ -187,15 +192,16 @@ document.body.onkeydown = async function (evt) {
             }
 
 //            console.log(`updated ${lang} cues: ${adjustment}`);
+            snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment}`);
 
             clearTimeout(timeoutHandle);
             timeoutHandle = setTimeout(
                 function() {
                     updateStoryInfo(story, () => {
-                        snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment}`);
+                        snackbarMessage(`saved updates to subtitle timings`);
                     });
                 },
-                1000
+                3000
             );
         } else if (evt.code.startsWith('Digit')) {
             if (evt.altKey) {
@@ -453,9 +459,14 @@ playerSpeedNumber.onchange = function (evt) {
 }
 
 function displayStory(story) {
+    var lines = story.content.split('\n').filter(x => x);  // filter out blank lines
 
-    // storyLines.innerHTML = html + '</table>';
-    storyLines.innerHTML = `<div>${story.content}</div>`;
+    let html = '';
+    for (let i = 0; i < lines.length; i++) {
+        html += `<div>${lines[i]}</div>`
+    }
+
+    storyLines.innerHTML = html;
 }
 
 function isOffCooldown(rank, dateMarked, unixTime) {

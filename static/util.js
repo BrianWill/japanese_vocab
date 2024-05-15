@@ -360,14 +360,33 @@ ${cue.text}\n\n`;
 }
 
 
-// add adjustment to every start and end timing, but only those >= afterTime
-function adjustTextTrackTimings(track, afterTime, adjustment) {
-    for (let cue of track.cues) {
+// add adjustment to every start and end timing, but only those which overlap or come after 'time'
+function adjustTextTrackTimings(track, time, adjustment) {
+    let index = track.cues.length;
+
+    // find first track that overlap afterTime
+    for (let i = 0; i < track.cues.length; i++) {
+        let cue = track.cues[i];
+
         if (cue.endTime > afterTime) {
-            cue.startTime += adjustment;
-            cue.endTime += adjustment;
-        }
+            // return false if adjusting the cue would make it overlap the prior cue
+            let prior = track.cues[i - 1];    
+            if ((cue.startTime + adjustment) < prior.endTime) {
+                return false;
+            }
+
+            index = i;
+            break;
+        }    
     }
+
+    for (let i = index; i < track.cues.length; i++) {
+        let cue = track.cues[i];
+        cue.startTime += adjustment;
+        cue.endTime += adjustment;
+    }
+
+    return true;
 }
 
 // find all cues for which time is between the start and end
