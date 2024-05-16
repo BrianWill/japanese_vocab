@@ -368,7 +368,7 @@ function adjustTextTrackTimings(track, time, adjustment) {
     for (let i = 0; i < track.cues.length; i++) {
         let cue = track.cues[i];
 
-        if (cue.endTime > afterTime) {
+        if (cue.endTime > time) {
             // return false if adjusting the cue would make it overlap the prior cue
             let prior = track.cues[i - 1];    
             if ((cue.startTime + adjustment) < prior.endTime) {

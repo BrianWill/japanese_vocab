@@ -1,9 +1,10 @@
 # japanese_vocab TODO
 
-
-drills: hotkeys to set status of a word
-
 test subtitle adjustment
+
+for current subtitle, show list of all the words with their word info
+    easy way to change the word status and set remaining reps
+    when importing story, need to store word ids for each subtitle? how to get words?
 
 
 hotkey to open the current japanese subtitle in google translate

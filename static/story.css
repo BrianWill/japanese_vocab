@@ -17,7 +17,7 @@ body {
 
 #caption_container {
     display: flex;
-    transform: translateY(-10em);
+    transform: translateY(-12em);
     width: 100%;
     gap: 10%;
 }

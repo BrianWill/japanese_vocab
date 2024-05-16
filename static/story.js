@@ -183,7 +183,7 @@ document.body.onkeydown = async function (evt) {
                 displayCues(cues, captionsEn);
             }
             
-            if (japanese)
+            if (japanese) {
                 lang = 'Japanese';
                 adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
                 story.transcript_ja = textTrackToString(trackJa.track);

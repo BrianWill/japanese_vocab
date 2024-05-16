@@ -10,7 +10,7 @@ var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
 var statusSelect = document.getElementById('status_select');
 
-const WORD_COOLDOWN_TIME = 60 * 60 * 3 // 3 hours (in seconds)
+const WORD_COOLDOWN_TIME = 60 * 60 * 24 * 2.5; // 2.5 days (in seconds)
 
 const DRILL_CATEGORY_KATAKANA = 1;
 const DRILL_CATEGORY_ICHIDAN = 2;
@@ -206,6 +206,21 @@ document.body.onkeydown = async function (evt) {
             if (drillSet.length === 0) {
                 nextRound();
             }
+            displayWords();
+        } else if (evt.code === 'Digit1') {  
+            evt.preventDefault();
+            word.status = 'catalog';
+            updateWord(word);
+            displayWords();
+        } else if (evt.code === 'Digit2') {  
+            evt.preventDefault();
+            word.status = 'backlog';
+            updateWord(word);
+            displayWords();
+        } else if (evt.code === 'Digit3') {  
+            evt.preventDefault();
+            word.status = 'archived';
+            updateWord(word);
             displayWords();
         }
     }
