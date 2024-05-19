@@ -542,10 +542,13 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	// make sure the story actually exists
-	rows, err := sqldb.Query(`SELECT id, story, day_offset, type FROM schedule_entries;`)
+	rows, err := sqldb.Query(`SELECT e.id, story, day_offset, type, 
+		title, source, lifetime_repetitions, level 
+		FROM schedule_entries as e INNER JOIN catalog_stories as s 
+		ON e.id = s.id;`)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
 		return
 	}
 	defer rows.Close()
@@ -554,9 +557,10 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var entry ScheduleEntry
-		if err := rows.Scan(&entry.ID, &entry.Story, &entry.DayOffset, &entry.Type); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.Story, &entry.DayOffset, &entry.Type,
+			&entry.Title, &entry.Source, &entry.LifetimeRepetitions, &entry.Level); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
+			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
 			return
 		}
 		entries = append(entries, entry)

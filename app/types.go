@@ -41,10 +41,14 @@ type StoryImport struct {
 }
 
 type ScheduleEntry struct {
-	ID        int64 `json:"id,omitempty"`
-	Story     int64 `json:"story"`
-	DayOffset int64 `json:"day_offset"`
-	Type      int64 `json:"type"`
+	ID                  int64  `json:"id,omitempty"`
+	Story               int64  `json:"story"`
+	DayOffset           int64  `json:"day_offset"`
+	Type                int64  `json:"type"`
+	Title               string `json:"title,omitempty"`
+	Source              string `json:"source,omitempty"`
+	LifetimeRepetitions int64  `json:"lifetime_repetitions,omitempty"`
+	Level               string `json:"level,omitempty"`
 }
 
 type ScheduleStoryRequest struct {

@@ -1,11 +1,13 @@
 var storyList = document.getElementById('story_list');
 var sourceSelect = document.getElementById('source_select');
+var scheduleList = document.getElementById('schedule');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
 document.body.onload = function (evt) {
     //getStoryList(displayStoryList);
     getCatalogStories(processStories);
+    getSchedule(displaySchedule);
 };
 
 
@@ -25,6 +27,7 @@ storyList.onchange = function (evt) {
 var storiesById = {};
 var storiesBySource = {};
 var stories = [];
+var scheduleEntries = [];
 
 let levelNameMap = {
     1: 'Low',
@@ -84,7 +87,6 @@ function processStories(storyData) {
         list.push(s);
     }
 
-
     let selectOptionsHTML = `<option value="in progress">In Progress</option>`;
     let i = 1;
     for (let source in storiesBySource) {
@@ -94,6 +96,20 @@ function processStories(storyData) {
     sourceSelect.innerHTML = selectOptionsHTML;
 
     displayStories();
+};
+
+function displaySchedule(entries) {
+    let tableHeader = `<table class="schedule_table">
+    <tr>
+        <th>Repetitions</th>
+        <th title="difficulty level of this story">Level</th>
+        <th>Title</th>
+        <th>Source</th>
+    </tr>`;
+
+    let html = '';
+
+    scheduleList.innerHTML = html;
 };
 
 function displayStories() {

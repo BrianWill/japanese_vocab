@@ -5,6 +5,8 @@ daily schedule system:
     day_offset is capped at 20? (three weeks)
 
 
+finish writing displaySchedule()
+
 words and stories have two statuses: normal or archived
     represent as integer 0 or 1?
 

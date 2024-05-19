@@ -238,6 +238,38 @@ function getCatalogStories(successFn) {
         });
 }
 
+function getSchedule(successFn) {
+    fetch('/schedule', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Schedule:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function getLog(successFn) {
+    fetch('/schedule', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Log:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 
 function timeSince(date) {
     if (date <= 1) {
