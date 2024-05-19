@@ -10,8 +10,6 @@ var captionsEn = document.getElementById('captions_en');
 var statusSelect = document.getElementById('status_select');
 
 var playerControls = document.getElementById('player_controls');
-var markStoryLink = document.getElementById('mark_story');
-var countSpinner = document.getElementById('count_spinner');
 
 var story = null;
 var selectedLineIdx = 0;
@@ -75,23 +73,6 @@ storyLines.onwheel = function (evt) {
 };
 
 const STORY_MARK_COOLDOWN = 60 * 60 * 4;
-
-markStoryLink.onclick = function (evt) {
-    evt.preventDefault();
-    let unixTime = Math.floor(Date.now() / 1000);
-    if (story.date_marked + STORY_MARK_COOLDOWN > unixTime) {
-        snackbarMessage("story cannot be marked right now because it's on cooldown");
-        return;
-    }
-    story.date_marked = unixTime;
-    story.repetitions_remaining = Math.max(story.repetitions_remaining - 1, 0);
-    story.lifetime_repetitions++;
-    countSpinner.value = story.repetitions_remaining;
-    updateStoryInfo(story, () => {
-        displayStoryInfo(story);
-        snackbarMessage('marked story as read');
-    });
-};
 
 var timeoutHandle = 0;
 
@@ -294,11 +275,6 @@ storyLines.onmousedown = function (evt) {
 };
 
 
-countSpinner.onchange = function (evt) {
-    story.repetitions_remaining = parseInt(evt.target.value);
-    updateStoryInfo(story, () => { });
-};
-
 // returns time in seconds
 function parseTimestamp(timestamp) {
     let [mins, seconds] = timestamp.split(':');
@@ -359,8 +335,6 @@ function displayStoryInfo(story) {
     document.getElementById('date_info').innerText = story.date;
     document.getElementById('lifetime_repetitions_info').innerText = 'Times repeated: ' + story.lifetime_repetitions;
     console.log(story);
-
-    countSpinner.value = story.repetitions_remaining;
 }
 
 function openStory(id) {

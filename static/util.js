@@ -183,7 +183,6 @@ function displayEntry(entry) {
 function updateStoryInfo(story, successFn) {
     story = {
         id: story.id,
-        repetitions_remaining: story.repetitions_remaining,
         level: story.level,
         date_marked: story.date_marked,
         lifetime_repetitions: story.lifetime_repetitions,
@@ -371,7 +370,8 @@ function adjustTextTrackTimings(track, time, adjustment) {
         if (cue.endTime > time) {
             // return false if adjusting the cue would make it overlap the prior cue
             let prior = track.cues[i - 1];    
-            if ((cue.startTime + adjustment) < prior.endTime) {
+            let adjustedStart = cue.startTime + adjustment;
+            if (adjustedStart < prior.endTime || adjustedStart < 0) {
                 return false;
             }
 

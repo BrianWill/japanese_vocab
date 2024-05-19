@@ -38,15 +38,11 @@ statusSelect.onchange = function (evt) {
 
 function newDrill() {
     let includeCatalog = false;
-    let includeBacklog = false;
     let includeArchived = false;
     for (let option of statusSelect.selectedOptions) {
         switch (option.value) {
             case 'catalog':
                 includeCatalog = true;
-                break;
-            case 'backlog':
-                includeBacklog = true;
                 break;
             case 'archived':
                 includeArchived = true;
@@ -109,7 +105,6 @@ function newDrill() {
             (includeOnCooldown && !offcooldown);
 
         let statusFilter = (includeCatalog && word.status == 'catalog') ||
-            (includeBacklog && word.status == 'backlog') ||
             (includeArchived && word.status == 'archived');
 
         if (!categoryFilter || !cooldownFilter || !statusFilter) {
@@ -138,7 +133,6 @@ function displayWords() {
                     <div class="base_form">${word.base_form}</div>
                     <div class="rank rank${word.status}">
                         ${word.status}<br>
-                        remaining: ${word.repetitions_remaining}<br>
                         lifetime: ${word.lifetime_repetitions}
                     </div>
                 </div>`;
@@ -192,15 +186,6 @@ document.body.onkeydown = async function (evt) {
         } else if (evt.code === 'KeyD') {  // mark answered
             evt.preventDefault();
             word.answered = true;
-            if (unixtime - word.date_marked > WORD_COOLDOWN_TIME) {
-                word.date_marked = unixtime;
-                word.repetitions_remaining = Math.max(0, word.repetitions_remaining - 1)
-                if (word.status == 'catalog' && word.repetitions_remaining == 0) {
-                    word.status = 'backlog';
-                }
-                word.lifetime_repetitions++;
-                updateWord(word);
-            }
             drillSet.shift();
             answeredSet.unshift(word);
             if (drillSet.length === 0) {
@@ -210,11 +195,6 @@ document.body.onkeydown = async function (evt) {
         } else if (evt.code === 'Digit1') {  
             evt.preventDefault();
             word.status = 'catalog';
-            updateWord(word);
-            displayWords();
-        } else if (evt.code === 'Digit2') {  
-            evt.preventDefault();
-            word.status = 'backlog';
             updateWord(word);
             displayWords();
         } else if (evt.code === 'Digit3') {  

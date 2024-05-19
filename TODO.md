@@ -1,6 +1,46 @@
 # japanese_vocab TODO
 
-test subtitle adjustment
+daily schedule system:
+
+    day_offset is capped at 20? (three weeks)
+
+
+words and stories have two statuses: normal or archived
+    represent as integer 0 or 1?
+
+repetitions are only incremented on stories and words when you "mark today complete"
+
+schedule page:
+    first day is labeled as "today (with today's date)"
+        link to "mark today complete"
+            decrements every day_offset
+            cooldown so this can only be done once per day? 
+                popup verifying if you want to add the stories into today's set?
+    second day as "tomorrow"
+    third day as "2 days from now"
+    fourth day as "3 days from now"
+    etc. 
+
+    click story to select it
+    inc dec the day offset
+        for individual repetitions or for all of same story?
+    remove stories
+        just remove individual repetition? or remove all repetitions?
+    stories are added to schedule from the catalog page:
+        by default, 5 repetitions spaced out by a few days with drills in between
+
+for drill page:
+    remove concept of cooldown?
+    remove "backlog" status
+    archived becomes just a checkbox: "include archived"
+    option to filter out words with a certain max number of lifetime repetitions
+
+get rid of "in progress" as a concept
+    instead of "drill vocab and kanji from stories in progress", replace with:
+        "drill vocab and kanji from stories in schedule" (or maybe just remove the whole concept)
+
+remove "mark story as read"
+
 
 for current subtitle, show list of all the words with their word info
     easy way to change the word status and set remaining reps
@@ -32,9 +72,6 @@ deduplicate the word ids in words field of catalog_stories
 
 on drill page: 
     link to set the current word's status (or select?)
-    change repetitions_remaining for current word (or all words in story?)
-
-story page action link: "Mark all backlog words as in progress"
 
 drill auto play mode
     - show a word with its definition (and play audio?) for n seconds, then automatically move to the next

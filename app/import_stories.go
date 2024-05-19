@@ -210,14 +210,6 @@ func storyExists(story StoryImport, sqldb *sql.DB) bool {
 	return true
 }
 
-func removeAllStories(sqldb *sql.DB) {
-	// atlernatively, `DELETE FROM catalog_stories;`
-	_, err := sqldb.Exec(`DELETE FROM catalog_stories;`)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 // (the story will be parsed into lines and words only when its added from the catalog to the main story table,
 // so in this importer, we just check that the data is valid)
 // check that the content can be parsed as the specified format
@@ -254,11 +246,11 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 
 	_, err = sqldb.Exec(`INSERT INTO catalog_stories (title, source, date, link, episode_number, audio, video, 
 				content, content_format, status, transcript_en, transcript_ja, 
-				words, repetitions_remaining, lifetime_repetitions, date_marked, level) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17);`,
+				words, lifetime_repetitions, date_marked, level) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16);`,
 		story.Title, story.Source, story.Date, story.Link, epNum,
 		story.Audio, story.Video, story.Content, story.ContentFormat, "catalog",
-		story.TranscriptEN, story.TranscriptJA, wordIdsJson, 0, DEFAULT_REPETITIONS, 0, story.Level)
+		story.TranscriptEN, story.TranscriptJA, wordIdsJson, 0, 0, story.Level)
 	return err
 }
 

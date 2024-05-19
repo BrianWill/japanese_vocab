@@ -14,13 +14,6 @@ sourceSelect.onchange = function (evt) {
 }
 
 storyList.onchange = function (evt) {
-    if (evt.target.className.includes('count_spinner')) {
-        let storyId = parseInt(evt.target.getAttribute('story_id'));
-        let story = storiesById[storyId];
-        story.repetitions_remaining = parseInt(evt.target.value);
-        updateStoryInfo(story, () => { });
-    }
-
     if (evt.target.className.includes('status_select')) {
         let storyId = parseInt(evt.target.getAttribute('story_id'));
         let story = storiesById[storyId];
@@ -70,10 +63,6 @@ function processStories(storyData) {
     stories = storyData;
 
     for (let s of stories) {
-        if (s.repetitions_remaining === undefined) {
-            s.repetitions_remaining = 0;
-        }
-
         if (s.date_marked === undefined) {
             s.date_marked = 0;
         }
@@ -114,8 +103,6 @@ function displayStories() {
             <td>
                 <select class="status_select" story_id="${s.id}">
                     <option ${(s.status == 'catalog') ? 'selected' : ''} value="catalog">catalog</option>
-                    <option ${(s.status == 'in progress') ? 'selected' : ''} value="in progress">in progress</option>
-                    <option ${(s.status == 'backlog') ? 'selected' : ''} value="backlog">backlog</option>
                     <option ${(s.status == 'archived') ? 'selected' : ''} value="archived">archived</option>
                 </select>
             </td>
@@ -125,9 +112,6 @@ function displayStories() {
             <td>
                 ${s.lifetime_repetitions}
             </td>  
-            <td>
-               <input story_id="${s.id}" type="number" class="count_spinner" min="0" max="9" steps="1" value="${s.repetitions_remaining}">
-            </td>
             <td>
                 <select class="level_select" story_id="${s.id}" title="difficulty level of this story">
                     <option ${(s.level == 'low') ? 'selected' : ''} value="low">low</option>
@@ -144,8 +128,7 @@ function displayStories() {
     <tr>
         <th title="number of additional times you intend to read this story">Status</th>
         <th>Time last read</th>
-        <th>Total<br>repetitions</th>
-        <th title="number of additional times you intend to read this story">Remaining<br>Repetitions</th>
+        <th>Repetitions</th>
         <th title="difficulty level of this story">Level</th>
         <th>Title</th>
         <th>Source</th>

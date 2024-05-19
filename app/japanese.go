@@ -49,11 +49,14 @@ const DRILL_CATEGORY_KANJI = 4096
 const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
 	DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU
 
+const READING = 0
+const LISTENING = 1
+const DRILLING = 2
+
+const NUM_SCHEDULED_REPETITIONS = 5
+
 const CATALOG = "catalog"
-const IN_PROGRESS = "in progress"
-const BACKLOG = "backlog"
 const ARCHIVED = "archived"
-const DEFAULT_REPETITIONS = 5
 
 const MAIN_USER_DB_PATH = "../data.db"
 
@@ -117,6 +120,10 @@ func main() {
 
 	router.HandleFunc("/update_story_info", UpdateStoryInfo).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
+	router.HandleFunc("/schedule_story", ScheduleStory).Methods("POST")
+	router.HandleFunc("/unschedule_story", UnscheduleStory).Methods("POST")
+	router.HandleFunc("/schedule", GetSchedule).Methods("GET")
+	router.HandleFunc("/log", GetLog).Methods("GET")
 	router.HandleFunc("/catalog_stories", GetCatalogStories).Methods("GET")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")
@@ -221,7 +228,6 @@ func makeUserDB(path string) {
 			base_form TEXT NOT NULL UNIQUE,
 			status TEXT NOT NULL,
 			lifetime_repetitions INTEGER NOT NULL,
-			repetitions_remaining INTEGER NOT NULL,
 			category INTEGER NOT NULL,
 			audio TEXT NOT NULL DEFAULT '',
 			audio_start REAL NOT NULL DEFAULT 0,
@@ -249,7 +255,6 @@ func makeUserDB(path string) {
 			episode_number TEXT,
 			audio TEXT,
 			video TEXT,
-			repetitions_remaining INTEGER,
 			lifetime_repetitions INTEGER NOT NULL,
 			transcript_en TEXT,
 			transcript_ja TEXT,
@@ -262,20 +267,23 @@ func makeUserDB(path string) {
 		log.Fatal(err)
 	}
 
-	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS stories 
-		(id INTEGER PRIMARY KEY, 
-			lines TEXT,   
-			lines_en TEXT,
-			lines_jp TEXT,
-			title	TEXT UNIQUE,
-			link	TEXT UNIQUE,
-			countdown INTEGER,
-			read_count INTEGER,
-			date_last_read INTEGER,
-			status INTEGER NOT NULL,
-			level INTEGER NOT NULL,
-			audio	TEXT,
-			date_added INTEGER NOT NULL)`)
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "schedule_entries" 
+		("id" INTEGER PRIMARY KEY,
+			story INTEGER NOT NULL,
+			day_offset INTEGER NOT NULL,
+			type INTEGER not null);`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "log_entries" 
+	("id" INTEGER PRIMARY KEY,
+		story INTEGER NOT NULL,
+		date INTEGER NOT NULL DEFAULT 0,
+		type INTEGER not null);`)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -41,58 +41,23 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	var story_link string
 	var wordIdsJson string
 
-	if drillRequest.Set == "in_progress" {
-		// get all stories that are in progress
-		rows, err := sqldb.Query(`SELECT words WHERE status = $1;`, IN_PROGRESS)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-			return
-		}
+	row := sqldb.QueryRow(`SELECT title, source, link, words FROM catalog_stories WHERE id = $1;`, drillRequest.StoryId)
+	err = row.Scan(&story_title, &story_source, &story_link, &wordIdsJson)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
 
-		for rows.Next() {
-			err = rows.Scan(&wordIdsJson)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-				return
-			}
-			defer rows.Close()
+	err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
 
-			err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-				return
-			}
-
-			for _, id := range wordIds {
-				wordIdMap[id] = true
-			}
-		}
-
-		story_title = ""
-		story_link = ""
-		story_source = "All Stories In Progress"
-	} else {
-		row := sqldb.QueryRow(`SELECT title, source, link, words FROM catalog_stories WHERE id = $1;`, drillRequest.StoryId)
-		err = row.Scan(&story_title, &story_source, &story_link, &wordIdsJson)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-			return
-		}
-
-		err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-			return
-		}
-
-		for _, id := range wordIds {
-			wordIdMap[id] = true
-		}
+	for _, id := range wordIds {
+		wordIdMap[id] = true
 	}
 
 	wordIds = make([]int64, len(wordIdMap))
@@ -108,10 +73,10 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 		word := &words[i]
 		word.ID = id
 		row := sqldb.QueryRow(`SELECT base_form, date_marked, status,
-				audio, audio_start, audio_end, category, repetitions_remaining, 
+				audio, audio_start, audio_end, category,
 				lifetime_repetitions, definitions FROM words WHERE id = $1;`, id)
 		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Status, &word.Audio,
-			&word.AudioStart, &word.AudioEnd, &word.Category, &word.RepetitionsRemaining,
+			&word.AudioStart, &word.AudioEnd, &word.Category,
 			&word.LifetimeRepetitions, &word.Definitions)
 		if err != nil && err != sql.ErrNoRows {
 			w.WriteHeader(http.StatusInternalServerError)

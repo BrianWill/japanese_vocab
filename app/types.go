@@ -6,24 +6,23 @@ import (
 )
 
 type CatalogStory struct {
-	ID                   int64   `json:"id,omitempty"`
-	Title                string  `json:"title,omitempty"`
-	Source               string  `json:"source,omitempty"`
-	Status               string  `json:"status,omitempty"`
-	Date                 string  `json:"date"`
-	DateMarked           int     `json:"date_marked,omitempty"`
-	EpisodeNumber        int     `json:"episode_number,omitempty"`
-	Level                string  `json:"level,omitempty"`
-	Content              string  `json:"content,omitempty"`
-	ContentFormat        string  `json:"content_format,omitempty"`
-	Link                 string  `json:"link,omitempty"`
-	Audio                string  `json:"audio,omitempty"`
-	Video                string  `json:"video,omitempty"`
-	TranscriptEN         string  `json:"transcript_en"`
-	TranscriptJA         string  `json:"transcript_ja"`
-	RepetitionsRemaining int64   `json:"repetitions_remaining"`
-	LifetimeRepetitions  int64   `json:"lifetime_repetitions"`
-	Words                []int64 `json:"words,omitempty"`
+	ID                  int64   `json:"id,omitempty"`
+	Title               string  `json:"title,omitempty"`
+	Source              string  `json:"source,omitempty"`
+	Status              string  `json:"status,omitempty"`
+	Date                string  `json:"date"`
+	DateMarked          int     `json:"date_marked,omitempty"`
+	EpisodeNumber       int     `json:"episode_number,omitempty"`
+	Level               string  `json:"level,omitempty"`
+	Content             string  `json:"content,omitempty"`
+	ContentFormat       string  `json:"content_format,omitempty"`
+	Link                string  `json:"link,omitempty"`
+	Audio               string  `json:"audio,omitempty"`
+	Video               string  `json:"video,omitempty"`
+	TranscriptEN        string  `json:"transcript_en"`
+	TranscriptJA        string  `json:"transcript_ja"`
+	LifetimeRepetitions int64   `json:"lifetime_repetitions"`
+	Words               []int64 `json:"words,omitempty"`
 }
 
 type StoryImport struct {
@@ -39,6 +38,25 @@ type StoryImport struct {
 	Video         string `json:"video,omitempty"`
 	TranscriptEN  string `json:"transcript_en,omitempty"`
 	TranscriptJA  string `json:"transcript_ja,omitempty"`
+}
+
+type ScheduleEntry struct {
+	ID        int64 `json:"id,omitempty"`
+	Story     int64 `json:"story"`
+	DayOffset int64 `json:"day_offset"`
+	Type      int64 `json:"type"`
+}
+
+type ScheduleStoryRequest struct {
+	ID    int64 `json:"id,omitempty"`    // used for removing a specific repetition
+	Story int64 `json:"story,omitempty"` // used for adding/removing all reps of a story
+}
+
+type LogEntry struct {
+	ID    int64 `json:"id,omitempty"`
+	Story int64 `json:"story"`
+	Date  int64 `json:"date"`
+	Type  int64 `json:"type"`
 }
 
 type StoryImportJSON struct {
@@ -106,8 +124,7 @@ type SetLineMarkRequest struct {
 }
 
 type DrillRequest struct {
-	StoryId int64  `json:"story_id"`
-	Set     string `json:"set"`
+	StoryId int64 `json:"story_id"`
 }
 
 type EnqueueRequest struct {
@@ -124,17 +141,16 @@ type EnqueuedStory struct {
 }
 
 type DrillWord struct {
-	ID                   int64   `json:"id,omitempty"`
-	BaseForm             string  `json:"base_form"`
-	Status               string  `json:"status"`
-	DateMarked           int64   `json:"date_marked"`
-	Category             int     `json:"category"`
-	Definitions          string  `json:"definitions,omitempty"`
-	Audio                string  `json:"audio,omitempty"`
-	AudioStart           float32 `json:"audio_start,omitempty"`
-	AudioEnd             float32 `json:"audio_end,omitempty"`
-	RepetitionsRemaining int     `json:"repetitions_remaining"`
-	LifetimeRepetitions  int     `json:"lifetime_repetitions"`
+	ID                  int64   `json:"id,omitempty"`
+	BaseForm            string  `json:"base_form"`
+	Status              string  `json:"status"`
+	DateMarked          int64   `json:"date_marked"`
+	Category            int     `json:"category"`
+	Definitions         string  `json:"definitions,omitempty"`
+	Audio               string  `json:"audio,omitempty"`
+	AudioStart          float32 `json:"audio_start,omitempty"`
+	AudioEnd            float32 `json:"audio_end,omitempty"`
+	LifetimeRepetitions int     `json:"lifetime_repetitions"`
 }
 
 type WordUpdate struct {
