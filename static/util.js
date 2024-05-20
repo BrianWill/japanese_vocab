@@ -198,7 +198,9 @@ function updateStoryInfo(story, successFn) {
         body: JSON.stringify(story),
     }).then((response) => response.json())
         .then((data) => {
-            successFn(data);
+            if (successFn) {
+                successFn(data);
+            }
         })
         .catch((error) => {
             console.error('Error marking story:', error);
@@ -215,7 +217,9 @@ function getStoryList(successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Stories list success:', data);
-            successFn(data);
+            if (successFn) {
+                successFn(data);
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -231,7 +235,9 @@ function getCatalogStories(successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Stories list success:', data);
-            successFn(data);
+            if (successFn) {
+                successFn(data);
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -247,7 +253,47 @@ function getSchedule(successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Schedule:', data);
-            successFn(data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function scheduleStory(storyId, successFn) {
+    fetch('/schedule_story', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"story": storyId})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Story scheduled:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function unscheduleStory(entryId, storyId, successFn) {
+    fetch('/unschedule_story', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"story": storyId, "id": entryId})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Story scheduled:', data);
+            if (successFn) {
+                successFn(data);
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -255,7 +301,7 @@ function getSchedule(successFn) {
 }
 
 function getLog(successFn) {
-    fetch('/schedule', {
+    fetch('/log', {
         method: 'GET', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
@@ -270,6 +316,43 @@ function getLog(successFn) {
         });
 }
 
+function adjustSchedule(entryId, adjustment, successFn) {
+    fetch('/schedule_adjust', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"offset_adjustment": adjustment, "id": entryId})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Log:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function logStory(entryId, storyId, successFn) {
+    fetch('/log_story', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"story": storyId, "id": entryId})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Log:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
 
 function timeSince(date) {
     if (date <= 1) {

@@ -40,27 +40,22 @@ type StoryImport struct {
 	TranscriptJA  string `json:"transcript_ja,omitempty"`
 }
 
-type ScheduleEntry struct {
+type ScheduleLogEntry struct {
 	ID                  int64  `json:"id,omitempty"`
 	Story               int64  `json:"story"`
 	DayOffset           int64  `json:"day_offset"`
+	Date                int64  `json:"date"`
 	Type                int64  `json:"type"`
 	Title               string `json:"title,omitempty"`
 	Source              string `json:"source,omitempty"`
-	LifetimeRepetitions int64  `json:"lifetime_repetitions,omitempty"`
+	LifetimeRepetitions int64  `json:"lifetime_repetitions"`
 	Level               string `json:"level,omitempty"`
 }
 
 type ScheduleStoryRequest struct {
-	ID    int64 `json:"id,omitempty"`    // used for removing a specific repetition
-	Story int64 `json:"story,omitempty"` // used for adding/removing all reps of a story
-}
-
-type LogEntry struct {
-	ID    int64 `json:"id,omitempty"`
-	Story int64 `json:"story"`
-	Date  int64 `json:"date"`
-	Type  int64 `json:"type"`
+	ID               int64 `json:"id,omitempty"`                // used for removing a specific repetition
+	Story            int64 `json:"story,omitempty"`             // used for adding/removing all reps of a story
+	OffsetAdjustment int64 `json:"offset_adjustment,omitempty"` // how much to increment / decrement the day_offset
 }
 
 type StoryImportJSON struct {

@@ -1,6 +1,7 @@
 var storyList = document.getElementById('story_list');
 var sourceSelect = document.getElementById('source_select');
-var scheduleList = document.getElementById('schedule');
+var scheduleDiv = document.getElementById('schedule');
+var loggedDiv = document.getElementById('logged');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
@@ -22,6 +23,12 @@ storyList.onchange = function (evt) {
         story.status = evt.target.value;
         updateStoryInfo(story, () => { });
     }
+    if (evt.target.className.includes('level_select')) {
+        var storyId = evt.target.getAttribute('story_id');
+        let story = storiesById[storyId];
+        story.level = evt.target.value;
+        updateStoryInfo(story, () => { });
+    }
 };
 
 var storiesById = {};
@@ -35,31 +42,34 @@ let levelNameMap = {
     3: 'High',
 };
 
+scheduleDiv.onclick = function (evt) {
+    if (evt.target.className.includes('schedule_remove_link')) {
+        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        unscheduleStory(entryId, 0, () => getSchedule(displaySchedule));
+    }
+
+    if (evt.target.className.includes('schedule_down_link')) {
+        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        adjustSchedule(entryId, +1, () => getSchedule(displaySchedule));
+    }
+
+    if (evt.target.className.includes('schedule_up_link')) {
+        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        adjustSchedule(entryId, -1, () => getSchedule(displaySchedule));
+    }
+
+    if (evt.target.className.includes('schedule_log_link')) {
+        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        logStory(entryId, 0, () => getSchedule(displaySchedule));
+    }
+};
+
 storyList.onclick = function (evt) {
-    if (!evt.target.classList.contains('level')) {
-        return;
+    if (evt.target.className.includes('schedule_link')) {
+        var storyId = evt.target.getAttribute('story_id');
+        let story = storiesById[storyId];
+        scheduleStory(story.id, () => getSchedule(displaySchedule));
     }
-    evt.preventDefault();
-    var storyId = evt.target.getAttribute('story_id');
-    var level = parseInt(evt.target.getAttribute('level'));
-
-    let maxLevel = Object.keys(levelNameMap).length;
-
-    let newLevel = level + 1;
-    if (newLevel > maxLevel) {
-        newLevel = 1;
-    }
-
-    evt.target.setAttribute('level', newLevel);
-    evt.target.className = `level ${levelNameMap[newLevel]}`;
-    evt.target.innerText = levelNameMap[newLevel];
-
-    console.log(`some level ${level} newlevel ${newLevel} id ${storyId}`);
-
-    // update db
-    let story = storiesById[storyId];
-    story.level = newLevel;
-    updateStoryInfo(story, () => { });
 };
 
 function processStories(storyData) {
@@ -99,35 +109,112 @@ function processStories(storyData) {
 };
 
 function displaySchedule(entries) {
-    let tableHeader = `<table class="schedule_table">
-    <tr>
-        <th>Repetitions</th>
-        <th title="difficulty level of this story">Level</th>
-        <th>Title</th>
-        <th>Source</th>
-    </tr>`;
 
-    let html = '';
+    let scheduleEntries = entries.schedule;
+    let logEntries = entries.log;
 
-    scheduleList.innerHTML = html;
+    // sort entries by day_offset
+    scheduleEntries.sort((a, b) => {
+        return a.day_offset - b.day_offset
+    });
+
+    logEntries.sort((a, b) => {
+        return a.day_offset - b.day_offset
+    });
+
+    {
+        let html = `<table class="schedule_table">`;
+
+        for (const entry of logEntries) {
+
+            let typeStr = '';
+            if (entry.type == 0) {
+                typeStr = 'Read';
+            } else if (entry.type == 1) {
+                typeStr = 'Listen';
+            } else if (entry.type == 2) {
+                typeStr = 'Drill';
+            }
+
+            html += `<tr>
+                <td>${timeSince(entry.date)}</td>
+                <td>${typeStr}</td>  
+                <td>${entry.source}</td>    
+                <td><a class="story_title" story_id="${entry.story}" 
+                        href="/story.html?storyId=${entry.story}">${entry.title}</a></td>
+                <td>${entry.level}</td>
+                <td>${entry.lifetime_repetitions} reps</td>
+            </tr>`;
+        }
+
+        loggedDiv.innerHTML = html + `</table>`;
+    }
+
+    {
+        let html = `<table class="schedule_table">`;
+
+        let currentDay = -1;
+
+        for (const entry of scheduleEntries) {
+            if (entry.day_offset > currentDay) {
+                currentDay = entry.day_offset;
+
+                let dayStr = '';
+                if (currentDay == 0) {
+                    dayStr = 'Today';
+                } else if (currentDay == 1) {
+                    dayStr = 'Tomorrow';
+                } else {
+                    dayStr = currentDay + ' days from now';
+                }
+
+                html += `<tr class="day_row"><td class="schedule_day">${dayStr}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>`
+            }
+
+            let typeStr = '';
+            if (entry.type == 0) {
+                typeStr = 'Read';
+            } else if (entry.type == 1) {
+                typeStr = 'Listen';
+            } else if (entry.type == 2) {
+                typeStr = 'Drill';
+            }
+
+            html += `<tr>
+            <td>${typeStr}</td>
+            <td>${entry.source}</td>    
+            <td><a class="story_title" story_id="${entry.story}" href="/story.html?storyId=${entry.story}">${entry.title}</a></td>
+            <td>${entry.level}</td>
+            <td>${entry.lifetime_repetitions} reps</td>
+            <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="move this rep to the next day">remove</a></td>
+            <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">down</a></td>
+            <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">up</a></td>
+            <td><a href="#" class="schedule_log_link" entry_id="${entry.id}" title="log this rep">log</a></td>
+        </tr>`;
+        }
+
+        scheduleDiv.innerHTML = html + `</table>`;
+    }
 };
 
 function displayStories() {
     function storyRow(s) {
         console.log(s);
         return `<tr>
-            <td>
-                <select class="status_select" story_id="${s.id}">
-                    <option ${(s.status == 'catalog') ? 'selected' : ''} value="catalog">catalog</option>
-                    <option ${(s.status == 'archived') ? 'selected' : ''} value="archived">archived</option>
-                </select>
-            </td>
+            <td><span class="story_source">${s.source}</span></td>
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             <td>
                 <span title="when this story was last read">${timeSince(s.date_marked)}</span>
             </td>
-            <td>
-                ${s.lifetime_repetitions}
-            </td>  
             <td>
                 <select class="level_select" story_id="${s.id}" title="difficulty level of this story">
                     <option ${(s.level == 'low') ? 'selected' : ''} value="low">low</option>
@@ -135,20 +222,20 @@ function displayStories() {
                     <option ${(s.level == 'high') ? 'selected' : ''} value="high">high</option>
                 </select>
             </td>
-            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            <td><span class="story_source">${s.source}</span></td>
+            <td>${s.lifetime_repetitions} reps</td>            
+            <td>
+                <select class="status_select" story_id="${s.id}">
+                    <option ${(s.status == 'catalog') ? 'selected' : ''} value="catalog">catalog</option>
+                    <option ${(s.status == 'archived') ? 'selected' : ''} value="archived">archived</option>
+                </select>
+            </td>
+            <td>
+                <a href="#" story_id="${s.id}" class="schedule_link">schedule</a>
+            </td>
             </tr>`;
     }
 
-    let tableHeader = `<table class="story_table">
-    <tr>
-        <th title="number of additional times you intend to read this story">Status</th>
-        <th>Time last read</th>
-        <th>Repetitions</th>
-        <th title="difficulty level of this story">Level</th>
-        <th>Title</th>
-        <th>Source</th>
-    </tr>`;
+    let tableHeader = `<table class="story_table">`;
 
     let html = '';
 
@@ -176,4 +263,5 @@ function displayStories() {
 
     storyList.innerHTML = html;
 };
+
 

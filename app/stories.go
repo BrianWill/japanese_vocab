@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+
 	//"unicode/utf8"
 
 	"github.com/gorilla/mux"
@@ -16,20 +17,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
 )
-
-const INITIAL_RANK = 1
-const INITIAL_STORY_COUNTDOWN = 3
-
-const DRILL_FILTER_ON_COOLDOWN = "on"
-const DRILL_FILTER_OFF_COOLDOWN = "off"
-const DRILL_FILTER_ALL = "all"
-
-const STORY_STATUS_CURRENT = 2
-const STORY_STATUS_NEVER_READ = 1
-const STORY_STATUS_ARCHIVE = 0
-const STORY_INITIAL_STATUS = STORY_STATUS_NEVER_READ
-
-const STORY_LOG_COOLDOWN = 60 * 60 * 8 // 8 hour cooldown (in seconds)
 
 func tokenize(content string) ([]*JpToken, []string, error) {
 	analyzerTokens := tok.Analyze(content, tokenizer.Normal)
@@ -445,8 +432,8 @@ func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
 func UnscheduleStory(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 
-	var scheduleRequest ScheduleStoryRequest
-	err := json.NewDecoder(r.Body).Decode(&scheduleRequest)
+	var body ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -461,15 +448,15 @@ func UnscheduleStory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	if scheduleRequest.ID > 0 {
-		_, err = sqldb.Exec(`DELETE FROM schedule_entries WHERE id = $1;`, scheduleRequest.ID)
+	if body.ID > 0 {
+		_, err = sqldb.Exec(`DELETE FROM schedule_entries WHERE id = $1;`, body.ID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
 			return
 		}
 	} else {
-		_, err = sqldb.Exec(`DELETE FROM schedule_entries WHERE story = $1;`, scheduleRequest.Story)
+		_, err = sqldb.Exec(`DELETE FROM schedule_entries WHERE story = $1;`, body.Story)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
@@ -528,6 +515,101 @@ func ScheduleStory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }
 
+func LogStory(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	var body ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	unixtime := time.Now().Unix()
+
+	var entryType int64
+	var story int64
+	row := sqldb.QueryRow(`SELECT type, story FROM schedule_entries WHERE id = $1`, body.ID)
+	err = row.Scan(&entryType, &story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`INSERT INTO log_entries (story, date, type) VALUES($1, $2, $3);`,
+		story, unixtime, entryType)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`DELETE FROM schedule_entries WHERE id = $1;`, body.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
+func ScheduleAdjust(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	var body ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	var dayOffset int64
+	var story int64
+	row := sqldb.QueryRow(`SELECT day_offset, story FROM schedule_entries WHERE id = $1`, body.ID)
+	err = row.Scan(&dayOffset, &story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	dayOffset += body.OffsetAdjustment
+	if dayOffset < 0 {
+		dayOffset = 0
+	}
+
+	_, err = sqldb.Exec(`UPDATE schedule_entries SET day_offset = $1 WHERE id = $2;`, dayOffset, body.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
 func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 
@@ -545,7 +627,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	rows, err := sqldb.Query(`SELECT e.id, story, day_offset, type, 
 		title, source, lifetime_repetitions, level 
 		FROM schedule_entries as e INNER JOIN catalog_stories as s 
-		ON e.id = s.id;`)
+		ON e.story = s.id;`)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
@@ -553,20 +635,47 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	entries := make([]ScheduleEntry, 0)
+	scheduleEntries := make([]ScheduleLogEntry, 0)
 
 	for rows.Next() {
-		var entry ScheduleEntry
+		var entry ScheduleLogEntry
 		if err := rows.Scan(&entry.ID, &entry.Story, &entry.DayOffset, &entry.Type,
 			&entry.Title, &entry.Source, &entry.LifetimeRepetitions, &entry.Level); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
 			return
 		}
-		entries = append(entries, entry)
+		scheduleEntries = append(scheduleEntries, entry)
 	}
 
-	json.NewEncoder(w).Encode(entries)
+	unixtime := time.Now().Unix() - 60*60*24 // 24 hours ago
+
+	// make sure the story actually exists
+	rows, err = sqldb.Query(`SELECT e.id, story, e.date, type, 
+		title, source, lifetime_repetitions, level 
+		FROM log_entries as e INNER JOIN catalog_stories as s 
+		ON e.story = s.id AND e.date > $1;`, unixtime)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	logEntries := make([]ScheduleLogEntry, 0)
+
+	for rows.Next() {
+		var entry ScheduleLogEntry
+		if err := rows.Scan(&entry.ID, &entry.Story, &entry.Date, &entry.Type,
+			&entry.Title, &entry.Source, &entry.LifetimeRepetitions, &entry.Level); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+			return
+		}
+		logEntries = append(logEntries, entry)
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"schedule": scheduleEntries, "log": logEntries})
 }
 
 func GetLog(w http.ResponseWriter, r *http.Request) {
@@ -591,10 +700,10 @@ func GetLog(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	entries := make([]LogEntry, 0)
+	entries := make([]ScheduleLogEntry, 0)
 
 	for rows.Next() {
-		var entry LogEntry
+		var entry ScheduleLogEntry
 		if err := rows.Scan(&entry.ID, &entry.Story, &entry.Date, &entry.Type); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))

@@ -148,11 +148,6 @@ a {
     color: #18b283;
 }
 
-
-#story_list td {
-    padding-right: 1em;
-}
-
 .header_link {
     color: #838383;
     font-size: 70%;
@@ -186,27 +181,16 @@ a {
     margin-left: 2em;
 }
 
-
-
-.story_table th {
+.story_table th, .schedule_table th {
     color: rgb(98, 98, 98);
     padding-right: 2em;
     font-size: 70%;
 }
 
-.story_table td {
+.story_table td, .schedule_table td {
     padding: 0.3em 0em;
 }
 
-.story_table td.story_table_section {
-    font-size: 120%;
-    padding: 1em 0em 0.2em 0em;
-}
-
-.story_table td.story_table_section a {
-    font-size: 70%;
-    padding: 1em 0em 0.2em 2em;
-}
 
 #story_list input[type=number] {
     background-color: #232323;
@@ -216,9 +200,32 @@ a {
     width: 3em;
 }
 
-#story_list table {
+#story_list table, .schedule_table {
     margin-left: 2em;
 }
+
+
+#story_list td, .schedule_table td  {
+    padding-right: 1em;
+}
+
+
+.schedule_table {
+    border-spacing: 0px 0.5em; /* Removes the cell spacing via CSS */
+    border-collapse: separate;  /* Optional - if you don't want to have double border where cells touch */
+}
+
+.day_row {
+    background-color: #405745;
+}
+
+.day_row td {
+    margin-top: 1em;
+} 
+
+.day_row td:first-child {
+    padding: 0.5em;
+} 
 
 #story_container {
     height: 98vh;
