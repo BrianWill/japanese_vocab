@@ -335,13 +335,13 @@ function adjustSchedule(entryId, adjustment, successFn) {
         });
 }
 
-function logStory(entryId, storyId, successFn) {
+function logStory(entryId, storyId, wordIds, successFn) {
     fetch('/log_story', {
         method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"story": storyId, "id": entryId})
+        body: JSON.stringify({"story": storyId, "id": entryId, "words": wordIds})
     }).then((response) => response.json())
         .then((data) => {
             console.log('Log:', data);

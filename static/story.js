@@ -7,7 +7,7 @@ var trackJa = document.getElementById('track_ja');
 var trackEn = document.getElementById('track_en');
 var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
-var statusSelect = document.getElementById('status_select');
+var markStoryLink = document.getElementById('mark_story');
 
 var playerControls = document.getElementById('player_controls');
 
@@ -16,11 +16,6 @@ var selectedLineIdx = 0;
 var youtubePlayer;
 
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.25;
-
-statusSelect.onchange = function (evt) {
-    story.status = statusSelect.value;
-    updateStoryInfo(story, () => { console.log('updated story info success') });
-};
 
 // only way to detect enter vs exit is whether the number of active increases (enter) or decreases (exit)
 
@@ -66,13 +61,20 @@ function displayCues(cues, target) {
     target.innerHTML = html;
 }
 
+
+markStoryLink.onclick = function (evt) {
+    evt.preventDefault();
+    var url = new URL(window.location.href);
+    var scheduleId = parseInt(url.searchParams.get("scheduleId"));
+    logStory(scheduleId, 0, [], () => snackbarMessage("story has been logged"));
+}
+
 storyLines.onwheel = function (evt) {
     evt.preventDefault();
     let scrollDelta = evt.wheelDeltaY * 2;
     storyLines.scrollTop -= scrollDelta;
 };
 
-const STORY_MARK_COOLDOWN = 60 * 60 * 4;
 
 var timeoutHandle = 0;
 
@@ -346,8 +348,6 @@ function openStory(id) {
     }).then((response) => response.json())
         .then((data) => {
             story = data;
-
-            statusSelect.value = story.status;
 
             displayStoryInfo(data);
             displayStory(data);

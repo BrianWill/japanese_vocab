@@ -422,3 +422,11 @@ h3 {
     color: #838383;
 }
 
+#drill_controls {
+    color: white;
+    padding: 1em;
+}
+
+#drill_controls a {
+    color: white;
+}

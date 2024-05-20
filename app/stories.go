@@ -536,18 +536,42 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 
 	unixtime := time.Now().Unix()
 
-	var entryType int64
-	var story int64
+	var entry ScheduleLogEntry
 	row := sqldb.QueryRow(`SELECT type, story FROM schedule_entries WHERE id = $1`, body.ID)
-	err = row.Scan(&entryType, &story)
+	err = row.Scan(&entry.Type, &entry.Story)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to get schedule entry: " + err.Error() + `"}`))
 		return
 	}
 
+	// get all other entries for the same story
+	rows, err := sqldb.Query(`SELECT id, type, day_offset FROM schedule_entries WHERE story = $1`, entry.Story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entries: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	scheduleEntries := make([]ScheduleLogEntry, 0)
+
+	for rows.Next() {
+		var entry ScheduleLogEntry
+		if err := rows.Scan(&entry.ID, &entry.Type, &entry.DayOffset); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+			return
+		}
+		scheduleEntries = append(scheduleEntries, entry)
+	}
+
+	// check if adjustment is valid
+
+	// adjust all reps of the story
+
 	_, err = sqldb.Exec(`INSERT INTO log_entries (story, date, type) VALUES($1, $2, $3);`,
-		story, unixtime, entryType)
+		entry.Story, unixtime, entry.Type)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
@@ -561,8 +585,34 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = incrementWordRepetitions(body.Words, sqldb)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update word repetition counts: " + err.Error() + `"}`))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
+func incrementWordRepetitions(wordIds []int64, sqldb *sql.DB) error {
+	for _, wordId := range wordIds {
+		var reps int64
+
+		row := sqldb.QueryRow(`SELECT lifetime_repetitions FROM words WHERE id = $1`, wordId)
+		err := row.Scan(&reps)
+		if err != nil {
+			return err
+		}
+
+		_, err = sqldb.Exec(`UPDATE words SET lifetime_repetitions = $1 WHERE id = $2;`, reps, wordId)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func ScheduleAdjust(w http.ResponseWriter, r *http.Request) {

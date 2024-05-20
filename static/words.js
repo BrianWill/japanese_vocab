@@ -9,6 +9,7 @@ var kanjiResultsDiv = document.getElementById('kanji_results');
 var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
 var statusSelect = document.getElementById('status_select');
+var logLink = document.getElementById('log_link');
 
 const WORD_COOLDOWN_TIME = 60 * 60 * 24 * 2.5; // 2.5 days (in seconds)
 
@@ -260,12 +261,29 @@ function showWord() {
     definitionsDiv.style.visibility = 'visible';
 }
 
+logLink.onclick = function (evt) {
+    evt.preventDefault();
+    var url = new URL(window.location.href);
+    var scheduleId = parseInt(url.searchParams.get("scheduleId"));
+
+    let wordIds = [];
+    for (const word of answeredSet) {
+        wordIds.push(word.id);
+    }
+
+    logStory(scheduleId, 0, wordIds, () => snackbarMessage("drill has been logged"));
+}
+
 document.body.onload = function (evt) {
     console.log('on page load');
 
     var url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
     let set = url.searchParams.get("set");
+
+    if (url.searchParams.get("scheduleId")) {
+        logLink.style.display = "inline";
+    }
 
     fetch('words', {
         method: 'POST', // or 'PUT'
@@ -284,7 +302,7 @@ document.body.onload = function (evt) {
                 w.definitions = JSON.parse(w.definitions);
             }
 
-            drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="${data.story_link}">${data.story_title}</a>`;
+            drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="${data.story_link}">${data.story_title}</a><br>`;
             //`<a href="/story.html?storyId=${storyId}"> ${data.story_title}</a>`;
             newDrill();
         })

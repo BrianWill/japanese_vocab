@@ -1,7 +1,6 @@
 var storyList = document.getElementById('story_list');
 var sourceSelect = document.getElementById('source_select');
 var scheduleDiv = document.getElementById('schedule');
-var loggedDiv = document.getElementById('logged');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
@@ -57,11 +56,6 @@ scheduleDiv.onclick = function (evt) {
         var entryId = parseInt(evt.target.getAttribute('entry_id'));
         adjustSchedule(entryId, -1, () => getSchedule(displaySchedule));
     }
-
-    if (evt.target.className.includes('schedule_log_link')) {
-        var entryId = parseInt(evt.target.getAttribute('entry_id'));
-        logStory(entryId, 0, () => getSchedule(displaySchedule));
-    }
 };
 
 storyList.onclick = function (evt) {
@@ -97,8 +91,8 @@ function processStories(storyData) {
         list.push(s);
     }
 
-    let selectOptionsHTML = `<option value="in progress">In Progress</option>`;
-    let i = 1;
+    let selectOptionsHTML = ``;
+    let i = 0;
     for (let source in storiesBySource) {
         selectOptionsHTML += `<option value="${i}">${source}</option>`
         i++;
@@ -125,6 +119,17 @@ function displaySchedule(entries) {
     {
         let html = `<table class="schedule_table">`;
 
+        html += `<tr class="day_row"><td class="schedule_day">Logged in last 24 hours</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>`;
+
         for (const entry of logEntries) {
 
             let typeStr = '';
@@ -137,21 +142,19 @@ function displaySchedule(entries) {
             }
 
             html += `<tr>
-                <td>${timeSince(entry.date)}</td>
                 <td>${typeStr}</td>  
                 <td>${entry.source}</td>    
                 <td><a class="story_title" story_id="${entry.story}" 
                         href="/story.html?storyId=${entry.story}">${entry.title}</a></td>
                 <td>${entry.level}</td>
                 <td>${entry.lifetime_repetitions} reps</td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>`;
         }
 
-        loggedDiv.innerHTML = html + `</table>`;
-    }
 
-    {
-        let html = `<table class="schedule_table">`;
 
         let currentDay = -1;
 
@@ -169,15 +172,15 @@ function displaySchedule(entries) {
                 }
 
                 html += `<tr class="day_row"><td class="schedule_day">${dayStr}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>`
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>`;
             }
 
             let typeStr = '';
@@ -189,16 +192,18 @@ function displaySchedule(entries) {
                 typeStr = 'Drill';
             }
 
+            let page = entry.type == 2 ? 'words' : 'story';
+            let storyLink = `/${page}.html?storyId=${entry.story}&scheduleId=${entry.id}`;
+
             html += `<tr>
             <td>${typeStr}</td>
             <td>${entry.source}</td>    
-            <td><a class="story_title" story_id="${entry.story}" href="/story.html?storyId=${entry.story}">${entry.title}</a></td>
+            <td><a class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
             <td>${entry.level}</td>
             <td>${entry.lifetime_repetitions} reps</td>
             <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="move this rep to the next day">remove</a></td>
             <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">down</a></td>
             <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">up</a></td>
-            <td><a href="#" class="schedule_log_link" entry_id="${entry.id}" title="log this rep">log</a></td>
         </tr>`;
         }
 
@@ -237,29 +242,16 @@ function displayStories() {
 
     let tableHeader = `<table class="story_table">`;
 
-    let html = '';
+    let html = tableHeader;
 
     let source = sourceSelect.options[sourceSelect.selectedIndex].text;
 
-    if (source == 'In Progress') {
-        // in progress
-        html = tableHeader;
-        for (let s of stories) {
-            if (s.status != 'catalog') {
-                html += storyRow(s);
-            }
-        }
-
-        html += `</table>`
-    } else {
-        // display by source
-        let list = storiesBySource[source];
-        html += `<hr><h2>${source}</h2>` + tableHeader;
-        for (let s of list) {
-            html += storyRow(s);
-        }
-        html += `</table>`;
+    // display by source
+    let list = storiesBySource[source];
+    for (let s of list) {
+        html += storyRow(s);
     }
+    html += `</table>`;
 
     storyList.innerHTML = html;
 };
