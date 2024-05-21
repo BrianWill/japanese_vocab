@@ -1,6 +1,6 @@
 # Japanese Input trainer
 
-A program for [learning Japanese through input](input.md) by reading stories and drilling their vocabulary.
+A program for [learning Japanese through input](input.md) by listening to stories and drilling their vocabulary.
 
 ![](./images/story.png)
 
@@ -9,7 +9,7 @@ A program for [learning Japanese through input](input.md) by reading stories and
 
 For Windows, you can just clone the repo and run `app/japanese.exe`, then go to `localhost:8080` in a web browser.
 
-For other platforms, you'll need to build the executable:
+For other platforms, you'll need to build the executable first:
 
 1. [Install Go](https://go.dev/doc/install), version 1.15 or later.
 1. At the command line, switch to the `app` directory.
@@ -17,20 +17,23 @@ For other platforms, you'll need to build the executable:
 1. Run `go get` to fetch the package dependencies.
 1. Run `go build` to build the executable.
 
-## Stories
+## Importing stories
 
-Each story has:
+Stories are imported in sets called "sources", which are represented as directories with files in a certain format. To import a source:
 
-- a title
-- a read count: the total number of times the story has been read
-- a countdown: the number of additional times you plan to read the story
-- a timestamp: the date and time that the story was last read
-- a link (optional): URL from which the story originates
-- an audio file (optional): an mp3, mp4, or m4a file path relative to `static/audio/`
+1. Copy or move the source directory to `/static/sources/`
+2. At the command line, run `./japanese.exe import` to (re)import all sources. (Sources that haven't changed since last import will not be updated by reimporting.)
 
 ## Main page
 
-The main page displays all the stories and allows you to add new stories. A checkbox toggles whether to show only stories with a countdown greater than 0.
+The main page displays the schedule of story repetitions, followed by the catalog of imported stories.
+
+In the catalog, the "schedule" link on a story adds 5 listening reps and 4 drilling reps to the schedule, spread out over about 2 weeks.
+
+In the schedule, you can remove reps and move them up or down in the schedule:
+
+- Moving a rep up or down will also move all reps after it of the same story.
+- As a rule, two reps of the same story cannot be scheduled for the same day.
 
 ## Story page
 
@@ -38,76 +41,35 @@ A story's page display's its title and text.
 
 A link under the title takes you to a page for drilling the words and kanji in the story.
 
-Another link under the title marks the story as read (which sets its timestamp, increments its read count, and decrements its countdown).
+The "log this story" link will remove the rep from the schedule.
 
-### Youtube and audio player
+### Video and audio player hotkey controls
 
-If the story link is a youtube video link, the video will show in an embedded player in the top corner.
-Otherwise, if the story audio path is not empty, the story page will instead have an audio player in the top corner.
+- `s` : toggle play/pause
+- `d` : jump ahead ~1 seconds
+- `a` : jump back ~1 seconds
+- `e` : jump ahead ~5 seconds
+- `q` : jump back ~5 seconds
 
-The youtube and audio players can be controlled via hotkeys:
+Because subtitle data from sources may not line up with the video or audio, these keys may be helpful:
 
-- `s``: toggle play/pause
-- `d``: jump ahead ~2 seconds
-- `a``: jump back ~2 seconds
-- `e``: jump ahead ~5 seconds
-- `q``: jump back ~5 seconds
-
-The words of the story text are highlighted based on part of speech:
-
-- white words: nouns
-- yellow: particles
-- dark yellow: connective particles (such as の and と)
-- red: verbs
-- dark red: verb auxilliaries and the copula
-- green: adverbs
-- violet: i-adjectives
-- blue: pronouns and determiners (such as これ and 何)
-
-(Note that the auto-generated grammatical analysis is not always 100% accurate but is generally quite good.)
-
-Clicking a word in the text selects it and displays its defintions and any kanji it contains. Some hotkeys affect the selected word:
-
-- `1`, `2`, `3`, and `4`: set the rank of the word to 1, 2, 3, or 4 
-- `space`: sets the word's drill timestamp (see below)
-
-### Story line timestamps
-
-Each line of the story has a timestamp:
-
-- clicking a timestamp jumps the player (if present) to that timestamp
-- alt-clicking a line's timestamp will set it to the player's current time.
-- middle-clicking a line's timestamp toggles whether the line is marked, changing the timestamp's color, which is useful for tracking interseting lines in a story.
-
-Clicking a timestamp also selects the line, and you can adjust the timestamp of the selected line:
-
-- `-` (minus) decrements the line's timestamp by half a second
-- `+` (plus) increments the line's timestamp by half a second
-
-Lines can be split and joined:
-
-- ctrl-clicking a line's timestamp merges the line to the end of the preceding line
-- ctrl-clicking a word in a line splits that word and the rest of the line into a new line; the new line's timestamp is set to the player's current time.
+- `-` : decrease the start and end time of the current subtitle (and all after it) by 0.25 seconds
+- `+` : increase the start and end time of the current subtitle (and all after it) by 0.25 seconds
 
 ## Drilling page
 
 ![](./images/drill.png)
 
-Each word has a rank of 1, 2, 3, or 4 and a timestamp denoting when the word was last drilled. Words are considered "on cooldown" if they have been drilled within the cooldown window, which depends upon rank:
+The words of the drill are displayed in a random-ordered list, with the current word at the top.
 
-- Rank 1 cooldown: 5 hours
-- Rank 2 cooldown: 4 days
-- Rank 3 cooldown: 30 days
-- Rank 4 cooldown: 1000 days
+Hotkeys that affect the current word:
 
-By default, only "on cooldown" are not included in the drill list, but this can be controlled 
-
-Some hotkeys affect the word at the top of the list:
-
-- `d`: sets the word's drill timestamp and marks it correct (which moves the card to the discard pile at the bottom)
-- `a`: sets the word's drill timestamp and marks it incorreect (which marks it red and moves it down to the second position in the list)
-- `1`, `2`, `3`, and `4`: set the rank of the word to 1, 2, 3, or 4 
+- `d`: mark the word correct
+- `a`: mark the word incorrect
+- `1` : toggle whether the word is archived
 
 Once you mark all words in the list correct or incorrect, the words you marked incorrect will be reshuffled for another round of drilling.
 
 Words in the drill list can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
+
+The "log this drill" link will log the drill, removing it from your schedule and incrementing the repetition count for the words you drilled.

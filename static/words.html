@@ -5,41 +5,54 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
     <link rel="stylesheet" href="words.css">
-    <link rel="stylesheet" href="nouislider.css">
     <title>Japan Vocab</title>
 </head>
 
 <body>
-    <span id="top_link"><a href="/">⬅ &#x1F3E0;</a></span> 
-    <h3 id="drill_title"></h3>
-    <h3 id="drill_info"></h3>
-    &nbsp;&nbsp;
-    <select id="category" name="category">
-        <option value="all">words of all kinds</option>
-        <option value="kanji">kanji characters</option>
-        <option value="katakana">katakana words</option>
-        <option value="ichidan">ichidan verbs</option>
-        <option value="godan">godan verbs</option>
-    </select>
-    <select id="filter_select">
-        <option value="off" selected>words off cooldown</option>
-        <option value="on">words on cooldown</option>
-        <option value="all">words on or off cooldown</option>
-    </select>
-    <label>Rank:</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div id="rank_slider"></div>
-    <br>
     <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
-    <div id="results">
-        <div id="answer">
-            <div id="kanji_results"></div>
-            <div id="definitions"></div>
+    <div id="words_container">
+        <div id="definition">
+            <div id="results">
+                <div id="answer">
+                    <div id="kanji_results"></div>
+                    <div id="definitions"></div>
+                </div>
+            </div>
         </div>
-        <div id="cards"></div>
+        <div id="words">
+            <div id="cards"></div>
+        </div>
+        <div id="right_sidebar">
+            <div id="home_link"><a href="/">home</a></div>
+            <h3 id="drill_title"></h3>
+            <h3 id="drill_info"></h3>
+            <div>
+                <select id="category" name="category" size="5" multiple>
+                    <option selected value="kanji">kanji characters</option>
+                    <option selected value="katakana">katakana words</option>
+                    <option selected value="ichidan">ichidan verbs</option>
+                    <option selected value="godan">godan verbs</option>
+                    <option selected value="other">other</option>
+                </select>
+            </div>
+            <div>
+                <select id="filter_select" size="2" multiple>
+                    <option selected value="off">off cooldown</option>
+                    <option value="on">on cooldown</option>
+                </select>
+            </div>
+            <div>
+                <select size="2" multiple id="archived_select">
+                    <option selected value='unarchived'>unarchived</option>
+                    <option value='archived'>archived</option>
+                </select>
+            </div>
+            <div id="drill_controls"><a id="log_link" href="#" style="display: none;">log this drill</a></div>
+        </div>
     </div>
     <div id="snackbar"></div>
 </body>
 <script src="words.js"></script>
 <script src="util.js"></script>
-<script src="nouislider.js"></script>
 
 </html>

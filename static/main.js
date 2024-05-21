@@ -1,71 +1,40 @@
 var storyList = document.getElementById('story_list');
-var newStoryText = document.getElementById('new_story_text');
-var newStoryButton = document.getElementById('new_story_button');
-var newStoryTitle = document.getElementById('new_story_title');
-var newStoryLink = document.getElementById('new_story_link');
-var newStoryAudio = document.getElementById('new_story_audio');
+var sourceSelect = document.getElementById('source_select');
+var scheduleDiv = document.getElementById('schedule');
+var ipDiv = document.getElementById('ip');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
 document.body.onload = function (evt) {
-    getStoryList(displayStoryList);
+    getStories(processStories);
+    getSchedule(displaySchedule);
+    getIP((ips) => {
+        let html = 'local ip: ';
+        for (const ip of ips) {
+            html += ip + '&nbsp;&nbsp;'
+        }
+        ipDiv.innerHTML = html;
+    });
 };
 
-newStoryButton.onclick = function (evt) {
-    let data = {
-        content: newStoryText.value,
-        title: newStoryTitle.value,
-        link: newStoryLink.value,
-        audio: newStoryAudio.value,
-    };
 
-    newStoryText.value = '';
-    newStoryTitle.value = '';
-    newStoryLink.value = '';
-    newStoryAudio.value = '';
-
-    fetch('/create_story', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    }).then((response) => response.json())
-        .then((data) => {
-            getStoryList(displayStoryList);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-};
+sourceSelect.onchange = function (evt) {
+    displayStories();
+}
 
 storyList.onchange = function (evt) {
-    if (evt.target.className.includes('count_spinner')) {
-        let storyId = parseInt(evt.target.getAttribute('story_id'));
+    if (evt.target.className.includes('level_select')) {
+        var storyId = evt.target.getAttribute('story_id');
         let story = storiesById[storyId];
-        story.countdown = parseInt(evt.target.value);
-        updateStoryCounts(story, () => { });
+        story.level = evt.target.value;
+        updateStoryInfo(story, () => { });
     }
 };
 
-function retokenizeStory(story) {
-    fetch('/retokenize_story', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: story.id }),
-    }).then((response) => response.json())
-        .then((data) => {
-            getStoryList(displayStoryList);
-        })
-        .catch((error) => {
-            console.error('Error retokenizing:', error);
-        });
-}
-
-
 var storiesById = {};
+var storiesBySource = {};
+var stories = [];
+var scheduleEntries = [];
 
 let levelNameMap = {
     1: 'Low',
@@ -73,98 +42,216 @@ let levelNameMap = {
     3: 'High',
 };
 
-storyList.onclick = function(evt) {
-    if (!evt.target.classList.contains('level')) {
-        return;
-    }
-    evt.preventDefault();
-    var storyId = evt.target.getAttribute('story_id');
-    var level = parseInt(evt.target.getAttribute('level'));
-
-    let maxLevel = Object.keys(levelNameMap).length;
-    
-    let newLevel = level + 1;
-    if (newLevel > maxLevel) {
-        newLevel = 1;
+scheduleDiv.onclick = function (evt) {
+    if (evt.target.className.includes('schedule_remove_link')) {
+        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        unscheduleStory(entryId, 0, () => getSchedule(displaySchedule));
     }
 
-    evt.target.setAttribute('level', newLevel);
-    evt.target.className = `level ${levelNameMap[newLevel]}`;
-    evt.target.innerText = levelNameMap[newLevel];
+    if (evt.target.className.includes('schedule_down_link')) {
+        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        adjustSchedule(entryId, +1, () => getSchedule(displaySchedule));
+    }
 
-    console.log(`some level ${level} newlevel ${newLevel} id ${storyId}`);
-
-    // update db
-    let story = storiesById[storyId];
-    story.level = newLevel;
-    updateStoryCounts(story, () => { });
+    if (evt.target.className.includes('schedule_up_link')) {
+        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        adjustSchedule(entryId, -1, () => getSchedule(displaySchedule));
+    }
 };
 
-function displayStoryList(stories) {
-    stories.sort((a, b) => {
-        if (a.date_last_read === b.date_last_read) {
-            return b.date_added - a.date_added
+storyList.onclick = function (evt) {
+    if (evt.target.className.includes('schedule_link')) {
+        var storyId = evt.target.getAttribute('story_id');
+        let story = storiesById[storyId];
+        scheduleStory(story.id, () => getSchedule(displaySchedule));
+    }
+};
+
+function processStories(storyData) {
+    stories = storyData;
+
+    for (let s of stories) {
+        if (s.date_marked === undefined) {
+            s.date_marked = 0;
         }
-        return b.date_last_read - a.date_last_read
+    }
+
+    stories.sort((a, b) => {
+        return b.date_marked - a.date_marked
     });
 
+    storiesById = {};
+    storiesBySource = {};
 
+    for (let s of stories) {
+        storiesById[s.id] = s;
+        let list = storiesBySource[s.source];
+        if (list === undefined) {
+            list = storiesBySource[s.source] = [];
+        }
+        list.push(s);
+    }
+
+    let selectOptionsHTML = ``;
+    let i = 0;
+    for (let source in storiesBySource) {
+        selectOptionsHTML += `<option value="${i}">${source}</option>`
+        i++;
+    }
+    sourceSelect.innerHTML = selectOptionsHTML;
+
+    displayStories();
+};
+
+function displaySchedule(entries) {
+
+    let scheduleEntries = entries.schedule;
+    let logEntries = entries.log;
+
+    // sort entries by day_offset
+    scheduleEntries.sort((a, b) => {
+        return a.day_offset - b.day_offset
+    });
+
+    logEntries.sort((a, b) => {
+        return a.day_offset - b.day_offset
+    });
+
+    {
+        let html = `<table class="schedule_table">`;
+
+        html += `<tr class="day_row"><td class="schedule_day">Logged in last 24 hours</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>`;
+
+        for (const entry of logEntries) {
+
+            let typeStr = '';
+            if (entry.type == 0) {
+                typeStr = 'Read';
+            } else if (entry.type == 1) {
+                typeStr = 'Listen';
+            } else if (entry.type == 2) {
+                typeStr = 'Drill';
+            }
+
+            let hash = integerHash(entry.story + entry.source + entry.title);
+            let color = randomPaletteColor(hash);
+
+            html += `<tr>
+                <td>${typeStr}</td>  
+                <td>${entry.source}</td>    
+                <td><a style="color:${color};" class="story_title" story_id="${entry.story}" 
+                        href="/story.html?storyId=${entry.story}">${entry.title}</a></td>
+                <td>${entry.level}</td>
+                <td>${entry.repetitions} rep</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>`;
+        }
+
+        let currentDay = -1;
+
+        for (const entry of scheduleEntries) {
+            if (entry.day_offset > currentDay) {
+                currentDay = entry.day_offset;
+
+                let dayStr = '';
+                if (currentDay == 0) {
+                    dayStr = 'Today';
+                } else if (currentDay == 1) {
+                    dayStr = 'Tomorrow';
+                } else {
+                    dayStr = currentDay + ' days from now';
+                }
+
+                html += `<tr class="day_row"><td class="schedule_day">${dayStr}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>`;
+            }
+
+            let typeStr = '';
+            if (entry.type == 0) {
+                typeStr = 'Read';
+            } else if (entry.type == 1) {
+                typeStr = 'Listen';
+            } else if (entry.type == 2) {
+                typeStr = 'Drill';
+            }
+
+            let page = entry.type == 2 ? 'words' : 'story';
+            let storyLink = `/${page}.html?storyId=${entry.story}&scheduleId=${entry.id}`;
+
+            let hash = integerHash(entry.story + entry.source + entry.title);
+            let color = randomPaletteColor(hash);
+
+            html += `<tr>
+            <td>${typeStr}</td>
+            <td>${entry.source}</td>    
+            <td><a style="color: ${color};" class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
+            <td>${entry.level}</td>
+            <td>${entry.repetitions} rep</td>
+            <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="move this rep to the next day">remove</a></td>
+            <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">down</a></td>
+            <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">up</a></td>
+        </tr>`;
+        }
+
+        scheduleDiv.innerHTML = html + `</table>`;
+    }
+};
+
+function displayStories() {
     function storyRow(s) {
         return `<tr>
-            <td>
-                <span title="when this story was last read">${timeSince(s.date_last_read)}</span>
-            </td>  
-            <td>
-               <input story_id="${s.id}" type="number" class="count_spinner" min="-1" max="9" steps="1" value="${s.countdown}">
-            </td>
-            <td>
-                <span story_id="${s.id}" level="${s.level}" class="level ${levelNameMap[s.level]}" title="difficulty level of this story">${levelNameMap[s.level]}</span>
-            </td>
+            <td><span class="story_source">${s.source}</span></td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td>
+                <span title="when this story was last read">${timeSince(s.date_marked)}</span>
+            </td>
+            <td>
+                <select class="level_select" story_id="${s.id}" title="difficulty level of this story">
+                    <option ${(s.level == 'low') ? 'selected' : ''} value="low">low</option>
+                    <option ${(s.level == 'medium') ? 'selected' : ''} value="medium">medium</option>
+                    <option ${(s.level == 'high') ? 'selected' : ''} value="high">high</option>
+                </select>
+            </td>
+            <td>${s.repetitions} reps</td>            
+            <td>
+                <a href="#" story_id="${s.id}" class="schedule_link">schedule</a>
+            </td>
             </tr>`;
     }
 
-    let tableHeader = `<table class="story_table">
-    <tr>
-        <th>Time last read</th>
-        <th title="number of additional times you intend to read this story">Countdown</th>
-        <th title="difficulty level of this story">Level</th>
-        <th>Title</th>
-    </tr>`;
+    let tableHeader = `<table class="story_table">`;
 
+    let html = tableHeader;
 
-    let html = `
-        <h3><a class="drill_link" title="vocab and kanji from stories with a countdown greater than zero" href="words.html?set=current">drill countdown &gt; 0</a>
-        <a class="drill_link" title="vocab and kanji from stories with a countdown equal to zero" href="words.html?set=active">drill countdown = 0</a>
-        <a class="drill_link" title="vocab and kanji from stories with a countdown less than zero" href="words.html?set=archived">drill countdown &lt; 0</a></h3>` 
-        + tableHeader;
+    let source = sourceSelect.options[sourceSelect.selectedIndex].text;
 
-    storiesById = {};
-
-    for (let s of stories) {
-        storiesById[s.id] = s;
-        if (s.countdown > 0) {
-            html += storyRow(s);
-        }
+    // display by source
+    let list = storiesBySource[source];
+    for (let s of list) {
+        html += storyRow(s);
     }
+    html += `</table>`;
 
-    html += `</table> <hr>` + tableHeader;
-
-    for (let s of stories) {
-        storiesById[s.id] = s;
-        if (s.countdown == 0) {
-            html += storyRow(s);
-        }
-    }
-
-    html += `</table> <hr>` + tableHeader;
-
-    for (let s of stories) {
-        storiesById[s.id] = s;
-        if (s.countdown < 0) {
-            html += storyRow(s);
-        }
-    }
-
-    storyList.innerHTML = html + '</table>';
+    storyList.innerHTML = html;
 };
+
+

@@ -33,42 +33,39 @@ function splitOnHighPitch(str, pitch) {
     ];
 }
 
-function displayKanji(kanji, word) {
+function displayKanji(kanjiDefs, word) {
     html = '';
 
-    if (!kanji || kanji.length === 0) {
+    if (!kanjiDefs || kanjiDefs.length === 0) {
         kanjiResultsDiv.innerHTML = '';
         return;
     }
 
-    for (let ch of new Set(word.split(''))) {
-        for (let k of kanji) {
-            if (k.literal === ch) {
-                for (let group of k.readingmeaning.group) {
-                    onyomi = group.reading.filter(x => x.type === 'ja_on').map(x => `<span class="kanji_reading">${x.value}</span>`);
-                    kunyomi = group.reading.filter(x => x.type === 'ja_kun').map(x => `<span class="kanji_reading">${x.value}</span>`);
 
-                    var meanings = group.meaning.filter(x => !x.language).map(x => x.value);
+    for (let def of kanjiDefs) {
+        for (let group of def.readingmeaning.group) {
+            onyomi = group.reading.filter(x => x.type === 'ja_on').map(x => `<span class="kanji_reading">${x.value}</span>`);
+            kunyomi = group.reading.filter(x => x.type === 'ja_kun').map(x => `<span class="kanji_reading">${x.value}</span>`);
 
-                    var misc = '';
-                    if (k.misc.stroke_count) {
-                        misc += `<span class="strokes">strokes: ${k.misc.stroke_count}</span>`;
-                    }
-                    if (k.misc.frequency) {
-                        misc += `<span class="frequency">frequency: ${k.misc.frequency}</span>`;
-                    }
+            var meanings = group.meaning.filter(x => !x.language).map(x => x.value);
 
-                    html += `<div class="kanji">
+            var misc = '';
+            if (def.misc.stroke_count) {
+                misc += `<span class="strokes">strokes: ${def.misc.stroke_count}</span>`;
+            }
+            if (def.misc.frequency) {
+                misc += `<span class="frequency">frequency: ${def.misc.frequency}</span>`;
+            }
+
+            html += `<div class="kanji">
                             <div>
-                            <span class="literal">${k.literal}</span>
+                            <span class="literal">${def.literal}</span>
                             <div><span class="onyomi_readings">${onyomi.join('')}</span></div>
                             <div><span class="kunyomi_readings">${kunyomi.join('')}</span></div>
                             </div>
                             <div class="kanji_meanings">${meanings.join(';  &nbsp;&nbsp;')}</div>
                             <div class="kanji_misc">${misc}</div>
                             </div>`;
-                }
-            }
         }
     }
 
@@ -84,13 +81,17 @@ function getKanji(str) {
         body: JSON.stringify(str),
     }).then((response) => response.json()
     ).then((data) => {
-        displayKanji(data.kanji, str);
+        for (let i in data) {
+            data[i] = JSON.parse(data[i]);
+        }
+        //console.log('kanji response:', data);
+        displayKanji(data, str);
     }).catch((error) => {
         console.error('Error:', error);
     });
 }
 
-function updateWord(word, wordInfoMap, marking) {
+function updateWord(word, marking) {
     fetch('/update_word', {
         method: 'POST', // or 'PUT'
         headers: {
@@ -99,35 +100,14 @@ function updateWord(word, wordInfoMap, marking) {
         body: JSON.stringify(word),
     }).then((response) => response.json()
     ).then((data) => {
-        if (marking) {
-            snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
-        } else {
-            snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to rank ${data.rank}`);
-        }
-        updateWordInfo(data, wordInfoMap, marking);
+        // if (marking) {
+        //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
+        // } else {
+        //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to archived: ${data.archived}`);
+        // }
     }).catch((error) => {
         console.error('Error:', error);
     });
-}
-
-function updateWordInfo(word, wordInfoMap, marking) {
-    let tokenizedStory = document.getElementById('tokenized_story');
-    if (tokenizedStory) {
-        let wordSpans = tokenizedStory.querySelectorAll(`span[baseform="${word.base_form}"]`);
-        console.log('updating word info', word.base_form, word.rank, word.date_marked, 'found spans', wordSpans.length);
-        let unixTime = Math.floor(Date.now() / 1000);
-        for (let span of wordSpans) {
-            span.classList.remove('rank1', 'rank2', 'rank3', 'rank4');
-            span.classList.add('rank' + word.rank);
-            if (marking) {
-                span.classList.remove('offcooldown');
-            }
-        }
-    }
-
-    var wordInfo = wordInfoMap[word.base_form];
-    wordInfo.rank = word.rank;
-    wordInfo.date_marked = word.date_marked;
 }
 
 var snackebarTimeoutHandle = null;
@@ -200,39 +180,17 @@ function displayEntry(entry) {
             </div>`;
 }
 
-function updateStoryStatus(story, refreshList) {
-    let temp = { ...story };
-    delete temp.content;
-    delete temp.tokens;
-    delete temp.link;
-    delete temp.title;
-    delete temp.words;
-    fetch(`/update_story_status`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(temp),
-    }).then((response) => response.json())
-        .then((data) => {
-            if (refreshList) {
-                getStoryList(displayStoryList);
-            }
-        })
-        .catch((error) => {
-            console.error('Error marking story:', error);
-        });
-}
-
-function updateStoryCounts(story, successFn) {
+function updateStoryInfo(story, successFn) {
     story = {
         id: story.id,
-        countdown: story.countdown,
-        read_count: story.read_count,
         level: story.level,
-        date_last_read: story.date_last_read
+        date_marked: story.date_marked,
+        repetitions: story.repetitions,
+        archived: story.archived,
+        transcript_ja: story.transcript_ja,
+        transcript_en: story.transcript_en
     };
-    fetch(`/update_story_counts`, {
+    fetch(`/update_story_info`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -240,7 +198,9 @@ function updateStoryCounts(story, successFn) {
         body: JSON.stringify(story),
     }).then((response) => response.json())
         .then((data) => {
-            successFn(data);
+            if (successFn) {
+                successFn(data);
+            }
         })
         .catch((error) => {
             console.error('Error marking story:', error);
@@ -257,6 +217,98 @@ function getStoryList(successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Stories list success:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function getStories(successFn) {
+    fetch('/stories', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Stories list success:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function getSchedule(successFn) {
+    fetch('/schedule', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Schedule:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function scheduleStory(storyId, successFn) {
+    fetch('/schedule_story', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "story": storyId })
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Story scheduled:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function unscheduleStory(entryId, storyId, successFn) {
+    fetch('/unschedule_story', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "story": storyId, "id": entryId })
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Story scheduled:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function getLog(successFn) {
+    fetch('/log', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Log:', data);
             successFn(data);
         })
         .catch((error) => {
@@ -264,8 +316,62 @@ function getStoryList(successFn) {
         });
 }
 
+function getIP(successFn) {
+    fetch('/ip', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('IP:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function adjustSchedule(entryId, adjustment, successFn) {
+    fetch('/schedule_adjust', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "offset_adjustment": adjustment, "id": entryId })
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Log:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function logStory(entryId, storyId, wordIds, successFn) {
+    fetch('/log_story', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "story": storyId, "id": entryId, "words": wordIds })
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Log:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function timeSince(date) {
-    if (date === 0) {
+    if (date <= 1) {
         return 'never';
     }
 
@@ -338,9 +444,6 @@ function timeSince(date) {
     return 'just now';
 }
 
-const DRILL_ALL_CURRENT = -1;
-const DRILL_ALL = 0;
-
 function addLogEvent(storyId) {
     fetch(`/add_log_event/${storyId}`, {
         method: 'GET',
@@ -355,6 +458,93 @@ function addLogEvent(storyId) {
         .catch((error) => {
             console.error('Error:', error);
         });
-
 }
 
+// todo test with negative time
+function formatTrackTime(time) {
+    let seconds = Math.trunc(time);
+
+    let fractionStr = '000';
+    let arr = String(time).split('.');
+    if (arr.length > 1) {
+        fractionStr = arr[1].substring(0, 3).padEnd(3, '0');
+    }
+
+    let secondsStr = String(seconds % 60).padStart(2, '0');
+    let minutesStr = String(Math.trunc(seconds / 60) % 60).padStart(2, '0');
+    let hoursStr = String(Math.trunc(seconds / (60 * 60))).padStart(2, '0');
+
+    return `${hoursStr}:${minutesStr}:${secondsStr}.${fractionStr}`;
+}
+
+function textTrackToString(track) {
+    let vtt = 'WEBVTT\n\n';
+
+    for (let cue of track.cues) {
+        vtt += `${cue.id}
+${formatTrackTime(cue.startTime)} --> ${formatTrackTime(cue.endTime)}
+${cue.text}\n\n`;
+    }
+
+    return vtt;
+}
+
+
+// add adjustment to every start and end timing, but only those which overlap or come after 'time'
+function adjustTextTrackTimings(track, time, adjustment) {
+    let index = track.cues.length;
+
+    // find first track that overlap afterTime
+    for (let i = 0; i < track.cues.length; i++) {
+        let cue = track.cues[i];
+
+        if (cue.endTime > time) {
+            // return false if adjusting the cue would make it overlap the prior cue
+            let prior = track.cues[i - 1];
+            let adjustedStart = cue.startTime + adjustment;
+            if (adjustedStart < prior.endTime || adjustedStart < 0) {
+                return false;
+            }
+
+            index = i;
+            break;
+        }
+    }
+
+    for (let i = index; i < track.cues.length; i++) {
+        let cue = track.cues[i];
+        cue.startTime += adjustment;
+        cue.endTime += adjustment;
+    }
+
+    return true;
+}
+
+// find all cues for which time is between the start and end
+function findCues(track, time) {
+    let cues = [];
+    for (let cue of track.cues) {
+        if (cue.startTime <= time && time <= cue.endTime) {
+            cues.push(cue);
+        }
+    }
+    return cues;
+}
+
+function integerHash(str) {
+    let hash = 0;
+    str.split('').forEach(char => {
+        hash = char.charCodeAt(0) + ((hash << 5) - hash)
+    });
+    return hash;
+}
+
+var colorPalette = ['#c7522a', '#e5c185', '#fbf2c4', '#74a892', "#d9042b", 
+    "#730220", "#03658c", "#f29f05", "#f27b50", "#c7522a", "#e5c185", 
+    "#f0daa5", "#fbf2c4", "#b8cdab", "#74a892", "#008585" 
+];
+
+function randomPaletteColor(hash) {
+    let idx = Math.abs(hash) % colorPalette.length;
+    return colorPalette[idx];
+}

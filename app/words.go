@@ -4,7 +4,8 @@ import (
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	//"fmt"
+	"regexp"
 
 	// "math"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 )
 
 func WordDrill(w http.ResponseWriter, r *http.Request) {
-	dbPath := GetUserDb()
+	dbPath := MAIN_USER_DB_PATH
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("content-encoding", "gzip")
@@ -32,137 +33,68 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	baseForms, err := getStoryWords(drillRequest.StoryId, drillRequest.Set, sqldb)
+	var wordIds []int64
+	wordIdMap := make(map[int64]bool)
+
+	var story_title string
+	var story_source string
+	var story_link string
+	var wordIdsJson string
+
+	row := sqldb.QueryRow(`SELECT title, source, link, words FROM stories WHERE id = $1;`, drillRequest.StoryId)
+	err = row.Scan(&story_title, &story_source, &story_link, &wordIdsJson)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
-	rows, err := sqldb.Query(`SELECT id, base_form, rank, date_marked, category FROM words;`)
+	err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		gw.Write([]byte(`{ "message": "` + "failure to get word: " + err.Error() + `"}`))
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
-	defer rows.Close()
 
-	words := make([]DrillWord, 0)
-	for rows.Next() {
-		var word DrillWord
-		err = rows.Scan(&word.ID, &word.BaseForm,
-			&word.Rank, &word.DateMarked,
-			&word.Category)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			gw.Write([]byte(`{ "message": "` + "failure to scan word: " + err.Error() + `"}`))
-			return
-		}
-		if drillRequest.StoryId == -1 {
-			words = append(words, word)
-		} else if _, ok := baseForms[word.BaseForm]; ok {
-			words = append(words, word)
-		}
+	for _, id := range wordIds {
+		wordIdMap[id] = true
 	}
 
-	wordInfoMap := make(map[string]WordInfo)
+	wordIds = make([]int64, len(wordIdMap))
+	i := 0
+	for id := range wordIdMap {
+		wordIds[i] = id
+		i++
+	}
 
-	for _, word := range words {
-		wordInfo := WordInfo{
-			Definitions: getDefinitions(word.BaseForm),
-		}
+	words := make([]DrillWord, len(wordIds))
 
-		row := sqldb.QueryRow(`SELECT rank, date_marked, audio, audio_start, audio_end FROM words WHERE base_form = $1;`, word.BaseForm)
-
-		err = row.Scan(&wordInfo.Rank, &wordInfo.DateMarked, &wordInfo.Audio, &wordInfo.AudioStart, &wordInfo.AudioEnd)
+	for i, id := range wordIds {
+		word := &words[i]
+		word.ID = id
+		row := sqldb.QueryRow(`SELECT base_form, date_marked, archived,
+				audio, audio_start, audio_end, category,
+				repetitions, definitions FROM words WHERE id = $1;`, id)
+		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Archived, &word.Audio,
+			&word.AudioStart, &word.AudioEnd, &word.Category,
+			&word.Repetitions, &word.Definitions)
 		if err != nil && err != sql.ErrNoRows {
 			w.WriteHeader(http.StatusInternalServerError)
 			gw.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))
 			return
 		}
-
-		wordInfoMap[word.BaseForm] = wordInfo
 	}
 
-	json.NewEncoder(gw).Encode(bson.M{"words": words, "wordInfoMap": wordInfoMap})
-}
-
-func getStoryWords(storyId int64, set string, sqldb *sql.DB) (map[string]bool, error) {
-	baseForms := make(map[string]bool)
-
-	if storyId == -1 {
-		rows, err := sqldb.Query(`SELECT base_form FROM words`)
-		if err != nil {
-			return nil, fmt.Errorf("failure to get words: " + err.Error())
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var baseForm string
-			err = rows.Scan(&baseForm)
-			if err != nil {
-				return nil, fmt.Errorf("failure to scan word base form: " + err.Error())
-			}
-
-			baseForms[baseForm] = true
-		}
-
-		return baseForms, nil
-	}
-
-	var rows *sql.Rows
-	var err error
-
-	switch set {
-	case "current":
-		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown > 0`)
-	case "active":
-		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown = 0`)
-	case "archived":
-		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE countdown < 0`)
-	default:
-		rows, err = sqldb.Query(`SELECT lines FROM stories WHERE id = $1`, storyId)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("failure to get story words: " + err.Error())
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var linesJSON string
-		var lines []Line
-		err = rows.Scan(&linesJSON)
-		if err != nil {
-			return nil, fmt.Errorf("failure to scan story line: " + err.Error())
-		}
-		err := json.Unmarshal([]byte(linesJSON), &lines)
-		if err != nil {
-			return nil, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
-		}
-
-		for _, line := range lines {
-			for _, kanji := range line.Kanji {
-				baseForms[kanji.Character] = true
-			}
-			for _, word := range line.Words {
-				baseForms[word.BaseForm] = true
-			}
-		}
-	}
-
-	return baseForms, nil
+	json.NewEncoder(gw).Encode(bson.M{"words": words, "story_link": story_link, "story_title": story_title, "story_source": story_source})
 }
 
 func UpdateWord(w http.ResponseWriter, r *http.Request) {
-	dbPath := GetUserDb()
-
 	w.Header().Set("Content-Type", "application/json")
 
 	var word WordUpdate
 	json.NewDecoder(r.Body).Decode(&word)
 
-	sqldb, err := sql.Open("sqlite3", dbPath)
+	sqldb, err := sql.Open("sqlite3", MAIN_USER_DB_PATH)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -184,8 +116,9 @@ func UpdateWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE words SET rank = $1, date_marked = $2, audio = $3, audio_start = $4, audio_end = $5, WHERE base_form = $6;`,
-		word.Rank, word.DateMarked, word.Audio, word.AudioStart, word.AudioEnd, word.BaseForm)
+	_, err = sqldb.Exec(`UPDATE words SET archived = $1, date_marked = $2, audio = $3, audio_start = $4, 
+			audio_end = $5 WHERE base_form = $6;`,
+		word.Archived, word.DateMarked, word.Audio, word.AudioStart, word.AudioEnd, word.BaseForm)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update word: " + err.Error() + `"}`))
@@ -193,4 +126,56 @@ func UpdateWord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(word)
+}
+
+func GetKanji(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var str string
+	json.NewDecoder(r.Body).Decode(&str)
+
+	var re = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
+	kanjiStrings := re.FindAllString(str, -1)
+
+	sqldb, err := sql.Open("sqlite3", MAIN_USER_DB_PATH)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	// remove duplicate kanji but maintain original order
+	kanjiSet := make([]string, 0)
+outer:
+	for _, ch := range kanjiStrings {
+		for _, k := range kanjiSet {
+			if k == ch {
+				continue outer
+			}
+		}
+		kanjiSet = append(kanjiSet, ch)
+	}
+
+	//fmt.Println("kanji set", kanjiSet)
+
+	kanjiDefs := make([]string, 0)
+	for _, ch := range kanjiSet {
+		row := sqldb.QueryRow(`SELECT kanji FROM words WHERE base_form = $1;`, ch)
+		var def string
+		err = row.Scan(&def)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(`{ "message": "` + "kanji not found: " + err.Error() + `"}`))
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "error looking up kanji: " + err.Error() + `"}`))
+			return
+		}
+		kanjiDefs = append(kanjiDefs, def)
+	}
+
+	json.NewEncoder(w).Encode(kanjiDefs)
 }

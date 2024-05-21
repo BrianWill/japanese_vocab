@@ -14,28 +14,32 @@ h3 {
     font-size: 130%;
 }
 
-#tokenized_story {
+#home_link {
+    text-align: right;
+    padding: 0.5em;
+}
+
+#story_lines {
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
     letter-spacing: 0.02em;
     line-height: 1.6;
     font-size: 170%;
     padding-left: 1.5em;
-    height: 28em;
     overflow-y: scroll;
     margin-right: 1em;
     padding-right: 1em;
 }
 
-#tokenized_story p:first-child {
+#story_lines p:first-child {
     margin-top: 0em;
 }
 
-#tokenized_story p {
+#story_lines p {
     margin-top: 1.1em;
     margin-bottom: 1.1em;
 }
 
-#tokenized_story span {
+#story_lines span {
     white-space: nowrap;
 }
 
@@ -127,28 +131,6 @@ a {
     color: #838383;
 }
 
-#story_list a.story_title.status0 {
-    color: #d52246;
-}
-
-#story_list a.story_title.status1 {
-    color: #bbbb36;
-}
-
-#story_list a.story_title.status2 {
-    color: #18b283;
-    /* color: #2f82e7; */
-}
-
-#story_list a.story_title.status3 {
-    color: #18b283;
-}
-
-
-#story_list td {
-    padding-right: 1em;
-}
-
 .header_link {
     color: #838383;
     font-size: 70%;
@@ -182,27 +164,16 @@ a {
     margin-left: 2em;
 }
 
-
-
-.story_table th {
+.story_table th, .schedule_table th {
     color: rgb(98, 98, 98);
     padding-right: 2em;
     font-size: 70%;
 }
 
-.story_table td {
+.story_table td, .schedule_table td {
     padding: 0.3em 0em;
 }
 
-.story_table td.story_table_section {
-    font-size: 120%;
-    padding: 1em 0em 0.2em 0em;
-}
-
-.story_table td.story_table_section a {
-    font-size: 70%;
-    padding: 1em 0em 0.2em 2em;
-}
 
 #story_list input[type=number] {
     background-color: #232323;
@@ -212,24 +183,54 @@ a {
     width: 3em;
 }
 
-#story_list table {
+#story_list table, .schedule_table {
     margin-left: 2em;
 }
 
+
+#story_list td, .schedule_table td  {
+    padding-right: 1em;
+}
+
+
+.schedule_table {
+    border-spacing: 0px 0.5em; /* Removes the cell spacing via CSS */
+    border-collapse: separate;  /* Optional - if you don't want to have double border where cells touch */
+}
+
+.day_row {
+    background-color: #405745;
+}
+
+.day_row td {
+    margin-top: 1em;
+} 
+
+.day_row td:first-child {
+    padding: 0.5em;
+} 
+
 #story_container {
+    height: 98vh;
     display: grid;
-    grid-template-columns: 2fr 3fr;
-    grid-template-rows: 1fr;
+    grid-template-columns: 4fr 1fr;
     gap: 0px 0px;
+
+    grid-template-areas: 
+      "media sidebar"
+      "lines lines"; 
+}
+
+#media {
+    grid-area: media;
+}
+
+#story_sidebar {
+    grid-area: sidebar;
 }
 
 .high_pitch {
     font-weight: bold;
-}
-
-#story_title {
-    text-align: center;
-
 }
 
 #story_title a {
@@ -313,7 +314,7 @@ input[type=number] {
     vertical-align: top;
 }
 
-#tokenized_story .line_timestamp:hover {
+#story_lines .line_timestamp:hover {
     color: white;
     cursor: pointer;
     text-decoration: white solid underline;
@@ -329,19 +330,19 @@ input[type=number] {
 }
 
 .offcooldown.rank1,
-#tokenized_story.highlight_all_words span.rank1 {
+#story_lines.highlight_all_words span.rank1 {
     background-color: #040404;
     border: dashed #a1a0a0 1px;
     
 }
 
 .offcooldown.rank2,
-#tokenized_story.highlight_all_words span.rank2 {
+#story_lines.highlight_all_words span.rank2 {
     background-color: #0d0d0d;
 }
 
 .offcooldown.rank3,
-#tokenized_story.highlight_all_words span.rank3 {
+#story_lines.highlight_all_words span.rank3 {
     background-color: #393838;
 }
 
@@ -470,16 +471,6 @@ span.verb:hover {
     padding-right: 1.5em;
 }
 
-#audio_player {
-    padding: 1em;
-    display: none;
-}
-
-#video_player {
-    width: 100%;
-    display: none;
-}
-
 #stories td {
     padding-right: 3em;
 }
@@ -503,12 +494,13 @@ span.verb:hover {
 }
 
 
-#tokenized_story .marked_line.line_timestamp:hover {
+#story_lines .marked_line.line_timestamp:hover {
     color: rgb(255, 251, 0);
     text-decoration: rgb(255, 251, 0) solid underline;
 }
 
-#tokenized_story {
+#story_lines {
+    grid-area: lines;
     cursor: default;
 }
 
@@ -534,4 +526,14 @@ span.verb:hover {
 
 .High {
     background-color: red;
+}
+
+#source_select {
+    font-size: 120%;
+} 
+
+#ip {
+    padding: 1em;
+    color: rgb(114, 114, 114);
+    font-size: 80%;
 }

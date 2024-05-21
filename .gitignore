@@ -14,12 +14,13 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-
+data.db
 ignore/*
 app/air_errors.log
 app/tmp/air_errors.log
 static/audio/ignore/*
 static/audio/*
-users/test.db
-app/scrape/node_modules
-app/scrape/Nihongo Picnic Podcast
+static/ignore/*
+static/sources/*
+bin/scrape/node_modules
+bin/scrape/*

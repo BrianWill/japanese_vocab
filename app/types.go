@@ -6,39 +6,70 @@ import (
 )
 
 type Story struct {
-	ID             int64               `json:"id,omitempty"`
-	Content        string              `json:"content,omitempty"`
-	Title          string              `json:"title,omitempty"`
-	Link           string              `json:"link,omitempty"`
-	Audio          string              `json:"audio"`
-	Lines          []Line              `json:"lines,omitempty"`
-	Status         int                 `json:"status"`
-	Level          int                 `json:"level"`
-	ReadCount      int                 `json:"read_count"`
-	Countdown      int                 `json:"countdown"`
-	DateLastRead   int64               `json:"date_last_read"`
-	DateAdded      int64               `json:"date_added,omitempty"`
-	WordInfo       map[string]WordInfo `json:"word_info,omitempty"`
-	WordRankCounts WordRankCounts      `json:"word_ranks,omitempty"`
+	ID            int64   `json:"id,omitempty"`
+	Title         string  `json:"title,omitempty"`
+	Source        string  `json:"source,omitempty"`
+	Date          string  `json:"date"`
+	DateMarked    int     `json:"date_marked,omitempty"`
+	EpisodeNumber int     `json:"episode_number,omitempty"`
+	Level         string  `json:"level,omitempty"`
+	Content       string  `json:"content,omitempty"`
+	ContentFormat string  `json:"content_format,omitempty"`
+	Link          string  `json:"link,omitempty"`
+	Audio         string  `json:"audio,omitempty"`
+	Video         string  `json:"video,omitempty"`
+	TranscriptEN  string  `json:"transcript_en"`
+	TranscriptJA  string  `json:"transcript_ja"`
+	Repetitions   int64   `json:"repetitions"`
+	Words         []int64 `json:"words,omitempty"`
 }
 
-type WordRankCounts [4]int
+type StoryImport struct {
+	Title         string `json:"title,omitempty"`
+	Source        string `json:"source,omitempty"`
+	Date          string `json:"date,omitempty"`
+	EpisodeNumber string `json:"episode_number,omitempty"`
+	Level         string `json:"level,omitempty"`
+	Content       string `json:"content,omitempty"`
+	ContentFormat string `json:"content_format,omitempty"`
+	Link          string `json:"link,omitempty"`
+	Audio         string `json:"audio,omitempty"`
+	Video         string `json:"video,omitempty"`
+	TranscriptEN  string `json:"transcript_en,omitempty"`
+	TranscriptJA  string `json:"transcript_ja,omitempty"`
+}
+
+type ScheduleLogEntry struct {
+	ID          int64  `json:"id,omitempty"`
+	Story       int64  `json:"story"`
+	DayOffset   int64  `json:"day_offset"`
+	Date        int64  `json:"date"`
+	Type        int64  `json:"type"`
+	Title       string `json:"title,omitempty"`
+	Source      string `json:"source,omitempty"`
+	Repetitions int64  `json:"repetitions"`
+	Level       string `json:"level,omitempty"`
+}
+
+type ScheduleStoryRequest struct {
+	ID               int64   `json:"id,omitempty"`                // used for removing a specific repetition
+	Story            int64   `json:"story,omitempty"`             // used for adding/removing all reps of a story
+	OffsetAdjustment int64   `json:"offset_adjustment,omitempty"` // how much to increment / decrement the day_offset
+	Words            []int64 `json:"words,omitempty"`             // the words whose repetitions needs to be incremented
+}
+
+type StoryImportJSON struct {
+	Source        string        `json:"source,omitempty"`
+	ContentFormat string        `json:"content_format,omitempty"`
+	Stories       []StoryImport `json:"stories,omitempty"`
+}
 
 type WordInfo struct {
-	Rank        int           `json:"rank"`
 	Definitions []JMDictEntry `json:"definitions,omitempty"`
 	DateMarked  int64         `json:"date_marked"`
 	Audio       string        `json:"audio"`
 	AudioStart  float32       `json:"audio_start"`
 	AudioEnd    float32       `json:"audio_end"`
-}
-
-type Line struct {
-	Words     []LineWord `json:"words,omitempty"`
-	Timestamp string     `json:"timestamp,omitempty"`
-	//Content   string      `json:"content,omitempty"`
-	Kanji  []LineKanji `json:"kanji,omitempty"`
-	Marked bool        `json:"marked"`
 }
 
 type LineWord struct {
@@ -54,70 +85,26 @@ type LineKanji struct {
 	Character string `json:"character,omitempty"`
 }
 
-type LogEvent struct {
-	ID      int64  `json:"id,omitempty"`
-	StoryID int64  `json:"story_id,omitempty"`
-	Date    int64  `json:"date,omitempty"`
-	Title   string `json:"title,omitempty"`
-}
-
-type SplitLineRequest struct {
-	StoryID     int64   `json:"story_id,omitempty"`
-	LineToSplit int     `json:"line_to_split"`
-	WordIdx     int     `json:"word_idx"`
-	Timestamp   float64 `json:"timestamp"`
-}
-
-type ConsolidateLineRequest struct {
-	StoryID      int64 `json:"story_id,omitempty"`
-	LineToRemove int   `json:"line_to_remove,omitempty"`
-}
-
-type SetTimestampRequest struct {
-	StoryID   int64   `json:"story_id,omitempty"`
-	LineIdx   int     `json:"line_idx"`
-	Timestamp float64 `json:"timestamp"`
-}
-
-type SetLineMarkRequest struct {
-	StoryID int64 `json:"story_id,omitempty"`
-	LineIdx int   `json:"line_idx"`
-	Marked  bool  `json:"marked"`
-}
-
-type StoryList struct {
-	Stories []Story `json:"stories,omitempty"`
-}
-
 type DrillRequest struct {
-	StoryId int64  `json:"story_id"`
-	Set     string `json:"set"`
-}
-
-type EnqueueRequest struct {
-	StoryId int64 `json:"story_id,omitempty"`
-	Count   int   `json:"count,omitempty"`
-}
-
-type EnqueuedStory struct {
-	Date    int    `json:"date"`
-	ID      int64  `json:"id,omitempty"`
-	StoryID int64  `json:"story_id,omitempty"`
-	Title   string `json:"title,omitempty"`
-	Link    string `json:"link,omitempty"`
+	StoryId int64 `json:"story_id"`
 }
 
 type DrillWord struct {
-	ID         int64  `json:"id,omitempty"`
-	BaseForm   string `json:"base_form"`
-	Rank       int    `json:"rank"`
-	DateMarked int64  `json:"date_marked"`
-	Category   int    `json:"category"`
+	ID          int64   `json:"id,omitempty"`
+	BaseForm    string  `json:"base_form"`
+	Archived    int64   `json:"archived"`
+	DateMarked  int64   `json:"date_marked"`
+	Category    int     `json:"category"`
+	Definitions string  `json:"definitions,omitempty"`
+	Audio       string  `json:"audio,omitempty"`
+	AudioStart  float32 `json:"audio_start,omitempty"`
+	AudioEnd    float32 `json:"audio_end,omitempty"`
+	Repetitions int     `json:"repetitions"`
 }
 
 type WordUpdate struct {
 	BaseForm   string  `json:"base_form"`
-	Rank       int     `json:"rank"`
+	Archived   int64   `json:"archived"`
 	DateMarked int64   `json:"date_marked"`
 	Audio      string  `json:"audio"`
 	AudioStart float32 `json:"audio_start"`
@@ -165,6 +152,10 @@ type WordSearch struct {
 type JMDict struct {
 	XMLName xml.Name      `xml:"JMDict"`
 	Entries []JMDictEntry `xml:"entry" json:"entries"`
+}
+
+type Definition struct {
+	Entries []JMDictEntry `bson:"entries, omitempty" json:"entries,omitempty"`
 }
 
 type JMDictEntry struct {

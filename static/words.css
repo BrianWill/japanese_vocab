@@ -81,12 +81,6 @@ h3 {
     border: 1px solid #d2d2d2;
 }
 
-
-#cards {
-    margin-left: 2em;
-    margin-top: 3em;
-}
-
 #interior_link {
     text-decoration: none;
 }
@@ -96,18 +90,13 @@ h3 {
 }
 
 #results {
-    margin-top: 3em;
-    margin-bottom: 2em;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
-    gap: 0px 0px;
+    background-color: rgb(36, 41, 55);
+    border-top-right-radius: 90px;
+    height: 100%;
 }
 
 #answer {
-    background-color: rgb(36, 41, 55);
     font-size: 130%;
-    border-top-right-radius: 90px;
     gap: 0px 0px;
 }
 
@@ -126,19 +115,25 @@ h3 {
     padding: 2px 0px 13px 30px;
     margin: 22px;
     font-size: 340%;
-    color: #dfdfdf;
+    color: #b2b2b2;
     background-color: black;
     border-radius: 8px;
     display: flex;
     flex-wrap: nowrap;
-    align-items: baseline;
+    align-items: center;
+}
+
+
+#words div.drill_word:first-of-type .base_form {
+    font-size: 135%;
+    color: #ececec;
 }
 
 .rank {
     margin-left: auto;
     margin-right: 20px;
-    font-size: 50%;
-    color: #3b3b3b;
+    font-size: 25%;
+    color: #828282;
 }
 
 #drill_info {
@@ -235,7 +230,7 @@ h3 {
     margin-top: 0.5em;
 }
 
-#drill_count {
+#repetitions {
     font-size: 120%;
     margin: 5px;
     width: 9em;
@@ -247,32 +242,18 @@ h3 {
     width: 12em;
 }
 
-#category {
+#right_sidebar select {
     font-size: 100%;
     margin: 5px;
     width: 12em;
+    overflow: hidden;
 }
 
-#filter_select {
-    font-size: 100%;
-    margin: 5px;
-    width: 14em;
+#right_sidebar select option:checked {
+    background-color: rgb(122, 129, 150);
 }
 
-#drill_filter {
-    font-size: 100%;
-    margin: 5px;
-    width: 18em;
-}
-
-#drill_wrong {
-    font-size: 100%;
-    margin: 5px;
-    width: 12em;
-}
-
-#current_drill_count {
-    text-align: right;
+#current_repetitions {
     margin-right: 30px;
 }
 
@@ -406,4 +387,47 @@ h3 {
 
 .drill_word .rank>span {
     font-size: 40%;
+}
+
+#words_container {
+    height: 98vh;
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+
+    grid-auto-columns: 1fr;
+    grid-template-areas:
+        "definition words sidebar";
+}
+
+#right_sidebar {
+    grid-area: sidebar;
+}
+
+#definition {
+    grid-area: definition;
+}
+
+#words {
+    grid-area: words;
+}
+
+#home_link {
+
+    text-align: right;
+}
+
+#home_link a {
+    color: #838383;
+    margin-right: 1em;
+}
+
+#drill_controls {
+    color: white;
+    padding: 1em;
+}
+
+#drill_controls a {
+    color: white;
 }

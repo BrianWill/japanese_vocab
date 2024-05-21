@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
-	"strings"
 	"time"
+
 	//"unicode/utf8"
 
 	"github.com/gorilla/mux"
@@ -18,97 +18,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
 )
-
-const INITIAL_RANK = 1
-const INITIAL_STORY_COUNTDOWN = 3
-
-const DRILL_FILTER_ON_COOLDOWN = "on"
-const DRILL_FILTER_OFF_COOLDOWN = "off"
-const DRILL_FILTER_ALL = "all"
-
-const STORY_STATUS_CURRENT = 2
-const STORY_STATUS_NEVER_READ = 1
-const STORY_STATUS_ARCHIVE = 0
-const STORY_INITIAL_STATUS = STORY_STATUS_NEVER_READ
-
-const STORY_LOG_COOLDOWN = 60 * 60 * 8 // 8 hour cooldown (in seconds)
-
-func CreateStory(response http.ResponseWriter, request *http.Request) {
-	dbPath := GetUserDb()
-
-	response.Header().Set("Content-Type", "application/json")
-
-	var story Story
-	json.NewDecoder(request.Body).Decode(&story)
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	_, newWordCount, err := addStory(story, sqldb, false)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	fmt.Println("total new words added:", newWordCount)
-	json.NewEncoder(response).Encode("Success adding story")
-}
-
-func DeleteStory(response http.ResponseWriter, request *http.Request) {
-	dbPath := GetUserDb()
-
-	response.Header().Set("Content-Type", "application/json")
-
-	var story Story
-	json.NewDecoder(request.Body).Decode(&story)
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	err = removeStory(story.ID, sqldb)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	json.NewEncoder(response).Encode("Success removing story")
-}
-
-func RetokenizeStory(response http.ResponseWriter, request *http.Request) {
-	dbPath := GetUserDb()
-
-	response.Header().Set("Content-Type", "application/json")
-
-	var story Story
-	json.NewDecoder(request.Body).Decode(&story)
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-	}
-	defer sqldb.Close()
-
-	_, newWordCount, err := addStory(story, sqldb, true)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	fmt.Println("total new words added:", newWordCount)
-	json.NewEncoder(response).Encode("Success retokenizing story")
-}
 
 func tokenize(content string) ([]*JpToken, []string, error) {
 	analyzerTokens := tok.Analyze(content, tokenizer.Normal)
@@ -148,116 +57,6 @@ func tokenize(content string) ([]*JpToken, []string, error) {
 	}
 
 	return tokens, kanji, nil
-}
-
-func addStory(story Story, sqldb *sql.DB, retokenize bool) (id int64, newWordCount int, err error) {
-	if retokenize {
-		var linesJSON string
-		row := sqldb.QueryRow(`SELECT title, link, lines, date_added, audio 
-			FROM stories WHERE id = $1;`, story.ID)
-		if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded, &story.Audio); err != nil {
-			return 0, 0, fmt.Errorf("failure to read story: " + err.Error())
-		}
-		err := json.Unmarshal([]byte(linesJSON), &story.Lines)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
-		}
-		for _, line := range story.Lines {
-			story.Content += line.Timestamp + "\n"
-			for _, word := range line.Words {
-				story.Content += word.Surface
-			}
-		}
-	} else {
-		row := sqldb.QueryRow(`SELECT id FROM stories WHERE title = $1;`, story.Title)
-		if err := row.Scan(&story.ID); err != nil && err != sql.ErrNoRows {
-			return 0, 0, fmt.Errorf("story with same title already exists: " + err.Error())
-		}
-	}
-
-	// if text has timestamps, split on timestamps,
-	// otherwise split on blank lines
-	timestampRegex := regexp.MustCompile(`(?m)^\s*\d*:\d*\s*$`) // match timestamp line
-	timestamps := timestampRegex.FindAllString(story.Content, -1)
-	lineContents := timestampRegex.Split(story.Content, -1)
-
-	if len(timestamps) > 0 {
-		// todo: check that the timestamps increase in value
-		lineContents = lineContents[1:]
-	} else {
-		blanklinesRegex := regexp.MustCompile(`(?m)^\s*$\n`) // match timestamp line
-		lineContents = blanklinesRegex.Split(story.Content, -1)
-		if len(lineContents) > 0 && lineContents[0] == "" {
-			lineContents = lineContents[1:]
-		}
-	}
-
-	lines := make([]Line, len(lineContents))
-
-	newWordCount = 0
-
-	for i, content := range lineContents {
-		timestamp := "0:00"
-		if len(timestamps) > 0 {
-			timestamp = timestamps[i]
-		}
-		timestamp = strings.TrimSpace(timestamp)
-		content = strings.TrimSpace(content)
-
-		//fmt.Println(timestamp, content)
-
-		tokens, kanjiSet, err := tokenize(content)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failure to tokenize story: " + err.Error())
-		}
-
-		wordsOfLine, lineKanji, addedWordCount, err := addWords(tokens, kanjiSet, sqldb)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failure to add words: " + err.Error())
-		}
-		newWordCount += addedWordCount
-
-		lines[i] = Line{
-			Timestamp: timestamp,
-			Words:     wordsOfLine,
-			Kanji:     lineKanji,
-		}
-	}
-
-	linesJson, err := json.Marshal(lines)
-	if err != nil {
-		return 0, 0, fmt.Errorf("failure to lines: " + err.Error())
-	}
-
-	if retokenize {
-		_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`,
-			linesJson, story.ID)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failure to update story: " + err.Error())
-		}
-		return story.ID, newWordCount, nil
-	} else {
-		date := time.Now().Unix()
-		result, err := sqldb.Exec(`INSERT INTO stories (lines, title, link, audio, date_added, status, countdown, read_count, date_last_read) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
-			linesJson, story.Title, story.Link, story.Audio, date, STORY_INITIAL_STATUS, INITIAL_STORY_COUNTDOWN, 0, 0)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failure to insert story: " + err.Error())
-		}
-		id, err = result.LastInsertId()
-		if err != nil {
-			return 0, 0, fmt.Errorf("failure to insert story: " + err.Error())
-		}
-		return id, newWordCount, nil
-	}
-}
-
-func removeStory(storyId int64, sqldb *sql.DB) (err error) {
-	_, err = sqldb.Exec(`DELETE FROM stories WHERE id = $1;`, storyId)
-	if err != nil {
-		return fmt.Errorf("failure to insert story: " + err.Error())
-	}
-	return nil
 }
 
 func getTokenPOS(token *JpToken, priorToken *JpToken) string {
@@ -339,122 +138,125 @@ func extractKanji(tokens []*JpToken) ([]string, error) {
 	return kanji, nil
 }
 
-func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) ([]LineWord, []LineKanji, int, error) {
+func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []int64, newWordCount int, err error) {
 	var reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
 	var reHasKatakana = regexp.MustCompile(`[ア-ン]`)
 	var reHasKana = regexp.MustCompile(`[ア-ンァ-ヴぁ-ゔ]`)
 
-	newWordCount := 0
+	newWordCount = 0
 	unixtime := time.Now().Unix()
 
-	lineWords := make([]LineWord, len(tokens))
+	wordIds = make([]int64, 0)
+
+	keptTokens := make([]*JpToken, 0)
+
+	// filter out tokens that have no part of speech
 	for i, token := range tokens {
 		priorToken := &JpToken{}
 		if i > 0 {
 			priorToken = tokens[i-1]
 		}
 
-		lineWord := &lineWords[i]
-		lineWord.Surface = token.Surface
-		lineWord.BaseForm = token.BaseForm
-		lineWord.POS = getTokenPOS(token, priorToken)
+		pos := getTokenPOS(token, priorToken)
+		if pos == "" {
+			continue
+		}
+
+		keptTokens = append(keptTokens, token)
+	}
+
+	words := make(map[string]bool)
+	for _, t := range keptTokens {
+		words[t.BaseForm] = true
+	}
+
+	for _, k := range kanjiSet {
+		words[k] = true
+	}
+
+	wordIdsMap := make(map[int64]bool)
+
+	for baseForm := range words {
+		hasKatakana := len(reHasKatakana.FindStringIndex(baseForm)) > 0
+		hasKana := len(reHasKana.FindStringIndex(baseForm)) > 0
+		hasKanji := len(reHasKanji.FindStringIndex(baseForm)) > 0
+		isKanji := len([]rune(baseForm)) == 1 && reHasKanji.FindStringIndex(baseForm) != nil
+
+		if !hasKana && !hasKanji { // not a valid word
+			continue
+		}
 
 		category := 0
-
-		if lineWord.POS == "" { // not a vocab word
-			continue
-		}
-
-		hasKatakana := len(reHasKatakana.FindStringIndex(token.BaseForm)) > 0
-		hasKana := len(reHasKana.FindStringIndex(token.BaseForm)) > 0
-		hasKanji := len(reHasKanji.FindStringIndex(token.BaseForm)) > 0
-
-		if !hasKana && !hasKanji {
-			continue
-		}
 
 		// has katakana
 		if hasKatakana {
 			category |= DRILL_CATEGORY_KATAKANA
 		}
 
-		entries := getDefinitions(token.BaseForm)
+		entries := getDefinitions(baseForm)
 		for _, entry := range entries {
 			for _, sense := range entry.Senses {
 				category |= getVerbCategory(sense)
 			}
 		}
 
-		lineWord.Category = category
+		entriesJSON, err := json.Marshal(entries)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		kanjiDef := KanjiCharacter{}
+
+		if isKanji {
+			for _, ch := range allKanji.Characters {
+				if ch.Literal == baseForm {
+					kanjiDef = ch
+					break
+				}
+			}
+
+			category |= DRILL_CATEGORY_KANJI
+		}
+
+		kanjiDefJSON, err := json.Marshal(kanjiDef)
+		if err != nil {
+			return nil, 0, err
+		}
 
 		var id int64
-		err := sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1`, token.BaseForm).Scan(&id)
+		err = sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1`, baseForm).Scan(&id)
 		if err != nil && err != sql.ErrNoRows {
-			return nil, nil, 0, err
+			return nil, 0, err
 		}
 		if err == nil {
-			lineWord.ID = id // word already exists
+			if _, ok := wordIdsMap[id]; !ok {
+				wordIdsMap[id] = true
+				wordIds = append(wordIds, id)
+			}
 			continue
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, rank, drill_count, audio, audio_start, audio_end) 
-			VALUES($1, $2, $3, $4, $5, $6);`,
-			lineWord.BaseForm, 0, unixtime, lineWord.Category, INITIAL_RANK, 0, "", 0, 0)
+			date_added, category, repetitions, definitions, kanji) 
+			VALUES($1, $2, $3, $4, $5, $6, $7);`,
+			baseForm, 0, unixtime, category, 0, entriesJSON, kanjiDefJSON)
 		if err != nil {
-			return nil, nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
+			return nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
 		}
 
 		id, err = insertResult.LastInsertId()
 		if err != nil {
-			return nil, nil, 0, fmt.Errorf("failure to get id of inserted word: " + err.Error())
+			return nil, 0, fmt.Errorf("failure to get id of inserted word: " + err.Error())
 		}
+
+		fmt.Println("inserted word: ", baseForm, id)
+
 		newWordCount++
-		lineWord.ID = id
+		wordIds = append(wordIds, id)
+		wordIdsMap[id] = true
 	}
 
-	kanjiToInsert := make(map[string]*LineKanji)
-
-	lineKanji := make([]LineKanji, len(kanjiSet))
-	for i, kanji := range kanjiSet {
-		if _, ok := kanjiToInsert[kanji]; ok {
-			continue // early out
-		}
-
-		lk := &lineKanji[i]
-		lk.Character = kanji
-
-		var id int64
-		err := sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1;`, lk.Character).Scan(&id)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, nil, 0, err
-		}
-		if err == nil {
-			lk.ID = id // kanji already exists
-			continue
-		}
-
-		kanjiToInsert[kanji] = lk
-	}
-
-	for _, lk := range kanjiToInsert {
-		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, rank, drill_count, audio, audio_start, audio_end) 
-			VALUES($1, $2, $3, $4, $5, $6);`,
-			lk.Character, 0, unixtime, DRILL_CATEGORY_KANJI, INITIAL_RANK, 0, "", 0, 0)
-		if err != nil {
-			return nil, nil, 0, fmt.Errorf("failure to insert kanji: " + err.Error())
-		}
-
-		id, err := insertResult.LastInsertId()
-		if err != nil {
-			return nil, nil, 0, fmt.Errorf("failure to get id of inserted kanji: " + err.Error())
-		}
-		newWordCount++
-		lk.ID = id
-	}
-
-	return lineWords, lineKanji, newWordCount, nil
+	return wordIds, newWordCount, nil
 }
 
 func getDefinitions(baseForm string) []JMDictEntry {
@@ -475,59 +277,17 @@ func getDefinitions(baseForm string) []JMDictEntry {
 		}
 	}
 
-	//fmt.Println("get definitions", baseForm, len(entries))
-
 	definitionsCache[baseForm] = entries
 	return entries
 }
 
-// func getDefinitionsJSON(baseForm string) (string, error) {
-// 	if json, ok := definitionsJSONCache[baseForm]; ok {
-// 		return json, nil
-// 	}
-
-// 	entries := getDefinitions(baseForm)
-
-// 	entriesJSON, err := json.Marshal(entries)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failure marshalling definitions for word: %s", baseForm)
-// 	}
-
-// 	definitionsJSONCache[baseForm] = string(entriesJSON)
-// 	return string(entriesJSON), nil
-// }
-
-func getVerbCategory(sense JMDictSense) int {
-	category := 0
-	for _, pos := range sense.Pos {
-		switch pos {
-		case "verb-ichidan":
-			category |= DRILL_CATEGORY_ICHIDAN
-		case "verb-godan-su":
-			category |= DRILL_CATEGORY_GODAN_SU
-		case "verb-godan-ku":
-			category |= DRILL_CATEGORY_GODAN_KU
-		case "verb-godan-gu":
-			category |= DRILL_CATEGORY_GODAN_GU
-		case "verb-godan-ru":
-			category |= DRILL_CATEGORY_GODAN_RU
-		case "verb-godan-u":
-			category |= DRILL_CATEGORY_GODAN_U
-		case "verb-godan-tsu":
-			category |= DRILL_CATEGORY_GODAN_TSU
-		case "verb-godan-mu":
-			category |= DRILL_CATEGORY_GODAN_MU
-		case "verb-godan-nu":
-			category |= DRILL_CATEGORY_GODAN_NU
-		case "verb-godan-bu":
-			category |= DRILL_CATEGORY_GODAN_BU
-		}
-	}
-	return category
+type BaseFormCategoryPair struct {
+	BaseForm string
+	Category int
 }
 
-func GetStoriesList(response http.ResponseWriter, request *http.Request) {
-	dbPath := GetUserDb()
+func GetStories(response http.ResponseWriter, request *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
 
 	response.Header().Set("Content-Type", "application/json")
 
@@ -539,7 +299,17 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, title, link, lines, status, level, date_added, countdown, read_count, date_last_read FROM stories;`)
+	ips, err := GetOutboundIP()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, ip := range ips {
+		fmt.Println("ip: ", ip)
+	}
+
+	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, audio, video, 
+			level, date, date_marked, repetitions FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -549,75 +319,22 @@ func GetStoriesList(response http.ResponseWriter, request *http.Request) {
 
 	var stories []Story
 	for rows.Next() {
-		var linesJSON string
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Link, &linesJSON, &story.Status, &story.Level,
-			&story.DateAdded, &story.Countdown, &story.ReadCount, &story.DateLastRead); err != nil {
+		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber,
+			&story.Audio, &story.Video, &story.Level, &story.Date,
+			&story.DateMarked, &story.Repetitions); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
-			return
-		}
-
-		err := json.Unmarshal([]byte(linesJSON), &story.Lines)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(`{ "message": "` + "failure to unmarshal story lines: " + err.Error() + `"}`))
 			return
 		}
 		stories = append(stories, story)
 	}
 
-	wordRanks, err := GetWordRanks(sqldb)
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get word ranks: " + err.Error() + `"}`))
-		return
-	}
-
-	for i := range stories {
-		story := &stories[i]
-		story.WordRankCounts = GetStoryWordRankCounts(story.Lines, wordRanks)
-		story.Lines = nil // omit the lines from the returned data
-	}
-
 	json.NewEncoder(response).Encode(stories)
 }
 
-func GetStoryWordRankCounts(lines []Line, wordRanks map[string]int) WordRankCounts {
-	var counts WordRankCounts
-	for _, line := range lines {
-		for _, word := range line.Words {
-			if rank, ok := wordRanks[word.BaseForm]; ok {
-				counts[rank-1]++
-			}
-		}
-	}
-	return counts
-}
-
-func GetWordRanks(sqldb *sql.DB) (map[string]int, error) {
-	wordRanks := make(map[string]int)
-
-	rows, err := sqldb.Query(`SELECT id, base_form, rank FROM words;`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var word DrillWord
-		err = rows.Scan(&word.ID, &word.BaseForm, &word.Rank)
-		if err != nil {
-			return nil, err
-		}
-		wordRanks[word.BaseForm] = word.Rank
-	}
-
-	return wordRanks, nil
-}
-
 func GetStory(w http.ResponseWriter, r *http.Request) {
-	dbPath := GetUserDb()
+	dbPath := MAIN_USER_DB_PATH
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("content-encoding", "gzip")
@@ -641,7 +358,21 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	story, err := getStory(int64(id), sqldb)
+	row := sqldb.QueryRow(`SELECT title, source, link, content, date, audio, video, 
+		level, words, date_marked, transcript_en, transcript_ja FROM stories WHERE id = $1;`, id)
+
+	var words string
+	story := Story{ID: int64(id)}
+	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
+		&story.Audio, &story.Video,
+		&story.Level, &words, &story.DateMarked,
+		&story.TranscriptEN, &story.TranscriptJA); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
+		return
+	}
+
+	err = json.Unmarshal([]byte(words), &story.Words)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -656,51 +387,8 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getStory(id int64, sqldb *sql.DB) (Story, error) {
-	row := sqldb.QueryRow(`SELECT title, link, lines, date_added, audio, countdown, read_count, date_last_read FROM stories WHERE id = $1;`, id)
-
-	var linesJSON string
-	story := Story{ID: id}
-	if err := row.Scan(&story.Title, &story.Link, &linesJSON, &story.DateAdded,
-		&story.Audio, &story.Countdown, &story.ReadCount, &story.DateLastRead); err != nil {
-		return Story{}, fmt.Errorf("failure to scan story row: " + err.Error())
-	}
-
-	err := json.Unmarshal([]byte(linesJSON), &story.Lines)
-	if err != nil {
-		return Story{}, fmt.Errorf("failure to unmarshall story lines: " + err.Error())
-	}
-
-	wordInfo := make(map[string]WordInfo)
-
-	for _, line := range story.Lines {
-		for _, word := range line.Words {
-			wordInfo[word.BaseForm] = WordInfo{
-				Definitions: getDefinitions(word.BaseForm),
-			}
-		}
-	}
-
-	story.WordInfo = wordInfo
-
-	for baseForm := range story.WordInfo {
-		wordInfo := story.WordInfo[baseForm]
-
-		row := sqldb.QueryRow(`SELECT rank, date_marked FROM words WHERE base_form = $1;`, baseForm)
-
-		err = row.Scan(&wordInfo.Rank, &wordInfo.DateMarked)
-		if err != nil && err != sql.ErrNoRows {
-			return Story{}, fmt.Errorf("failure to get word info: " + err.Error())
-		}
-
-		story.WordInfo[baseForm] = wordInfo
-	}
-
-	return story, nil
-}
-
-func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
-	dbPath := GetUserDb()
+func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -736,8 +424,13 @@ func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	_, err = sqldb.Exec(`UPDATE stories SET countdown = $1, read_count = $2, date_last_read = $3, level = $4 WHERE id = $5;`,
-		story.Countdown, story.ReadCount, story.DateLastRead, story.Level, story.ID)
+	_, err = sqldb.Exec(`UPDATE stories SET 
+			date_marked = $1, level = $2, repetitions = $3, 
+			transcript_en = CASE WHEN $4 = '' THEN transcript_en ELSE $4 END,
+			transcript_ja = CASE WHEN $5 = '' THEN transcript_ja ELSE $5 END
+			WHERE id = $6;`,
+		story.DateMarked, story.Level, story.Repetitions,
+		story.TranscriptEN, story.TranscriptJA, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
@@ -747,9 +440,16 @@ func UpdateStoryCounts(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }
 
-// remove a line and combine its content with the previous line
-func ConsolidateLine(w http.ResponseWriter, r *http.Request) {
-	dbPath := GetUserDb()
+func UnscheduleStory(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	var body ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -759,210 +459,156 @@ func ConsolidateLine(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	w.Header().Set("Content-Type", "application/json")
-
-	var consolidateLine ConsolidateLineRequest
-	err = json.NewDecoder(r.Body).Decode(&consolidateLine)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	if consolidateLine.LineToRemove < 1 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to conslidate must have index of 1 or greater}`))
-		return
-	}
-
-	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, consolidateLine.StoryID)
-
-	var linesJSON string
-	if err := row.Scan(&linesJSON); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to get story lines": "` + err.Error() + `"}`))
-		return
-	}
-
-	var lines []Line
-	err = json.Unmarshal([]byte(linesJSON), &lines)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to unmarhsal story lines JSON": "` + err.Error() + `"}`))
-		return
-	}
-
-	if consolidateLine.LineToRemove >= len(lines) {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to conslidate must have index of 1 or greater}`))
-		return
-	}
-
-	idx := consolidateLine.LineToRemove
-	prevLine := &lines[idx-1]
-	line := lines[idx]
-
-	//prevLine.Content += line.Content
-	prevLine.Words = append(prevLine.Words, line.Words...)
-
-	kanjiMap := make(map[string]LineKanji)
-	for _, v := range prevLine.Kanji {
-		kanjiMap[v.Character] = v
-	}
-	for _, v := range line.Kanji {
-		kanjiMap[v.Character] = v
-	}
-
-	prevLine.Kanji = make([]LineKanji, len(kanjiMap))
-	i := 0
-	for _, v := range kanjiMap {
-		prevLine.Kanji[i] = v
-		i++
-	}
-
-	// remove the line
-	lines = append(lines[:idx], lines[idx+1:]...)
-
-	linesBytes, err := json.Marshal(lines)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to JSONify story lines": "` + err.Error() + `"}`))
-		return
-	}
-
-	_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, consolidateLine.StoryID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
-		return
-	}
-
-	w.Write(linesBytes)
-}
-
-func SplitLine(w http.ResponseWriter, r *http.Request) {
-	dbPath := GetUserDb()
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	w.Header().Set("Content-Type", "application/json")
-
-	var splitLine SplitLineRequest
-	err = json.NewDecoder(r.Body).Decode(&splitLine)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, splitLine.StoryID)
-
-	var linesJSON string
-	if err := row.Scan(&linesJSON); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to get story lines": "` + err.Error() + `"}`))
-		return
-	}
-
-	var lines []Line
-	err = json.Unmarshal([]byte(linesJSON), &lines)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to unmarhsal story lines JSON": "` + err.Error() + `"}`))
-		return
-	}
-
-	if splitLine.LineToSplit < 0 || splitLine.LineToSplit >= len(lines) {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to split must have index of 1 or greater}`))
-		return
-	}
-
-	idx := splitLine.LineToSplit
-	origLine := &lines[idx]
-
-	if splitLine.WordIdx < 1 || splitLine.WordIdx >= len(origLine.Words) {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to split word index must be in range}`))
-		return
-	}
-
-	timestamp := secondsToTimestamp(splitLine.Timestamp)
-	if splitLine.Timestamp == 0 {
-		timestamp = origLine.Timestamp
-	}
-
-	newLine := Line{
-		Words:     origLine.Words[splitLine.WordIdx:],
-		Timestamp: timestamp,
-	}
-	origLine.Words = origLine.Words[:splitLine.WordIdx]
-
-	kanjiMap := make(map[string]LineKanji)
-	for _, v := range origLine.Kanji {
-		kanjiMap[v.Character] = v
-	}
-	for _, v := range newLine.Kanji {
-		kanjiMap[v.Character] = v
-	}
-
-	origKanjiMap := make(map[string]bool)
-	for _, word := range origLine.Words {
-		for _, rune := range word.Surface {
-			s := string(rune)
-			if _, ok := kanjiMap[s]; ok {
-				origKanjiMap[string(rune)] = true
-			}
+	if body.ID > 0 {
+		_, err = sqldb.Exec(`DELETE FROM schedule_entries WHERE id = $1;`, body.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+			return
+		}
+	} else {
+		_, err = sqldb.Exec(`DELETE FROM schedule_entries WHERE story = $1;`, body.Story)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+			return
 		}
 	}
-	newKanjiMap := make(map[string]bool)
-	for _, word := range newLine.Words {
-		for _, rune := range word.Surface {
-			s := string(rune)
-			if _, ok := kanjiMap[s]; ok {
-				newKanjiMap[string(rune)] = true
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
+func ScheduleStory(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	var scheduleRequest ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&scheduleRequest)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	for i := 0; i < NUM_SCHEDULED_REPETITIONS; i++ {
+		day := i * 3
+
+		// add rep
+		_, err := sqldb.Exec(`INSERT INTO schedule_entries (story, day_offset, type) VALUES($1, $2, $3);`,
+			scheduleRequest.Story, day, LISTENING)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+			return
+		}
+
+		// add drill except after last rep
+		if i < NUM_SCHEDULED_REPETITIONS-1 {
+			_, err = sqldb.Exec(`INSERT INTO schedule_entries (story, day_offset, type) VALUES($1, $2, $3);`,
+				scheduleRequest.Story, day+1, DRILLING)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+				return
 			}
 		}
 	}
 
-	origLine.Kanji = make([]LineKanji, 0)
-	for ch := range origKanjiMap {
-		origLine.Kanji = append(origLine.Kanji, kanjiMap[ch])
-	}
-	newLine.Kanji = make([]LineKanji, 0)
-	for ch := range newKanjiMap {
-		newLine.Kanji = append(newLine.Kanji, kanjiMap[ch])
-	}
-
-	// insert the line
-	lines = append(lines[:idx+1], lines[idx:]...)
-	lines[idx+1] = newLine
-
-	linesBytes, err := json.Marshal(lines)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to JSONify story lines": "` + err.Error() + `"}`))
-		return
-	}
-
-	_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, splitLine.StoryID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
-		return
-	}
-
-	w.Write(linesBytes)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }
 
-func SetTimestamp(w http.ResponseWriter, r *http.Request) {
-	dbPath := GetUserDb()
+func LogStory(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	var body ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	unixtime := time.Now().Unix()
+
+	var entry ScheduleLogEntry
+	row := sqldb.QueryRow(`SELECT type, story FROM schedule_entries WHERE id = $1`, body.ID)
+	err = row.Scan(&entry.Type, &entry.Story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`INSERT INTO log_entries (story, date, type) VALUES($1, $2, $3);`,
+		entry.Story, unixtime, entry.Type)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`DELETE FROM schedule_entries WHERE id = $1;`, body.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE stories SET repetitions = repetitions + 1 WHERE id = $1;`, entry.Story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update story reps: " + err.Error() + `"}`))
+		return
+	}
+
+	err = incrementWordRepetitions(body.Words, sqldb)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update word repetition counts: " + err.Error() + `"}`))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
+func incrementWordRepetitions(wordIds []int64, sqldb *sql.DB) error {
+	for _, wordId := range wordIds {
+		_, err := sqldb.Exec(`UPDATE words SET repetitions = repetitions + 1WHERE id = $1;`, wordId)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ScheduleAdjust(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	var body ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -974,78 +620,78 @@ func SetTimestamp(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var setTimestamp SetTimestampRequest
-	err = json.NewDecoder(r.Body).Decode(&setTimestamp)
+	var entry ScheduleLogEntry
+	row := sqldb.QueryRow(`SELECT day_offset, story FROM schedule_entries WHERE id = $1`, body.ID)
+	err = row.Scan(&entry.DayOffset, &entry.Story)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entry: " + err.Error() + `"}`))
 		return
 	}
 
-	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, setTimestamp.StoryID)
-
-	var linesJSON string
-	if err := row.Scan(&linesJSON); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to get story lines": "` + err.Error() + `"}`))
-		return
-	}
-
-	var lines []Line
-	err = json.Unmarshal([]byte(linesJSON), &lines)
+	// get all other entries for the same story
+	rows, err := sqldb.Query(`SELECT id, type, day_offset FROM schedule_entries WHERE story = $1`, entry.Story)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to unmarshal story lines JSON": "` + err.Error() + `"}`))
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entries: " + err.Error() + `"}`))
 		return
 	}
+	defer rows.Close()
 
-	if setTimestamp.LineIdx < 0 || setTimestamp.LineIdx >= len(lines) {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to set timestamp must have index of 1 or greater}`))
-		return
+	scheduleEntries := make([]ScheduleLogEntry, 0)
+
+	for rows.Next() {
+		var entry ScheduleLogEntry
+		if err := rows.Scan(&entry.ID, &entry.Type, &entry.DayOffset); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+			return
+		}
+		scheduleEntries = append(scheduleEntries, entry)
 	}
 
-	line := &lines[setTimestamp.LineIdx]
+	sort.Slice(scheduleEntries, func(i, j int) bool {
+		return scheduleEntries[i].DayOffset < scheduleEntries[j].DayOffset
+	})
 
-	if setTimestamp.Timestamp < 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: cannot set timestamp to value less than zero}`))
-		return
+	adjust := false
+	for i := range scheduleEntries {
+		if scheduleEntries[i].ID == body.ID {
+			adjust = true
+		}
+
+		if adjust {
+			scheduleEntries[i].DayOffset += body.OffsetAdjustment
+		}
 	}
 
-	line.Timestamp = secondsToTimestamp(setTimestamp.Timestamp)
-
-	linesBytes, err := json.Marshal(lines)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to JSONify story lines": "` + err.Error() + `"}`))
-		return
+	// check that the adjusted offsets are greater than 0 and strictly increase
+	priorOffset := int64(-1)
+	for _, entry := range scheduleEntries {
+		if entry.DayOffset <= priorOffset {
+			json.NewEncoder(w).Encode(bson.M{"status": "no adjustment"})
+			return
+		}
+		priorOffset = entry.DayOffset
 	}
 
-	_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, setTimestamp.StoryID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
-		return
+	// adjust all reps of the story
+	for _, entry := range scheduleEntries {
+		_, err = sqldb.Exec(`UPDATE schedule_entries SET day_offset = $1 WHERE id = $2;`, entry.DayOffset, entry.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+			return
+		}
 	}
 
-	w.Write(linesBytes)
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }
 
-func secondsToTimestamp(seconds float64) string {
-	minutes := math.Floor(seconds / 60)
-	seconds -= minutes * 60
-	wholeSeconds := math.Floor(seconds)
-	fracSeconds := seconds - wholeSeconds
-	s := fmt.Sprintf("%d:%02d", int(minutes), int(seconds))
-	if fracSeconds > 0 {
-		s += ".5"
-	}
-	return s
-}
+func GetSchedule(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
 
-func SetLineMark(w http.ResponseWriter, r *http.Request) {
-	dbPath := GetUserDb()
+	w.Header().Set("Content-Type", "application/json")
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -1055,55 +701,107 @@ func SetLineMark(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
+	// make sure the story actually exists
+	rows, err := sqldb.Query(`SELECT e.id, story, day_offset, type, 
+		title, source, repetitions, level 
+		FROM schedule_entries as e INNER JOIN stories as s 
+		ON e.story = s.id;`)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	scheduleEntries := make([]ScheduleLogEntry, 0)
+
+	for rows.Next() {
+		var entry ScheduleLogEntry
+		if err := rows.Scan(&entry.ID, &entry.Story, &entry.DayOffset, &entry.Type,
+			&entry.Title, &entry.Source, &entry.Repetitions, &entry.Level); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+			return
+		}
+		scheduleEntries = append(scheduleEntries, entry)
+	}
+
+	unixtime := time.Now().Unix() - 60*60*24 // 24 hours ago
+
+	// make sure the story actually exists
+	rows, err = sqldb.Query(`SELECT e.id, story, e.date, type, 
+		title, source, repetitions, level 
+		FROM log_entries as e INNER JOIN stories as s 
+		ON e.story = s.id AND e.date > $1;`, unixtime)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	logEntries := make([]ScheduleLogEntry, 0)
+
+	for rows.Next() {
+		var entry ScheduleLogEntry
+		if err := rows.Scan(&entry.ID, &entry.Story, &entry.Date, &entry.Type,
+			&entry.Title, &entry.Source, &entry.Repetitions, &entry.Level); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+			return
+		}
+		logEntries = append(logEntries, entry)
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"schedule": scheduleEntries, "log": logEntries})
+}
+
+func GetLog(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
 	w.Header().Set("Content-Type", "application/json")
 
-	var setLineMark SetLineMarkRequest
-	err = json.NewDecoder(r.Body).Decode(&setLineMark)
+	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
+	defer sqldb.Close()
 
-	row := sqldb.QueryRow(`SELECT lines FROM stories WHERE id = $1;`, setLineMark.StoryID)
-
-	var linesJSON string
-	if err := row.Scan(&linesJSON); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to get story lines": "` + err.Error() + `"}`))
-		return
-	}
-
-	var lines []Line
-	err = json.Unmarshal([]byte(linesJSON), &lines)
+	// make sure the story actually exists
+	rows, err := sqldb.Query(`SELECT id, story, date, type FROM log_entries;`)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to unmarshal story lines JSON": "` + err.Error() + `"}`))
+		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
 		return
 	}
+	defer rows.Close()
 
-	if setLineMark.LineIdx < 0 || setLineMark.LineIdx >= len(lines) {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{ "message: line to set mark must have index of 1 or greater}`))
-		return
+	entries := make([]ScheduleLogEntry, 0)
+
+	for rows.Next() {
+		var entry ScheduleLogEntry
+		if err := rows.Scan(&entry.ID, &entry.Story, &entry.Date, &entry.Type); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
+			return
+		}
+		entries = append(entries, entry)
 	}
 
-	line := &lines[setLineMark.LineIdx]
-	line.Marked = setLineMark.Marked
+	json.NewEncoder(w).Encode(entries)
+}
 
-	linesBytes, err := json.Marshal(lines)
+func GetIP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	ips, err := GetOutboundIP()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message: failure to JSONify story lines": "` + err.Error() + `"}`))
+		w.Write([]byte(`{ "message": "` + "failure to get IPs: " + err.Error() + `"}`))
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE stories SET lines = $1 WHERE id = $2;`, linesBytes, setLineMark.StoryID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to update lines in story: " + err.Error() + `"}`))
-		return
-	}
-
-	w.Write(linesBytes)
+	json.NewEncoder(w).Encode(ips)
 }

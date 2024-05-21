@@ -8,72 +8,10 @@ var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
-var rankSlider = document.getElementById('rank_slider');
+var archivedSelect = document.getElementById('archived_select');
+var logLink = document.getElementById('log_link');
 
-
-const COOLDOWN_TIME = 60 * 60 * 3 // number of seconds
-
-var drillSet = null;
-var answeredSet = [];
-var stories;
-var words;
-var wordInfoMap;
-
-function newDrill() {
-    let includeOffCooldown = true;
-    let includeOnCooldown = true;
-    switch (filterSelect.value) {
-        case 'off':
-            includeOnCooldown = false;
-            break;
-        case 'on':
-            includeOffCooldown = false;
-            break;
-    }
-
-    let categoryMask = getCategoryMask(categorySelect.value);
-    let [minRank, maxRank] = rankSlider.noUiSlider.get();
-    let unixTime = Math.floor(Date.now() / 1000);
-
-    let countsByRank = [0, 0, 0, 0, 0];
-    let onCooldownCountsByRank = [0, 0, 0, 0, 0];
-
-    drillSet = [];
-    for (let word of words) {
-        let wordInfo = wordInfoMap[word.base_form];
-        let offcooldown = (unixTime - wordInfo.date_marked) > cooldownsByRank[wordInfo.rank];
-        countsByRank[wordInfo.rank]++;
-        if (offcooldown) {
-            onCooldownCountsByRank[wordInfo.rank]++;
-        }
-
-        // filter
-        if (categorySelect.value === 'all' || (word.category & categoryMask) != 0) {
-            let wordInfo = wordInfoMap[word.base_form];
-            if (wordInfo.rank >= minRank && wordInfo.rank <= maxRank) {
-                if ((includeOffCooldown && includeOnCooldown) ||
-                    (includeOffCooldown && offcooldown) ||
-                    (includeOnCooldown && !offcooldown)
-                ) {
-                    word.answered = false;
-                    drillSet.push(word);
-                }
-            }
-        }
-    }
-
-    drillComlpeteDiv.style.display = 'none';
-    shuffle(drillSet);
-    answeredSet = [];
-
-    drillInfoH.innerHTML = `
-                        ${words.length} words in story &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number">Rank 1:</span> ${countsByRank[1]} words <span class="cooldown">(${onCooldownCountsByRank[1]} off cooldown)</span> &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number">Rank 2:</span> ${countsByRank[2]} words <span class="cooldown">(${onCooldownCountsByRank[2]} off cooldown)</span> &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number">Rank 3:</span> ${countsByRank[3]} words <span class="cooldown">(${onCooldownCountsByRank[3]} off cooldown)</span> &nbsp;&nbsp;&nbsp;
-                        <span class="rank_number">Rank 4:</span> ${countsByRank[4]} words <span class="cooldown">(${onCooldownCountsByRank[4]} off cooldown)</span>`;
-    displayWords();
-}
+const WORD_COOLDOWN_TIME = 60 * 60 * 24 * 2.5; // 2.5 days (in seconds)
 
 const DRILL_CATEGORY_KATAKANA = 1;
 const DRILL_CATEGORY_ICHIDAN = 2;
@@ -89,19 +27,102 @@ const DRILL_CATEGORY_GODAN_NU = 2048;
 const DRILL_CATEGORY_KANJI = 4096;
 const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
     DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU;
+const DRILL_ALL = DRILL_CATEGORY_GODAN | DRILL_CATEGORY_ICHIDAN | DRILL_CATEGORY_KANJI | DRILL_CATEGORY_KATAKANA;
 
-function getCategoryMask(category) {
-    switch (category) {
-        case 'kanji':
-            return DRILL_CATEGORY_KANJI;
-        case 'katakana':
-            return DRILL_CATEGORY_KATAKANA;
-        case 'godan':
-            return DRILL_CATEGORY_GODAN;
-        case 'ichidan':
-            return DRILL_CATEGORY_ICHIDAN;
+var drillSet = [];
+var answeredSet = [];
+var words;
+
+archivedSelect.onchange = function (evt) {
+    newDrill();
+};
+
+function newDrill() {
+    let includeNotArchived = false;
+    let includeArchived = false;
+    for (let option of archivedSelect.selectedOptions) {
+        switch (option.value) {
+            case 'unarchived':
+                includeNotArchived = true;
+                break;
+            case 'archived':
+                includeArchived = true;
+                break;
+        }
     }
-    return -1;
+
+    let includeOffCooldown = false;
+    let includeOnCooldown = false;
+    for (let option of filterSelect.selectedOptions) {
+        switch (option.value) {
+            case 'off':
+                includeOffCooldown = true;
+                break;
+            case 'on':
+                includeOnCooldown = true;
+                break;
+        }
+    }
+
+    let categoryMask = 0;
+    let includeOther = false;
+    for (let option of categorySelect.selectedOptions) {
+        switch (option.value) {
+            case 'kanji':
+                categoryMask |= DRILL_CATEGORY_KANJI;
+                break;
+            case 'katakana':
+                categoryMask |= DRILL_CATEGORY_KATAKANA;
+                break;
+            case 'godan':
+                categoryMask |= DRILL_CATEGORY_GODAN;
+                break;
+            case 'ichidan':
+                categoryMask |= DRILL_CATEGORY_ICHIDAN;
+                break;
+            case 'other':
+                includeOther = true;
+                break;
+        }
+    }
+
+    let unixTime = Math.floor(Date.now() / 1000);
+
+    let countOffCooldown = 0;
+
+    drillSet = [];
+    for (let word of words) {
+        let offcooldown = (unixTime - word.date_marked) > WORD_COOLDOWN_TIME;
+        if (offcooldown) {
+            countOffCooldown++;
+        }
+
+        let isOther = (word.category & DRILL_ALL) == 0;
+        let isCategoryMatch = (word.category & categoryMask) != 0;
+        let categoryFilter = isCategoryMatch || (includeOther && isOther);
+
+        let cooldownFilter = (includeOffCooldown && includeOnCooldown) ||
+            (includeOffCooldown && offcooldown) ||
+            (includeOnCooldown && !offcooldown);
+
+        let statusFilter = (includeNotArchived && word.archived == 0) ||
+            (includeArchived && word.archived == 1);
+
+        if (!categoryFilter || !cooldownFilter || !statusFilter) {
+            continue;
+        }
+
+        word.answered = false;
+        drillSet.push(word);
+    }
+
+    drillComlpeteDiv.style.display = 'none';
+    shuffle(drillSet);
+    answeredSet = [];
+
+    drillInfoH.innerHTML = `${words.length} words in story <br>
+                        ${countOffCooldown} words off cooldown`;
+    displayWords();
 }
 
 categorySelect.onchange = newDrill;
@@ -109,13 +130,17 @@ filterSelect.onchange = newDrill;
 
 function displayWords() {
     function wordInfo(word, idx, answered) {
+        let archived = word.archived ? 'archived' : '';
         return `<div index="${idx}" class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
-                    <div class="rank rank${word.rank}"><span>rank</span> ${word.rank}</div>
+                    <div class="rank ">
+                        ${archived}<br>
+                        ${word.repetitions} reps
+                    </div>
                 </div>`;
     }
 
-    html = `<h3 id="current_drill_count">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
+    html = `<h3 id="current_repetitions">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
 
     idx = 0;
     for (let word of drillSet) {
@@ -135,7 +160,7 @@ function displayWords() {
     cardsDiv.innerHTML = html;
 
     if (drillSet[0]) {
-        loadWordDefinition(drillSet[0].base_form)
+        loadWordDefinition(drillSet[0])
     }
 }
 
@@ -150,43 +175,7 @@ document.body.onkeydown = async function (evt) {
     if (drillSet && drillSet.length > 0) {
         var word = drillSet[0];
         let unixtime = Math.floor(Date.now() / 1000); // in seconds
-        //console.log(evt.code);
-        if (evt.code === 'KeyS') {
-            evt.preventDefault();
-            // showWord();
-        } else if (evt.code === 'Digit1') {
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.rank = 1;
-                updateWord(word, wordInfoMap);
-                displayWords();
-            }
-        } else if (evt.code === 'Digit2') {
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.rank = 2;
-                updateWord(word, wordInfoMap);
-                displayWords();
-            }
-        } else if (evt.code === 'Digit3') {
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.rank = 3;
-                updateWord(word, wordInfoMap);
-                displayWords();
-            }
-        } else if (evt.code === 'Digit4') {
-            evt.preventDefault();
-            if (drillSet && drillSet[0]) {
-                var word = drillSet[0];
-                word.rank = 4;
-                updateWord(word, wordInfoMap);
-                displayWords();
-            }
-        } else if (evt.code === 'KeyA') {  // mark wrong and swap top two words
+        if (evt.code === 'KeyA') {  // mark wrong and swap top two words
             evt.preventDefault();
             word.wrong = true;
             if (drillSet.length > 1) {
@@ -196,16 +185,20 @@ document.body.onkeydown = async function (evt) {
         } else if (evt.code === 'KeyD') {  // mark answered
             evt.preventDefault();
             word.answered = true;
-            if (unixtime - word.date_marked > COOLDOWN_TIME) {
-                word.date_marked = unixtime;
-                word.drill_count++;
-                updateWord(word, wordInfoMap);
-            }
             drillSet.shift();
             answeredSet.unshift(word);
             if (drillSet.length === 0) {
                 nextRound();
             }
+            displayWords();
+        } else if (evt.code === 'Digit1') {  
+            evt.preventDefault();
+            if (word.archived == 0) {
+                word.archived = 1;
+            } else if (word.archived == 1) {
+                word.archived = 0;
+            }
+            updateWord(word);
             displayWords();
         }
     }
@@ -214,16 +207,15 @@ document.body.onkeydown = async function (evt) {
 cardsDiv.onclick = function (evt) {
     evt.preventDefault();
     let ele = evt.target.closest('.drill_word');
+    if (!ele) {
+        return;
+    }
     var idx = parseInt(ele.getAttribute('index'));
     if (idx && idx < drillSet.length - 1) {
-        console.log("clicked card", idx);
+        //console.log("clicked card", idx); 
         var front = drillSet.slice(0, idx);
-        var back = drillSet.slice(idx);
-        drillSet = back;
-        answeredSet = front.concat(answeredSet);
-        for (let word of answeredSet) {
-            word.answered = true;
-        }
+        var back = drillSet.slice(idx + 1);
+        drillSet = [drillSet[idx]].concat(front, back);
         displayWords();
     }
 };
@@ -249,20 +241,16 @@ function nextRound() {
     shuffle(drillSet);
 }
 
-function loadWordDefinition(baseForm) {
-    getKanji(baseForm); // get all possibly relevant kanji
+function loadWordDefinition(word) {
+    getKanji(word.base_form); // get all possibly relevant kanji
 
-    let wordInfo = wordInfoMap[baseForm];
-    if (wordInfo) {
-        let defs = wordInfo.definitions;
-        html = '';
-        if (defs) {
-            for (let def of defs) {
-                html += displayEntry(def);
-            }
+    html = '';
+    if (word.definitions) {
+        for (let def of word.definitions) {
+            html += displayEntry(def);
         }
-        definitionsDiv.innerHTML = html;
     }
+    definitionsDiv.innerHTML = html;
 }
 
 function showWord() {
@@ -270,87 +258,50 @@ function showWord() {
     definitionsDiv.style.visibility = 'visible';
 }
 
+logLink.onclick = function (evt) {
+    evt.preventDefault();
+    var url = new URL(window.location.href);
+    var scheduleId = parseInt(url.searchParams.get("scheduleId"));
+
+    let wordIds = [];
+    for (const word of answeredSet) {
+        wordIds.push(word.id);
+    }
+
+    logStory(scheduleId, 0, wordIds, () => snackbarMessage("drill has been logged"));
+}
+
 document.body.onload = function (evt) {
     console.log('on page load');
 
-    noUiSlider.create(rankSlider, {
-        start: [1, 4],
-        step: 1,
-        connect: true,
-        pips: {
-            mode: 'count',
-            values: 4,
-            density: 1,
-            stepped: true
-        },
-        range: {
-            'min': 1,
-            'max': 4
-        },
-        format: {
-            // 'to' the formatted value. Receives a number.
-            to: function (value) {
-                return value;
-            },
-            // 'from' the formatted value.
-            // Receives a string, should return a number.
-            from: function (value) {
-                return value;
-            }
-        }
-    });
+    var url = new URL(window.location.href);
+    let storyId = parseInt(url.searchParams.get("storyId"));
+    let set = url.searchParams.get("set");
 
-    function sliderUpdate(values, handle, unencoded, tap, positions, noUiSlider) {
-        newDrill();
+    if (url.searchParams.get("scheduleId")) {
+        logLink.style.display = "inline";
     }
 
-    fetch('/stories_list', {
-        method: 'GET', // or 'PUT'
+    fetch('words', {
+        method: 'POST', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({
+            story_id: storyId,
+            set: set,
+        })
     }).then((response) => response.json())
         .then((data) => {
-            //console.log('Stories list success:', data);
-            stories = data;
-
-            storyIds = {};
-            var url = new URL(window.location.href);
-            let storyId = parseInt(url.searchParams.get("storyId"));
-            let set = url.searchParams.get("set");
-
-            if (set !== null) {
-                drillTitleH.innerHTML = `${set}`;
-            } else {
-                let title = 'ALL STORIES';
-                for (let story of stories) {
-                    if (storyId === story.id) {
-                        title = story.title;
-                    }
-                }           
-
-                drillTitleH.innerHTML = `<a href="/story.html?storyId=${storyId}"> ${title}</a>`;
+            words = data.words;
+            console.log(words);
+            for (w of words) {
+                w.definitions = JSON.parse(w.definitions);
             }
 
-            fetch('words', {
-                method: 'POST', // or 'PUT'
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    story_id: storyId,
-                    set: set,
-                })
-            }).then((response) => response.json())
-                .then((data) => {
-                    words = data.words;
-                    wordInfoMap = data.wordInfoMap;
-
-                    rankSlider.noUiSlider.on('update', sliderUpdate);  // calls newDrill upon registration
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
+            drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="${data.story_link}">${data.story_title}</a><br>`;
+            //`<a href="/story.html?storyId=${storyId}"> ${data.story_title}</a>`;
+            newDrill();
         })
         .catch((error) => {
             console.error('Error:', error);
