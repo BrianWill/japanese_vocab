@@ -69,22 +69,6 @@ func main() {
 	definitionsCache = make(map[string][]JMDictEntry)
 
 	if len(os.Args) > 1 && os.Args[1] == "import" {
-		if len(os.Args) < 3 {
-			log.Fatalln("expected json file path arg")
-			return
-		}
-
-		loadDictionary()
-
-		fmt.Println("db: ", MAIN_USER_DB_PATH)
-		err := importStories(MAIN_USER_DB_PATH, os.Args[2])
-		if err != nil {
-			log.Fatalln(err)
-		}
-		return
-	}
-
-	if len(os.Args) > 1 && os.Args[1] == "import_sources" {
 		loadDictionary()
 
 		fmt.Println("db: ", MAIN_USER_DB_PATH)

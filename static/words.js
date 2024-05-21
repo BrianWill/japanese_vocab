@@ -38,12 +38,12 @@ archivedSelect.onchange = function (evt) {
 };
 
 function newDrill() {
-    let includeCatalog = false;
+    let includeNotArchived = false;
     let includeArchived = false;
     for (let option of archivedSelect.selectedOptions) {
         switch (option.value) {
-            case 'catalog':
-                includeCatalog = true;
+            case 'unarchived':
+                includeNotArchived = true;
                 break;
             case 'archived':
                 includeArchived = true;
@@ -105,7 +105,7 @@ function newDrill() {
             (includeOffCooldown && offcooldown) ||
             (includeOnCooldown && !offcooldown);
 
-        let statusFilter = (includeCatalog && word.archived == 0) ||
+        let statusFilter = (includeNotArchived && word.archived == 0) ||
             (includeArchived && word.archived == 1);
 
         if (!categoryFilter || !cooldownFilter || !statusFilter) {
