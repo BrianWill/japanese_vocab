@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"time"
 
@@ -236,7 +237,7 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []in
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, lifetime_repetitions, status, definitions, kanji) 
+			date_added, category, repetitions, status, definitions, kanji) 
 			VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
 			baseForm, 0, unixtime, category, 0, "catalog", entriesJSON, kanjiDefJSON)
 		if err != nil {
@@ -299,7 +300,7 @@ func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, audio, video, 
-			status, level, date, date_marked, lifetime_repetitions FROM catalog_stories;`)
+			status, level, date, date_marked, repetitions FROM catalog_stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -311,7 +312,7 @@ func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story CatalogStory
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber, &story.Audio, &story.Video,
-			&story.Status, &story.Level, &story.Date, &story.DateMarked, &story.LifetimeRepetitions); err != nil {
+			&story.Status, &story.Level, &story.Date, &story.DateMarked, &story.Repetitions); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -414,11 +415,11 @@ func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	_, err = sqldb.Exec(`UPDATE catalog_stories SET 
-			date_marked = $1, level = $2, lifetime_repetitions = $3, status = $4, 
+			date_marked = $1, level = $2, repetitions = $3, status = $4, 
 			transcript_en = CASE WHEN $5 = '' THEN transcript_en ELSE $5 END,
 			transcript_ja = CASE WHEN $6 = '' THEN transcript_ja ELSE $6 END
 			WHERE id = $7;`,
-		story.DateMarked, story.Level, story.LifetimeRepetitions, story.Status,
+		story.DateMarked, story.Level, story.Repetitions, story.Status,
 		story.TranscriptEN, story.TranscriptJA, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -545,31 +546,6 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get all other entries for the same story
-	rows, err := sqldb.Query(`SELECT id, type, day_offset FROM schedule_entries WHERE story = $1`, entry.Story)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to get schedule entries: " + err.Error() + `"}`))
-		return
-	}
-	defer rows.Close()
-
-	scheduleEntries := make([]ScheduleLogEntry, 0)
-
-	for rows.Next() {
-		var entry ScheduleLogEntry
-		if err := rows.Scan(&entry.ID, &entry.Type, &entry.DayOffset); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
-			return
-		}
-		scheduleEntries = append(scheduleEntries, entry)
-	}
-
-	// check if adjustment is valid
-
-	// adjust all reps of the story
-
 	_, err = sqldb.Exec(`INSERT INTO log_entries (story, date, type) VALUES($1, $2, $3);`,
 		entry.Story, unixtime, entry.Type)
 	if err != nil {
@@ -582,6 +558,13 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE catalog_stories SET repetitions = repetitions + 1 WHERE id = $1;`, entry.Story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update story reps: " + err.Error() + `"}`))
 		return
 	}
 
@@ -598,20 +581,11 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 
 func incrementWordRepetitions(wordIds []int64, sqldb *sql.DB) error {
 	for _, wordId := range wordIds {
-		var reps int64
-
-		row := sqldb.QueryRow(`SELECT lifetime_repetitions FROM words WHERE id = $1`, wordId)
-		err := row.Scan(&reps)
-		if err != nil {
-			return err
-		}
-
-		_, err = sqldb.Exec(`UPDATE words SET lifetime_repetitions = $1 WHERE id = $2;`, reps, wordId)
+		_, err := sqldb.Exec(`UPDATE words SET repetitions = repetitions + 1WHERE id = $1;`, wordId)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -634,29 +608,73 @@ func ScheduleAdjust(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	var dayOffset int64
-	var story int64
+	w.Header().Set("Content-Type", "application/json")
+
+	var entry ScheduleLogEntry
 	row := sqldb.QueryRow(`SELECT day_offset, story FROM schedule_entries WHERE id = $1`, body.ID)
-	err = row.Scan(&dayOffset, &story)
+	err = row.Scan(&entry.DayOffset, &entry.Story)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to get schedule entry: " + err.Error() + `"}`))
 		return
 	}
 
-	dayOffset += body.OffsetAdjustment
-	if dayOffset < 0 {
-		dayOffset = 0
-	}
-
-	_, err = sqldb.Exec(`UPDATE schedule_entries SET day_offset = $1 WHERE id = $2;`, dayOffset, body.ID)
+	// get all other entries for the same story
+	rows, err := sqldb.Query(`SELECT id, type, day_offset FROM schedule_entries WHERE story = $1`, entry.Story)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entries: " + err.Error() + `"}`))
 		return
 	}
+	defer rows.Close()
 
-	w.Header().Set("Content-Type", "application/json")
+	scheduleEntries := make([]ScheduleLogEntry, 0)
+
+	for rows.Next() {
+		var entry ScheduleLogEntry
+		if err := rows.Scan(&entry.ID, &entry.Type, &entry.DayOffset); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+			return
+		}
+		scheduleEntries = append(scheduleEntries, entry)
+	}
+
+	sort.Slice(scheduleEntries, func(i, j int) bool {
+		return scheduleEntries[i].DayOffset < scheduleEntries[j].DayOffset
+	})
+
+	adjust := false
+	for i := range scheduleEntries {
+		if scheduleEntries[i].ID == body.ID {
+			adjust = true
+		}
+
+		if adjust {
+			scheduleEntries[i].DayOffset += body.OffsetAdjustment
+		}
+	}
+
+	// check that the adjusted offsets are greater than 0 and strictly increase
+	priorOffset := int64(-1)
+	for _, entry := range scheduleEntries {
+		if entry.DayOffset <= priorOffset {
+			json.NewEncoder(w).Encode(bson.M{"status": "no adjustment"})
+			return
+		}
+		priorOffset = entry.DayOffset
+	}
+
+	// adjust all reps of the story
+	for _, entry := range scheduleEntries {
+		_, err = sqldb.Exec(`UPDATE schedule_entries SET day_offset = $1 WHERE id = $2;`, entry.DayOffset, entry.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+			return
+		}
+	}
+
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }
 
@@ -675,7 +693,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	// make sure the story actually exists
 	rows, err := sqldb.Query(`SELECT e.id, story, day_offset, type, 
-		title, source, lifetime_repetitions, level 
+		title, source, repetitions, level 
 		FROM schedule_entries as e INNER JOIN catalog_stories as s 
 		ON e.story = s.id;`)
 	if err != nil {
@@ -690,7 +708,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var entry ScheduleLogEntry
 		if err := rows.Scan(&entry.ID, &entry.Story, &entry.DayOffset, &entry.Type,
-			&entry.Title, &entry.Source, &entry.LifetimeRepetitions, &entry.Level); err != nil {
+			&entry.Title, &entry.Source, &entry.Repetitions, &entry.Level); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
 			return
@@ -702,7 +720,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	// make sure the story actually exists
 	rows, err = sqldb.Query(`SELECT e.id, story, e.date, type, 
-		title, source, lifetime_repetitions, level 
+		title, source, repetitions, level 
 		FROM log_entries as e INNER JOIN catalog_stories as s 
 		ON e.story = s.id AND e.date > $1;`, unixtime)
 	if err != nil {
@@ -717,7 +735,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var entry ScheduleLogEntry
 		if err := rows.Scan(&entry.ID, &entry.Story, &entry.Date, &entry.Type,
-			&entry.Title, &entry.Source, &entry.LifetimeRepetitions, &entry.Level); err != nil {
+			&entry.Title, &entry.Source, &entry.Repetitions, &entry.Level); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
 			return

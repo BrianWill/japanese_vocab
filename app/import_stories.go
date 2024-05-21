@@ -246,7 +246,7 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 
 	_, err = sqldb.Exec(`INSERT INTO catalog_stories (title, source, date, link, episode_number, audio, video, 
 				content, content_format, status, transcript_en, transcript_ja, 
-				words, lifetime_repetitions, date_marked, level) 
+				words, repetitions, date_marked, level) 
 				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16);`,
 		story.Title, story.Source, story.Date, story.Link, epNum,
 		story.Audio, story.Video, story.Content, story.ContentFormat, "catalog",

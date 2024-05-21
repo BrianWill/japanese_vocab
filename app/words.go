@@ -74,10 +74,10 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 		word.ID = id
 		row := sqldb.QueryRow(`SELECT base_form, date_marked, status,
 				audio, audio_start, audio_end, category,
-				lifetime_repetitions, definitions FROM words WHERE id = $1;`, id)
+				repetitions, definitions FROM words WHERE id = $1;`, id)
 		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Status, &word.Audio,
 			&word.AudioStart, &word.AudioEnd, &word.Category,
-			&word.LifetimeRepetitions, &word.Definitions)
+			&word.Repetitions, &word.Definitions)
 		if err != nil && err != sql.ErrNoRows {
 			w.WriteHeader(http.StatusInternalServerError)
 			gw.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))

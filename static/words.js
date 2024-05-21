@@ -134,12 +134,12 @@ function displayWords() {
                     <div class="base_form">${word.base_form}</div>
                     <div class="rank rank${word.status}">
                         ${word.status}<br>
-                        lifetime: ${word.lifetime_repetitions}
+                        lifetime: ${word.repetitions}
                     </div>
                 </div>`;
     }
 
-    html = `<h3 id="current_lifetime_repetitions">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
+    html = `<h3 id="current_repetitions">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
 
     idx = 0;
     for (let word of drillSet) {

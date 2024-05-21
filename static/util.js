@@ -185,7 +185,7 @@ function updateStoryInfo(story, successFn) {
         id: story.id,
         level: story.level,
         date_marked: story.date_marked,
-        lifetime_repetitions: story.lifetime_repetitions,
+        repetitions: story.repetitions,
         status: story.status,
         transcript_ja: story.transcript_ja,
         transcript_en: story.transcript_en
@@ -268,7 +268,7 @@ function scheduleStory(storyId, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"story": storyId})
+        body: JSON.stringify({ "story": storyId })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Story scheduled:', data);
@@ -287,7 +287,7 @@ function unscheduleStory(entryId, storyId, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"story": storyId, "id": entryId})
+        body: JSON.stringify({ "story": storyId, "id": entryId })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Story scheduled:', data);
@@ -322,7 +322,7 @@ function adjustSchedule(entryId, adjustment, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"offset_adjustment": adjustment, "id": entryId})
+        body: JSON.stringify({ "offset_adjustment": adjustment, "id": entryId })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Log:', data);
@@ -341,7 +341,7 @@ function logStory(entryId, storyId, wordIds, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"story": storyId, "id": entryId, "words": wordIds})
+        body: JSON.stringify({ "story": storyId, "id": entryId, "words": wordIds })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Log:', data);
@@ -447,7 +447,7 @@ function addLogEvent(storyId) {
 // todo test with negative time
 function formatTrackTime(time) {
     let seconds = Math.trunc(time);
-    
+
     let fractionStr = '000';
     let arr = String(time).split('.');
     if (arr.length > 1) {
@@ -484,7 +484,7 @@ function adjustTextTrackTimings(track, time, adjustment) {
 
         if (cue.endTime > time) {
             // return false if adjusting the cue would make it overlap the prior cue
-            let prior = track.cues[i - 1];    
+            let prior = track.cues[i - 1];
             let adjustedStart = cue.startTime + adjustment;
             if (adjustedStart < prior.endTime || adjustedStart < 0) {
                 return false;
@@ -492,7 +492,7 @@ function adjustTextTrackTimings(track, time, adjustment) {
 
             index = i;
             break;
-        }    
+        }
     }
 
     for (let i = index; i < track.cues.length; i++) {
@@ -513,4 +513,55 @@ function findCues(track, time) {
         }
     }
     return cues;
+}
+
+
+function stringToColor(str) {
+    let hash = 0;
+    str.split('').forEach(char => {
+        hash = char.charCodeAt(0) + ((hash << 5) - hash)
+    });
+    let vals = []
+    for (let i = 0; i < 3; i++) {
+        const value = (hash >> (i * 8)) & 0xff;
+        vals[i] = value;
+    }
+    let h = vals[0] * (360 / 256);
+    let s = vals[1] * (50 / 256) + 50;  // scale to value between 50 and 100
+    let l = vals[2] * (50 / 256) + 50;  // scale to value between 50 and 100
+
+    return hslToHex(h, s, l);
+}
+
+function integerHash(str) {
+    let hash = 0;
+    str.split('').forEach(char => {
+        hash = char.charCodeAt(0) + ((hash << 5) - hash)
+    });
+    return hash;
+}
+
+function randomInteger(max) {
+    return Math.floor(Math.random() * (max + 1));
+}
+
+function hslToHex(h, s, l) {
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+var colorPalette = ['#c7522a', '#e5c185', '#fbf2c4', '#74a892', "#d9042b", 
+    "#730220", "#03658c", "#f29f05", "#f27b50", "#c7522a", "#e5c185", 
+    "#f0daa5", "#fbf2c4", "#b8cdab", "#74a892", "#008585" 
+];
+
+function randomPaletteColor(hash) {
+    let idx = Math.abs(hash) % colorPalette.length;
+    return colorPalette[idx];
 }

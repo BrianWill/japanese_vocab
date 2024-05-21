@@ -230,7 +230,7 @@ h3 {
     margin-top: 0.5em;
 }
 
-#lifetime_repetitions {
+#repetitions {
     font-size: 120%;
     margin: 5px;
     width: 9em;
@@ -253,7 +253,7 @@ h3 {
     background-color: rgb(122, 129, 150);
 }
 
-#current_lifetime_repetitions {
+#current_repetitions {
     margin-right: 30px;
 }
 
@@ -420,6 +420,7 @@ h3 {
 
 #home_link a {
     color: #838383;
+    margin-right: 1em;
 }
 
 #drill_controls {

@@ -335,7 +335,7 @@ function displayStoryInfo(story) {
     document.getElementById('story_title').innerHTML = `<a href="${story.link}">${story.title}</a><hr>`;
     document.getElementById('source_info').innerText = 'Source: ' + story.source;
     document.getElementById('date_info').innerText = story.date;
-    document.getElementById('lifetime_repetitions_info').innerText = 'Times repeated: ' + story.lifetime_repetitions;
+    document.getElementById('repetitions_info').innerText = 'Times repeated: ' + story.repetitions;
     console.log(story);
 }
 

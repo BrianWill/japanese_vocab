@@ -141,20 +141,21 @@ function displaySchedule(entries) {
                 typeStr = 'Drill';
             }
 
+            let hash = integerHash(entry.story + entry.source + entry.title);
+            let color = randomPaletteColor(hash);
+
             html += `<tr>
                 <td>${typeStr}</td>  
                 <td>${entry.source}</td>    
-                <td><a class="story_title" story_id="${entry.story}" 
+                <td><a style="color:${color};" class="story_title" story_id="${entry.story}" 
                         href="/story.html?storyId=${entry.story}">${entry.title}</a></td>
                 <td>${entry.level}</td>
-                <td>${entry.lifetime_repetitions} reps</td>
+                <td>${entry.repetitions} rep</td>
                 <td></td>
                 <td></td>
                 <td></td>
             </tr>`;
         }
-
-
 
         let currentDay = -1;
 
@@ -195,12 +196,15 @@ function displaySchedule(entries) {
             let page = entry.type == 2 ? 'words' : 'story';
             let storyLink = `/${page}.html?storyId=${entry.story}&scheduleId=${entry.id}`;
 
+            let hash = integerHash(entry.story + entry.source + entry.title);
+            let color = randomPaletteColor(hash);
+
             html += `<tr>
             <td>${typeStr}</td>
             <td>${entry.source}</td>    
-            <td><a class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
+            <td><a style="color: ${color};" class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
             <td>${entry.level}</td>
-            <td>${entry.lifetime_repetitions} reps</td>
+            <td>${entry.repetitions} rep</td>
             <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="move this rep to the next day">remove</a></td>
             <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">down</a></td>
             <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">up</a></td>
@@ -213,7 +217,6 @@ function displaySchedule(entries) {
 
 function displayStories() {
     function storyRow(s) {
-        console.log(s);
         return `<tr>
             <td><span class="story_source">${s.source}</span></td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
@@ -227,7 +230,7 @@ function displayStories() {
                     <option ${(s.level == 'high') ? 'selected' : ''} value="high">high</option>
                 </select>
             </td>
-            <td>${s.lifetime_repetitions} reps</td>            
+            <td>${s.repetitions} reps</td>            
             <td>
                 <select class="status_select" story_id="${s.id}">
                     <option ${(s.status == 'catalog') ? 'selected' : ''} value="catalog">catalog</option>
