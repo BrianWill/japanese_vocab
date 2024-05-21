@@ -9,7 +9,7 @@ type CatalogStory struct {
 	ID            int64   `json:"id,omitempty"`
 	Title         string  `json:"title,omitempty"`
 	Source        string  `json:"source,omitempty"`
-	Status        string  `json:"status,omitempty"`
+	Archived      string  `json:"archived,omitempty"`
 	Date          string  `json:"date"`
 	DateMarked    int     `json:"date_marked,omitempty"`
 	EpisodeNumber int     `json:"episode_number,omitempty"`
@@ -73,12 +73,6 @@ type WordInfo struct {
 	AudioEnd    float32       `json:"audio_end"`
 }
 
-type StoryWordStatusUpdateRequest struct {
-	ID        int64  `json:"id,omitempty"`
-	OldStatus string `json:"old_status"`
-	NewStatus string `json:"new_status"`
-}
-
 type LineWord struct {
 	ID       int64  `json:"id,omitempty"`
 	BaseForm string `json:"baseform,omitempty"`
@@ -92,52 +86,8 @@ type LineKanji struct {
 	Character string `json:"character,omitempty"`
 }
 
-type LogEvent struct {
-	ID      int64  `json:"id,omitempty"`
-	StoryID int64  `json:"story_id,omitempty"`
-	Date    int64  `json:"date,omitempty"`
-	Title   string `json:"title,omitempty"`
-}
-
-type SplitLineRequest struct {
-	StoryID     int64   `json:"story_id,omitempty"`
-	LineToSplit int     `json:"line_to_split"`
-	WordIdx     int     `json:"word_idx"`
-	Timestamp   float64 `json:"timestamp"`
-}
-
-type ConsolidateLineRequest struct {
-	StoryID      int64 `json:"story_id,omitempty"`
-	LineToRemove int   `json:"line_to_remove,omitempty"`
-}
-
-type SetTimestampRequest struct {
-	StoryID   int64   `json:"story_id,omitempty"`
-	LineIdx   int     `json:"line_idx"`
-	Timestamp float64 `json:"timestamp"`
-}
-
-type SetLineMarkRequest struct {
-	StoryID int64 `json:"story_id,omitempty"`
-	LineIdx int   `json:"line_idx"`
-	Marked  bool  `json:"marked"`
-}
-
 type DrillRequest struct {
 	StoryId int64 `json:"story_id"`
-}
-
-type EnqueueRequest struct {
-	StoryId int64 `json:"story_id,omitempty"`
-	Count   int   `json:"count,omitempty"`
-}
-
-type EnqueuedStory struct {
-	Date    int    `json:"date"`
-	ID      int64  `json:"id,omitempty"`
-	StoryID int64  `json:"story_id,omitempty"`
-	Title   string `json:"title,omitempty"`
-	Link    string `json:"link,omitempty"`
 }
 
 type DrillWord struct {
@@ -155,7 +105,7 @@ type DrillWord struct {
 
 type WordUpdate struct {
 	BaseForm   string  `json:"base_form"`
-	Status     string  `json:"status"`
+	Archived   string  `json:"archived"`
 	DateMarked int64   `json:"date_marked"`
 	Audio      string  `json:"audio"`
 	AudioStart float32 `json:"audio_start"`

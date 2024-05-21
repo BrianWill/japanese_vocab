@@ -237,9 +237,9 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []in
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, repetitions, status, definitions, kanji) 
+			date_added, category, repetitions, archived, definitions, kanji) 
 			VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-			baseForm, 0, unixtime, category, 0, "catalog", entriesJSON, kanjiDefJSON)
+			baseForm, 0, unixtime, category, 0, 0, entriesJSON, kanjiDefJSON)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
 		}
@@ -300,7 +300,7 @@ func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, audio, video, 
-			status, level, date, date_marked, repetitions FROM catalog_stories;`)
+			archived, level, date, date_marked, repetitions FROM catalog_stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -312,7 +312,7 @@ func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story CatalogStory
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber, &story.Audio, &story.Video,
-			&story.Status, &story.Level, &story.Date, &story.DateMarked, &story.Repetitions); err != nil {
+			&story.Archived, &story.Level, &story.Date, &story.DateMarked, &story.Repetitions); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -349,13 +349,13 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, content, date, audio, video, 
-		level, words, date_marked, status, transcript_en, transcript_ja FROM catalog_stories WHERE id = $1;`, id)
+		level, words, date_marked, archived, transcript_en, transcript_ja FROM catalog_stories WHERE id = $1;`, id)
 
 	var words string
 	story := CatalogStory{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
 		&story.Audio, &story.Video,
-		&story.Level, &words, &story.DateMarked, &story.Status,
+		&story.Level, &words, &story.DateMarked, &story.Archived,
 		&story.TranscriptEN, &story.TranscriptJA); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
@@ -415,11 +415,11 @@ func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	_, err = sqldb.Exec(`UPDATE catalog_stories SET 
-			date_marked = $1, level = $2, repetitions = $3, status = $4, 
+			date_marked = $1, level = $2, repetitions = $3, archived = $4, 
 			transcript_en = CASE WHEN $5 = '' THEN transcript_en ELSE $5 END,
 			transcript_ja = CASE WHEN $6 = '' THEN transcript_ja ELSE $6 END
 			WHERE id = $7;`,
-		story.DateMarked, story.Level, story.Repetitions, story.Status,
+		story.DateMarked, story.Level, story.Repetitions, story.Archived,
 		story.TranscriptEN, story.TranscriptJA, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

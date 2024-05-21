@@ -55,9 +55,6 @@ const DRILLING = 2
 
 const NUM_SCHEDULED_REPETITIONS = 5
 
-const CATALOG = "catalog"
-const ARCHIVED = "archived"
-
 const MAIN_USER_DB_PATH = "../data.db"
 
 func main() {
@@ -228,7 +225,7 @@ func makeUserDB(path string) {
 	statement, err := sqldb.Prepare(`CREATE TABLE IF NOT EXISTS words 
 		(id INTEGER PRIMARY KEY,
 			base_form TEXT NOT NULL UNIQUE,
-			status TEXT NOT NULL,
+			archived INTEGER NOT NULL,
 			repetitions INTEGER NOT NULL,
 			category INTEGER NOT NULL,
 			audio TEXT NOT NULL DEFAULT '',
@@ -250,7 +247,7 @@ func makeUserDB(path string) {
 		("id" INTEGER PRIMARY KEY,
 			title TEXT NOT NULL,
 			source TEXT NOT NULL,
-			status TEXT NOT NULL,
+			archived INTEGER NOT NULL,
 			date TEXT,
 			link TEXT,
 			level TEXT,

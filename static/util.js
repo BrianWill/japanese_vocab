@@ -103,7 +103,7 @@ function updateWord(word, marking) {
         // if (marking) {
         //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
         // } else {
-        //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to status: ${data.status}`);
+        //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to archived: ${data.archived}`);
         // }
     }).catch((error) => {
         console.error('Error:', error);
@@ -186,7 +186,7 @@ function updateStoryInfo(story, successFn) {
         level: story.level,
         date_marked: story.date_marked,
         repetitions: story.repetitions,
-        status: story.status,
+        archived: story.archived,
         transcript_ja: story.transcript_ja,
         transcript_en: story.transcript_en
     };

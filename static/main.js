@@ -19,7 +19,7 @@ storyList.onchange = function (evt) {
     if (evt.target.className.includes('status_select')) {
         let storyId = parseInt(evt.target.getAttribute('story_id'));
         let story = storiesById[storyId];
-        story.status = evt.target.value;
+        story.archived = evt.target.value;
         updateStoryInfo(story, () => { });
     }
     if (evt.target.className.includes('level_select')) {
@@ -231,12 +231,6 @@ function displayStories() {
                 </select>
             </td>
             <td>${s.repetitions} reps</td>            
-            <td>
-                <select class="status_select" story_id="${s.id}">
-                    <option ${(s.status == 'catalog') ? 'selected' : ''} value="catalog">catalog</option>
-                    <option ${(s.status == 'archived') ? 'selected' : ''} value="archived">archived</option>
-                </select>
-            </td>
             <td>
                 <a href="#" story_id="${s.id}" class="schedule_link">schedule</a>
             </td>
