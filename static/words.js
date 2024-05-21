@@ -8,7 +8,7 @@ var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
-var archivedSelect = document.getElementById('status_select');
+var archivedSelect = document.getElementById('archived_select');
 var logLink = document.getElementById('log_link');
 
 const WORD_COOLDOWN_TIME = 60 * 60 * 24 * 2.5; // 2.5 days (in seconds)

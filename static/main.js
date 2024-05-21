@@ -16,12 +16,6 @@ sourceSelect.onchange = function (evt) {
 }
 
 storyList.onchange = function (evt) {
-    if (evt.target.className.includes('status_select')) {
-        let storyId = parseInt(evt.target.getAttribute('story_id'));
-        let story = storiesById[storyId];
-        story.archived = evt.target.value;
-        updateStoryInfo(story, () => { });
-    }
     if (evt.target.className.includes('level_select')) {
         var storyId = evt.target.getAttribute('story_id');
         let story = storiesById[storyId];

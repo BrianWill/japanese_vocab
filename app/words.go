@@ -41,7 +41,7 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	var story_link string
 	var wordIdsJson string
 
-	row := sqldb.QueryRow(`SELECT title, source, link, words FROM catalog_stories WHERE id = $1;`, drillRequest.StoryId)
+	row := sqldb.QueryRow(`SELECT title, source, link, words FROM stories WHERE id = $1;`, drillRequest.StoryId)
 	err = row.Scan(&story_title, &story_source, &story_link, &wordIdsJson)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

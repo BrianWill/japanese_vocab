@@ -227,7 +227,7 @@ function getStoryList(successFn) {
 }
 
 function getCatalogStories(successFn) {
-    fetch('/catalog_stories', {
+    fetch('/stories', {
         method: 'GET', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',

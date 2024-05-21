@@ -2,13 +2,12 @@
 
 daily schedule system:
 
-    should user be able to log reps that aren't from today (day_offset = 0)? kinda weird if they can
-
     ability to modify a rep's type (in main menu via select box?)
 
-    scheduling a story should fail if the story already is in the schedule
+    scheduling a story should fail if the story already is in the schedule?
+        or just popup confirm dialog with warning of how many reps of that story are already in the schedule
 
-    fix status of stories and words to just be archived or not (integer = 0 or 1)
+    in app menu for importing / reimporting sources
 
     "unlog" link on recently logged entry that moves the entry back to "today"?
         or do we need to remember the day_offset to undo it?
@@ -19,48 +18,14 @@ daily schedule system:
     when logging a rep, display message if the rep had already been logged (or some other error?)
 
 
-schedule page:
-    first day is labeled as "today (with today's date)"
-        link to "mark today complete"
-            decrements every day_offset
-            cooldown so this can only be done once per day? 
-                popup verifying if you want to add the stories into today's set?
-    second day as "tomorrow"
-    third day as "2 days from now"
-    fourth day as "3 days from now"
-    etc. 
-
-    click story to select it
-    inc dec the day offset
-        for individual repetitions or for all of same story?
-    remove stories
-        just remove individual repetition? or remove all repetitions?
-    stories are added to schedule from the catalog page:
-        by default, 5 repetitions spaced out by a few days with drills in between
-
-for drill page:
-    remove concept of cooldown?
-    remove "backlog" status
-    archived becomes just a checkbox: "include archived"
-    option to filter out words with a certain max number of lifetime repetitions
-
-get rid of "in progress" as a concept
-    instead of "drill vocab and kanji from stories in progress", replace with:
-        "drill vocab and kanji from stories in schedule" (or maybe just remove the whole concept)
-
-remove "mark story as read"
-
-
 for current subtitle, show list of all the words with their word info
     easy way to change the word status and set remaining reps
     when importing story, need to store word ids for each subtitle? how to get words?
-
 
 hotkey to open the current japanese subtitle in google translate
 
 way to split/extract shorter stories from full episodes
     in json episode, have list of substories with title, start_time, end_time?
-
 
 link from story drill back to the story? could just use back though
 (maybe link to external site should be a separate link that is labeld as such)
@@ -69,51 +34,23 @@ test new word importing
     
 audit for dead code
 
-add text field under word in which we can paste any text (serves as quick def)
-    html edit content
-    gets saved automatically in new words db column
+audit for dead css styles
 
-    only shown for top word? or shown for all? maybe a toggle button
+deduplicate the word ids in words field of stories
 
-    or maybe just first part of def
-
-deduplicate the word ids in words field of catalog_stories
-
-on drill page: 
-    link to set the current word's status (or select?)
 
 drill auto play mode
     - show a word with its definition (and play audio?) for n seconds, then automatically move to the next
     - words auto drilled will be temporarily marked
     - when done with the drill, button to decrement counter for all words that were temporarily marked
-
-
-way to mark individual words of a story
-
-    for story, include token list with story content? but what about subtitles?
-
-    what about selecting kanji within a word?
-
-    clicking text in content or subtitle may match a word
-        (not all cursor points in text correspond to word, so need some kind of error to make this clear. Snackbar message?)
-
-    need a IdentifyWord endpoint: send a string (whole sentence or the whole subtitle cue containing the word) plus the click point.
-        Does grammatical analysis to identify the baseword clicked (if any)
-
-    or tokenize story for story page
-    
-    clicking a db word shows it in sidebar, with info there about word status and options to set its repetitions and status
-
- 
-
-Maybe get rid of story date? Do users care when the story was published?
+    - show the word very large, play the audio, short pause before next word
+        (only play cards with audio? maybe an option)
 
 
 subtitles: 
     english: https://subscene.com/   https://www.opensubtitles.org/en/search/subs   https://www.podnapisi.net
     japanese: https://kitsunekko.net/dirlist.php?dir=subtitles%2Fjapanese%2F 
 
-how to convert .ass to .srt?
 
 for a word, track all sentences that include the word
 
@@ -124,10 +61,6 @@ ffmpeg -i [input] -c:a copy -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow 
 use puppeteer to scrape for transcripts and meta info
 use podcast-dl (https://www.npmjs.com/package/podcast-dl/v/7.0.0-async.1) to get audio files
     npx podcast-dl --url <PODCAST_RSS_URL>
-
-autoplay drill mode
-    show the word very large, play the audio, short pause before next word
-        (only play cards with audio? maybe an option)
 
 
 store audio link with timestamps

@@ -123,7 +123,7 @@ func main() {
 	router.HandleFunc("/schedule", GetSchedule).Methods("GET")
 	router.HandleFunc("/log", GetLog).Methods("GET")
 	router.HandleFunc("/log_story", LogStory).Methods("POST")
-	router.HandleFunc("/catalog_stories", GetCatalogStories).Methods("GET")
+	router.HandleFunc("/stories", GetCatalogStories).Methods("GET")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
 	router.HandleFunc("/words", WordDrill).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
@@ -243,7 +243,7 @@ func makeUserDB(path string) {
 		log.Fatal(err)
 	}
 
-	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "catalog_stories" 
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "stories" 
 		("id" INTEGER PRIMARY KEY,
 			title TEXT NOT NULL,
 			source TEXT NOT NULL,

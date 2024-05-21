@@ -131,23 +131,6 @@ a {
     color: #838383;
 }
 
-#story_list a.story_title.status0 {
-    color: #d52246;
-}
-
-#story_list a.story_title.status1 {
-    color: #bbbb36;
-}
-
-#story_list a.story_title.status2 {
-    color: #18b283;
-    /* color: #2f82e7; */
-}
-
-#story_list a.story_title.status3 {
-    color: #18b283;
-}
-
 .header_link {
     color: #838383;
     font-size: 70%;

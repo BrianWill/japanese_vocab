@@ -198,7 +198,7 @@ func getSubtitles(path string) (newSubtitles string, content string, err error) 
 func storyExists(story StoryImport, sqldb *sql.DB) bool {
 	var id int64
 
-	err := sqldb.QueryRow(`SELECT id FROM catalog_stories WHERE title = $1 and source = $2;`,
+	err := sqldb.QueryRow(`SELECT id FROM stories WHERE title = $1 and source = $2;`,
 		story.Title, story.Source).Scan(&id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -228,7 +228,7 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 	if storyExists(story, sqldb) {
 		fmt.Printf(`updating story: "%s"`+"\n", story.Title)
 
-		_, err := sqldb.Exec(`UPDATE catalog_stories SET 
+		_, err := sqldb.Exec(`UPDATE stories SET 
 				date = $1, link = $2, episode_number = $3, audio = $4, video = $5, 
 				content = $6, content_format = $7, 
 				transcript_en = CASE WHEN transcript_en = '' THEN $8 ELSE transcript_en END,
@@ -244,7 +244,7 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
-	_, err = sqldb.Exec(`INSERT INTO catalog_stories (title, source, date, link, episode_number, audio, video, 
+	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, audio, video, 
 				content, content_format, archived, transcript_en, transcript_ja, 
 				words, repetitions, date_marked, level) 
 				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16);`,
