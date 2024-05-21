@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net"
 )
 
 func unzipSource(path string) ([]byte, error) {
@@ -74,4 +75,38 @@ func getVerbCategory(sense JMDictSense) int {
 		}
 	}
 	return category
+}
+
+// Get preferred outbound ip of this machine
+func GetOutboundIP() ([]string, error) {
+
+	strs := make([]string, 0)
+
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	// handle err
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			return nil, err
+		}
+		// handle err
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+
+			if !ip.IsLoopback() && ip.To4() != nil {
+				strs = append(strs, ip.String())
+			}
+		}
+	}
+
+	return strs, nil
 }

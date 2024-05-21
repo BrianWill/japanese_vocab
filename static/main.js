@@ -1,13 +1,20 @@
 var storyList = document.getElementById('story_list');
 var sourceSelect = document.getElementById('source_select');
 var scheduleDiv = document.getElementById('schedule');
+var ipDiv = document.getElementById('ip');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
 document.body.onload = function (evt) {
-    //getStoryList(displayStoryList);
-    getCatalogStories(processStories);
+    getStories(processStories);
     getSchedule(displaySchedule);
+    getIP((ips) => {
+        let html = 'local ip: ';
+        for (const ip of ips) {
+            html += ip + '&nbsp;&nbsp;'
+        }
+        ipDiv.innerHTML = html;
+    });
 };
 
 

@@ -226,7 +226,7 @@ function getStoryList(successFn) {
         });
 }
 
-function getCatalogStories(successFn) {
+function getStories(successFn) {
     fetch('/stories', {
         method: 'GET', // or 'PUT'
         headers: {
@@ -309,6 +309,22 @@ function getLog(successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Log:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function getIP(successFn) {
+    fetch('/ip', {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('IP:', data);
             successFn(data);
         })
         .catch((error) => {
@@ -515,45 +531,12 @@ function findCues(track, time) {
     return cues;
 }
 
-
-function stringToColor(str) {
-    let hash = 0;
-    str.split('').forEach(char => {
-        hash = char.charCodeAt(0) + ((hash << 5) - hash)
-    });
-    let vals = []
-    for (let i = 0; i < 3; i++) {
-        const value = (hash >> (i * 8)) & 0xff;
-        vals[i] = value;
-    }
-    let h = vals[0] * (360 / 256);
-    let s = vals[1] * (50 / 256) + 50;  // scale to value between 50 and 100
-    let l = vals[2] * (50 / 256) + 50;  // scale to value between 50 and 100
-
-    return hslToHex(h, s, l);
-}
-
 function integerHash(str) {
     let hash = 0;
     str.split('').forEach(char => {
         hash = char.charCodeAt(0) + ((hash << 5) - hash)
     });
     return hash;
-}
-
-function randomInteger(max) {
-    return Math.floor(Math.random() * (max + 1));
-}
-
-function hslToHex(h, s, l) {
-    l /= 100;
-    const a = s * Math.min(l, 1 - l) / 100;
-    const f = n => {
-        const k = (n + h / 30) % 12;
-        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-        return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
-    };
-    return `#${f(0)}${f(8)}${f(4)}`;
 }
 
 var colorPalette = ['#c7522a', '#e5c185', '#fbf2c4', '#74a892', "#d9042b", 

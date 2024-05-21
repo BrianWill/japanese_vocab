@@ -9,7 +9,6 @@ type Story struct {
 	ID            int64   `json:"id,omitempty"`
 	Title         string  `json:"title,omitempty"`
 	Source        string  `json:"source,omitempty"`
-	Archived      string  `json:"archived,omitempty"`
 	Date          string  `json:"date"`
 	DateMarked    int     `json:"date_marked,omitempty"`
 	EpisodeNumber int     `json:"episode_number,omitempty"`
@@ -105,7 +104,7 @@ type DrillWord struct {
 
 type WordUpdate struct {
 	BaseForm   string  `json:"base_form"`
-	Archived   string  `json:"archived"`
+	Archived   int64   `json:"archived"`
 	DateMarked int64   `json:"date_marked"`
 	Audio      string  `json:"audio"`
 	AudioStart float32 `json:"audio_start"`

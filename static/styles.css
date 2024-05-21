@@ -531,3 +531,9 @@ span.verb:hover {
 #source_select {
     font-size: 120%;
 } 
+
+#ip {
+    padding: 1em;
+    color: rgb(114, 114, 114);
+    font-size: 80%;
+}

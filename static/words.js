@@ -130,12 +130,12 @@ filterSelect.onchange = newDrill;
 
 function displayWords() {
     function wordInfo(word, idx, answered) {
-        let archived = word.archived ? 'archived' : 'catalog';
+        let archived = word.archived ? 'archived' : '';
         return `<div index="${idx}" class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
                     <div class="rank ">
                         ${archived}<br>
-                        lifetime: ${word.repetitions}
+                        ${word.repetitions} reps
                     </div>
                 </div>`;
     }
@@ -175,10 +175,7 @@ document.body.onkeydown = async function (evt) {
     if (drillSet && drillSet.length > 0) {
         var word = drillSet[0];
         let unixtime = Math.floor(Date.now() / 1000); // in seconds
-        if (evt.code === 'KeyS') {
-            evt.preventDefault();
-            // showWord();
-        } else if (evt.code === 'KeyA') {  // mark wrong and swap top two words
+        if (evt.code === 'KeyA') {  // mark wrong and swap top two words
             evt.preventDefault();
             word.wrong = true;
             if (drillSet.length > 1) {
@@ -196,12 +193,11 @@ document.body.onkeydown = async function (evt) {
             displayWords();
         } else if (evt.code === 'Digit1') {  
             evt.preventDefault();
-            word.archived = 0;
-            updateWord(word);
-            displayWords();
-        } else if (evt.code === 'Digit3') {  
-            evt.preventDefault();
-            word.archived = 1;
+            if (word.archived == 0) {
+                word.archived = 1;
+            } else if (word.archived == 1) {
+                word.archived = 0;
+            }
             updateWord(word);
             displayWords();
         }

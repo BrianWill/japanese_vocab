@@ -237,9 +237,9 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []in
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, date_marked,
-			date_added, category, repetitions, archived, definitions, kanji) 
-			VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-			baseForm, 0, unixtime, category, 0, 0, entriesJSON, kanjiDefJSON)
+			date_added, category, repetitions, definitions, kanji) 
+			VALUES($1, $2, $3, $4, $5, $6, $7);`,
+			baseForm, 0, unixtime, category, 0, entriesJSON, kanjiDefJSON)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
 		}
@@ -286,7 +286,7 @@ type BaseFormCategoryPair struct {
 	Category int
 }
 
-func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
+func GetStories(response http.ResponseWriter, request *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 
 	response.Header().Set("Content-Type", "application/json")
@@ -299,8 +299,17 @@ func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
+	ips, err := GetOutboundIP()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, ip := range ips {
+		fmt.Println("ip: ", ip)
+	}
+
 	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, audio, video, 
-			archived, level, date, date_marked, repetitions FROM stories;`)
+			level, date, date_marked, repetitions FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -311,8 +320,9 @@ func GetCatalogStories(response http.ResponseWriter, request *http.Request) {
 	var stories []Story
 	for rows.Next() {
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber, &story.Audio, &story.Video,
-			&story.Archived, &story.Level, &story.Date, &story.DateMarked, &story.Repetitions); err != nil {
+		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber,
+			&story.Audio, &story.Video, &story.Level, &story.Date,
+			&story.DateMarked, &story.Repetitions); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -349,13 +359,13 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, content, date, audio, video, 
-		level, words, date_marked, archived, transcript_en, transcript_ja FROM stories WHERE id = $1;`, id)
+		level, words, date_marked, transcript_en, transcript_ja FROM stories WHERE id = $1;`, id)
 
 	var words string
 	story := Story{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
 		&story.Audio, &story.Video,
-		&story.Level, &words, &story.DateMarked, &story.Archived,
+		&story.Level, &words, &story.DateMarked,
 		&story.TranscriptEN, &story.TranscriptJA); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
@@ -415,11 +425,11 @@ func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	_, err = sqldb.Exec(`UPDATE stories SET 
-			date_marked = $1, level = $2, repetitions = $3, archived = $4, 
-			transcript_en = CASE WHEN $5 = '' THEN transcript_en ELSE $5 END,
-			transcript_ja = CASE WHEN $6 = '' THEN transcript_ja ELSE $6 END
-			WHERE id = $7;`,
-		story.DateMarked, story.Level, story.Repetitions, story.Archived,
+			date_marked = $1, level = $2, repetitions = $3, 
+			transcript_en = CASE WHEN $4 = '' THEN transcript_en ELSE $4 END,
+			transcript_ja = CASE WHEN $5 = '' THEN transcript_ja ELSE $5 END
+			WHERE id = $6;`,
+		story.DateMarked, story.Level, story.Repetitions,
 		story.TranscriptEN, story.TranscriptJA, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -781,4 +791,17 @@ func GetLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(entries)
+}
+
+func GetIP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	ips, err := GetOutboundIP()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get IPs: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(ips)
 }

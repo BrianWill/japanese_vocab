@@ -2,39 +2,42 @@
 
 daily schedule system:
 
+    when importing, json file that defines how the videos are split into shorter stories
+        for a long video file, can you constrain the timeline to less than the full running length?
+            append to src url: #t=[starttime][,endtime]
+                <source src=http://techslides.com/demos/sample-videos/small.webm#t=2,3 type=video/webm>
+
+    hotkey to open the current japanese subtitle in google translate
+
     ability to modify a rep's type (in main menu via select box?)
 
-    scheduling a story should fail if the story already is in the schedule?
-        or just popup confirm dialog with warning of how many reps of that story are already in the schedule
+    ability to add an additional rep for a story in the schedule?
+        add button on rep that creates a new rep of same type the next day (or none if it the next day already has a rep of that story)
 
     in app menu for importing / reimporting sources
 
-    "unlog" link on recently logged entry that moves the entry back to "today"?
-        or do we need to remember the day_offset to undo it?
-        Or just have an undo button for all scheduling/logging operations?
+    undo system for the schedule/log
+        upon every change, just store a full copy?
+            jsonify in a "backup" table
 
-    editing story level and archived state should only be on the story page, not on main page
+        what about undoing increments of story and word reps?
+
+    cleanup or remove the "content" display at bottom of story
+        for audio stories, shrink the video element
 
     when logging a rep, display message if the rep had already been logged (or some other error?)
+        or just grey out the link when story is already loggged
+        or if scheduleId is not defined, log link does not appear
+        upon success of logging, redirect to main page?
 
+    audit for dead code
+
+    audit for dead css styles
 
 for current subtitle, show list of all the words with their word info
     easy way to change the word status and set remaining reps
-    when importing story, need to store word ids for each subtitle? how to get words?
+    when importing story, need to store word ids for each subtitle? how to get words? 
 
-hotkey to open the current japanese subtitle in google translate
-
-way to split/extract shorter stories from full episodes
-    in json episode, have list of substories with title, start_time, end_time?
-
-link from story drill back to the story? could just use back though
-(maybe link to external site should be a separate link that is labeld as such)
-
-test new word importing
-    
-audit for dead code
-
-audit for dead css styles
 
 deduplicate the word ids in words field of stories
 
@@ -45,7 +48,6 @@ drill auto play mode
     - when done with the drill, button to decrement counter for all words that were temporarily marked
     - show the word very large, play the audio, short pause before next word
         (only play cards with audio? maybe an option)
-
 
 subtitles: 
     english: https://subscene.com/   https://www.opensubtitles.org/en/search/subs   https://www.podnapisi.net
@@ -61,7 +63,6 @@ ffmpeg -i [input] -c:a copy -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow 
 use puppeteer to scrape for transcripts and meta info
 use podcast-dl (https://www.npmjs.com/package/podcast-dl/v/7.0.0-async.1) to get audio files
     npx podcast-dl --url <PODCAST_RSS_URL>
-
 
 store audio link with timestamps
     any way to capture from stories with youtube audio? probably not
