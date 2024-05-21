@@ -143,7 +143,7 @@ type EnqueuedStory struct {
 type DrillWord struct {
 	ID          int64   `json:"id,omitempty"`
 	BaseForm    string  `json:"base_form"`
-	Status      string  `json:"status"`
+	Archived    int64   `json:"archived"`
 	DateMarked  int64   `json:"date_marked"`
 	Category    int     `json:"category"`
 	Definitions string  `json:"definitions,omitempty"`

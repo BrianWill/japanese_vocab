@@ -2,35 +2,21 @@
 
 daily schedule system:
 
-    remove story log link from main page
-        instead log stories from story page and drill page
-        update story links in schedule (drill links take you to drill page)
+    should user be able to log reps that aren't from today (day_offset = 0)? kinda weird if they can
 
-    when logging a rep, display message if the rep had already been logged (or some other error?)
-
-    when logging a drill, only inc reps for words that were answered in the drill
-    
-    moving a rep down (positive adjustment) should move all other reps for same story down the same distance
-    moving a rep up should shift all reps after it of same story with it
-        should not be able to move a story up if it would move to the same day or earlier day as another rep of the same story
-
-    when logging a story, update the lifetime_repetitions of the story 
-        if the rep is a drill, update the lifetime_repetitions of the words in the story
+    ability to modify a rep's type (in main menu via select box?)
 
     scheduling a story should fail if the story already is in the schedule
 
-    fix status of stories and words to just be archived or not
+    fix status of stories and words to just be archived or not (integer = 0 or 1)
 
     "unlog" link on recently logged entry that moves the entry back to "today"?
         or do we need to remember the day_offset to undo it?
         Or just have an undo button for all scheduling/logging operations?
 
-    day_offset is capped at 20? (three weeks)
+    editing story level and archived state should only be on the story page, not on main page
 
-    
-
-words and stories have two statuses: normal or archived
-    represent as integer 0 or 1?
+    when logging a rep, display message if the rep had already been logged (or some other error?)
 
 
 schedule page:

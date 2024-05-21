@@ -72,10 +72,10 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	for i, id := range wordIds {
 		word := &words[i]
 		word.ID = id
-		row := sqldb.QueryRow(`SELECT base_form, date_marked, status,
+		row := sqldb.QueryRow(`SELECT base_form, date_marked, archived,
 				audio, audio_start, audio_end, category,
 				repetitions, definitions FROM words WHERE id = $1;`, id)
-		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Status, &word.Audio,
+		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Archived, &word.Audio,
 			&word.AudioStart, &word.AudioEnd, &word.Category,
 			&word.Repetitions, &word.Definitions)
 		if err != nil && err != sql.ErrNoRows {

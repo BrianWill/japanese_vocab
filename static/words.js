@@ -8,7 +8,7 @@ var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
-var statusSelect = document.getElementById('status_select');
+var archivedSelect = document.getElementById('status_select');
 var logLink = document.getElementById('log_link');
 
 const WORD_COOLDOWN_TIME = 60 * 60 * 24 * 2.5; // 2.5 days (in seconds)
@@ -33,14 +33,14 @@ var drillSet = [];
 var answeredSet = [];
 var words;
 
-statusSelect.onchange = function (evt) {
+archivedSelect.onchange = function (evt) {
     newDrill();
 };
 
 function newDrill() {
     let includeCatalog = false;
     let includeArchived = false;
-    for (let option of statusSelect.selectedOptions) {
+    for (let option of archivedSelect.selectedOptions) {
         switch (option.value) {
             case 'catalog':
                 includeCatalog = true;
@@ -105,8 +105,8 @@ function newDrill() {
             (includeOffCooldown && offcooldown) ||
             (includeOnCooldown && !offcooldown);
 
-        let statusFilter = (includeCatalog && word.status == 'catalog') ||
-            (includeArchived && word.status == 'archived');
+        let statusFilter = (includeCatalog && word.archived == 0) ||
+            (includeArchived && word.archived == 1);
 
         if (!categoryFilter || !cooldownFilter || !statusFilter) {
             continue;
@@ -130,10 +130,11 @@ filterSelect.onchange = newDrill;
 
 function displayWords() {
     function wordInfo(word, idx, answered) {
+        let archived = word.archived ? 'archived' : 'catalog';
         return `<div index="${idx}" class="drill_word ${word.wrong ? 'wrong' : ''} ${word.answered ? 'answered' : ''}">
                     <div class="base_form">${word.base_form}</div>
-                    <div class="rank rank${word.status}">
-                        ${word.status}<br>
+                    <div class="rank ">
+                        ${archived}<br>
                         lifetime: ${word.repetitions}
                     </div>
                 </div>`;
@@ -195,12 +196,12 @@ document.body.onkeydown = async function (evt) {
             displayWords();
         } else if (evt.code === 'Digit1') {  
             evt.preventDefault();
-            word.status = 'catalog';
+            word.archived = 0;
             updateWord(word);
             displayWords();
         } else if (evt.code === 'Digit3') {  
             evt.preventDefault();
-            word.status = 'archived';
+            word.archived = 1;
             updateWord(word);
             displayWords();
         }
