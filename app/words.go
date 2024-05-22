@@ -72,10 +72,10 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	for i, id := range wordIds {
 		word := &words[i]
 		word.ID = id
-		row := sqldb.QueryRow(`SELECT base_form, date_marked, archived,
+		row := sqldb.QueryRow(`SELECT base_form, archived,
 				audio, audio_start, audio_end, category,
 				repetitions, definitions FROM words WHERE id = $1;`, id)
-		err = row.Scan(&word.BaseForm, &word.DateMarked, &word.Archived, &word.Audio,
+		err = row.Scan(&word.BaseForm, &word.Archived, &word.Audio,
 			&word.AudioStart, &word.AudioEnd, &word.Category,
 			&word.Repetitions, &word.Definitions)
 		if err != nil && err != sql.ErrNoRows {
@@ -116,9 +116,9 @@ func UpdateWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE words SET archived = $1, date_marked = $2, audio = $3, audio_start = $4, 
-			audio_end = $5 WHERE base_form = $6;`,
-		word.Archived, word.DateMarked, word.Audio, word.AudioStart, word.AudioEnd, word.BaseForm)
+	_, err = sqldb.Exec(`UPDATE words SET archived = $1, audio = $2, audio_start = $3, 
+			audio_end = $4 WHERE base_form = $5;`,
+		word.Archived, word.Audio, word.AudioStart, word.AudioEnd, word.BaseForm)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update word: " + err.Error() + `"}`))

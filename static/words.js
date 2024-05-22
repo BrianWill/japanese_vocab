@@ -6,12 +6,9 @@ var categorySelect = document.getElementById('category');
 var doneButton = document.getElementById('done_button');
 var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
-var filterSelect = document.getElementById('filter_select')
 var definitionsDiv = document.getElementById('definitions');
 var archivedSelect = document.getElementById('archived_select');
 var logLink = document.getElementById('log_link');
-
-const WORD_COOLDOWN_TIME = 60 * 60 * 24 * 2.5; // 2.5 days (in seconds)
 
 const DRILL_CATEGORY_KATAKANA = 1;
 const DRILL_CATEGORY_ICHIDAN = 2;
@@ -51,19 +48,6 @@ function newDrill() {
         }
     }
 
-    let includeOffCooldown = false;
-    let includeOnCooldown = false;
-    for (let option of filterSelect.selectedOptions) {
-        switch (option.value) {
-            case 'off':
-                includeOffCooldown = true;
-                break;
-            case 'on':
-                includeOnCooldown = true;
-                break;
-        }
-    }
-
     let categoryMask = 0;
     let includeOther = false;
     for (let option of categorySelect.selectedOptions) {
@@ -88,27 +72,16 @@ function newDrill() {
 
     let unixTime = Math.floor(Date.now() / 1000);
 
-    let countOffCooldown = 0;
-
     drillSet = [];
     for (let word of words) {
-        let offcooldown = (unixTime - word.date_marked) > WORD_COOLDOWN_TIME;
-        if (offcooldown) {
-            countOffCooldown++;
-        }
-
         let isOther = (word.category & DRILL_ALL) == 0;
         let isCategoryMatch = (word.category & categoryMask) != 0;
         let categoryFilter = isCategoryMatch || (includeOther && isOther);
 
-        let cooldownFilter = (includeOffCooldown && includeOnCooldown) ||
-            (includeOffCooldown && offcooldown) ||
-            (includeOnCooldown && !offcooldown);
-
         let statusFilter = (includeNotArchived && word.archived == 0) ||
             (includeArchived && word.archived == 1);
 
-        if (!categoryFilter || !cooldownFilter || !statusFilter) {
+        if (!categoryFilter || !statusFilter) {
             continue;
         }
 
@@ -120,13 +93,11 @@ function newDrill() {
     shuffle(drillSet);
     answeredSet = [];
 
-    drillInfoH.innerHTML = `${words.length} words in story <br>
-                        ${countOffCooldown} words off cooldown`;
+    drillInfoH.innerHTML = `${words.length} words in story`;
     displayWords();
 }
 
 categorySelect.onchange = newDrill;
-filterSelect.onchange = newDrill;
 
 function displayWords() {
     function wordInfo(word, idx, answered) {

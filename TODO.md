@@ -2,10 +2,22 @@
 
 daily schedule system:
 
-    when importing, json file that defines how the videos are split into shorter stories
-        for a long video file, can you constrain the timeline to less than the full running length?
-            append to src url: #t=[starttime][,endtime]
-                <source src=http://techslides.com/demos/sample-videos/small.webm#t=2,3 type=video/webm>
+    ability in story mode to mark the start time and end time of a video, then extract that to a new story
+        gets added to the same source
+        writes out a json file for the sub-story
+            (so that it can be imported with the rest of the source)
+            the transcript data is stored directly in the json file
+                transcript_ja
+                transcript_en
+        use modal popup to pick the name?
+            name is same as the parent story + title of your choosing in modal
+            popup reports the start time and end time
+        option in app to delete these stories (along with the json file)?
+            or maybe just option to delete any story in catalog?
+
+    add video_start time and video_end time to 
+    append to src url: #t=[starttime][,endtime]
+        <source src=http://techslides.com/demos/sample-videos/small.webm#t=2,3 type=video/webm>
 
     hotkey to open the current japanese subtitle in google translate
 

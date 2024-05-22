@@ -246,11 +246,11 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, audio, video, 
 				content, content_format, archived, transcript_en, transcript_ja, 
-				words, repetitions, date_marked, level) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16);`,
+				words, repetitions, level) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);`,
 		story.Title, story.Source, story.Date, story.Link, epNum,
 		story.Audio, story.Video, story.Content, story.ContentFormat, 0,
-		story.TranscriptEN, story.TranscriptJA, wordIdsJson, 0, 0, story.Level)
+		story.TranscriptEN, story.TranscriptJA, wordIdsJson, 0, story.Level)
 	return err
 }
 

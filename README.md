@@ -56,7 +56,14 @@ Because subtitle data from sources may not line up with the video or audio, thes
 - `-` : decrease the start and end time of the current subtitle (and all after it) by 0.25 seconds
 - `+` : increase the start and end time of the current subtitle (and all after it) by 0.25 seconds
 
-## Drilling page
+To help break up longer stories into shorter ones:
+
+- `[` : set start time marker to the player's current time
+- `]` : set end time marker to the player's current time
+
+Once you've set start and end markers, you can create a new story by clicking the "create sotry from subrange" link in the sidebar.
+
+## Drill page
 
 ![](./images/drill.png)
 

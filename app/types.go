@@ -10,7 +10,6 @@ type Story struct {
 	Title         string  `json:"title,omitempty"`
 	Source        string  `json:"source,omitempty"`
 	Date          string  `json:"date"`
-	DateMarked    int     `json:"date_marked,omitempty"`
 	EpisodeNumber int     `json:"episode_number,omitempty"`
 	Level         string  `json:"level,omitempty"`
 	Content       string  `json:"content,omitempty"`
@@ -58,6 +57,15 @@ type ScheduleStoryRequest struct {
 	Words            []int64 `json:"words,omitempty"`             // the words whose repetitions needs to be incremented
 }
 
+type CreateSubrangeStoryRequest struct {
+	ParentStory  int64   `json:"parent_story"` // id
+	Title        string  `json:"title"`
+	StartTime    float64 `json:"start_time"`
+	EndTime      float64 `json:"end_time"`
+	TranscriptEN string  `json:"transcript_en"`
+	TranscriptJA string  `json:"transcript_ja"`
+}
+
 type StoryImportJSON struct {
 	Source        string        `json:"source,omitempty"`
 	ContentFormat string        `json:"content_format,omitempty"`
@@ -66,7 +74,6 @@ type StoryImportJSON struct {
 
 type WordInfo struct {
 	Definitions []JMDictEntry `json:"definitions,omitempty"`
-	DateMarked  int64         `json:"date_marked"`
 	Audio       string        `json:"audio"`
 	AudioStart  float32       `json:"audio_start"`
 	AudioEnd    float32       `json:"audio_end"`
@@ -93,7 +100,6 @@ type DrillWord struct {
 	ID          int64   `json:"id,omitempty"`
 	BaseForm    string  `json:"base_form"`
 	Archived    int64   `json:"archived"`
-	DateMarked  int64   `json:"date_marked"`
 	Category    int     `json:"category"`
 	Definitions string  `json:"definitions,omitempty"`
 	Audio       string  `json:"audio,omitempty"`
@@ -105,7 +111,6 @@ type DrillWord struct {
 type WordUpdate struct {
 	BaseForm   string  `json:"base_form"`
 	Archived   int64   `json:"archived"`
-	DateMarked int64   `json:"date_marked"`
 	Audio      string  `json:"audio"`
 	AudioStart float32 `json:"audio_start"`
 	AudioEnd   float32 `json:"audio_end"`

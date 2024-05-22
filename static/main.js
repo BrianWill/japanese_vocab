@@ -70,16 +70,6 @@ storyList.onclick = function (evt) {
 function processStories(storyData) {
     stories = storyData;
 
-    for (let s of stories) {
-        if (s.date_marked === undefined) {
-            s.date_marked = 0;
-        }
-    }
-
-    stories.sort((a, b) => {
-        return b.date_marked - a.date_marked
-    });
-
     storiesById = {};
     storiesBySource = {};
 
@@ -221,9 +211,6 @@ function displayStories() {
         return `<tr>
             <td><span class="story_source">${s.source}</span></td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            <td>
-                <span title="when this story was last read">${timeSince(s.date_marked)}</span>
-            </td>
             <td>
                 <select class="level_select" story_id="${s.id}" title="difficulty level of this story">
                     <option ${(s.level == 'low') ? 'selected' : ''} value="low">low</option>

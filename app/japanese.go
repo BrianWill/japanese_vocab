@@ -104,6 +104,7 @@ func main() {
 	router.HandleFunc("/schedule_story", ScheduleStory).Methods("POST")
 	router.HandleFunc("/unschedule_story", UnscheduleStory).Methods("POST")
 	router.HandleFunc("/schedule_adjust", ScheduleAdjust).Methods("POST")
+	router.HandleFunc("/create_subrange_story", CreateSubrangeStory).Methods("POST")
 	router.HandleFunc("/schedule", GetSchedule).Methods("GET")
 	router.HandleFunc("/ip", GetIP).Methods("GET")
 	router.HandleFunc("/log", GetLog).Methods("GET")
@@ -216,7 +217,6 @@ func makeUserDB(path string) {
 			audio TEXT NOT NULL DEFAULT '',
 			audio_start REAL NOT NULL DEFAULT 0,
 			audio_end REAL NOT NULL DEFAULT 0,
-			date_marked INTEGER NOT NULL DEFAULT 0,
 			date_added INTEGER NOT NULL,
 			definitions TEXT,
 			kanji TEXT,

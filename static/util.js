@@ -184,7 +184,6 @@ function updateStoryInfo(story, successFn) {
     story = {
         id: story.id,
         level: story.level,
-        date_marked: story.date_marked,
         repetitions: story.repetitions,
         archived: story.archived,
         transcript_ja: story.transcript_ja,
@@ -370,6 +369,25 @@ function logStory(entryId, storyId, wordIds, successFn) {
         });
 }
 
+function createSubrangeStory(storyInfo, successFn) {
+    fetch(`/create_subrange_story`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(storyInfo)
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log(data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function timeSince(date) {
     if (date <= 1) {
         return 'never';
@@ -477,10 +495,21 @@ function formatTrackTime(time) {
     return `${hoursStr}:${minutesStr}:${secondsStr}.${fractionStr}`;
 }
 
-function textTrackToString(track) {
+function textTrackToString(track, startTime, endTime) {
+    if (startTime === undefined) {
+        startTime = Number.MIN_VALUE;
+    }
+    if (endTime === undefined) {
+        endTime = Number.MAX_VALUE;
+    }
+
     let vtt = 'WEBVTT\n\n';
 
     for (let cue of track.cues) {
+        if (cue.startTime > endTime || cue.endTime < startTime) {
+            continue;
+        }
+
         vtt += `${cue.id}
 ${formatTrackTime(cue.startTime)} --> ${formatTrackTime(cue.endTime)}
 ${cue.text}\n\n`;

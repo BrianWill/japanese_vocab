@@ -8,12 +8,16 @@ var trackEn = document.getElementById('track_en');
 var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
 var markStoryLink = document.getElementById('mark_story');
+var subStoryLink = document.getElementById('sub_story');
 
 var playerControls = document.getElementById('player_controls');
 
 var story = null;
 var selectedLineIdx = 0;
 var youtubePlayer;
+
+var markedStartTime = 0;
+var markedEndTime = 0;
 
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.25;
 
@@ -59,6 +63,27 @@ function displayCues(cues, target) {
     }
 
     target.innerHTML = html;
+}
+
+
+subStoryLink.onclick = function (evt) {
+    evt.preventDefault();
+    let msg = `Create new story from subrange: ${formatTrackTime(markedStartTime)} to ${formatTrackTime(markedEndTime)} of ${story.source} - ${story.title}.
+(Use the [ and ] keys to set start and end time markers while playing.)`;
+    let title = window.prompt(msg, 'new title')
+    if (title) {
+        let storyInfo = {
+            "parent_story": story.id,
+            "title": story.title + " - " + title,
+            "start_time": markedStartTime,
+            "end_time": markedEndTime,
+            "transcript_ja": textTrackToString(trackJa.track, markedStartTime, markedEndTime),
+            "transcript_en": textTrackToString(trackEn.track, markedStartTime, markedEndTime)
+        };
+        createSubrangeStory(storyInfo, () => {
+            snackbarMessage("subrange story has been created");
+        });
+    }
 }
 
 
@@ -165,7 +190,7 @@ document.body.onkeydown = async function (evt) {
                 let cues = findCues(trackEn.track, player.currentTime);
                 displayCues(cues, captionsEn);
             }
-            
+
             if (japanese) {
                 lang = 'Japanese';
                 adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
@@ -174,12 +199,12 @@ document.body.onkeydown = async function (evt) {
                 displayCues(cues, captionsJa);
             }
 
-//            console.log(`updated ${lang} cues: ${adjustment}`);
+            //            console.log(`updated ${lang} cues: ${adjustment}`);
             snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment}`);
 
             clearTimeout(timeoutHandle);
             timeoutHandle = setTimeout(
-                function() {
+                function () {
                     updateStoryInfo(story, () => {
                         snackbarMessage(`saved updates to subtitle timings`);
                     });
@@ -194,6 +219,14 @@ document.body.onkeydown = async function (evt) {
                 player.currentTime = duration * (digit / 10);
                 displayCurrentCues();
             }
+        } else if (evt.code === 'BracketLeft') {
+            evt.preventDefault();
+            markedStartTime = Math.trunc(player.currentTime);
+            snackbarMessage('subrange start marker set to current position');
+        } else if (evt.code === 'BracketRight') {
+            evt.preventDefault();
+            markedEndTime = Math.trunc(player.currentTime);
+            snackbarMessage('subrange end marker set to current position');
         }
     }
 };
