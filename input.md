@@ -188,3 +188,7 @@ These sources lack human-written transcripts in most cases, so you must rely upo
 - [Haru's Japanese Cafe](https://www.youtube.com/@HarusJapaneseCafe)
 - [Japanese Language Community](https://www.youtube.com/@erikojuku)
 - [Nihongo Con Teppei](https://nihongoconteppei.com/)
+
+## Other useful links
+
+- [Pitch accent trainer](https://kotu.io/tests/pitchAccent/perception/minimalPairs)

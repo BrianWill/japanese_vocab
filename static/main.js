@@ -27,7 +27,7 @@ storyList.onchange = function (evt) {
         var storyId = evt.target.getAttribute('story_id');
         let story = storiesById[storyId];
         story.level = evt.target.value;
-        updateStoryInfo(story, () => { });
+        updateStory(story, () => { });
     }
 };
 
@@ -100,11 +100,11 @@ function displaySchedule(entries) {
 
     // sort entries by day_offset
     scheduleEntries.sort((a, b) => {
-        return a.day_offset - b.day_offset
+        return a.day_offset - b.day_offset;
     });
 
     logEntries.sort((a, b) => {
-        return a.day_offset - b.day_offset
+        return a.day_offset - b.day_offset;
     });
 
     {
@@ -233,6 +233,11 @@ function displayStories() {
 
     // display by source
     let list = storiesBySource[source];
+
+    list.sort((a, b) => {
+        return a.episode_number - b.episode_number;
+    });
+
     for (let s of list) {
         html += storyRow(s);
     }

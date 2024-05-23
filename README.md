@@ -50,11 +50,13 @@ The "log this story" link will remove the rep from the schedule.
 - `a` : jump back ~1 seconds
 - `e` : jump ahead ~5 seconds
 - `q` : jump back ~5 seconds
+- `-` : decrease playback speed
+- `+` : increase playback speed
 
 Because subtitle data from sources may not line up with the video or audio, these keys may be helpful:
 
-- `-` : decrease the start and end time of the current subtitle (and all after it) by 0.25 seconds
-- `+` : increase the start and end time of the current subtitle (and all after it) by 0.25 seconds
+- `alt` + `-` : decrease the start and end time of the current subtitle (and all after it) by 0.25 seconds
+- `alt` + `+` : increase the start and end time of the current subtitle (and all after it) by 0.25 seconds
 
 To help break up longer stories into shorter ones:
 

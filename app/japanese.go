@@ -55,7 +55,7 @@ const DRILLING = 2
 
 const NUM_SCHEDULED_REPETITIONS = 5
 
-const MAIN_USER_DB_PATH = "../data.db"
+const MAIN_USER_DB_PATH = "./data/data.db"
 
 func main() {
 	var err error
@@ -99,7 +99,7 @@ func main() {
 
 	//router.Use(middleware)
 
-	router.HandleFunc("/update_story_info", UpdateStoryInfo).Methods("POST")
+	router.HandleFunc("/update_story_info", UpdateStory).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/schedule_story", ScheduleStory).Methods("POST")
 	router.HandleFunc("/unschedule_story", UnscheduleStory).Methods("POST")
@@ -141,7 +141,7 @@ func devMiddleware(h http.Handler) http.Handler {
 
 func loadDictionary() {
 	start := time.Now()
-	bytes, err := unzipSource("../kanji.zip")
+	bytes, err := unzipSource("./data/kanji.zip")
 	if err != nil {
 		panic(err)
 	}
@@ -153,7 +153,7 @@ func loadDictionary() {
 	fmt.Println("time to load kanji: ", duration)
 
 	start = time.Now()
-	bytes, err = unzipSource("../entries.zip")
+	bytes, err = unzipSource("./data/entries.zip")
 	if err != nil {
 		panic(err)
 	}
@@ -237,9 +237,10 @@ func makeUserDB(path string) {
 			link TEXT,
 			level TEXT,
 			episode_number TEXT,
-			audio TEXT,
 			video TEXT,
 			repetitions INTEGER NOT NULL,
+			start_time REAL,
+			end_time REAL,
 			transcript_en TEXT,
 			transcript_ja TEXT,
 			content TEXT,

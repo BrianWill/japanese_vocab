@@ -180,9 +180,11 @@ function displayEntry(entry) {
             </div>`;
 }
 
-function updateStoryInfo(story, successFn) {
+function updateStory(story, successFn) {
     story = {
         id: story.id,
+        source: story.source,
+        title: story.title,
         level: story.level,
         repetitions: story.repetitions,
         archived: story.archived,
@@ -479,7 +481,7 @@ function addLogEvent(storyId) {
 }
 
 // todo test with negative time
-function formatTrackTime(time) {
+function formatTrackTime(time, noFraction) {
     let seconds = Math.trunc(time);
 
     let fractionStr = '000';
@@ -491,6 +493,10 @@ function formatTrackTime(time) {
     let secondsStr = String(seconds % 60).padStart(2, '0');
     let minutesStr = String(Math.trunc(seconds / 60) % 60).padStart(2, '0');
     let hoursStr = String(Math.trunc(seconds / (60 * 60))).padStart(2, '0');
+
+    if (noFraction) {
+        return `${hoursStr}:${minutesStr}:${secondsStr}`;
+    }
 
     return `${hoursStr}:${minutesStr}:${secondsStr}.${fractionStr}`;
 }
@@ -523,7 +529,9 @@ ${cue.text}\n\n`;
 function adjustTextTrackTimings(track, time, adjustment) {
     let index = track.cues.length;
 
-    // find first track that overlap afterTime
+    const minMargin = 0.5;
+
+    // find first track that overlap 'time'
     for (let i = 0; i < track.cues.length; i++) {
         let cue = track.cues[i];
 
@@ -531,7 +539,7 @@ function adjustTextTrackTimings(track, time, adjustment) {
             // return false if adjusting the cue would make it overlap the prior cue
             let prior = track.cues[i - 1];
             let adjustedStart = cue.startTime + adjustment;
-            if (adjustedStart < prior.endTime || adjustedStart < 0) {
+            if (adjustedStart < (prior.startTime + minMargin) || adjustedStart < 0) {
                 return false;
             }
 

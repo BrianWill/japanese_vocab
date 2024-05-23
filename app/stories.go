@@ -308,8 +308,8 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 		fmt.Println("ip: ", ip)
 	}
 
-	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, audio, video, 
-			level, date, repetitions FROM stories;`)
+	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, video, 
+			level, date, repetitions, start_time, end_time FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -321,7 +321,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber,
-			&story.Audio, &story.Video, &story.Level, &story.Date, &story.Repetitions); err != nil {
+			&story.Video, &story.Level, &story.Date, &story.Repetitions, &story.StartTime, &story.EndTime); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -357,15 +357,17 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	row := sqldb.QueryRow(`SELECT title, source, link, content, date, audio, video, 
-		level, words, transcript_en, transcript_ja FROM stories WHERE id = $1;`, id)
+	row := sqldb.QueryRow(`SELECT title, source, link, content, date, video, 
+		level, words, transcript_en, transcript_ja, repetitions, start_time, end_time 
+		FROM stories WHERE id = $1;`, id)
 
 	var words string
 	story := Story{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
-		&story.Audio, &story.Video,
+		&story.Video,
 		&story.Level, &words,
-		&story.TranscriptEN, &story.TranscriptJA); err != nil {
+		&story.TranscriptEN, &story.TranscriptJA,
+		&story.Repetitions, &story.StartTime, &story.EndTime); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
@@ -386,7 +388,7 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
+func UpdateStory(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 
 	w.Header().Set("Content-Type", "application/json")
@@ -434,6 +436,13 @@ func UpdateStoryInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
 		return
+	}
+
+	err = updateStoryJson(story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure updating story json: " + err.Error() + `"}`))
+		rows.Close()
 	}
 
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
@@ -824,13 +833,36 @@ func CreateSubrangeStory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	row := sqldb.QueryRow(`SELECT title, source, link, audio, video, level FROM stories WHERE id = $1;`, body.ParentStory)
+	row := sqldb.QueryRow(`SELECT source, link, video, level, episode_number FROM stories WHERE id = $1;`, body.ParentStory)
 
-	story := Story{ID: int64(body.ParentStory)}
-	if err := row.Scan(&story.Title, &story.Source, &story.Link,
-		&story.Audio, &story.Video, &story.Level); err != nil {
+	content, err := getSubtitlesContent(body.TranscriptJA)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	story := Story{
+		Title:         body.Title,
+		StartTime:     body.StartTime,
+		EndTime:       body.EndTime,
+		TranscriptEN:  body.TranscriptEN,
+		TranscriptJA:  body.TranscriptJA,
+		Content:       content,
+		ContentFormat: "text",
+	}
+
+	if err := row.Scan(&story.Source, &story.Link,
+		&story.Video, &story.Level, &story.EpisodeNumber); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
+		return
+	}
+
+	err = importStory(story, sqldb)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": failure importing subrange story:"` + err.Error() + `"}`))
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -15,59 +16,63 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const SOURCES_PATH = "../static/sources/"
+
 var newlineRegEx *regexp.Regexp
 
-func importStories(dbPath string, jsonPath string) error {
-	fmt.Println("importing stories...")
-	jsonBytes, err := os.ReadFile(jsonPath)
-	if err != nil {
-		panic(err)
-	}
+// todo fix imports for sources with main json file for all stories
 
-	// parse the json file
-	storyJSON := StoryImportJSON{}
-	storyJSON.Stories = make([]StoryImport, 0)
-	err = json.Unmarshal(jsonBytes, &storyJSON)
-	if err != nil {
-		panic(err)
-	}
+// func importStories(dbPath string, jsonPath string) error {
+// 	fmt.Println("importing stories...")
+// 	jsonBytes, err := os.ReadFile(jsonPath)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	// open the db
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		panic(err)
-	}
-	defer sqldb.Close()
+// 	// parse the json file
+// 	storyJSON := StoryImportJSON{}
+// 	storyJSON.Stories = make([]Story, 0)
+// 	err = json.Unmarshal(jsonBytes, &storyJSON)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	fmt.Println("Defaults source: ", storyJSON.Source)
-	fmt.Println("NUM STORIES: ", len(storyJSON.Stories))
+// 	// open the db
+// 	sqldb, err := sql.Open("sqlite3", dbPath)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer sqldb.Close()
 
-	//removeAllStories(sqldb)
+// 	fmt.Println("Defaults source: ", storyJSON.Source)
+// 	fmt.Println("NUM STORIES: ", len(storyJSON.Stories))
 
-	for _, s := range storyJSON.Stories {
+// 	//removeAllStories(sqldb)
 
-		s.Title = strings.TrimSpace(s.Title)
+// 	for _, s := range storyJSON.Stories {
 
-		if s.Source == "" {
-			s.Source = storyJSON.Source
-		}
+// 		s.Title = strings.TrimSpace(s.Title)
 
-		if s.Level == "" {
-			s.Level = "Intermediate"
-		}
+// 		if s.Source == "" {
+// 			s.Source = storyJSON.Source
+// 		}
 
-		if s.ContentFormat == "" {
-			s.ContentFormat = storyJSON.ContentFormat
-		}
+// 		if s.Level == "" {
+// 			s.Level = "Intermediate"
+// 		}
 
-		err = importStory(s, sqldb)
-		if err != nil {
-			log.Fatal(err)
-			return err
-		}
-	}
-	return nil
-}
+// 		if s.ContentFormat == "" {
+// 			s.ContentFormat = storyJSON.ContentFormat
+// 		}
+
+// 		err = importStory(s, sqldb)
+// 		if err != nil {
+// 			log.Fatal(err)
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 func importSources(dbPath string) error {
 	fmt.Println("importing sources...")
@@ -77,8 +82,6 @@ func importSources(dbPath string) error {
 		panic(err)
 	}
 	defer sqldb.Close()
-
-	const SOURCES_PATH = "../static/sources/"
 
 	entries, err := os.ReadDir(SOURCES_PATH)
 	if err != nil {
@@ -103,13 +106,20 @@ func importSource(sourcePath string, source string, sqldb *sql.DB) error {
 		log.Fatal(err)
 	}
 
-	storyMap := make(map[int]*StoryImport) // episode number to
+	storyMap := make(map[int]*Story) // episode number to
 
 	for _, entry := range entries {
 		name := entry.Name()
 		components := strings.Split(name, ".")
 		if len(components) < 2 {
 			return fmt.Errorf("malformed file name in source: %s", name)
+		}
+
+		extension := components[len(components)-1]
+		isVideo := extension == "mp4"
+		isSubtitle := extension == "vtt" || extension == "ass" || extension == "srt"
+		if !isVideo && !isSubtitle {
+			continue
 		}
 
 		epNumber, err := strconv.Atoi(components[len(components)-2])
@@ -119,22 +129,20 @@ func importSource(sourcePath string, source string, sqldb *sql.DB) error {
 
 		story, ok := storyMap[epNumber]
 		if !ok {
-			story = &StoryImport{}
+			story = &Story{}
 			storyMap[epNumber] = story
 		}
 		numStr := strconv.Itoa(epNumber)
-		story.EpisodeNumber = numStr
+		story.EpisodeNumber = epNumber
 		story.Title = source + " - ep " + numStr
 		story.Source = source
 		story.Level = "medium"
 		story.ContentFormat = "text"
 
-		extension := components[len(components)-1]
-		isVideo := extension == "mp4"
 		if isVideo {
 			story.Video = name
 		}
-		isSubtitle := extension == "vtt" || extension == "ass" || extension == "srt"
+
 		if isSubtitle {
 			if len(components) < 3 {
 				return fmt.Errorf("subtitle file does not specify language")
@@ -195,7 +203,26 @@ func getSubtitles(path string) (newSubtitles string, content string, err error) 
 	return buf.String(), sb.String(), nil
 }
 
-func storyExists(story StoryImport, sqldb *sql.DB) bool {
+func getSubtitlesContent(vtt string) (string, error) {
+	subs, err := astisub.ReadFromWebVTT(bytes.NewReader([]byte(vtt)))
+	if err != nil {
+		return "", err
+	}
+
+	var sb strings.Builder
+	for _, item := range subs.Items {
+		for _, line := range item.Lines {
+			for _, lineItem := range line.Items {
+				sb.WriteString(lineItem.Text)
+			}
+			sb.WriteString("\n")
+		}
+	}
+
+	return sb.String(), nil
+}
+
+func storyExists(story Story, sqldb *sql.DB) bool {
 	var id int64
 
 	err := sqldb.QueryRow(`SELECT id FROM stories WHERE title = $1 and source = $2;`,
@@ -213,29 +240,64 @@ func storyExists(story StoryImport, sqldb *sql.DB) bool {
 // (the story will be parsed into lines and words only when its added from the catalog to the main story table,
 // so in this importer, we just check that the data is valid)
 // check that the content can be parsed as the specified format
-func importStory(story StoryImport, sqldb *sql.DB) error {
-	epNum, err := strconv.Atoi(story.EpisodeNumber)
-	if err != nil {
-		fmt.Printf(`story "%s" has malformed episode number: %s`+"\n", story.Title, story.EpisodeNumber)
-		return err
-	}
-
+func importStory(story Story, sqldb *sql.DB) error {
 	newWordCount, wordIdsJson, err := processStoryWords(story, sqldb)
 	if err != nil {
 		return err
 	}
 
+	var jsonPath string = SOURCES_PATH + story.Source + "/" + story.Title + ".json"
+
+	jsonExisted := true
+	if _, err := os.Stat(jsonPath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			jsonExisted = false
+		} else {
+			return err
+		}
+	}
+
+	if jsonExisted {
+		content, err := os.ReadFile(jsonPath)
+		if err != nil {
+			log.Fatal("Error when opening file: ", err)
+		}
+
+		var jsonStory Story
+		err = json.Unmarshal(content, &jsonStory)
+		if err != nil {
+			log.Fatal("Error during Unmarshal(): ", err)
+		}
+
+		if jsonStory.TranscriptEN != "" {
+			story.TranscriptEN = jsonStory.TranscriptEN
+		}
+		if jsonStory.TranscriptJA != "" {
+			story.TranscriptJA = jsonStory.TranscriptJA
+		}
+		if jsonStory.Content != "" {
+			story.Content = jsonStory.Content
+		}
+	} else {
+		err = writeStoryJson(jsonPath, story)
+		if err != nil {
+			return err
+		}
+	}
+
+	epNumStr := strconv.Itoa(story.EpisodeNumber)
+
 	if storyExists(story, sqldb) {
 		fmt.Printf(`updating story: "%s"`+"\n", story.Title)
 
 		_, err := sqldb.Exec(`UPDATE stories SET 
-				date = $1, link = $2, episode_number = $3, audio = $4, video = $5, 
-				content = $6, content_format = $7, 
-				transcript_en = CASE WHEN transcript_en = '' THEN $8 ELSE transcript_en END,
+				date = $1, link = $2, episode_number = $3, video = $4, 
+				content = $5, content_format = $6, 
+				transcript_en = CASE WHEN transcript_en = '' THEN $7 ELSE transcript_en END,
 				transcript_ja = CASE WHEN transcript_ja = '' THEN $8 ELSE transcript_ja END,
-				words = $10 
-				WHERE title = $11 and source = $12;`,
-			story.Date, story.Link, epNum, story.Audio, story.Video,
+				words = $9 
+				WHERE title = $10 and source = $11;`,
+			story.Date, story.Link, epNumStr, story.Video,
 			story.Content, story.ContentFormat, story.TranscriptEN,
 			story.TranscriptJA, wordIdsJson,
 			story.Title, story.Source)
@@ -244,17 +306,64 @@ func importStory(story StoryImport, sqldb *sql.DB) error {
 
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
-	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, audio, video, 
-				content, content_format, archived, transcript_en, transcript_ja, 
-				words, repetitions, level) 
+	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, video, 
+				content, content_format, transcript_en, transcript_ja, words, repetitions, level, start_time, end_time) 
 				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);`,
-		story.Title, story.Source, story.Date, story.Link, epNum,
-		story.Audio, story.Video, story.Content, story.ContentFormat, 0,
-		story.TranscriptEN, story.TranscriptJA, wordIdsJson, 0, story.Level)
+		story.Title, story.Source, story.Date, story.Link, epNumStr,
+		story.Video, story.Content, story.ContentFormat, story.TranscriptEN,
+		story.TranscriptJA, wordIdsJson, 0, story.Level, story.StartTime, story.EndTime)
+
 	return err
 }
 
-func processStoryWords(story StoryImport, sqldb *sql.DB) (newWordCount int, wordIdsJson string, err error) {
+func writeStoryJson(filePath string, story Story) error {
+	jsonString, err := json.Marshal(&story)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filePath, jsonString, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateStoryJson(story Story) error {
+	var jsonPath string = SOURCES_PATH + story.Source + "/" + story.Title + ".json"
+	fmt.Println("jsonpPath", jsonPath)
+
+	content, err := os.ReadFile(jsonPath)
+	if err != nil {
+		return err
+	}
+
+	var jsonStory Story
+	err = json.Unmarshal(content, &jsonStory)
+	if err != nil {
+		return err
+	}
+
+	if story.TranscriptEN != "" {
+		jsonStory.TranscriptEN = story.TranscriptEN
+	}
+	if story.TranscriptJA != "" {
+		jsonStory.TranscriptJA = story.TranscriptJA
+	}
+	if story.Content != "" {
+		jsonStory.Content = story.Content
+	}
+
+	err = writeStoryJson(jsonPath, jsonStory)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func processStoryWords(story Story, sqldb *sql.DB) (newWordCount int, wordIdsJson string, err error) {
 
 	// remove newlines from the string in case words are split across lines
 	if newlineRegEx == nil {

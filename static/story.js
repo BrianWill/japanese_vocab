@@ -20,6 +20,7 @@ var markedStartTime = 0;
 var markedEndTime = 0;
 
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.25;
+const PLAYBACK_ADJUSTMENT = 0.05;
 
 // only way to detect enter vs exit is whether the number of active increases (enter) or decreases (exit)
 
@@ -70,7 +71,14 @@ subStoryLink.onclick = function (evt) {
     evt.preventDefault();
     let msg = `Create new story from subrange: ${formatTrackTime(markedStartTime)} to ${formatTrackTime(markedEndTime)} of ${story.source} - ${story.title}.
 (Use the [ and ] keys to set start and end time markers while playing.)`;
-    let title = window.prompt(msg, 'new title')
+
+    if (markedStartTime < 0 || markedEndTime < markedStartTime) {
+        snackbarMessage("end time must be greater than start time");
+        return
+    }
+
+    let title = window.prompt(msg, 'new title');
+
     if (title) {
         let storyInfo = {
             "parent_story": story.id,
@@ -80,6 +88,7 @@ subStoryLink.onclick = function (evt) {
             "transcript_ja": textTrackToString(trackJa.track, markedStartTime, markedEndTime),
             "transcript_en": textTrackToString(trackEn.track, markedStartTime, markedEndTime)
         };
+
         createSubrangeStory(storyInfo, () => {
             snackbarMessage("subrange story has been created");
         });
@@ -177,40 +186,45 @@ document.body.onkeydown = async function (evt) {
         } else if (evt.code === 'Equal' || evt.code === 'Minus') {
             evt.preventDefault();
 
-            let adjustment = (evt.code === 'Equal') ? TEXT_TRACK_TIMING_ADJUSTMENT : -TEXT_TRACK_TIMING_ADJUSTMENT;
-            let lang = ''
+            if (evt.altKey) {
+                let adjustment = (evt.code === 'Equal') ? TEXT_TRACK_TIMING_ADJUSTMENT : -TEXT_TRACK_TIMING_ADJUSTMENT;
+                let lang = ''
 
-            let english = document.getElementById('transcript_en_checkbox').checked;
-            let japanese = document.getElementById('transcript_ja_checkbox').checked;
+                let english = document.getElementById('transcript_en_checkbox').checked;
+                let japanese = document.getElementById('transcript_ja_checkbox').checked;
 
-            if (english) {
-                lang = 'English';
-                adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
-                story.transcript_en = textTrackToString(trackEn.track);
-                let cues = findCues(trackEn.track, player.currentTime);
-                displayCues(cues, captionsEn);
+                if (english) {
+                    lang = 'English';
+                    adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
+                    story.transcript_en = textTrackToString(trackEn.track);
+                    let cues = findCues(trackEn.track, player.currentTime);
+                    displayCues(cues, captionsEn);
+                }
+
+                if (japanese) {
+                    lang = 'Japanese';
+                    adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
+                    story.transcript_ja = textTrackToString(trackJa.track);
+                    let cues = findCues(trackJa.track, player.currentTime);
+                    displayCues(cues, captionsJa);
+                }
+
+                //            console.log(`updated ${lang} cues: ${adjustment}`);
+                snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment}`);
+
+                clearTimeout(timeoutHandle);
+                timeoutHandle = setTimeout(
+                    function () {
+                        updateStory(story, () => {
+                            snackbarMessage(`saved updates to subtitle timings`);
+                        });
+                    },
+                    3000
+                );
+            } else {
+                let adjustment = (evt.code === 'Equal') ? PLAYBACK_ADJUSTMENT : -PLAYBACK_ADJUSTMENT;
+                adjustPlaybackSpeed(adjustment);
             }
-
-            if (japanese) {
-                lang = 'Japanese';
-                adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
-                story.transcript_ja = textTrackToString(trackJa.track);
-                let cues = findCues(trackJa.track, player.currentTime);
-                displayCues(cues, captionsJa);
-            }
-
-            //            console.log(`updated ${lang} cues: ${adjustment}`);
-            snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment}`);
-
-            clearTimeout(timeoutHandle);
-            timeoutHandle = setTimeout(
-                function () {
-                    updateStoryInfo(story, () => {
-                        snackbarMessage(`saved updates to subtitle timings`);
-                    });
-                },
-                3000
-            );
         } else if (evt.code.startsWith('Digit')) {
             if (evt.altKey) {
                 evt.preventDefault();
@@ -367,8 +381,17 @@ function displayStoryInfo(story) {
     drillWordsLink.setAttribute('href', `/words.html?storyId=${story.id}`);
     document.getElementById('story_title').innerHTML = `<a href="${story.link}">${story.title}</a><hr>`;
     document.getElementById('source_info').innerText = 'Source: ' + story.source;
-    document.getElementById('date_info').innerText = story.date;
-    document.getElementById('repetitions_info').innerText = 'Times repeated: ' + story.repetitions;
+    if (story.date) {
+        document.getElementById('date_info').innerText = story.date;
+    }
+
+    let time = '';
+    if (story.start_time != undefined && story.end_time != undefined) {
+        time = `Start time: ${formatTrackTime(story.start_time, true)}<br> 
+            End time: ${formatTrackTime(story.end_time, true)}<br>`;
+    }
+
+    document.getElementById('repetitions_info').innerHTML = `Times repeated: ${story.repetitions}<br> ${time}`;
     console.log(story);
 }
 
@@ -417,26 +440,17 @@ function openStory(id) {
                 return;
             }
 
-            if (story.audio && story.audio.endsWith('.mp4')) {
-                // todo why did I create a new video element?
-                const video = document.createElement("video");
-                player.replaceWith(video);
-                player = video;
-                player.setAttribute('id', 'video_player');
-                player.setAttribute('controls', 'true');
-
-                player.src = '/audio/' + story.audio;
-                player.style.display = 'block';
-            } else if (story.video) {
+            if (story.video) {
                 player.style.display = 'block';
                 player.setAttribute('type', 'video/mp4');
-                player.src = '/sources/' + story.source + "/" + story.video;
+                let time = '';
+                if (story.end_time > 0) {
+                    time = `#t=${Math.trunc(story.start_time)},${Math.trunc(story.end_time)}`;
+                }
+                player.src = '/sources/' + story.source + "/" + story.video + time;
 
                 console.log("src", player.src);
-            } else if (story.audio) {
-                player.style.display = 'block';
-                player.src = '/audio/' + story.audio;
-            }
+            } 
 
             if (story.transcript_en) {
                 trackEn.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_en);
@@ -462,6 +476,17 @@ playerSpeedNumber.onchange = function (evt) {
         youtubePlayer.setPlaybackRate(parseFloat(playerSpeedNumber.value));
     } else if (player) {
         player.playbackRate = parseFloat(playerSpeedNumber.value);
+    }
+}
+
+function adjustPlaybackSpeed(adjustment) {
+    let newSpeed = parseFloat(playerSpeedNumber.value) + adjustment
+    playerSpeedNumber.value = newSpeed.toFixed(2);
+
+    if (youtubePlayer) {
+        youtubePlayer.setPlaybackRate(newSpeed);
+    } else if (player) {
+        player.playbackRate = newSpeed;
     }
 }
 

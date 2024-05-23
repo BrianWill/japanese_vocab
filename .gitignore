@@ -18,8 +18,6 @@ data.db
 ignore/*
 app/air_errors.log
 app/tmp/air_errors.log
-static/audio/ignore/*
-static/audio/*
 static/ignore/*
 static/sources/*
 bin/scrape/node_modules
