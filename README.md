@@ -45,6 +45,7 @@ The "log this story" link will remove the rep from the schedule.
 
 ### Video and audio player hotkey controls
 
+- `f` : toggle fullscreen
 - `s` : toggle play/pause
 - `d` : jump ahead ~1 seconds
 - `a` : jump back ~1 seconds

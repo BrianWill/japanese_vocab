@@ -442,12 +442,20 @@ function openStory(id) {
 
             if (story.video) {
                 player.style.display = 'block';
+
+                let path = '/sources/' + story.source + "/" + story.video;
+                if (!path.endsWith('mp4')) {
+                    // grid-template-columns: 4fr 1fr;
+                    var grid = document.getElementById('story_container')
+                    //grid.style.grid
+                }
+
                 player.setAttribute('type', 'video/mp4');
                 let time = '';
                 if (story.end_time > 0) {
                     time = `#t=${Math.trunc(story.start_time)},${Math.trunc(story.end_time)}`;
                 }
-                player.src = '/sources/' + story.source + "/" + story.video + time;
+                player.src = path + time;
 
                 console.log("src", player.src);
             } 

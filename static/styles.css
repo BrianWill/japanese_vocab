@@ -1,6 +1,7 @@
 body {
     background-color: rgb(35, 35, 35);
     color: #aabdcf;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
 }
 
 h3 {
@@ -209,25 +210,6 @@ a {
 .day_row td:first-child {
     padding: 0.5em;
 } 
-
-#story_container {
-    height: 98vh;
-    display: grid;
-    grid-template-columns: 4fr 1fr;
-    gap: 0px 0px;
-
-    grid-template-areas: 
-      "media sidebar"
-      "lines lines"; 
-}
-
-#media {
-    grid-area: media;
-}
-
-#story_sidebar {
-    grid-area: sidebar;
-}
 
 .high_pitch {
     font-weight: bold;
@@ -494,16 +476,6 @@ span.verb:hover {
 }
 
 
-#story_lines .marked_line.line_timestamp:hover {
-    color: rgb(255, 251, 0);
-    text-decoration: rgb(255, 251, 0) solid underline;
-}
-
-#story_lines {
-    grid-area: lines;
-    cursor: default;
-}
-
 .drill_link {
     font-size: 60%;
     margin-left: 1em;
@@ -536,4 +508,17 @@ span.verb:hover {
     padding: 1em;
     color: rgb(114, 114, 114);
     font-size: 80%;
+}
+
+.schedule_down_link, .schedule_up_link {
+    text-decoration: none;
+}
+
+.logged_row {
+    color: #525252;
+}
+
+.day_row.logged_row {
+    background-color: #5b615d;
+    color: rgb(183, 183, 183);
 }

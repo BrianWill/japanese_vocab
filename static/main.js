@@ -1,12 +1,9 @@
-var storyList = document.getElementById('story_list');
-var sourceSelect = document.getElementById('source_select');
 var scheduleDiv = document.getElementById('schedule');
 var ipDiv = document.getElementById('ip');
 
 const STORY_COOLDOWN = 60 * 60 * 24;
 
 document.body.onload = function (evt) {
-    getStories(processStories);
     getSchedule(displaySchedule);
     getIP((ips) => {
         let html = 'local ip: ';
@@ -18,22 +15,6 @@ document.body.onload = function (evt) {
 };
 
 
-sourceSelect.onchange = function (evt) {
-    displayStories();
-}
-
-storyList.onchange = function (evt) {
-    if (evt.target.className.includes('level_select')) {
-        var storyId = evt.target.getAttribute('story_id');
-        let story = storiesById[storyId];
-        story.level = evt.target.value;
-        updateStory(story, () => { });
-    }
-};
-
-var storiesById = {};
-var storiesBySource = {};
-var stories = [];
 var scheduleEntries = [];
 
 let levelNameMap = {
@@ -59,40 +40,6 @@ scheduleDiv.onclick = function (evt) {
     }
 };
 
-storyList.onclick = function (evt) {
-    if (evt.target.className.includes('schedule_link')) {
-        var storyId = evt.target.getAttribute('story_id');
-        let story = storiesById[storyId];
-        scheduleStory(story.id, () => getSchedule(displaySchedule));
-    }
-};
-
-function processStories(storyData) {
-    stories = storyData;
-
-    storiesById = {};
-    storiesBySource = {};
-
-    for (let s of stories) {
-        storiesById[s.id] = s;
-        let list = storiesBySource[s.source];
-        if (list === undefined) {
-            list = storiesBySource[s.source] = [];
-        }
-        list.push(s);
-    }
-
-    let selectOptionsHTML = ``;
-    let i = 0;
-    for (let source in storiesBySource) {
-        selectOptionsHTML += `<option value="${i}">${source}</option>`
-        i++;
-    }
-    sourceSelect.innerHTML = selectOptionsHTML;
-
-    displayStories();
-};
-
 function displaySchedule(entries) {
 
     let scheduleEntries = entries.schedule;
@@ -110,9 +57,8 @@ function displaySchedule(entries) {
     {
         let html = `<table class="schedule_table">`;
 
-        html += `<tr class="day_row"><td class="schedule_day">Logged in last 24 hours</td>
-            <td></td>
-            <td></td>
+        html += `<tr class="day_row logged_row">
+            <td class="schedule_day">Logged in last 24 hours</td>
             <td></td>
             <td></td>
             <td></td>
@@ -135,14 +81,12 @@ function displaySchedule(entries) {
             let hash = integerHash(entry.story + entry.source + entry.title);
             let color = randomPaletteColor(hash);
 
-            html += `<tr>
+            html += `<tr class="logged_row">
                 <td>${typeStr}</td>  
                 <td>${entry.source}</td>    
-                <td><a style="color:${color};" class="story_title" story_id="${entry.story}" 
-                        href="/story.html?storyId=${entry.story}">${entry.title}</a></td>
+                <td><span style="color:${color};" class="story_title">${entry.title}</span></td>
                 <td>${entry.level}</td>
                 <td>${entry.repetitions} rep</td>
-                <td></td>
                 <td></td>
                 <td></td>
             </tr>`;
@@ -163,9 +107,8 @@ function displaySchedule(entries) {
                     dayStr = currentDay + ' days from now';
                 }
 
-                html += `<tr class="day_row"><td class="schedule_day">${dayStr}</td>
-                    <td></td>
-                    <td></td>
+                html += `<tr class="day_row">
+                    <td class="schedule_day">${dayStr}</td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -194,56 +137,13 @@ function displaySchedule(entries) {
             <td>${typeStr}</td>
             <td>${entry.source}</td>    
             <td><a style="color: ${color};" class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
-            <td>${entry.level}</td>
             <td>${entry.repetitions} rep</td>
-            <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="move this rep to the next day">remove</a></td>
-            <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">down</a></td>
-            <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">up</a></td>
+            <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="remove this rep">╳</a></td>
+            <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">🡳</a></td>
+            <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">🡱</a></td>
         </tr>`;
         }
 
         scheduleDiv.innerHTML = html + `</table>`;
     }
 };
-
-function displayStories() {
-    function storyRow(s) {
-        return `<tr>
-            <td><span class="story_source">${s.source}</span></td>
-            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            <td>
-                <select class="level_select" story_id="${s.id}" title="difficulty level of this story">
-                    <option ${(s.level == 'low') ? 'selected' : ''} value="low">low</option>
-                    <option ${(s.level == 'medium') ? 'selected' : ''} value="medium">medium</option>
-                    <option ${(s.level == 'high') ? 'selected' : ''} value="high">high</option>
-                </select>
-            </td>
-            <td>${s.repetitions} reps</td>            
-            <td>
-                <a href="#" story_id="${s.id}" class="schedule_link">schedule</a>
-            </td>
-            </tr>`;
-    }
-
-    let tableHeader = `<table class="story_table">`;
-
-    let html = tableHeader;
-
-    let source = sourceSelect.options[sourceSelect.selectedIndex].text;
-
-    // display by source
-    let list = storiesBySource[source];
-
-    list.sort((a, b) => {
-        return a.episode_number - b.episode_number;
-    });
-
-    for (let s of list) {
-        html += storyRow(s);
-    }
-    html += `</table>`;
-
-    storyList.innerHTML = html;
-};
-
-

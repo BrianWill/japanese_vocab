@@ -1,8 +1,24 @@
 # japanese_vocab TODO
 
 daily schedule system:
-   
-    in catalog, link to delete the story (with popup confirmation)
+
+    schedule should return error if the story is already scheduled
+        (or give confirmation dialog to delete all existing reps of the story and add new ones)
+    
+    in catalog, denote stories that are currently scheduled
+
+    remove concept of story level
+
+    add icon indicator on drill type in schedule (find appropriate unicode symbols?)
+    
+    story opened from the catalog instead of from schedule should not have link to log the story
+
+    clicking log link should redirect back to main page after success response
+    
+    subtitles should be displayed below the video when not in fullscreen mode?
+
+    way to set start and end points for the current story:
+        alt plus `[` `]` ?
 
     hotkey to open the current japanese subtitle in google translate
 
@@ -10,6 +26,8 @@ daily schedule system:
 
     ability to add an additional rep for a story in the schedule?
         add button on rep that creates a new rep of same type the next day (or none if it the next day already has a rep of that story)
+
+    in catalog, link to delete the story (with popup confirmation)
 
     in app menu for importing / reimporting sources
 

@@ -2,24 +2,46 @@ body {
     overflow-y: hidden;
 }
 
-#audio_player {
-    width: 100%;
-    padding: 1em;
-    display: none;
-}
-
-#video_player {
-    width: 100%;
-    display: none;
-    height: 100%;
-    width: 100%;
-}
-
 #caption_container {
     display: flex;
     transform: translateY(-12em);
     width: 100%;
     gap: 10%;
+}
+
+#main_container {
+    display: flex;
+    flex-direction: column;
+    height: 98vh;
+}
+
+#story_container {
+    flex: 1 0 0;
+    display: flex;
+}
+
+#media {
+    flex: 2 0 0;
+}
+
+#story_sidebar {
+    flex: 1 0 0;
+}
+
+
+#story_lines .marked_line.line_timestamp:hover {
+    color: rgb(255, 251, 0);
+    text-decoration: rgb(255, 251, 0) solid underline;
+}
+
+#story_lines {
+    flex: 1 0 0;
+    cursor: default;
+}
+
+
+#video_player {
+    width: 100%;
 }
 
 #captions_en {
