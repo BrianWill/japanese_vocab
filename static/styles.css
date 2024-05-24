@@ -522,3 +522,11 @@ span.verb:hover {
     background-color: #5b615d;
     color: rgb(183, 183, 183);
 }
+
+.schedule_remove_link {
+    text-decoration: none;
+}
+
+.schedule_add_link {
+    text-decoration: none;
+}

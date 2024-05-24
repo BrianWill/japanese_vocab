@@ -335,7 +335,7 @@ function getIP(successFn) {
 
 function adjustSchedule(entryId, adjustment, successFn) {
     fetch('/schedule_adjust', {
-        method: 'POST', // or 'PUT'
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -352,9 +352,32 @@ function adjustSchedule(entryId, adjustment, successFn) {
         });
 }
 
+function scheduleAddRep(entryId, successFn) {
+    fetch('/schedule_add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "id": entryId })
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Log:', data);
+            if (data.status != "success") {
+                snackbarMessage("new rep not added because the next day already has a rep of this story");
+                return;
+            }
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function logStory(entryId, storyId, wordIds, successFn) {
     fetch('/log_story', {
-        method: 'POST', // or 'PUT'
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },

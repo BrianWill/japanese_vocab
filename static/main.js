@@ -24,10 +24,17 @@ let levelNameMap = {
 };
 
 scheduleDiv.onclick = function (evt) {
+    evt.preventDefault();
+
     if (evt.target.className.includes('schedule_remove_link')) {
         var entryId = parseInt(evt.target.getAttribute('entry_id'));
         unscheduleStory(entryId, 0, () => getSchedule(displaySchedule));
     }
+
+    if (evt.target.className.includes('schedule_add_link')) {
+        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        scheduleAddRep(entryId, () => getSchedule(displaySchedule));
+    }    
 
     if (evt.target.className.includes('schedule_down_link')) {
         var entryId = parseInt(evt.target.getAttribute('entry_id'));
@@ -65,6 +72,7 @@ function displaySchedule(entries) {
             <td></td>
             <td></td>
             <td></td>
+            <td></td>
         </tr>`;
 
         for (const entry of logEntries) {
@@ -85,8 +93,8 @@ function displaySchedule(entries) {
                 <td>${typeStr}</td>  
                 <td>${entry.source}</td>    
                 <td><span style="color:${color};" class="story_title">${entry.title}</span></td>
-                <td>${entry.level}</td>
                 <td>${entry.repetitions} rep</td>
+                <td></td>
                 <td></td>
                 <td></td>
             </tr>`;
@@ -109,6 +117,7 @@ function displaySchedule(entries) {
 
                 html += `<tr class="day_row">
                     <td class="schedule_day">${dayStr}</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -138,7 +147,8 @@ function displaySchedule(entries) {
             <td>${entry.source}</td>    
             <td><a style="color: ${color};" class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
             <td>${entry.repetitions} rep</td>
-            <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="remove this rep">╳</a></td>
+            <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="remove this rep">✖️</a></td>
+            <td><a href="#" class="schedule_add_link" entry_id="${entry.id}" title="add another rep of this story to the next day">➕</a></td>
             <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">🡳</a></td>
             <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">🡱</a></td>
         </tr>`;

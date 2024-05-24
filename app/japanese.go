@@ -104,6 +104,7 @@ func main() {
 	router.HandleFunc("/schedule_story", ScheduleStory).Methods("POST")
 	router.HandleFunc("/unschedule_story", UnscheduleStory).Methods("POST")
 	router.HandleFunc("/schedule_adjust", ScheduleAdjust).Methods("POST")
+	router.HandleFunc("/schedule_add", ScheduleAdd).Methods("POST")
 	router.HandleFunc("/create_subrange_story", CreateSubrangeStory).Methods("POST")
 	router.HandleFunc("/schedule", GetSchedule).Methods("GET")
 	router.HandleFunc("/ip", GetIP).Methods("GET")

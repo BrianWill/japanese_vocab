@@ -696,6 +696,83 @@ func ScheduleAdjust(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }
 
+// add a single rep after a specified rep
+func ScheduleAdd(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	var body ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var entry ScheduleLogEntry
+	row := sqldb.QueryRow(`SELECT day_offset, type, story FROM schedule_entries WHERE id = $1`, body.ID)
+	err = row.Scan(&entry.DayOffset, &entry.Type, &entry.Story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	// get all other entries for the same story
+	rows, err := sqldb.Query(`SELECT id, type, day_offset FROM schedule_entries WHERE story = $1`, entry.Story)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get schedule entries: " + err.Error() + `"}`))
+		return
+	}
+	defer rows.Close()
+
+	scheduleEntries := make([]ScheduleLogEntry, 0)
+
+	for rows.Next() {
+		var entry ScheduleLogEntry
+		if err := rows.Scan(&entry.ID, &entry.Type, &entry.DayOffset); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
+			return
+		}
+		scheduleEntries = append(scheduleEntries, entry)
+	}
+
+	sort.Slice(scheduleEntries, func(i, j int) bool {
+		return scheduleEntries[i].DayOffset < scheduleEntries[j].DayOffset
+	})
+
+	// if target day is occupied, do nothing
+	targetDay := entry.DayOffset + 1
+	for i := range scheduleEntries {
+		if scheduleEntries[i].DayOffset == targetDay {
+			json.NewEncoder(w).Encode(bson.M{"status": "target day is occupied"})
+			return
+		}
+	}
+
+	// create the new rep
+	_, err = sqldb.Exec(`INSERT INTO schedule_entries (story, day_offset, type) VALUES($1, $2, $3);`,
+		entry.Story, targetDay, entry.Type)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
 func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 
