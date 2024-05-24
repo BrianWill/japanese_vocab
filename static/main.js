@@ -129,11 +129,11 @@ function displaySchedule(entries) {
 
             let typeStr = '';
             if (entry.type == 0) {
-                typeStr = 'Read';
+                typeStr = 'Read 📖';
             } else if (entry.type == 1) {
-                typeStr = 'Listen';
+                typeStr = 'Listen 👂';
             } else if (entry.type == 2) {
-                typeStr = 'Drill';
+                typeStr = 'Drill 📣';
             }
 
             let page = entry.type == 2 ? 'words' : 'story';
