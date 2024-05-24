@@ -7,8 +7,6 @@ daily schedule system:
     
     in catalog, denote stories that are currently scheduled
 
-    remove concept of story level
-
     add icon indicator on drill type in schedule (find appropriate unicode symbols?)
     
     story opened from the catalog instead of from schedule should not have link to log the story

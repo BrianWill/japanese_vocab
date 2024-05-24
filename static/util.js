@@ -185,7 +185,6 @@ function updateStory(story, successFn) {
         id: story.id,
         source: story.source,
         title: story.title,
-        level: story.level,
         repetitions: story.repetitions,
         archived: story.archived,
         transcript_ja: story.transcript_ja,

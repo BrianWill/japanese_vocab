@@ -236,7 +236,6 @@ func makeUserDB(path string) {
 			archived INTEGER NOT NULL,
 			date TEXT,
 			link TEXT,
-			level TEXT,
 			episode_number TEXT,
 			video TEXT,
 			repetitions INTEGER NOT NULL,

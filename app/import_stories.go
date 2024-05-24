@@ -57,10 +57,6 @@ var newlineRegEx *regexp.Regexp
 // 			s.Source = storyJSON.Source
 // 		}
 
-// 		if s.Level == "" {
-// 			s.Level = "Intermediate"
-// 		}
-
 // 		if s.ContentFormat == "" {
 // 			s.ContentFormat = storyJSON.ContentFormat
 // 		}
@@ -136,7 +132,6 @@ func importSource(sourcePath string, source string, sqldb *sql.DB) error {
 		story.EpisodeNumber = epNumber
 		story.Title = source + " - ep " + numStr
 		story.Source = source
-		story.Level = "medium"
 		story.ContentFormat = "text"
 
 		if isVideo {
@@ -307,11 +302,11 @@ func importStory(story Story, sqldb *sql.DB) error {
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, video, 
-				content, content_format, transcript_en, transcript_ja, words, repetitions, level, start_time, end_time) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);`,
+				content, content_format, transcript_en, transcript_ja, words, repetitions, start_time, end_time) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);`,
 		story.Title, story.Source, story.Date, story.Link, epNumStr,
 		story.Video, story.Content, story.ContentFormat, story.TranscriptEN,
-		story.TranscriptJA, wordIdsJson, 0, story.Level, story.StartTime, story.EndTime)
+		story.TranscriptJA, wordIdsJson, 0, story.StartTime, story.EndTime)
 
 	return err
 }

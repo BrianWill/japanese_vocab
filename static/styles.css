@@ -481,25 +481,6 @@ span.verb:hover {
     margin-left: 1em;
 }
 
-.level {
-    border-radius: 2px;
-    padding: 0.3em;
-    cursor: pointer;
-    user-select: none;
-}
-
-.Low {
-    background-color: green;
-}
-
-.Medium {
-    background-color: blue;
-}
-
-.High {
-    background-color: red;
-}
-
 #source_select {
     font-size: 120%;
 } 

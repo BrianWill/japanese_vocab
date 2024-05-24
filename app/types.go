@@ -11,7 +11,6 @@ type Story struct {
 	Source        string  `json:"source,omitempty"`
 	Date          string  `json:"date,omitempty"`
 	EpisodeNumber int     `json:"episode_number,omitempty"`
-	Level         string  `json:"level,omitempty"`
 	Content       string  `json:"content,omitempty"`
 	ContentFormat string  `json:"content_format,omitempty"`
 	Link          string  `json:"link,omitempty"`
@@ -33,7 +32,6 @@ type ScheduleLogEntry struct {
 	Title       string `json:"title,omitempty"`
 	Source      string `json:"source,omitempty"`
 	Repetitions int64  `json:"repetitions"`
-	Level       string `json:"level,omitempty"`
 }
 
 type ScheduleStoryRequest struct {

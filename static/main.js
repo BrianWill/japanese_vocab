@@ -17,12 +17,6 @@ document.body.onload = function (evt) {
 
 var scheduleEntries = [];
 
-let levelNameMap = {
-    1: 'Low',
-    2: 'Medium',
-    3: 'High',
-};
-
 scheduleDiv.onclick = function (evt) {
     evt.preventDefault();
 

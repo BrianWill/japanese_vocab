@@ -309,7 +309,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	}
 
 	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, video, 
-			level, date, repetitions, start_time, end_time FROM stories;`)
+			date, repetitions, start_time, end_time FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -321,7 +321,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber,
-			&story.Video, &story.Level, &story.Date, &story.Repetitions, &story.StartTime, &story.EndTime); err != nil {
+			&story.Video, &story.Date, &story.Repetitions, &story.StartTime, &story.EndTime); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -358,14 +358,13 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, content, date, video, 
-		level, words, transcript_en, transcript_ja, repetitions, start_time, end_time 
+		words, transcript_en, transcript_ja, repetitions, start_time, end_time 
 		FROM stories WHERE id = $1;`, id)
 
 	var words string
 	story := Story{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
-		&story.Video,
-		&story.Level, &words,
+		&story.Video, &words,
 		&story.TranscriptEN, &story.TranscriptJA,
 		&story.Repetitions, &story.StartTime, &story.EndTime); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -426,11 +425,11 @@ func UpdateStory(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	_, err = sqldb.Exec(`UPDATE stories SET 
-			level = $1, repetitions = $2, 
-			transcript_en = CASE WHEN $3 = '' THEN transcript_en ELSE $3 END,
-			transcript_ja = CASE WHEN $4 = '' THEN transcript_ja ELSE $4 END
-			WHERE id = $5;`,
-		story.Level, story.Repetitions,
+			repetitions = $1, 
+			transcript_en = CASE WHEN $2 = '' THEN transcript_en ELSE $2 END,
+			transcript_ja = CASE WHEN $3 = '' THEN transcript_ja ELSE $3 END
+			WHERE id = $4;`,
+		story.Repetitions,
 		story.TranscriptEN, story.TranscriptJA, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -788,7 +787,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	// make sure the story actually exists
 	rows, err := sqldb.Query(`SELECT e.id, story, day_offset, type, 
-		title, source, repetitions, level 
+		title, source, repetitions 
 		FROM schedule_entries as e INNER JOIN stories as s 
 		ON e.story = s.id;`)
 	if err != nil {
@@ -803,7 +802,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var entry ScheduleLogEntry
 		if err := rows.Scan(&entry.ID, &entry.Story, &entry.DayOffset, &entry.Type,
-			&entry.Title, &entry.Source, &entry.Repetitions, &entry.Level); err != nil {
+			&entry.Title, &entry.Source, &entry.Repetitions); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
 			return
@@ -815,7 +814,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	// make sure the story actually exists
 	rows, err = sqldb.Query(`SELECT e.id, story, e.date, type, 
-		title, source, repetitions, level 
+		title, source, repetitions
 		FROM log_entries as e INNER JOIN stories as s 
 		ON e.story = s.id AND e.date > $1;`, unixtime)
 	if err != nil {
@@ -830,7 +829,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var entry ScheduleLogEntry
 		if err := rows.Scan(&entry.ID, &entry.Story, &entry.Date, &entry.Type,
-			&entry.Title, &entry.Source, &entry.Repetitions, &entry.Level); err != nil {
+			&entry.Title, &entry.Source, &entry.Repetitions); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
 			return
@@ -910,7 +909,7 @@ func CreateSubrangeStory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	row := sqldb.QueryRow(`SELECT source, link, video, level, episode_number FROM stories WHERE id = $1;`, body.ParentStory)
+	row := sqldb.QueryRow(`SELECT source, link, video, episode_number FROM stories WHERE id = $1;`, body.ParentStory)
 
 	content, err := getSubtitlesContent(body.TranscriptJA)
 	if err != nil {
@@ -930,7 +929,7 @@ func CreateSubrangeStory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := row.Scan(&story.Source, &story.Link,
-		&story.Video, &story.Level, &story.EpisodeNumber); err != nil {
+		&story.Video, &story.EpisodeNumber); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
@@ -942,10 +941,6 @@ func CreateSubrangeStory(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{ "message": failure importing subrange story:"` + err.Error() + `"}`))
 		return
 	}
-
-	// add words from the ja transcript
-
-	// add new story
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
