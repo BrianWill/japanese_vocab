@@ -239,7 +239,7 @@ logLink.onclick = function (evt) {
         wordIds.push(word.id);
     }
 
-    logStory(scheduleId, 0, wordIds, () => snackbarMessage("drill has been logged"));
+    logStory(scheduleId, 0, wordIds, () => window.location.href = '/' );
 }
 
 document.body.onload = function (evt) {

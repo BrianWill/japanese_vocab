@@ -7,24 +7,16 @@ daily schedule system:
     
     in catalog, denote stories that are currently scheduled
 
-    add icon indicator on drill type in schedule (find appropriate unicode symbols?)
-    
-    story opened from the catalog instead of from schedule should not have link to log the story
+    ability to modify a rep's type (in main menu via select box?)
+        or click type to toggle it
 
-    clicking log link should redirect back to main page after success response
-    
     subtitles should be displayed below the video when not in fullscreen mode?
 
     way to set start and end points for the current story:
         alt plus `[` `]` ?
 
     hotkey to open the current japanese subtitle in google translate
-
-    ability to modify a rep's type (in main menu via select box?)
-
-    ability to add an additional rep for a story in the schedule?
-        add button on rep that creates a new rep of same type the next day (or none if it the next day already has a rep of that story)
-
+    
     in catalog, link to delete the story (with popup confirmation)
 
     in app menu for importing / reimporting sources
@@ -36,9 +28,6 @@ daily schedule system:
         what about undoing increments of story and word reps?
 
     convert podcast content into transcripts?
-
-    cleanup or remove the "content" display at bottom of story
-        for audio stories, shrink the video element
 
     when logging a rep, display message if the rep had already been logged (or some other error?)
         or just grey out the link when story is already loggged

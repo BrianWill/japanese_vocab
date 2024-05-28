@@ -7,7 +7,7 @@ var trackJa = document.getElementById('track_ja');
 var trackEn = document.getElementById('track_en');
 var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
-var markStoryLink = document.getElementById('mark_story');
+var logStoryLink = document.getElementById('mark_story');
 var subStoryLink = document.getElementById('sub_story');
 
 var playerControls = document.getElementById('player_controls');
@@ -96,11 +96,11 @@ subStoryLink.onclick = function (evt) {
 }
 
 
-markStoryLink.onclick = function (evt) {
+logStoryLink.onclick = function (evt) {
     evt.preventDefault();
     var url = new URL(window.location.href);
     var scheduleId = parseInt(url.searchParams.get("scheduleId"));
-    logStory(scheduleId, 0, [], () => snackbarMessage("story has been logged"));
+    logStory(scheduleId, 0, [], () => window.location.href = "/" );
 }
 
 storyLines.onwheel = function (evt) {
@@ -445,9 +445,7 @@ function openStory(id) {
 
                 let path = '/sources/' + story.source + "/" + story.video;
                 if (!path.endsWith('mp4')) {
-                    // grid-template-columns: 4fr 1fr;
-                    var grid = document.getElementById('story_container')
-                    //grid.style.grid
+                    player.style.height = '60px';
                 }
 
                 player.setAttribute('type', 'video/mp4');
@@ -584,3 +582,11 @@ function onPlayerStateChange(event) {
 function onPlaybackRateChange(val) {
     console.log('changed rate', val);
 }
+
+document.body.onload = function (evt) {
+    var url = new URL(window.location.href);
+    var scheduleId = url.searchParams.get("scheduleId");
+    if (!scheduleId) {
+        logStoryLink.style.display = 'none';
+    }
+};

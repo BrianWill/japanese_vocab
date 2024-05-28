@@ -578,11 +578,14 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE stories SET repetitions = repetitions + 1 WHERE id = $1;`, entry.Story)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to update story reps: " + err.Error() + `"}`))
-		return
+	// todo should type of drill be included in the request?
+	if len(body.Words) == 0 {
+		_, err = sqldb.Exec(`UPDATE stories SET repetitions = repetitions + 1 WHERE id = $1;`, entry.Story)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to update story reps: " + err.Error() + `"}`))
+			return
+		}
 	}
 
 	err = incrementWordRepetitions(body.Words, sqldb)
@@ -598,7 +601,7 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 
 func incrementWordRepetitions(wordIds []int64, sqldb *sql.DB) error {
 	for _, wordId := range wordIds {
-		_, err := sqldb.Exec(`UPDATE words SET repetitions = repetitions + 1WHERE id = $1;`, wordId)
+		_, err := sqldb.Exec(`UPDATE words SET repetitions = repetitions + 1 WHERE id = $1;`, wordId)
 		if err != nil {
 			return err
 		}

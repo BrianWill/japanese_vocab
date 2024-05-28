@@ -37,7 +37,7 @@ In the schedule, you can remove reps and move them up or down in the schedule:
 
 ## Story page
 
-A story's page display's its title and text. 
+A story's page displays its title and text. 
 
 A link under the title takes you to a page for drilling the words and kanji in the story.
 
@@ -64,7 +64,7 @@ To help break up longer stories into shorter ones:
 - `[` : set start time marker to the player's current time
 - `]` : set end time marker to the player's current time
 
-Once you've set start and end markers, you can create a new story by clicking the "create sotry from subrange" link in the sidebar.
+Once you've set start and end markers, you can create a new story by clicking the "create story from subrange" link in the sidebar.
 
 ## Drill page
 
