@@ -609,6 +609,44 @@ func incrementWordRepetitions(wordIds []int64, sqldb *sql.DB) error {
 	return nil
 }
 
+// toggle among rep types (currently just two: listening and drill)
+func ScheduleChangeType(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var body ScheduleStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	if body.RepType != DRILLING && body.RepType != LISTENING && body.RepType != READING {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "invalid rep type"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE schedule_entries SET type = $1 WHERE id = $2;`, body.RepType, body.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
 func ScheduleAdjust(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 

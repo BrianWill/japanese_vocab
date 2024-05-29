@@ -38,6 +38,7 @@ type ScheduleStoryRequest struct {
 	ID               int64   `json:"id,omitempty"`                // used for removing a specific repetition
 	Story            int64   `json:"story,omitempty"`             // used for adding/removing all reps of a story
 	OffsetAdjustment int64   `json:"offset_adjustment,omitempty"` // how much to increment / decrement the day_offset
+	RepType          int64   `json:"rep_type,omitempty"`          // the type of drill
 	Words            []int64 `json:"words,omitempty"`             // the words whose repetitions needs to be incremented
 }
 

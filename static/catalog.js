@@ -29,7 +29,7 @@ storyList.onclick = function (evt) {
     if (evt.target.className.includes('schedule_link')) {
         var storyId = evt.target.getAttribute('story_id');
         let story = storiesById[storyId];
-        scheduleStory(story.id, () => getSchedule(displaySchedule));
+        scheduleStory(story.id, () => window.location.href = "/");
     }
 };
 

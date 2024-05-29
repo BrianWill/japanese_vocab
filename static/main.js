@@ -20,26 +20,38 @@ var scheduleEntries = [];
 scheduleDiv.onclick = function (evt) {
     if (evt.target.className.includes('schedule_remove_link')) {
         evt.preventDefault();
-        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        let entryId = parseInt(evt.target.getAttribute('entry_id'));
         unscheduleStory(entryId, 0, () => getSchedule(displaySchedule));
     }
 
     if (evt.target.className.includes('schedule_add_link')) {
         evt.preventDefault();
-        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        let entryId = parseInt(evt.target.getAttribute('entry_id'));
         scheduleAddRep(entryId, () => getSchedule(displaySchedule));
     }
 
     if (evt.target.className.includes('schedule_down_link')) {
         evt.preventDefault();
-        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        let entryId = parseInt(evt.target.getAttribute('entry_id'));
         adjustSchedule(entryId, +1, () => getSchedule(displaySchedule));
     }
 
     if (evt.target.className.includes('schedule_up_link')) {
         evt.preventDefault();
-        var entryId = parseInt(evt.target.getAttribute('entry_id'));
+        let entryId = parseInt(evt.target.getAttribute('entry_id'));
         adjustSchedule(entryId, -1, () => getSchedule(displaySchedule));
+    }
+
+    if (evt.target.className.includes('rep_type')) {
+        evt.preventDefault();
+        let entryId = parseInt(evt.target.getAttribute('entry_id'));
+        let repType = parseInt(evt.target.getAttribute('rep_type'));
+
+        if (repType == LISTENING) {
+            changeScheduleType(entryId, DRILLING, () => getSchedule(displaySchedule));
+        } else if (repType == DRILLING) {
+            changeScheduleType(entryId, LISTENING, () => getSchedule(displaySchedule));
+        }        
     }
 };
 
@@ -62,6 +74,7 @@ function displaySchedule(entries) {
 
         html += `<tr class="day_row logged_row">
             <td class="schedule_day">Logged in last 24 hours</td>
+            <td></td>
             <td></td>
             <td></td>
             <td></td>
@@ -93,6 +106,8 @@ function displaySchedule(entries) {
                 <td></td>
                 <td></td>
                 <td></td>
+                <td></td>
+                <td>${timeSince(entry.date)}</td>
             </tr>`;
         }
 
@@ -130,6 +145,7 @@ function displaySchedule(entries) {
                 <td></td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>`;
 
             if (entriesByDay[day] == undefined) {
@@ -153,7 +169,7 @@ function displaySchedule(entries) {
                 let color = randomPaletteColor(hash);
 
                 html += `<tr>
-                    <td>${typeStr}</td>
+                    <td class="rep_type" rep_type="${entry.type}" entry_id="${entry.id}">${typeStr}</td>
                     <td>${entry.source}</td>    
                     <td><a style="color: ${color};" class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
                     <td>${entry.repetitions} rep</td>
@@ -161,61 +177,10 @@ function displaySchedule(entries) {
                     <td><a href="#" class="schedule_add_link" entry_id="${entry.id}" title="add another rep of this story to the next day">➕</a></td>
                     <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">🡳</a></td>
                     <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">🡱</a></td>
+                    <td></td>
                 </tr>`;
             }
         }
-
-        // for (const entry of scheduleEntries) {
-        //     if (entry.day_offset > currentDay) {
-        //         currentDay = entry.day_offset;
-
-        //         let dayStr = '';
-        //         if (currentDay == 0) {
-        //             dayStr = 'Today';
-        //         } else if (currentDay == 1) {
-        //             dayStr = 'Tomorrow';
-        //         } else {
-        //             dayStr = currentDay + ' days from now';
-        //         }
-
-        //         html += `<tr class="day_row">
-        //             <td class="schedule_day">${dayStr}</td>
-        //             <td></td>
-        //             <td></td>
-        //             <td></td>
-        //             <td></td>
-        //             <td></td>
-        //             <td></td>
-        //             <td></td>
-        //         </tr>`;
-        //     }
-
-        //     let typeStr = '';
-        //     if (entry.type == 0) {
-        //         typeStr = '📖 Read';
-        //     } else if (entry.type == 1) {
-        //         typeStr = '👂 Listen';
-        //     } else if (entry.type == 2) {
-        //         typeStr = '📣 Drill';
-        //     }
-
-        //     let page = entry.type == 2 ? 'words' : 'story';
-        //     let storyLink = `/${page}.html?storyId=${entry.story}&scheduleId=${entry.id}`;
-
-        //     let hash = integerHash(entry.story + entry.source + entry.title);
-        //     let color = randomPaletteColor(hash);
-
-        //     html += `<tr>
-        //     <td>${typeStr}</td>
-        //     <td>${entry.source}</td>    
-        //     <td><a style="color: ${color};" class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
-        //     <td>${entry.repetitions} rep</td>
-        //     <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="remove this rep">✖️</a></td>
-        //     <td><a href="#" class="schedule_add_link" entry_id="${entry.id}" title="add another rep of this story to the next day">➕</a></td>
-        //     <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">🡳</a></td>
-        //     <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">🡱</a></td>
-        // </tr>`;
-        // }
 
         scheduleDiv.innerHTML = html + `</table>`;
     }

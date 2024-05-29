@@ -507,10 +507,6 @@ function displayStory(story) {
     storyLines.innerHTML = html;
 }
 
-function isOffCooldown(rank, dateMarked, unixTime) {
-    let timeSinceLastDrill = unixTime - dateMarked;
-    return timeSinceLastDrill > cooldownsByRank[rank];
-}
 
 var selectedWordBaseForm = null;
 

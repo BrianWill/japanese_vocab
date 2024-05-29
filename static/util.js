@@ -1,12 +1,6 @@
-const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 24 * 1000; // 1000 days in seconds
-const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 30;  // 30 days in seconds
-const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 4;   // 4 days in seconds
-const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 5;        // 5 hours in second
-const cooldownsByRank = [0, DRILL_COOLDOWN_RANK_1, DRILL_COOLDOWN_RANK_2, DRILL_COOLDOWN_RANK_3, DRILL_COOLDOWN_RANK_4];
-
-const STORY_STATUS_CURRENT = 2;
-const STORY_STATUS_NEVER_READ = 1;
-const STORY_STATUS_ARCHIVE = 0;
+const READING = 0;
+const LISTENING = 1;
+const DRILLING = 2;
 
 function splitOnHighPitch(str, pitch) {
     let [downPitch, upPitch] = pitch;
@@ -291,6 +285,25 @@ function unscheduleStory(entryId, storyId, successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Story scheduled:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function changeScheduleType(entryId, repType, successFn) {
+    fetch('/schedule_change_type', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "id": entryId, "rep_type": repType })
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Rep type changed:', data);
             if (successFn) {
                 successFn(data);
             }

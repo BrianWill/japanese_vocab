@@ -511,3 +511,11 @@ span.verb:hover {
 .schedule_add_link {
     text-decoration: none;
 }
+
+.rep_type {
+    cursor: pointer;
+}
+
+.rep_type:hover {
+    text-decoration: underline;
+}
