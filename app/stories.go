@@ -702,30 +702,25 @@ func ScheduleAdjust(w http.ResponseWriter, r *http.Request) {
 		return scheduleEntries[i].DayOffset < scheduleEntries[j].DayOffset
 	})
 
-	adjust := false
+	idx := 0
 	for i := range scheduleEntries {
 		if scheduleEntries[i].ID == body.ID {
-			adjust = true
-		}
-
-		if adjust {
-			scheduleEntries[i].DayOffset += body.OffsetAdjustment
+			idx = i
 		}
 	}
 
-	// check that the adjusted offsets are greater than 0 and strictly increase
-	priorOffset := int64(-1)
-	for _, entry := range scheduleEntries {
-		if entry.DayOffset <= priorOffset {
-			json.NewEncoder(w).Encode(bson.M{"status": "no adjustment"})
-			return
-		}
-		priorOffset = entry.DayOffset
+	minOffset := int64(0)
+	if idx > 0 {
+		minOffset = scheduleEntries[idx-1].DayOffset + 1
 	}
 
-	// adjust all reps of the story
-	for _, entry := range scheduleEntries {
-		_, err = sqldb.Exec(`UPDATE schedule_entries SET day_offset = $1 WHERE id = $2;`, entry.DayOffset, entry.ID)
+	if scheduleEntries[idx].DayOffset+body.OffsetAdjustment < minOffset {
+		body.OffsetAdjustment = minOffset - scheduleEntries[idx].DayOffset
+	}
+
+	for _, entry := range scheduleEntries[idx:] {
+		newOffset := entry.DayOffset + body.OffsetAdjustment
+		_, err = sqldb.Exec(`UPDATE schedule_entries SET day_offset = $1 WHERE id = $2;`, newOffset, entry.ID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to add schedule entry: " + err.Error() + `"}`))
@@ -851,7 +846,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 		scheduleEntries = append(scheduleEntries, entry)
 	}
 
-	unixtime := time.Now().Unix() - 60*60*24 // 24 hours ago
+	unixtime := time.Now().Unix() - 60*60*48 // 48 hours ago
 
 	// make sure the story actually exists
 	rows, err = sqldb.Query(`SELECT e.id, story, e.date, type, 

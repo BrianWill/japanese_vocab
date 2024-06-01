@@ -19,7 +19,8 @@ var youtubePlayer;
 var markedStartTime = 0;
 var markedEndTime = 0;
 
-const TEXT_TRACK_TIMING_ADJUSTMENT = 0.25;
+const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
+const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
 const PLAYBACK_ADJUSTMENT = 0.05;
 
 // only way to detect enter vs exit is whether the number of active increases (enter) or decreases (exit)
@@ -100,7 +101,7 @@ logStoryLink.onclick = function (evt) {
     evt.preventDefault();
     var url = new URL(window.location.href);
     var scheduleId = parseInt(url.searchParams.get("scheduleId"));
-    logStory(scheduleId, 0, [], () => window.location.href = "/" );
+    logStory(scheduleId, 0, [], () => window.location.href = "/");
 }
 
 storyLines.onwheel = function (evt) {
@@ -110,7 +111,7 @@ storyLines.onwheel = function (evt) {
 };
 
 
-var timeoutHandle = 0;
+var subtitleAdjustTimeoutHandle = 0;
 
 document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
@@ -188,14 +189,18 @@ document.body.onkeydown = async function (evt) {
 
             if (evt.altKey) {
                 let adjustment = (evt.code === 'Equal') ? TEXT_TRACK_TIMING_ADJUSTMENT : -TEXT_TRACK_TIMING_ADJUSTMENT;
-                let lang = ''
+                let lang = 'English and Japanese';
 
                 let english = document.getElementById('transcript_en_checkbox').checked;
                 let japanese = document.getElementById('transcript_ja_checkbox').checked;
 
+                if (!english && !japanese) {
+                    return;
+                }
+
                 if (english) {
                     lang = 'English';
-                    adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
+                    adjustTextTrackAllTimings(trackEn.track, adjustment);
                     story.transcript_en = textTrackToString(trackEn.track);
                     let cues = findCues(trackEn.track, player.currentTime);
                     displayCues(cues, captionsEn);
@@ -203,17 +208,16 @@ document.body.onkeydown = async function (evt) {
 
                 if (japanese) {
                     lang = 'Japanese';
-                    adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
+                    adjustTextTrackAllTimings(trackJa.track, adjustment);
                     story.transcript_ja = textTrackToString(trackJa.track);
                     let cues = findCues(trackJa.track, player.currentTime);
                     displayCues(cues, captionsJa);
                 }
 
-                //            console.log(`updated ${lang} cues: ${adjustment}`);
-                snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment}`);
+                snackbarMessage(`updated ${lang} subtitle timings by ${adjustment} seconds`);
 
-                clearTimeout(timeoutHandle);
-                timeoutHandle = setTimeout(
+                clearTimeout(subtitleAdjustTimeoutHandle);
+                subtitleAdjustTimeoutHandle = setTimeout(
                     function () {
                         updateStory(story, () => {
                             snackbarMessage(`saved updates to subtitle timings`);
@@ -225,24 +229,106 @@ document.body.onkeydown = async function (evt) {
                 let adjustment = (evt.code === 'Equal') ? PLAYBACK_ADJUSTMENT : -PLAYBACK_ADJUSTMENT;
                 adjustPlaybackSpeed(adjustment);
             }
-        } else if (evt.code.startsWith('Digit')) {
-            if (evt.altKey) {
-                evt.preventDefault();
-                let digit = parseInt(evt.code.slice(-1));
-                let duration = player.duration;
-                player.currentTime = duration * (digit / 10);
-                displayCurrentCues();
+        } else if (evt.code === 'BracketLeft' && evt.altKey) {
+            evt.preventDefault();
+            let adjustment = TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
+            let lang = 'English and Japanese';
+
+            let english = document.getElementById('transcript_en_checkbox').checked;
+            let japanese = document.getElementById('transcript_ja_checkbox').checked;
+
+            if (!english && !japanese) {
+                return;
             }
-        } else if (evt.code === 'BracketLeft') {
+
+            if (english) {
+                lang = 'English ';
+                bringForwardTextTrackTimings(trackEn.track, player.currentTime);
+                story.transcript_en = textTrackToString(trackEn.track);
+                let cues = findCues(trackEn.track, player.currentTime);
+                displayCues(cues, captionsEn);
+            }
+
+            if (japanese) {
+                lang = 'Japanese ';
+                bringForwardTextTrackTimings(trackJa.track, player.currentTime);
+                story.transcript_ja = textTrackToString(trackJa.track);
+                let cues = findCues(trackJa.track, player.currentTime);
+                displayCues(cues, captionsJa);
+            }
+
+            snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
+
+            clearTimeout(subtitleAdjustTimeoutHandle);
+            subtitleAdjustTimeoutHandle = setTimeout(
+                function () {
+                    updateStory(story, () => {
+                        snackbarMessage(`saved updates to subtitle timings`);
+                    });
+                },
+                3000
+            );
+        } else if (evt.code === 'BracketRight' && evt.altKey) {
             evt.preventDefault();
-            markedStartTime = Math.trunc(player.currentTime);
-            snackbarMessage('subrange start marker set to current position');
-        } else if (evt.code === 'BracketRight') {
-            evt.preventDefault();
-            markedEndTime = Math.trunc(player.currentTime);
-            snackbarMessage('subrange end marker set to current position');
+            let adjustment = TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
+            let lang = 'English and Japanese';
+
+            let english = document.getElementById('transcript_en_checkbox').checked;
+            let japanese = document.getElementById('transcript_ja_checkbox').checked;
+
+            if (!english && !japanese) {
+                return;
+            }
+
+            if (english) {
+                lang = 'English ';
+                adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
+                story.transcript_en = textTrackToString(trackEn.track);
+                let cues = findCues(trackEn.track, player.currentTime);
+                displayCues(cues, captionsEn);
+            }
+
+            if (japanese) {
+                lang = 'Japanese ';
+                adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
+                story.transcript_ja = textTrackToString(trackJa.track);
+                let cues = findCues(trackJa.track, player.currentTime);
+                displayCues(cues, captionsJa);
+            }
+
+            snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
+
+            clearTimeout(subtitleAdjustTimeoutHandle);
+            subtitleAdjustTimeoutHandle = setTimeout(
+                function () {
+                    updateStory(story, () => {
+                        snackbarMessage(`saved updates to subtitle timings`);
+                    });
+                },
+                3000
+            );
+        } else {
+            let adjustment = (evt.code === 'Equal') ? PLAYBACK_ADJUSTMENT : -PLAYBACK_ADJUSTMENT;
+            adjustPlaybackSpeed(adjustment);
         }
+    } else if (evt.code.startsWith('Digit')) {
+        if (evt.altKey) {
+            evt.preventDefault();
+            let digit = parseInt(evt.code.slice(-1));
+            let duration = player.duration;
+            player.currentTime = duration * (digit / 10);
+            displayCurrentCues();
+        }
+    } else if (evt.code === 'BracketLeft') {
+        evt.preventDefault();
+        markedStartTime = Math.trunc(player.currentTime);
+        snackbarMessage('subrange start marker set to current position');
+    } else if (evt.code === 'BracketRight') {
+        evt.preventDefault();
+        markedEndTime = Math.trunc(player.currentTime);
+        snackbarMessage('subrange end marker set to current position');
     }
+}
 };
 
 storyLines.onmousedown = function (evt) {
@@ -456,7 +542,7 @@ function openStory(id) {
                 player.src = path + time;
 
                 console.log("src", player.src);
-            } 
+            }
 
             if (story.transcript_en) {
                 trackEn.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_en);

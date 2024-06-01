@@ -574,7 +574,8 @@ function adjustTextTrackTimings(track, time, adjustment) {
             // return false if adjusting the cue would make it overlap the prior cue
             let prior = track.cues[i - 1];
             let adjustedStart = cue.startTime + adjustment;
-            if (adjustedStart < (prior.startTime + minMargin) || adjustedStart < 0) {
+            let excessOverlap = prior && adjustedStart < (prior.startTime + minMargin);
+            if (excessOverlap || adjustedStart < 0) {
                 return false;
             }
 
@@ -582,6 +583,53 @@ function adjustTextTrackTimings(track, time, adjustment) {
             break;
         }
     }
+
+    for (let i = index; i < track.cues.length; i++) {
+        let cue = track.cues[i];
+        cue.startTime += adjustment;
+        cue.endTime += adjustment;
+    }
+
+    return true;
+}
+
+// add adjustment to every start and end timing
+function adjustTextTrackAllTimings(track, adjustment) {
+    // do nothing if first cue start time would be less than 0
+    let firstCue = track.cues[0];
+    if (firstCue.startTime + adjustment < 0) {
+        return false;
+    }
+
+    for (let i = index; i < track.cues.length; i++) {
+        let cue = track.cues[i];
+        cue.startTime += adjustment;
+        cue.endTime += adjustment;
+    }
+
+    return true;
+}
+
+// move next cue after time up to time, and move all cues after up the same amount
+function bringForwardTextTrackTimings(track, time) {
+    let index = track.cues.length;
+
+    // find first cue which comes after time
+    for (let i = 0; i < track.cues.length; i++) {
+        let cue = track.cues[i];
+
+        // do nothing if a track overlaps the time
+        if (cue.startTime < time && cue.endTime > time) {
+            return false;
+        }
+
+        if (cue.startTime > time) {
+            index = i;
+            break;
+        }
+    }
+
+    let adjustment = track.cues[i].startTime - time;
 
     for (let i = index; i < track.cues.length; i++) {
         let cue = track.cues[i];

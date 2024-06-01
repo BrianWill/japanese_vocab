@@ -39,7 +39,12 @@ scheduleDiv.onclick = function (evt) {
     if (evt.target.className.includes('schedule_up_link')) {
         evt.preventDefault();
         let entryId = parseInt(evt.target.getAttribute('entry_id'));
-        adjustSchedule(entryId, -1, () => getSchedule(displaySchedule));
+
+        if (evt.altKey) {
+            adjustSchedule(entryId, 1 << 31, () => getSchedule(displaySchedule));
+        } else {
+            adjustSchedule(entryId, -1, () => getSchedule(displaySchedule));
+        }
     }
 
     if (evt.target.className.includes('rep_type')) {
@@ -73,7 +78,7 @@ function displaySchedule(entries) {
         let html = `<table class="schedule_table">`;
 
         html += `<tr class="day_row logged_row">
-            <td class="schedule_day">Logged in last 24 hours</td>
+            <td class="schedule_day">Logged in last 48 hours</td>
             <td></td>
             <td></td>
             <td></td>
@@ -169,7 +174,7 @@ function displaySchedule(entries) {
                 let color = randomPaletteColor(hash);
 
                 html += `<tr>
-                    <td class="rep_type" rep_type="${entry.type}" entry_id="${entry.id}">${typeStr}</td>
+                    <td class="rep_type" rep_type="${entry.type}" entry_id="${entry.id}" title="toggle the type of this rep">${typeStr}</td>
                     <td>${entry.source}</td>    
                     <td><a style="color: ${color};" class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
                     <td>${entry.repetitions} rep</td>

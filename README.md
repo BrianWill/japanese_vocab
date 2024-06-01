@@ -34,6 +34,7 @@ In the schedule, you can remove reps and move them up or down in the schedule:
 
 - Moving a rep up or down will also move all reps after it of the same story.
 - As a rule, two reps of the same story cannot be scheduled for the same day.
+- Holding alt while clicking up will move the rep up to the day after the prior rep of the same story (or to the first day if there is no prior rep).
 
 ## Story page
 
@@ -56,8 +57,10 @@ The "log this story" link will remove the rep from the schedule.
 
 Because subtitle data from sources may not line up with the video or audio, these keys may be helpful:
 
-- `alt` + `-` : decrease the start and end time of the current subtitle (and all after it) by 0.25 seconds
-- `alt` + `+` : increase the start and end time of the current subtitle (and all after it) by 0.25 seconds
+- `alt` + `-` : shift all subtitle timings forward by 0.2 seconds
+- `alt` + `+` : shift all subtitle timings back by 0.2 seconds
+- `alt` + `[` : shift the timings of the first subtitle after the current timemark up to the current timemark, and shift all following subtitles forward the same amount (only does something if the current timemark is between subtitles)
+- `alt` + `]` : shift the timings of the first subtitle after the current timemark back by 10 seconds, and shift all following subtitles back the same amount (only does something if the current timemark is between subtitles)
 
 To help break up longer stories into shorter ones:
 

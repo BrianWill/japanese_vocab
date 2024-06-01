@@ -2,18 +2,17 @@
 
 daily schedule system:
 
+    test new subtitle adjustments
+
     schedule should return error if the story is already scheduled
         (or give confirmation dialog to delete all existing reps of the story and add new ones)
     
     in catalog, denote stories that are currently scheduled
 
-    ability to modify a rep's type (in main menu via select box?)
-        or click type to toggle it
-
     subtitles should be displayed below the video when not in fullscreen mode?
 
     way to set start and end points for the current story:
-        alt plus `[` `]` ?
+        ctrl plus `[` `]` ?
 
     hotkey to open the current japanese subtitle in google translate
     
