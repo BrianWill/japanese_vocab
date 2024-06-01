@@ -307,9 +307,6 @@ document.body.onkeydown = async function (evt) {
                 },
                 3000
             );
-        } else {
-            let adjustment = (evt.code === 'Equal') ? PLAYBACK_ADJUSTMENT : -PLAYBACK_ADJUSTMENT;
-            adjustPlaybackSpeed(adjustment);
         }
     } else if (evt.code.startsWith('Digit')) {
         if (evt.altKey) {
@@ -328,7 +325,6 @@ document.body.onkeydown = async function (evt) {
         markedEndTime = Math.trunc(player.currentTime);
         snackbarMessage('subrange end marker set to current position');
     }
-}
 };
 
 storyLines.onmousedown = function (evt) {
