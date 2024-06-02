@@ -307,23 +307,23 @@ document.body.onkeydown = async function (evt) {
                 },
                 3000
             );
-        }
-    } else if (evt.code.startsWith('Digit')) {
-        if (evt.altKey) {
+        } else if (evt.code.startsWith('Digit')) {
+            if (evt.altKey) {
+                evt.preventDefault();
+                let digit = parseInt(evt.code.slice(-1));
+                let duration = player.duration;
+                player.currentTime = duration * (digit / 10);
+                displayCurrentCues();
+            }
+        } else if (evt.code === 'BracketLeft') {
             evt.preventDefault();
-            let digit = parseInt(evt.code.slice(-1));
-            let duration = player.duration;
-            player.currentTime = duration * (digit / 10);
-            displayCurrentCues();
+            markedStartTime = Math.trunc(player.currentTime);
+            snackbarMessage('subrange start marker set to current position');
+        } else if (evt.code === 'BracketRight') {
+            evt.preventDefault();
+            markedEndTime = Math.trunc(player.currentTime);
+            snackbarMessage('subrange end marker set to current position');
         }
-    } else if (evt.code === 'BracketLeft') {
-        evt.preventDefault();
-        markedStartTime = Math.trunc(player.currentTime);
-        snackbarMessage('subrange start marker set to current position');
-    } else if (evt.code === 'BracketRight') {
-        evt.preventDefault();
-        markedEndTime = Math.trunc(player.currentTime);
-        snackbarMessage('subrange end marker set to current position');
     }
 };
 

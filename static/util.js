@@ -2,6 +2,12 @@ const READING = 0;
 const LISTENING = 1;
 const DRILLING = 2;
 
+const DEFAULT_REPS = [LISTENING, DRILLING,
+    LISTENING, DRILLING,
+    LISTENING, DRILLING,
+    LISTENING, DRILLING,
+    LISTENING];
+
 function splitOnHighPitch(str, pitch) {
     let [downPitch, upPitch] = pitch;
     //console.log(`downpitch ${downPitch}, up pitch ${upPitch}`);
@@ -274,6 +280,27 @@ function scheduleStory(storyId, successFn) {
             console.error('Error:', error);
         });
 }
+
+
+function addStoryReps(storyId, reps, successFn) {
+    fetch('/add_reps', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "story_id": storyId, "reps": reps })
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Res added to story:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 
 function unscheduleStory(entryId, storyId, successFn) {
     fetch('/unschedule_story', {
@@ -659,9 +686,9 @@ function integerHash(str) {
     return hash;
 }
 
-var colorPalette = ['#c7522a', '#e5c185', '#fbf2c4', '#74a892', "#d9042b", 
-    "#730220", "#03658c", "#f29f05", "#f27b50", "#c7522a", "#e5c185", 
-    "#f0daa5", "#fbf2c4", "#b8cdab", "#74a892", "#008585" 
+var colorPalette = ['#c7522a', '#e5c185', '#fbf2c4', '#74a892', "#d9042b",
+    "#730220", "#03658c", "#f29f05", "#f27b50", "#c7522a", "#e5c185",
+    "#f0daa5", "#fbf2c4", "#b8cdab", "#74a892", "#008585"
 ];
 
 function randomPaletteColor(hash) {

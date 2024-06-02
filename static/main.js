@@ -75,7 +75,11 @@ function displaySchedule(entries) {
     });
 
     {
-        let html = `<table class="schedule_table">`;
+
+        let reps = ``;
+        let html = `<h2>Stories with scheduled repetitions</h2><table class="schedule_table">${reps}</table>`;
+
+        html += `<table class="schedule_table">`;
 
         html += `<tr class="day_row logged_row">
             <td class="schedule_day">Logged in last 48 hours</td>

@@ -1,13 +1,45 @@
 # japanese_vocab TODO
 
 daily schedule system:
+    
+    new scheduling concept:
+        any story or drill can be logged at any time
+            adds an entry into logged_reps
+            removes first rep of matching type from the scheduled_reps (if any)
+
+        story table:
+            reps_todo
+                ordered list of types:
+                    e.g. 3 reps: [listening, drill, listening]
+                null when empty
+            reps_logged
+                javascript list of entries:
+                    timestamp
+                    type (listening or drill)
+                null when empty
+        
+    in catalog, "schedule" link says "add reps"
+
+    schedule page just lists the stories with a schedule_reps that isn't null
+        ordered alphabetically?
+        shows time since last logged drill
+        ordered by time since last logged drill
+        shows list of completed and scheduled drills as a series of icons (drill and ear icons)
+            hovering over completed rep shows timestamp
+                use alpha to greyout the completed reps
+        alt-click to remove a todo rep? Or an X next to each one?
+        + at end to add another rep?
+        any kind of cooldown system between reps?
+
+    page to show all stories that have completed reps but for which reps_todo is null
+        order by most recent completed rep
+
+
 
     test new subtitle adjustments
 
     schedule should return error if the story is already scheduled
         (or give confirmation dialog to delete all existing reps of the story and add new ones)
-    
-    in catalog, denote stories that are currently scheduled
 
     subtitles should be displayed below the video when not in fullscreen mode?
 

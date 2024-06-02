@@ -6,21 +6,39 @@ import (
 )
 
 type Story struct {
-	ID            int64   `json:"id,omitempty"`
-	Title         string  `json:"title,omitempty"`
-	Source        string  `json:"source,omitempty"`
-	Date          string  `json:"date,omitempty"`
-	EpisodeNumber int     `json:"episode_number,omitempty"`
-	Content       string  `json:"content,omitempty"`
-	ContentFormat string  `json:"content_format,omitempty"`
-	Link          string  `json:"link,omitempty"`
-	Video         string  `json:"video,omitempty"`
-	StartTime     float64 `json:"start_time"`
-	EndTime       float64 `json:"end_time"`
-	TranscriptEN  string  `json:"transcript_en,omitempty"`
-	TranscriptJA  string  `json:"transcript_ja,omitempty"`
-	Repetitions   int64   `json:"repetitions"`
-	Words         []int64 `json:"words,omitempty"`
+	ID            int64       `json:"id,omitempty"`
+	Title         string      `json:"title,omitempty"`
+	Source        string      `json:"source,omitempty"`
+	Date          string      `json:"date,omitempty"`
+	EpisodeNumber int         `json:"episode_number,omitempty"`
+	Content       string      `json:"content,omitempty"`
+	ContentFormat string      `json:"content_format,omitempty"`
+	Link          string      `json:"link,omitempty"`
+	Video         string      `json:"video,omitempty"`
+	StartTime     float64     `json:"start_time"`
+	EndTime       float64     `json:"end_time"`
+	TranscriptEN  string      `json:"transcript_en,omitempty"`
+	TranscriptJA  string      `json:"transcript_ja,omitempty"`
+	Repetitions   int64       `json:"repetitions"`
+	Words         []int64     `json:"words,omitempty"`
+	RepsTodo      []int64     `json:"reps_todo,omitempty"`
+	RepsLogged    []LoggedRep `json:"reps_logged,omitempty"`
+}
+
+type LoggedRep struct {
+	Date int64
+	Type int64
+}
+
+type AddRepsRequest struct {
+	StoryID int64   `json:"story_id,omitempty"`
+	Reps    []int64 `json:"reps,omitempty"`
+}
+
+type SetRepTypeRequest struct {
+	StoryID  int64 `json:"story_id,omitempty"`
+	RepIndex int64 `json:"rep_index,omitempty"`
+	Type     int64 `json:"type,omitempty"`
 }
 
 type ScheduleLogEntry struct {

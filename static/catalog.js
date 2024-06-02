@@ -5,7 +5,7 @@ var ipDiv = document.getElementById('ip');
 const STORY_COOLDOWN = 60 * 60 * 24;
 
 document.body.onload = function (evt) {
-    getStories(processStories);
+    getStories(processCatalog);
     getIP((ips) => {
         let html = 'local ip: ';
         for (const ip of ips) {
@@ -17,7 +17,7 @@ document.body.onload = function (evt) {
 
 
 sourceSelect.onchange = function (evt) {
-    displayStories();
+    displayCatalog();
 }
 
 var storiesById = {};
@@ -29,11 +29,11 @@ storyList.onclick = function (evt) {
     if (evt.target.className.includes('schedule_link')) {
         var storyId = evt.target.getAttribute('story_id');
         let story = storiesById[storyId];
-        scheduleStory(story.id, () => window.location.href = "/");
+        addStoryReps(story.id, DEFAULT_REPS, () => window.location.href = "/");
     }
 };
 
-function processStories(storyData) {
+function processCatalog(storyData) {
     stories = storyData;
 
     storiesById = {};
@@ -56,17 +56,17 @@ function processStories(storyData) {
     }
     sourceSelect.innerHTML = selectOptionsHTML;
 
-    displayStories();
+    displayCatalog();
 };
 
-function displayStories() {
+function displayCatalog() {
     function storyRow(s) {
         return `<tr>
             <td><span class="story_source">${s.source}</span></td>
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             <td>${s.repetitions} reps</td>            
             <td>
-                <a href="#" story_id="${s.id}" class="schedule_link">schedule</a>
+                <a href="#" story_id="${s.id}" class="schedule_link">add repetitions</a>
             </td>
             </tr>`;
     }
