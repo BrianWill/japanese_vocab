@@ -27,7 +27,7 @@ function displayReps(entries) {
         }
     });
 
-    let html = `<h2>Current stories</h2>
+    let html = `
             <table class="schedule_table">
             <tr class="day_row logged_row">
                 <td>Source</td>

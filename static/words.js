@@ -279,7 +279,7 @@ document.body.onload = function (evt) {
             console.error('Error:', error);
         });
 
-    fetch('/story/' + id, {
+    fetch('/story/' + storyId, {
         method: 'GET', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
@@ -288,8 +288,7 @@ document.body.onload = function (evt) {
         .then((data) => {
             story = data;
 
-            if (!story.reps_logged) {
-                story.reps_logged = [];
-            }
-        }
+            story.reps_logged =  story.reps_logged || [];
+            story.reps_todo =  story.reps_todo || [];
+        });
 };
