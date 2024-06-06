@@ -128,10 +128,6 @@ a {
 
 }
 
-#story_list a {
-    color: #838383;
-}
-
 .header_link {
     color: #838383;
     font-size: 70%;
@@ -518,4 +514,30 @@ span.verb:hover {
 
 .rep_type:hover {
     text-decoration: underline;
+}
+
+.add_multiple_reps:not(:hover), .add_listening_rep:not(:hover), .add_drill_rep:not(:hover) {
+    text-decoration: none;
+}
+
+.listening {
+    color: #FF6978;
+}
+
+.drill {
+    color: #DFCF9D;
+}
+
+.rep_sequence > span {
+    margin-right: 0.5em;
+}
+
+#repetitions_info .rep {
+    padding-right: 0.2em;
+    cursor: pointer;
+    user-select: none;
+}
+
+.story_title {
+    color: #cabe7d;
 }

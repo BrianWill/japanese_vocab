@@ -2,11 +2,15 @@ const READING = 0;
 const LISTENING = 1;
 const DRILLING = 2;
 
-const DEFAULT_REPS = [LISTENING, DRILLING,
+const DEFAULT_REPS = [
     LISTENING, DRILLING,
     LISTENING, DRILLING,
     LISTENING, DRILLING,
-    LISTENING];
+    LISTENING, DRILLING,
+    LISTENING
+];
+
+const REP_COOLDOWN = 60 * 60 * 18;  // 18 hours (in seconds)
 
 function splitOnHighPitch(str, pitch) {
     let [downPitch, upPitch] = pitch;
@@ -207,25 +211,6 @@ function updateStory(story, successFn) {
         });
 }
 
-
-function getStoryList(successFn) {
-    fetch('/stories_list', {
-        method: 'GET', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Stories list success:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
 function getStories(successFn) {
     fetch('/stories', {
         method: 'GET', // or 'PUT'
@@ -262,16 +247,16 @@ function getSchedule(successFn) {
         });
 }
 
-function scheduleStory(storyId, successFn) {
-    fetch('/schedule_story', {
-        method: 'POST', // or 'PUT'
+
+function getReps(successFn) {
+    fetch('/reps', {
+        method: 'GET', // or 'PUT'
         headers: {
             'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "story": storyId })
+        }
     }).then((response) => response.json())
         .then((data) => {
-            console.log('Story scheduled:', data);
+            console.log('Reps:', data);
             if (successFn) {
                 successFn(data);
             }
@@ -281,6 +266,43 @@ function scheduleStory(storyId, successFn) {
         });
 }
 
+function updateReps(story, successFn) {
+    fetch('/update_reps', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "story_id": story.id, "reps_logged": story.reps_logged, "reps_todo": story.reps_todo})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Update reps:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function incWords(words, successFn) {
+    fetch('/inc_words', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"words": words})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Update reps:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
 
 function addStoryReps(storyId, reps, successFn) {
     fetch('/add_reps', {
@@ -292,45 +314,6 @@ function addStoryReps(storyId, reps, successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Res added to story:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-
-function unscheduleStory(entryId, storyId, successFn) {
-    fetch('/unschedule_story', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "story": storyId, "id": entryId })
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Story scheduled:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function changeScheduleType(entryId, repType, successFn) {
-    fetch('/schedule_change_type', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "id": entryId, "rep_type": repType })
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Rep type changed:', data);
             if (successFn) {
                 successFn(data);
             }
@@ -694,4 +677,69 @@ var colorPalette = ['#c7522a', '#e5c185', '#fbf2c4', '#74a892', "#d9042b",
 function randomPaletteColor(hash) {
     let idx = Math.abs(hash) % colorPalette.length;
     return colorPalette[idx];
+}
+
+function insertRep(story, repIdx) {
+    let type = story.reps_todo[repIdx]; 
+    story.reps_todo.splice(repIdx, 0, type);
+    
+	updateReps(story, function(data) {
+        displayStoryInfo(story);
+        snackbarMessage("removed a rep");
+    });
+}
+
+function deleteRep(story, repIdx) {
+    story.reps_todo.splice(repIdx, 1);
+    
+	updateReps(story, function(data) {
+        displayStoryInfo(story);
+        snackbarMessage("removed a rep");
+    });
+}
+
+function toggleRepType(story, repIdx) {
+    let priorType = story.reps_todo[repIdx];
+    if (priorType == LISTENING) {
+        story.reps_todo[repIdx] = DRILLING;
+    } else if (priorType == DRILLING) {
+        story.reps_todo[repIdx] = LISTENING;
+    }
+    
+	updateReps(story, function(data) {
+        displayStoryInfo(story);
+        snackbarMessage("toggled type of a queued rep");
+    });
+}
+
+function logRep(story, type, successFn) {
+    let unixtime = Math.floor(Date.now() / 1000);
+    let cooldownTime = unixtime - REP_COOLDOWN;
+
+    if (story.reps_logged) {
+        for (let rep of story.reps_logged) {
+            if (rep.type == type && rep.date > cooldownTime) {
+                snackbarMessage("story has already been logged within the cooldown window");
+                return;
+            }
+        }
+    }
+
+    // remove first rep matching the type
+    let i = 0;
+    for (let repType of story.reps_todo) {
+        if (repType == type) {
+            story.reps_todo.splice(i, 1);
+            break;
+        }
+        i++;
+    }
+    if (i == story.reps_todo.length) {
+        snackbarMessage(`no ${type == LISTENING ? 'listening' : 'drill'} reps are currently queued for this story`);
+        return;
+    }
+
+    story.reps_logged.push({ "date" : unixtime, "type": type});
+
+	updateReps(story, successFn);
 }

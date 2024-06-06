@@ -1,10 +1,10 @@
-var scheduleDiv = document.getElementById('schedule');
+var storyList = document.getElementById('story_list');
+var sourceSelect = document.getElementById('source_select');
 var ipDiv = document.getElementById('ip');
 
-const STORY_COOLDOWN = 60 * 60 * 24;
-
 document.body.onload = function (evt) {
-    getSchedule(displaySchedule);
+    getStories(processCatalog);
+    getReps(displayReps);
     getIP((ips) => {
         let html = 'local ip: ';
         for (const ip of ips) {
@@ -14,183 +14,141 @@ document.body.onload = function (evt) {
     });
 };
 
+function displayReps(entries) {
 
-var scheduleEntries = [];
+    entries = entries.stories;
 
-scheduleDiv.onclick = function (evt) {
-    if (evt.target.className.includes('schedule_remove_link')) {
-        evt.preventDefault();
-        let entryId = parseInt(evt.target.getAttribute('entry_id'));
-        unscheduleStory(entryId, 0, () => getSchedule(displaySchedule));
-    }
-
-    if (evt.target.className.includes('schedule_add_link')) {
-        evt.preventDefault();
-        let entryId = parseInt(evt.target.getAttribute('entry_id'));
-        scheduleAddRep(entryId, () => getSchedule(displaySchedule));
-    }
-
-    if (evt.target.className.includes('schedule_down_link')) {
-        evt.preventDefault();
-        let entryId = parseInt(evt.target.getAttribute('entry_id'));
-        adjustSchedule(entryId, +1, () => getSchedule(displaySchedule));
-    }
-
-    if (evt.target.className.includes('schedule_up_link')) {
-        evt.preventDefault();
-        let entryId = parseInt(evt.target.getAttribute('entry_id'));
-
-        if (evt.altKey) {
-            adjustSchedule(entryId, 1 << 31, () => getSchedule(displaySchedule));
+    // sort entries by source, then by title?
+    entries.sort((a, b) => {
+        if (a.source == b.source) {
+            return (a.title < b.title) ? -1 : (a.title > b.title) ? 1 : 0;
         } else {
-            adjustSchedule(entryId, -1, () => getSchedule(displaySchedule));
+            return (a.source < b.source) ? -1 : (a.source > b.source) ? 1 : 0;
         }
+    });
+
+    let html = `<h2>Current stories</h2>
+            <table class="schedule_table">
+            <tr class="day_row logged_row">
+                <td>Source</td>
+                <td>Title</td>
+                <td>Completed<br>listening reps</td>
+                <td>Completed<br>drill reps</td>
+                <td>Time since<br>last rep</td>
+                <td>Reps<br>todo</td>
+            </tr>`;
+
+    for (const entry of entries) {
+
+        let timeLastRep = 1;
+
+        if (entry.reps_logged) {
+            for (let rep of entry.reps_logged) {
+                if (rep.date > timeLastRep) {
+                    timeLastRep = rep.date;
+                }
+            }
+        }
+
+        let todoReps = ``;
+        for (let rep of entry.reps_todo) {
+            if (rep == LISTENING) {
+                todoReps += `<span class="listening" title="listening rep">聞</span>`;
+            } else if (rep == DRILLING) {
+                todoReps += `<span class="drill" title="vocabulary drill rep">語</span>`;
+            }
+        }
+
+        html += `<tr>
+            <td>${entry.source}</td>    
+            <td><a class="story_title" story_id="${entry.id}" href="/story.html?storyId=${entry.id}">${entry.title}</a></td>
+            <td>${entry.repetitions}</td>
+            <td>${entry.repetitions}</td>
+            <td>${timeSince(timeLastRep)}</td>
+            <td class="rep_sequence">${todoReps}</td>
+        </tr>`;
     }
 
-    if (evt.target.className.includes('rep_type')) {
-        evt.preventDefault();
-        let entryId = parseInt(evt.target.getAttribute('entry_id'));
-        let repType = parseInt(evt.target.getAttribute('rep_type'));
+    html += `</table>`;
 
-        if (repType == LISTENING) {
-            changeScheduleType(entryId, DRILLING, () => getSchedule(displaySchedule));
-        } else if (repType == DRILLING) {
-            changeScheduleType(entryId, LISTENING, () => getSchedule(displaySchedule));
-        }        
+    document.getElementById('reps').innerHTML = html;
+};
+
+
+/* CATALOG */
+
+sourceSelect.onchange = function (evt) {
+    displayCatalog();
+}
+
+var storiesById = {};
+var storiesBySource = {};
+var stories = [];
+
+storyList.onclick = function (evt) {
+    if (evt.target.className.includes('add_multiple_reps')) {
+        var storyId = evt.target.getAttribute('story_id');
+        let story = storiesById[storyId];
+        addStoryReps(story.id, DEFAULT_REPS, 
+            function () { 
+                getReps(displayReps);
+                snackbarMessage(`added reps to story: ${story.title}`);
+            }
+        );
     }
 };
 
-function displaySchedule(entries) {
+function processCatalog(storyData) {
+    stories = storyData;
 
-    let scheduleEntries = entries.schedule;
-    let logEntries = entries.log;
+    storiesById = {};
+    storiesBySource = {};
 
-    // sort entries by day_offset
-    scheduleEntries.sort((a, b) => {
-        return a.day_offset - b.day_offset;
-    });
-
-    logEntries.sort((a, b) => {
-        return a.day_offset - b.day_offset;
-    });
-
-    {
-
-        let reps = ``;
-        let html = `<h2>Stories with scheduled repetitions</h2><table class="schedule_table">${reps}</table>`;
-
-        html += `<table class="schedule_table">`;
-
-        html += `<tr class="day_row logged_row">
-            <td class="schedule_day">Logged in last 48 hours</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-        </tr>`;
-
-        for (const entry of logEntries) {
-
-            let typeStr = '';
-            if (entry.type == 0) {
-                typeStr = '📖 Read';
-            } else if (entry.type == 1) {
-                typeStr = '👂 Listen';
-            } else if (entry.type == 2) {
-                typeStr = '📣 Drill';
-            }
-
-            let hash = integerHash(entry.story + entry.source + entry.title);
-            let color = randomPaletteColor(hash);
-
-            html += `<tr class="logged_row">
-                <td>${typeStr}</td>  
-                <td>${entry.source}</td>    
-                <td><span style="color:${color};" class="story_title">${entry.title}</span></td>
-                <td>${entry.repetitions} rep</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>${timeSince(entry.date)}</td>
-            </tr>`;
+    for (let s of stories) {
+        storiesById[s.id] = s;
+        let list = storiesBySource[s.source];
+        if (list === undefined) {
+            list = storiesBySource[s.source] = [];
         }
-
-        //let currentDay = -1;
-        let entriesByDay = {};
-
-        let lastDay = 0; {
-            for (const entry of scheduleEntries) {
-                if (entriesByDay[entry.day_offset] == undefined) {
-                    entriesByDay[entry.day_offset] = [];
-                }
-                entriesByDay[entry.day_offset].push(entry);
-                if (entry.day_offset > lastDay) {
-                    lastDay = entry.day_offset;
-                }
-            }
-        }
-
-        for (let day = 0; day <= lastDay; day++) {
-            let dayStr = '';
-            if (day == 0) {
-                dayStr = 'Today';
-            } else if (day == 1) {
-                dayStr = 'Tomorrow';
-            } else {
-                dayStr = day + ' days from now';
-            }
-
-            html += `<tr class="day_row">
-                <td class="schedule_day">${dayStr}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>`;
-
-            if (entriesByDay[day] == undefined) {
-                continue;
-            }
-
-            for (const entry of entriesByDay[day]) {
-                let typeStr = '';
-                if (entry.type == 0) {
-                    typeStr = '📖 Read';
-                } else if (entry.type == 1) {
-                    typeStr = '👂 Listen';
-                } else if (entry.type == 2) {
-                    typeStr = '📣 Drill';
-                }
-
-                let page = entry.type == 2 ? 'words' : 'story';
-                let storyLink = `/${page}.html?storyId=${entry.story}&scheduleId=${entry.id}`;
-
-                let hash = integerHash(entry.story + entry.source + entry.title);
-                let color = randomPaletteColor(hash);
-
-                html += `<tr>
-                    <td class="rep_type" rep_type="${entry.type}" entry_id="${entry.id}" title="toggle the type of this rep">${typeStr}</td>
-                    <td>${entry.source}</td>    
-                    <td><a style="color: ${color};" class="story_title" story_id="${entry.story}" href="${storyLink}">${entry.title}</a></td>
-                    <td>${entry.repetitions} rep</td>
-                    <td><a href="#" class="schedule_remove_link" entry_id="${entry.id}" title="remove this rep">✖️</a></td>
-                    <td><a href="#" class="schedule_add_link" entry_id="${entry.id}" title="add another rep of this story to the next day">➕</a></td>
-                    <td><a href="#" class="schedule_down_link" entry_id="${entry.id}" title="move this rep to the next day">🡳</a></td>
-                    <td><a href="#" class="schedule_up_link" entry_id="${entry.id}" title="move this rep to the previous day">🡱</a></td>
-                    <td></td>
-                </tr>`;
-            }
-        }
-
-        scheduleDiv.innerHTML = html + `</table>`;
+        list.push(s);
     }
+
+    let selectOptionsHTML = ``;
+    let i = 0;
+    for (let source in storiesBySource) {
+        selectOptionsHTML += `<option value="${i}">${source}</option>`
+        i++;
+    }
+    sourceSelect.innerHTML = selectOptionsHTML;
+
+    displayCatalog();
+};
+
+function displayCatalog() {
+    function storyRow(s) {
+        return `<tr>
+                <td>
+                    <a href="#" story_id="${s.id}" class="add_multiple_reps" title="add several alternating listening and drill reps">queue reps</a>
+                </td>
+                <td><span class="story_source">${s.source}</span></td>
+                <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+                <td>${s.repetitions} reps</td>
+            </tr>`;
+    }
+
+    let tableHeader = `<table class="story_table">`;
+    let html = tableHeader;
+    let source = sourceSelect.options[sourceSelect.selectedIndex].text;
+
+    let list = storiesBySource[source];
+    list.sort((a, b) => {
+        return a.episode_number - b.episode_number;
+    });
+
+    for (let s of list) {
+        html += storyRow(s);
+    }
+    html += `</table>`;
+
+    storyList.innerHTML = html;
 };

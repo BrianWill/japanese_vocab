@@ -357,21 +357,37 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, content, date, video, 
-		words, transcript_en, transcript_ja, repetitions, start_time, end_time 
+		words, transcript_en, transcript_ja, repetitions, start_time, end_time, reps_logged, reps_todo 
 		FROM stories WHERE id = $1;`, id)
 
 	var words string
+	var loggedReps string
+	var todoReps string
 	story := Story{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
 		&story.Video, &words,
 		&story.TranscriptEN, &story.TranscriptJA,
-		&story.Repetitions, &story.StartTime, &story.EndTime); err != nil {
+		&story.Repetitions, &story.StartTime, &story.EndTime, &loggedReps, &todoReps); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
 	}
 
 	err = json.Unmarshal([]byte(words), &story.Words)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	err = json.Unmarshal([]byte(loggedReps), &story.RepsLogged)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	err = json.Unmarshal([]byte(todoReps), &story.RepsTodo)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))

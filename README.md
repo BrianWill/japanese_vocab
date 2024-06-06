@@ -26,23 +26,23 @@ Stories are imported in sets called "sources", which are represented as director
 
 ## Main page
 
-The main page displays the schedule of story repetitions, followed by the catalog of imported stories.
+The main page displays first the "current stories" (stories with queued repetitions) and then the full story catalog.
 
-In the catalog, the "schedule" link on a story adds 5 listening reps and 4 drilling reps to the schedule, spread out over about 2 weeks.
-
-In the schedule, you can remove reps and move them up or down in the schedule:
-
-- Moving a rep up or down will also move all reps after it of the same story.
-- As a rule, two reps of the same story cannot be scheduled for the same day.
-- Holding alt while clicking up will move the rep up to the day after the prior rep of the same story (or to the first day if there is no prior rep).
+In the catalog, select a source from the drop down, and click "queue reps" on a story to effectively add it to the "current stories". (The "queue reps" link adds 5 listening reps alternated with 4 drilling reps. You can edit a story's rep queue on the story's page.)
 
 ## Story page
 
-A story's page displays its title and text. 
+A story's page displays its title, text content, and a player for its audio or video.
 
-A link under the title takes you to a page for drilling the words and kanji in the story.
+The "drill the words of this story" link takes you to a page for drilling the words and kanji of the story.
 
-The "log this story" link will remove the rep from the schedule.
+The "log this story" link will log the rep (record the date of the rep and remove the first listen rep from the queue).
+
+Following the label "Reps todo", you'll see the queued reps:
+
+- Clicking a rep toggles its type (between listening and drilling).
+- Alt-clicking a rep inserts another rep of the same kind after it in the queue.
+- Ctrl-clicking a rep removes it from the queue.
 
 ### Video and audio player hotkey controls
 
@@ -67,7 +67,7 @@ To help break up longer stories into shorter ones:
 - `[` : set start time marker to the player's current time
 - `]` : set end time marker to the player's current time
 
-Once you've set start and end markers, you can create a new story by clicking the "create story from subrange" link in the sidebar.
+Once you've set start and end markers, you can click the "create story from subrange" link in the sidebar.
 
 ## Drill page
 
@@ -85,4 +85,4 @@ Once you mark all words in the list correct or incorrect, the words you marked i
 
 Words in the drill list can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
 
-The "log this drill" link will log the drill, removing it from your schedule and incrementing the repetition count for the words you drilled.
+The "log this drill" link will log the drill, removing the first drilling rep from the story's queue and incrementing the repetition count for the words you drilled.

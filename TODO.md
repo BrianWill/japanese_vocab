@@ -2,44 +2,29 @@
 
 daily schedule system:
     
-    new scheduling concept:
-        any story or drill can be logged at any time
-            adds an entry into logged_reps
-            removes first rep of matching type from the scheduled_reps (if any)
+    should current stories be sorted by time since last rep?
 
-        story table:
-            reps_todo
-                ordered list of types:
-                    e.g. 3 reps: [listening, drill, listening]
-                null when empty
-            reps_logged
-                javascript list of entries:
-                    timestamp
-                    type (listening or drill)
-                null when empty
-        
-    in catalog, "schedule" link says "add reps"
+    separate rep count for listening and drills
 
-    schedule page just lists the stories with a schedule_reps that isn't null
-        ordered alphabetically?
-        shows time since last logged drill
-        ordered by time since last logged drill
-        shows list of completed and scheduled drills as a series of icons (drill and ear icons)
-            hovering over completed rep shows timestamp
-                use alpha to greyout the completed reps
-        alt-click to remove a todo rep? Or an X next to each one?
-        + at end to add another rep?
-        any kind of cooldown system between reps?
+    logging cooldown (with override popup?) to avoid accidental excess logging
+        12 hours?
 
-    page to show all stories that have completed reps but for which reps_todo is null
-        order by most recent completed rep
 
+    story page:
+        display logged and todo reps
+            ability to remove and add todo reps
+        link: log a listening rep
+            warning if story has been logged within cooldown window
+        link: delete this story from catalog
+            (with confirmation pop-up)
+            only on subrange stories?
+
+    drill page:
+        link: log a drill rep
+            warning if story has been logged within cooldown window
 
 
     test new subtitle adjustments
-
-    schedule should return error if the story is already scheduled
-        (or give confirmation dialog to delete all existing reps of the story and add new ones)
 
     subtitles should be displayed below the video when not in fullscreen mode?
 
@@ -48,7 +33,6 @@ daily schedule system:
 
     hotkey to open the current japanese subtitle in google translate
     
-    in catalog, link to delete the story (with popup confirmation)
 
     in app menu for importing / reimporting sources
 
@@ -60,10 +44,7 @@ daily schedule system:
 
     convert podcast content into transcripts?
 
-    when logging a rep, display message if the rep had already been logged (or some other error?)
-        or just grey out the link when story is already loggged
-        or if scheduleId is not defined, log link does not appear
-        upon success of logging, redirect to main page?
+    
 
     audit for dead code
 

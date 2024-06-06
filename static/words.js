@@ -30,6 +30,8 @@ var drillSet = [];
 var answeredSet = [];
 var words;
 
+var story;
+
 archivedSelect.onchange = function (evt) {
     newDrill();
 };
@@ -162,7 +164,7 @@ document.body.onkeydown = async function (evt) {
                 nextRound();
             }
             displayWords();
-        } else if (evt.code === 'Digit1') {  
+        } else if (evt.code === 'Digit1') {
             evt.preventDefault();
             if (word.archived == 0) {
                 word.archived = 1;
@@ -239,7 +241,11 @@ logLink.onclick = function (evt) {
         wordIds.push(word.id);
     }
 
-    logStory(scheduleId, 0, wordIds, () => window.location.href = '/' );
+    logRep(story, DRILLING, function () {
+        incWords(wordIds, function () {
+            window.location.href = '/';
+        });
+    });
 }
 
 document.body.onload = function (evt) {
@@ -248,10 +254,6 @@ document.body.onload = function (evt) {
     var url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
     let set = url.searchParams.get("set");
-
-    if (url.searchParams.get("scheduleId")) {
-        logLink.style.display = "inline";
-    }
 
     fetch('words', {
         method: 'POST', // or 'PUT'
@@ -271,10 +273,23 @@ document.body.onload = function (evt) {
             }
 
             drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="${data.story_link}">${data.story_title}</a><br>`;
-            //`<a href="/story.html?storyId=${storyId}"> ${data.story_title}</a>`;
             newDrill();
         })
         .catch((error) => {
             console.error('Error:', error);
         });
+
+    fetch('/story/' + id, {
+        method: 'GET', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then((response) => response.json())
+        .then((data) => {
+            story = data;
+
+            if (!story.reps_logged) {
+                story.reps_logged = [];
+            }
+        }
 };

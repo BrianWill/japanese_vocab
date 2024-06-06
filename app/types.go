@@ -26,8 +26,8 @@ type Story struct {
 }
 
 type LoggedRep struct {
-	Date int64
-	Type int64
+	Date int64 `json:"date,omitempty"`
+	Type int64 `json:"type,omitempty"`
 }
 
 type AddRepsRequest struct {
@@ -41,6 +41,11 @@ type SetRepTypeRequest struct {
 	Type     int64 `json:"type,omitempty"`
 }
 
+type LogRepRequest struct {
+	StoryID int64 `json:"story_id,omitempty"`
+	Type    int64 `json:"type,omitempty"`
+}
+
 type ScheduleLogEntry struct {
 	ID          int64  `json:"id,omitempty"`
 	Story       int64  `json:"story"`
@@ -50,6 +55,21 @@ type ScheduleLogEntry struct {
 	Title       string `json:"title,omitempty"`
 	Source      string `json:"source,omitempty"`
 	Repetitions int64  `json:"repetitions"`
+}
+
+type RemoveRepRequest struct {
+	StoryID  int64 `json:"story_id"`
+	RepIndex int64 `json:"rep_index,omitempty"`
+}
+
+type UpdateRepsRequest struct {
+	StoryID    int64       `json:"story_id"`
+	RepsTodo   []int64     `json:"reps_todo,omitempty"`
+	RepsLogged []LoggedRep `json:"reps_logged,omitempty"`
+}
+
+type IncWordsRequest struct {
+	Words []int64 `json:"words,omitempty"` // the words whose repetitions needs to be incremented
 }
 
 type ScheduleStoryRequest struct {

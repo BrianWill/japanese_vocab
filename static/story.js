@@ -9,6 +9,7 @@ var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
 var logStoryLink = document.getElementById('mark_story');
 var subStoryLink = document.getElementById('sub_story');
+var repetitionsInfoDiv = document.getElementById('repetitions_info');
 
 var playerControls = document.getElementById('player_controls');
 
@@ -23,10 +24,7 @@ const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
 const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
 const PLAYBACK_ADJUSTMENT = 0.05;
 
-// only way to detect enter vs exit is whether the number of active increases (enter) or decreases (exit)
-
 trackJa.track.addEventListener('cuechange', displayCurrentCues);
-
 trackEn.track.addEventListener('cuechange', displayCurrentCues);
 
 function displayCurrentCues() {
@@ -96,13 +94,10 @@ subStoryLink.onclick = function (evt) {
     }
 }
 
-
 logStoryLink.onclick = function (evt) {
     evt.preventDefault();
-    var url = new URL(window.location.href);
-    var scheduleId = parseInt(url.searchParams.get("scheduleId"));
-    logStory(scheduleId, 0, [], () => window.location.href = "/");
-}
+    logRep(story, LISTENING, () => displayStoryInfo(story));
+};
 
 storyLines.onwheel = function (evt) {
     evt.preventDefault();
@@ -110,6 +105,22 @@ storyLines.onwheel = function (evt) {
     storyLines.scrollTop -= scrollDelta;
 };
 
+repetitionsInfoDiv.onclick = function (evt) {
+    evt.preventDefault();
+    
+    if (evt.target.className.includes('rep')) {
+        evt.preventDefault();
+        let repIdx = parseInt(evt.target.getAttribute('repIdx'));
+
+        if (evt.altKey) {
+            insertRep(story, repIdx);
+        } else if (evt.ctrlKey) {
+            deleteRep(story, repIdx);
+        } else {
+            toggleRepType(story, repIdx);
+        }
+    }
+};
 
 var subtitleAdjustTimeoutHandle = 0;
 
@@ -327,135 +338,12 @@ document.body.onkeydown = async function (evt) {
     }
 };
 
-storyLines.onmousedown = function (evt) {
-    if (evt.target.hasAttribute('word_idx_in_line')) {
-        if (evt.ctrlKey) {
-            let lineIdx = parseInt(evt.target.parentNode.parentNode.getAttribute('line_idx'));
-            splitLine(evt.target, lineIdx);
-        }
-    } else if (evt.target.classList.contains('line_timestamp')) {
-        evt.preventDefault();
-        let lineIdx = parseInt(evt.target.parentNode.parentNode.getAttribute('line_idx'));
-        if (evt.ctrlKey) {
-            fetch('/story_consolidate_line', {
-                method: 'POST', // or 'PUT'
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    story_id: story.id,
-                    line_to_remove: lineIdx
-                }),
-            }).then((response) => response.json())
-                .then((data) => {
-                    console.log('Success:', data);
-                    story.lines = data;
-                    displayStory(story);
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-        } else if (evt.which == 2 || evt.button == 4) {
-            evt.preventDefault();
-            if (evt.altKey) {
-                var words = story.lines[lineIdx].words;
-                let text = '';
-                for (const word of words) {
-                    text += word.surface;
-                }
-                window.open(`https://translate.google.com/?sl=auto&tl=en&text=${text}&op=translate`);
-            } else {
-                let marked = story.lines[lineIdx].marked == true;  // coerce undefined to bool
-                setLineMark(lineIdx, !marked);
-            }
-        } else if (evt.altKey) {
-            evt.preventDefault();
-            if (youtubePlayer) {
-                selectedLineIdx = lineIdx;
-                let seconds = youtubePlayer.getCurrentTime();
-                seconds -= 0.5;
-                if (seconds < 0) {
-                    seconds = 0;
-                }
-                setTimestamp(selectedLineIdx, seconds);
-            } else if (player) {
-                selectedLineIdx = lineIdx;
-                let seconds = roundToHalfSecond(player.currentTime);
-                seconds -= 0.5;
-                if (seconds < 0) {
-                    seconds = 0;
-                }
-                console.log(seconds);
-                setTimestamp(selectedLineIdx, seconds);
-            }
-        } else {
-            evt.preventDefault();
-            if (youtubePlayer) {
-                selectedLineIdx = lineIdx;
-                let seconds = parseTimestamp(evt.target.innerHTML);
-                youtubePlayer.seekTo(seconds);
-                youtubePlayer.playVideo();
-            } else if (player) {
-                selectedLineIdx = lineIdx;
-                let seconds = parseTimestamp(evt.target.innerHTML);
-                player.currentTime = seconds;
-                player.play();
-            }
-        }
-    }
-};
-
-
 // returns time in seconds
 function parseTimestamp(timestamp) {
     let [mins, seconds] = timestamp.split(':');
     mins = parseInt(mins);
     seconds = parseFloat(seconds);
     return mins * 60 + seconds;
-}
-
-function setTimestamp(lineIdx, timestamp) {
-    fetch('/story_set_timestamp', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            story_id: story.id,
-            line_idx: lineIdx,
-            timestamp: timestamp,
-        }),
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success:', data);
-            story.lines = data;
-            displayStory(story);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function setLineMark(lineIdx, marked) {
-    fetch('/story_set_mark', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            story_id: story.id,
-            line_idx: lineIdx,
-            marked: marked,
-        }),
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success:', data);
-            story.lines = data;
-            displayStory(story);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
 }
 
 
@@ -473,8 +361,36 @@ function displayStoryInfo(story) {
             End time: ${formatTrackTime(story.end_time, true)}<br>`;
     }
 
-    document.getElementById('repetitions_info').innerHTML = `Times repeated: ${story.repetitions}<br> ${time}`;
-    console.log(story);
+    document.getElementById('time_info').innerHTML = `${time}`;
+    displayReps(story);
+}
+
+function displayReps(story) {
+    let timeLastRep = 1;
+    if (story.reps_logged) {
+        for (let rep of story.reps_logged) {
+            if (rep.date > timeLastRep) {
+                timeLastRep = rep.date;
+            }
+        }
+    }
+
+    let todoReps = ``;
+    let i = 0;
+    for (let rep of story.reps_todo) {
+        if (rep == LISTENING) {
+            todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
+        } else if (rep == DRILLING) {
+            todoReps += `<span class="drill rep" repIdx="${i}" title="vocabulary drill rep">語</span>`;
+        }
+        i++;
+    }
+
+    let loggedReps = ``;
+
+    document.getElementById('repetitions_info').innerHTML = `Times repeated: ${story.repetitions}<br>
+        Time since last rep: ${timeSince(timeLastRep)}<br>
+        Reps todo: ${todoReps}`;
 }
 
 function openStory(id) {
@@ -486,6 +402,9 @@ function openStory(id) {
     }).then((response) => response.json())
         .then((data) => {
             story = data;
+
+            story.reps_logged = story.reps_logged || [];
+            story.reps_todo = story.reps_todo || [];
 
             displayStoryInfo(data);
             displayStory(data);
@@ -589,51 +508,6 @@ function displayStory(story) {
     storyLines.innerHTML = html;
 }
 
-
-var selectedWordBaseForm = null;
-
-function splitLine(target, lineIdx) {
-    let timestamp = parseTimestamp(story.lines[lineIdx].timestamp);
-    if (youtubePlayer) {
-        timestamp = youtubePlayer.getCurrentTime();
-        timestamp -= 0.5;
-        if (timestamp < 0) {
-            timestamp = 0;
-        }
-    } else if (player) {
-        timestamp = player.currentTime;
-        timestamp -= 0.5;
-        if (timestamp < 0) {
-            timestamp = 0;
-        }
-    }
-    let wordIdx = parseInt(target.getAttribute('word_idx_in_line'));
-    fetch('/story_split_line', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            story_id: story.id,
-            line_to_split: lineIdx,
-            timestamp: timestamp,
-            word_idx: wordIdx
-        }),
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Success:', data);
-            story.lines = data;
-            displayStory(story);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function roundToHalfSecond(seconds) {
-    return Math.round(seconds * 2) / 2;
-}
-
 // loads the IFrame Player API code asynchronously.
 var tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
@@ -663,8 +537,4 @@ function onPlaybackRateChange(val) {
 
 document.body.onload = function (evt) {
     var url = new URL(window.location.href);
-    var scheduleId = url.searchParams.get("scheduleId");
-    if (!scheduleId) {
-        logStoryLink.style.display = 'none';
-    }
 };

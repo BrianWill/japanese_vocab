@@ -53,7 +53,7 @@ const READING = 0
 const LISTENING = 1
 const DRILLING = 2
 
-const NUM_SCHEDULED_REPETITIONS = 5
+const REP_LOGGING_COOLDOWN = 60 * 60 * 18 // 18 hours (in seconds)
 
 const MAIN_USER_DB_PATH = "./data/data.db"
 
@@ -109,15 +109,16 @@ func main() {
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
 	router.HandleFunc("/", GetMain).Methods("GET")
 
-	// scheduling
-	router.HandleFunc("/schedule2", GetSchedule2).Methods("GET")
+	// new scheduling
 	router.HandleFunc("/add_reps", AddReps).Methods("POST")
+	router.HandleFunc("/reps", GetReps).Methods("GET")
+	router.HandleFunc("/update_reps", UpdateReps).Methods("POST")
+	router.HandleFunc("/inc_words", IncWords).Methods("POST")
+
+	// scheduling
 	router.HandleFunc("/schedule", GetSchedule).Methods("GET")
 	router.HandleFunc("/log", GetLog).Methods("GET")
 	router.HandleFunc("/log_story", LogStory).Methods("POST")
-	router.HandleFunc("/schedule_story", ScheduleStory).Methods("POST")
-	router.HandleFunc("/unschedule_story", UnscheduleStory).Methods("POST")
-	router.HandleFunc("/schedule_change_type", ScheduleChangeType).Methods("POST")
 	router.HandleFunc("/schedule_adjust", ScheduleAdjust).Methods("POST")
 	router.HandleFunc("/schedule_add", ScheduleAdd).Methods("POST")
 
@@ -249,8 +250,8 @@ func makeUserDB(path string) {
 			end_time REAL,
 			transcript_en TEXT,
 			transcript_ja TEXT,
-			reps_logged TEXT,
-			reps_todo TEXT,
+			reps_logged TEXT NOT NULL DEFAULT '',
+			reps_todo TEXT NOT NULL DEFAULT '',
 			content TEXT,
 			content_format TEXT);`)
 	if err != nil {
