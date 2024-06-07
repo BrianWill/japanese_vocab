@@ -238,7 +238,6 @@ func makeUserDB(path string) {
 			link TEXT,
 			episode_number TEXT,
 			video TEXT,
-			repetitions INTEGER NOT NULL,
 			start_time REAL,
 			end_time REAL,
 			transcript_en TEXT,

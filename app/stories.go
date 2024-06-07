@@ -308,7 +308,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	}
 
 	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, video, 
-			date, repetitions, start_time, end_time FROM stories;`)
+			date, start_time, end_time FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -320,7 +320,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber,
-			&story.Video, &story.Date, &story.Repetitions, &story.StartTime, &story.EndTime); err != nil {
+			&story.Video, &story.Date, &story.StartTime, &story.EndTime); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -357,7 +357,7 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, content, date, video, 
-		words, transcript_en, transcript_ja, repetitions, start_time, end_time, reps_logged, reps_todo 
+		words, transcript_en, transcript_ja, start_time, end_time, reps_logged, reps_todo 
 		FROM stories WHERE id = $1;`, id)
 
 	var words string
@@ -367,7 +367,7 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
 		&story.Video, &words,
 		&story.TranscriptEN, &story.TranscriptJA,
-		&story.Repetitions, &story.StartTime, &story.EndTime, &loggedReps, &todoReps); err != nil {
+		&story.StartTime, &story.EndTime, &loggedReps, &todoReps); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
@@ -440,11 +440,9 @@ func UpdateStory(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	_, err = sqldb.Exec(`UPDATE stories SET 
-			repetitions = $1, 
-			transcript_en = CASE WHEN $2 = '' THEN transcript_en ELSE $2 END,
-			transcript_ja = CASE WHEN $3 = '' THEN transcript_ja ELSE $3 END
-			WHERE id = $4;`,
-		story.Repetitions,
+			transcript_en = CASE WHEN $1 = '' THEN transcript_en ELSE $1 END,
+			transcript_ja = CASE WHEN $2 = '' THEN transcript_ja ELSE $2 END
+			WHERE id = $3;`,
 		story.TranscriptEN, story.TranscriptJA, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

@@ -23,7 +23,7 @@ func GetReps(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	rows, err := sqldb.Query(`SELECT id, title, source, repetitions, reps_logged, reps_todo FROM stories WHERE reps_todo != '[]';`)
+	rows, err := sqldb.Query(`SELECT id, title, source, reps_logged, reps_todo FROM stories WHERE reps_todo != '[]';`)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
@@ -38,7 +38,7 @@ func GetReps(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Repetitions, &repsLoggedStr, &repsTodoStr); err != nil {
+		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &repsLoggedStr, &repsTodoStr); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
 			return

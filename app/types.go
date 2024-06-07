@@ -19,7 +19,6 @@ type Story struct {
 	EndTime       float64     `json:"end_time"`
 	TranscriptEN  string      `json:"transcript_en,omitempty"`
 	TranscriptJA  string      `json:"transcript_ja,omitempty"`
-	Repetitions   int64       `json:"repetitions"`
 	Words         []int64     `json:"words,omitempty"`
 	RepsTodo      []int64     `json:"reps_todo,omitempty"`
 	RepsLogged    []LoggedRep `json:"reps_logged,omitempty"`
@@ -46,22 +45,6 @@ type LogRepRequest struct {
 	Type    int64 `json:"type,omitempty"`
 }
 
-type ScheduleLogEntry struct {
-	ID          int64  `json:"id,omitempty"`
-	Story       int64  `json:"story"`
-	DayOffset   int64  `json:"day_offset"`
-	Date        int64  `json:"date"`
-	Type        int64  `json:"type"`
-	Title       string `json:"title,omitempty"`
-	Source      string `json:"source,omitempty"`
-	Repetitions int64  `json:"repetitions"`
-}
-
-type RemoveRepRequest struct {
-	StoryID  int64 `json:"story_id"`
-	RepIndex int64 `json:"rep_index,omitempty"`
-}
-
 type UpdateRepsRequest struct {
 	StoryID    int64       `json:"story_id"`
 	RepsTodo   []int64     `json:"reps_todo,omitempty"`
@@ -70,14 +53,6 @@ type UpdateRepsRequest struct {
 
 type IncWordsRequest struct {
 	Words []int64 `json:"words,omitempty"` // the words whose repetitions needs to be incremented
-}
-
-type ScheduleStoryRequest struct {
-	ID               int64   `json:"id,omitempty"`                // used for removing a specific repetition
-	Story            int64   `json:"story,omitempty"`             // used for adding/removing all reps of a story
-	OffsetAdjustment int64   `json:"offset_adjustment,omitempty"` // how much to increment / decrement the day_offset
-	RepType          int64   `json:"rep_type,omitempty"`          // the type of drill
-	Words            []int64 `json:"words,omitempty"`             // the words whose repetitions needs to be incremented
 }
 
 type CreateSubrangeStoryRequest struct {
