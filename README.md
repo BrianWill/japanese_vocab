@@ -28,7 +28,9 @@ Stories are imported in sets called "sources", which are represented as director
 
 The main page displays first the "current stories" (stories with queued repetitions) and then the full story catalog.
 
-In the catalog, select a source from the drop down, and click "queue reps" on a story to effectively add it to the "current stories". (The "queue reps" link adds 5 listening reps alternated with 4 drilling reps. You can edit a story's rep queue on the story's page.)
+In the catalog, select a source from the drop down.
+
+Click "queue reps" on a story to effectively add it to the "current stories". (The "queue reps" link adds 5 listening reps alternated with 4 drilling reps. You can edit a story's rep queue on the story's page.)
 
 ## Story page
 
@@ -36,9 +38,9 @@ A story's page displays its title, text content, and a player for its audio or v
 
 The "drill the words of this story" link takes you to a page for drilling the words and kanji of the story.
 
-The "log this story" link will log the rep (record the date of the rep and remove the first listen rep from the queue).
+The "log this story" link will record the date of the rep and remove the first listen rep from the queue.
 
-Following the label "Reps todo", you'll see the queued reps:
+In "Queued reps":
 
 - Clicking a rep toggles its type (between listening and drilling).
 - Alt-clicking a rep inserts another rep of the same kind after it in the queue.
@@ -85,4 +87,4 @@ Once you mark all words in the list correct or incorrect, the words you marked i
 
 Words in the drill list can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
 
-The "log this drill" link will log the drill, removing the first drilling rep from the story's queue and incrementing the repetition count for the words you drilled.
+The "log this drill" link will record the date of the drill, remove the first drilling rep from the story's queue, and increment the repetition count for the words you drilled.

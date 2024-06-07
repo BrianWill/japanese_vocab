@@ -730,16 +730,12 @@ function logRep(story, type, successFn) {
     for (let repType of story.reps_todo) {
         if (repType == type) {
             story.reps_todo.splice(i, 1);
-            break;
+            story.reps_logged.push({ "date" : unixtime, "type": type});
+            updateReps(story, successFn);
+            return;
         }
         i++;
     }
-    if (i == story.reps_todo.length) {
-        snackbarMessage(`no ${type == LISTENING ? 'listening' : 'drill'} reps are currently queued for this story`);
-        return;
-    }
 
-    story.reps_logged.push({ "date" : unixtime, "type": type});
-
-	updateReps(story, successFn);
+    snackbarMessage(`no ${type == LISTENING ? 'listening' : 'drill'} reps are currently queued for this story`);
 }

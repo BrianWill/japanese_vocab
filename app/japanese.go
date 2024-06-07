@@ -109,18 +109,11 @@ func main() {
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
 	router.HandleFunc("/", GetMain).Methods("GET")
 
-	// new scheduling
+	// scheduling
 	router.HandleFunc("/add_reps", AddReps).Methods("POST")
 	router.HandleFunc("/reps", GetReps).Methods("GET")
 	router.HandleFunc("/update_reps", UpdateReps).Methods("POST")
 	router.HandleFunc("/inc_words", IncWords).Methods("POST")
-
-	// scheduling
-	router.HandleFunc("/schedule", GetSchedule).Methods("GET")
-	router.HandleFunc("/log", GetLog).Methods("GET")
-	router.HandleFunc("/log_story", LogStory).Methods("POST")
-	router.HandleFunc("/schedule_adjust", ScheduleAdjust).Methods("POST")
-	router.HandleFunc("/schedule_add", ScheduleAdd).Methods("POST")
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 

@@ -6,22 +6,12 @@ daily schedule system:
 
     separate rep count for listening and drills
 
-    logging cooldown (with override popup?) to avoid accidental excess logging
-        12 hours?
-
-
     story page:
-        display logged and todo reps
-            ability to remove and add todo reps
-        link: log a listening rep
-            warning if story has been logged within cooldown window
+        display logged reps
+        
         link: delete this story from catalog
             (with confirmation pop-up)
             only on subrange stories?
-
-    drill page:
-        link: log a drill rep
-            warning if story has been logged within cooldown window
 
 
     test new subtitle adjustments
@@ -33,18 +23,9 @@ daily schedule system:
 
     hotkey to open the current japanese subtitle in google translate
     
-
     in app menu for importing / reimporting sources
 
-    undo system for the schedule/log
-        upon every change, just store a full copy?
-            jsonify in a "backup" table
-
-        what about undoing increments of story and word reps?
-
-    convert podcast content into transcripts?
-
-    
+    convert podcast content into transcripts?   
 
     audit for dead code
 
@@ -97,17 +78,6 @@ oscilloscope for selecting audio range for a word
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 - highlighting for proper names
     - filter out of vocab? or just make it a word category you can filter for?
   
@@ -115,9 +85,6 @@ oscilloscope for selecting audio range for a word
 
 - in absence of baseform, maybe should NOT use surface? investigate "引き出し", "飛べる", "鬼滅の" -> "滅"
     - potential form should not count as verb base form: e.g. 飛べる should be added only as 飛ぶ, not as 飛べる
-
-- reload entries bson only when needed by request rather than keeping in memory?
-    - strip out unneeded parts of dictionaries
 
 - toucan-like stories:
     - use AI to replace some words with Japanese, then just add them as stories?

@@ -390,7 +390,7 @@ function displayReps(story) {
 
     document.getElementById('repetitions_info').innerHTML = `Times repeated: ${story.repetitions}<br>
         Time since last rep: ${timeSince(timeLastRep)}<br>
-        Reps todo: ${todoReps}`;
+        Queued reps: ${todoReps}`;
 }
 
 function openStory(id) {
