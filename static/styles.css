@@ -269,7 +269,7 @@ a {
 }
 
 #player_controls {
-    font-size: 70%;
+    font-size: 80%;
     display: none;
 }
 
@@ -463,7 +463,6 @@ span.verb:hover {
 }
 
 #story_actions span {
-    font-size: 70%;
     padding-right: 1.5em;
 }
 
@@ -540,4 +539,18 @@ span.verb:hover {
 
 .story_title {
     color: #cabe7d;
+}
+
+#story_actions .info_symbol {
+    padding-right: 0;
+    font-size: 100%;
+    cursor:help;
+    color: white;
+}
+
+.info_symbol {
+    padding-right: 1em;
+    font-size: 100%;
+    cursor:help;
+    color: white;
 }

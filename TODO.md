@@ -2,21 +2,20 @@
 
 daily schedule system:
     
-    should current stories be sorted by time since last rep?
+    list of recently completed:
+        stories with no queued reps but with a logged rep within last week
 
-    separate rep count for listening and drills
+    clicking info marks should show a modal popup with the info
 
-    story page:
-        display logged reps
-        
+    (get rid of rep count in DB and just sum up the logged reps)
+        display separate rep count for listening and drills
+
+    story page:      
         link: delete this story from catalog
             (with confirmation pop-up)
             only on subrange stories?
 
-
     test new subtitle adjustments
-
-    subtitles should be displayed below the video when not in fullscreen mode?
 
     way to set start and end points for the current story:
         ctrl plus `[` `]` ?

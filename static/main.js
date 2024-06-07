@@ -14,12 +14,32 @@ document.body.onload = function (evt) {
     });
 };
 
-function displayReps(entries) {
+function displayReps(stories) {
 
-    entries = entries.stories;
+    stories = stories.stories;
+
+    for (const s of stories) {
+        s.timeLastRep = 1;
+        s.listeningRepCount = 0;
+        s.drillRepCount = 0;
+
+        if (s.reps_logged) {
+            for (let rep of s.reps_logged) {
+                if (rep.type == LISTENING) {
+                    s.listeningRepCount++;
+                } else if (rep.type == DRILLING) {
+                    s.drillRepCount++;
+                }
+
+                if (rep.date > s.timeLastRep) {
+                    s.timeLastRep = rep.date;
+                }
+            }
+        }
+    }
 
     // sort entries by source, then by title?
-    entries.sort((a, b) => {
+    stories.sort((a, b) => {
         if (a.source == b.source) {
             return (a.title < b.title) ? -1 : (a.title > b.title) ? 1 : 0;
         } else {
@@ -27,31 +47,25 @@ function displayReps(entries) {
         }
     });
 
+    stories.sort((a, b) => {
+        return (a.timeLastRep < b.timeLastRep) ? -1 : (a.timeLastRep > b.timeLastRep) ? 1 : 0;
+    });
+
     let html = `
             <table class="schedule_table">
             <tr class="day_row logged_row">
                 <td>Source</td>
                 <td>Title</td>
-                <td>Completed<br>listening reps</td>
-                <td>Completed<br>drill reps</td>
+                <td title="number of completed listening reps">Listening<br>reps</td>
+                <td title="number of completed drill reps">Drill<br>reps</td>
                 <td>Time since<br>last rep</td>
-                <td>Reps<br>todo</td>
+                <td>Queued<br>reps</td>
             </tr>`;
 
-    for (const entry of entries) {
-
-        let timeLastRep = 1;
-
-        if (entry.reps_logged) {
-            for (let rep of entry.reps_logged) {
-                if (rep.date > timeLastRep) {
-                    timeLastRep = rep.date;
-                }
-            }
-        }
+    for (const s of stories) {
 
         let todoReps = ``;
-        for (let rep of entry.reps_todo) {
+        for (let rep of s.reps_todo) {
             if (rep == LISTENING) {
                 todoReps += `<span class="listening" title="listening rep">聞</span>`;
             } else if (rep == DRILLING) {
@@ -60,11 +74,11 @@ function displayReps(entries) {
         }
 
         html += `<tr>
-            <td>${entry.source}</td>    
-            <td><a class="story_title" story_id="${entry.id}" href="/story.html?storyId=${entry.id}">${entry.title}</a></td>
-            <td>${entry.repetitions}</td>
-            <td>${entry.repetitions}</td>
-            <td>${timeSince(timeLastRep)}</td>
+            <td>${s.source}</td>    
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td>${s.listeningRepCount}</td>
+            <td>${s.drillRepCount}</td>
+            <td>${timeSince(s.timeLastRep)}</td>
             <td class="rep_sequence">${todoReps}</td>
         </tr>`;
     }
@@ -89,8 +103,8 @@ storyList.onclick = function (evt) {
     if (evt.target.className.includes('add_multiple_reps')) {
         var storyId = evt.target.getAttribute('story_id');
         let story = storiesById[storyId];
-        addStoryReps(story.id, DEFAULT_REPS, 
-            function () { 
+        addStoryReps(story.id, DEFAULT_REPS,
+            function () {
                 getReps(displayReps);
                 snackbarMessage(`added reps to story: ${story.title}`);
             }
@@ -132,7 +146,6 @@ function displayCatalog() {
                 </td>
                 <td><span class="story_source">${s.source}</span></td>
                 <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-                <td>${s.repetitions} reps</td>
             </tr>`;
     }
 

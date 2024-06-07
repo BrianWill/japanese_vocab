@@ -431,3 +431,11 @@ h3 {
 #drill_controls a {
     color: white;
 }
+
+
+.info_symbol {
+    padding-right: 1em;
+    font-size: 100%;
+    cursor:help;
+    color: white;
+}

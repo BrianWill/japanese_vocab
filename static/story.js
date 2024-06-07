@@ -68,8 +68,7 @@ function displayCues(cues, target) {
 
 subStoryLink.onclick = function (evt) {
     evt.preventDefault();
-    let msg = `Create new story from subrange: ${formatTrackTime(markedStartTime)} to ${formatTrackTime(markedEndTime)} of ${story.source} - ${story.title}.
-(Use the [ and ] keys to set start and end time markers while playing.)`;
+    let msg = `Create new story from subrange: ${formatTrackTime(markedStartTime)} to ${formatTrackTime(markedEndTime)} of ${story.source} - ${story.title}.`;
 
     if (markedStartTime < 0 || markedEndTime < markedStartTime) {
         snackbarMessage("end time must be greater than start time");
@@ -96,7 +95,7 @@ subStoryLink.onclick = function (evt) {
 
 logStoryLink.onclick = function (evt) {
     evt.preventDefault();
-    logRep(story, LISTENING, () => displayStoryInfo(story));
+    logRep(story, LISTENING, () => window.location.href = '/');
 };
 
 storyLines.onwheel = function (evt) {
@@ -107,7 +106,7 @@ storyLines.onwheel = function (evt) {
 
 repetitionsInfoDiv.onclick = function (evt) {
     evt.preventDefault();
-    
+
     if (evt.target.className.includes('rep')) {
         evt.preventDefault();
         let repIdx = parseInt(evt.target.getAttribute('repIdx'));
@@ -366,9 +365,19 @@ function displayStoryInfo(story) {
 }
 
 function displayReps(story) {
+
     let timeLastRep = 1;
+    let listeningRepCount = 0;
+    let drillRepCount = 0;
+
     if (story.reps_logged) {
         for (let rep of story.reps_logged) {
+            if (rep.type == LISTENING) {
+                listeningRepCount++;
+            } else if (rep.type == DRILLING) {
+                drillRepCount++;
+            }
+
             if (rep.date > timeLastRep) {
                 timeLastRep = rep.date;
             }
@@ -388,9 +397,10 @@ function displayReps(story) {
 
     let loggedReps = ``;
 
-    document.getElementById('repetitions_info').innerHTML = `Times repeated: ${story.repetitions}<br>
+    document.getElementById('repetitions_info').innerHTML = `Listening reps: ${listeningRepCount}<br>
+        Drilling reps: ${drillRepCount}<br>
         Time since last rep: ${timeSince(timeLastRep)}<br>
-        Queued reps: ${todoReps}`;
+        <span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">⍰</span> Queued reps: ${todoReps}`;
 }
 
 function openStory(id) {
