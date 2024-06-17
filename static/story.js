@@ -107,7 +107,7 @@ storyLines.onwheel = function (evt) {
 repetitionsInfoDiv.onclick = function (evt) {
     evt.preventDefault();
 
-    if (evt.target.className.includes('rep')) {
+    if (evt.target.classList.contains('rep')) {
         evt.preventDefault();
         let repIdx = parseInt(evt.target.getAttribute('repIdx'));
 
@@ -118,6 +118,14 @@ repetitionsInfoDiv.onclick = function (evt) {
         } else {
             toggleRepType(story, repIdx);
         }
+    } else if (evt.target.classList.contains('add_reps_link')) {
+        addStoryReps(story.id, DEFAULT_REPS,
+            function () {
+                story.reps_todo = DEFAULT_REPS;
+                displayReps(story);
+                snackbarMessage(`added reps to story: ${story.title}`);
+            }
+        );
     }
 };
 
@@ -172,7 +180,7 @@ document.body.onkeydown = async function (evt) {
 
         } else if (evt.code === 'KeyA') {
             evt.preventDefault();
-            player.currentTime = timemark - 1.2;
+            player.currentTime = timemark - 1.8;
             displayCurrentCues();
         } else if (evt.code === 'KeyD') {
             evt.preventDefault();
@@ -384,23 +392,27 @@ function displayReps(story) {
         }
     }
 
-    let todoReps = ``;
-    let i = 0;
-    for (let rep of story.reps_todo) {
-        if (rep == LISTENING) {
-            todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
-        } else if (rep == DRILLING) {
-            todoReps += `<span class="drill rep" repIdx="${i}" title="vocabulary drill rep">語</span>`;
+    let todoReps;
+    if (story.reps_todo.length == 0) {
+        todoReps = `<a class="add_reps_link">Add reps to queue</a>`
+    } else {
+        todoReps = `<span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">㉄</span>
+        Queued reps: `;
+        let i = 0;
+        for (let rep of story.reps_todo) {
+            if (rep == LISTENING) {
+                todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
+            } else if (rep == DRILLING) {
+                todoReps += `<span class="drill rep" repIdx="${i}" title="vocabulary drill rep">語</span>`;
+            }
+            i++;
         }
-        i++;
     }
-
-    let loggedReps = ``;
 
     document.getElementById('repetitions_info').innerHTML = `Listening reps: ${listeningRepCount}<br>
         Drilling reps: ${drillRepCount}<br>
         Time since last rep: ${timeSince(timeLastRep)}<br>
-        <span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">⍰</span> Queued reps: ${todoReps}`;
+        ${todoReps}`;
 }
 
 function openStory(id) {

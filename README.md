@@ -30,7 +30,7 @@ The main page displays first the "current stories" (stories with queued repetiti
 
 In the catalog, select a source from the drop down.
 
-Click "queue reps" on a story to effectively add it to the "current stories". (The "queue reps" link adds 5 listening reps alternated with 4 drilling reps. You can edit a story's rep queue on the story's page.)
+Click "queue reps" on a story to effectively add it to the "current stories". (The "add reps to queue" link adds 5 listening reps alternated with 4 drilling reps. You can edit a story's rep queue on the story's page.)
 
 ## Story page
 

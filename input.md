@@ -73,19 +73,7 @@ It's important to have the right expectations:
 
 ## Kana and Kanji
 
-As for how to approach the writing system:
-
-- Romaji is at best a temporary crutch. Within a few weeks, a beginner should be comfortable enough with hiragana to avoid romaji entirely.
-- Katakana often remains troublesome for multiple years:
-  - Several pairs of katakana characters are hard to distinguish because they look very similar.
-  - Many Western import words spelt in katakana are considerably longer than most native Japanese words or Chinese import words.
-  - Import words spelt in katakana often contain sequences of syllables that occur infrequently or not at all in native Japanese or Chinese import words.
-  - The sounds of English import words are often distorted in surprising, inconsistent ways, making them strangely difficult for English speakers to read.
-- Reading a word does not require “knowing” its kanji! In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. Instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn.
-- There are tens of thousands of kanji that have been used throughout Japanese history, but only ~6000 kanji are used in modern Japanese with any frequency, and most native Japanese do not know all of these 6000. A typical educated native speaker can reliably read perhaps 3000-4000 kanji in the context of words and names, but the number of kanji they can recognize and define as isolated characters is somewhat smaller, and the number of kanji they can write by hand from memory is even smaller (say, perhaps, 2500 on the high end). **The most frequently used 1500-2000 kanji cover 99%+ of the kanji that occur in most modern Japanese writing. An additional 1000-1500 kanji cover most of the remaining 1%.**
-- In theory, writing kanji by hand can help you memorize the characters, but whether this works in practice is debateable, and hand writting practice is very slow and tedious. Most people today rarely write any language by hand, including English, so learning to handwrite Japanese is probably not worth the effort unless you have a great interest in calligraphy.
-- Like with words, you should learn kanji spellings of names as they come up. Don't try to systematically memorize nanori or the [jinmeiyou kanji](https://en.wikipedia.org/wiki/Jinmeiy%C5%8D_kanji).
-- Being able to recognize kana and kanji in calligraphy and other stylized forms is a skill that requires its own practice. But until you reach the stage where you can fludily consume native content, trying to read calligraphy will just slow you down. Likewise, reading vertical text can induce mental overhead, so it's best avoided while you're still in beginner and intermediate stages.
+As for how to approach the writing system, see [the writing system](writing.md).
 
 ## Random practice
 

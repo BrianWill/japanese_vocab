@@ -87,3 +87,19 @@ body {
 .story_info {
     font-size: 80%;
 }
+
+
+#story_lines {
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+    font-size: 120%;
+    padding-left: 1.5em;
+    overflow-y: scroll;
+    margin-right: 1em;
+    padding-right: 1em;
+}
+
+#story_lines span {
+    white-space: nowrap;
+}

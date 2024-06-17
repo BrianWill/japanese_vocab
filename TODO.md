@@ -2,6 +2,25 @@
 
 daily schedule system:
     
+    
+    word counts per story:
+        server side: given story id, return the count of unarchived and archived words
+        show count for each story in current stories
+        show count in story page
+        show in catalog? would be expensive, but not impossible    
+    
+    subrange story:
+        child links to parent
+        parent links to children?
+        updating time markers on child will update the subtitles and words from the parent
+        can delete child stories?
+        set multiple split points on a parent story to divide it into parts (instead of having to create them each individually)
+            once children are created, cannot redo split?
+            from parent page, option to redo the split (delete all current children and create new ones...but this deletes their queues)
+        parent story lists links to its children
+        child story links to its parent
+        
+    
     list of recently completed:
         stories with no queued reps but with a logged rep within last week
 
@@ -11,6 +30,7 @@ daily schedule system:
         display separate rep count for listening and drills
 
     story page:      
+        when queue is empty, link to queue reps (the standard number)
         link: delete this story from catalog
             (with confirmation pop-up)
             only on subrange stories?
@@ -21,6 +41,8 @@ daily schedule system:
         ctrl plus `[` `]` ?
 
     hotkey to open the current japanese subtitle in google translate
+
+    link to get translation of whole story content? (what is the limit?)
     
     in app menu for importing / reimporting sources
 

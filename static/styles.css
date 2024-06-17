@@ -20,30 +20,6 @@ h3 {
     padding: 0.5em;
 }
 
-#story_lines {
-    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
-    letter-spacing: 0.02em;
-    line-height: 1.6;
-    font-size: 170%;
-    padding-left: 1.5em;
-    overflow-y: scroll;
-    margin-right: 1em;
-    padding-right: 1em;
-}
-
-#story_lines p:first-child {
-    margin-top: 0em;
-}
-
-#story_lines p {
-    margin-top: 1.1em;
-    margin-bottom: 1.1em;
-}
-
-#story_lines span {
-    white-space: nowrap;
-}
-
 #word_list_container {
     margin-top: 5em;
 }
@@ -161,13 +137,15 @@ a {
     margin-left: 2em;
 }
 
-.story_table th, .schedule_table th {
+.story_table th,
+.schedule_table th {
     color: rgb(98, 98, 98);
     padding-right: 2em;
     font-size: 70%;
 }
 
-.story_table td, .schedule_table td {
+.story_table td,
+.schedule_table td {
     padding: 0.3em 0em;
 }
 
@@ -180,19 +158,23 @@ a {
     width: 3em;
 }
 
-#story_list table, .schedule_table {
+#story_list table,
+.schedule_table {
     margin-left: 2em;
 }
 
 
-#story_list td, .schedule_table td  {
+#story_list td,
+.schedule_table td {
     padding-right: 1em;
 }
 
 
 .schedule_table {
-    border-spacing: 0px 0.5em; /* Removes the cell spacing via CSS */
-    border-collapse: separate;  /* Optional - if you don't want to have double border where cells touch */
+    border-spacing: 0px 0.5em;
+    /* Removes the cell spacing via CSS */
+    border-collapse: separate;
+    /* Optional - if you don't want to have double border where cells touch */
 }
 
 .day_row {
@@ -201,11 +183,11 @@ a {
 
 .day_row td {
     margin-top: 1em;
-} 
+}
 
 .day_row td:first-child {
     padding: 0.5em;
-} 
+}
 
 .high_pitch {
     font-weight: bold;
@@ -254,7 +236,8 @@ a {
     margin: auto;
 }
 
-#create_story_div input, #new_story_text {
+#create_story_div input,
+#new_story_text {
     display: block;
     padding: 0.25rem;
     margin-bottom: 0.5rem;
@@ -311,7 +294,7 @@ input[type=number] {
 #story_lines.highlight_all_words span.rank1 {
     background-color: #040404;
     border: dashed #a1a0a0 1px;
-    
+
 }
 
 .offcooldown.rank2,
@@ -478,7 +461,7 @@ span.verb:hover {
 
 #source_select {
     font-size: 120%;
-} 
+}
 
 #ip {
     padding: 1em;
@@ -486,7 +469,8 @@ span.verb:hover {
     font-size: 80%;
 }
 
-.schedule_down_link, .schedule_up_link {
+.schedule_down_link,
+.schedule_up_link {
     text-decoration: none;
 }
 
@@ -515,7 +499,9 @@ span.verb:hover {
     text-decoration: underline;
 }
 
-.add_multiple_reps:not(:hover), .add_listening_rep:not(:hover), .add_drill_rep:not(:hover) {
+.add_multiple_reps:not(:hover),
+.add_listening_rep:not(:hover),
+.add_drill_rep:not(:hover) {
     text-decoration: none;
 }
 
@@ -527,7 +513,7 @@ span.verb:hover {
     color: #DFCF9D;
 }
 
-.rep_sequence > span {
+.rep_sequence>span {
     margin-right: 0.5em;
 }
 
@@ -544,13 +530,19 @@ span.verb:hover {
 #story_actions .info_symbol {
     padding-right: 0;
     font-size: 100%;
-    cursor:help;
+    cursor: help;
     color: white;
 }
 
 .info_symbol {
     padding-right: 1em;
     font-size: 100%;
-    cursor:help;
+    cursor: help;
     color: white;
+}
+
+#repetitions_info .add_reps_link {
+    font-size: 100%;
+    text-decoration: underline;
+    cursor: pointer;
 }
