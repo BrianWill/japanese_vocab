@@ -2,6 +2,26 @@
 
 daily schedule system:
     
+    import stories with just katakana words?
+        https://www.youtube.com/watch?v=F8tu5CeVWDM
+        https://www.youtube.com/watch?v=hrjV4VuDfiU
+
+    
+
+    make a kana drilling program
+        allow to pick exactly which characters to include?
+        or fixed sets of similar characters?
+
+        no typing, just reveal of sound?
+            tap key to reveal one by one or reveal for all characters?
+            
+        scrape list of katakana words from the dictionary
+            for a katakana word, use altering colors to indicate correspondence of romaji to kana
+            order the words by number of characters
+
+        exclude the oddball characters that never come up? or just go by words
+
+        
     
     word counts per story:
         server side: given story id, return the count of unarchived and archived words
