@@ -2,15 +2,13 @@
 
 ## Why is the Japanese writing system difficult to learn?
 
-The Japanese writing system is difficult to learn due to a few factors.
-
 First, of course, Japanese uses a very large number of characters:
 
 - **hiragana**, a set of phonetic characters consisting of about 50-100 characters (depending what you count as a distinct character)
 - **katakana**, a correponding set of phonetic characters, which is used mainly for writing foreign words and a few other special purposes
 - **kanji**, the ideographic Chinese characters, of which there are about 3000+ commonly known by most Japanese speakers
 
-Second, unlike in Chinese languages (Mandarin, Cantonese, et al.), most of the Japanese kanji have multiple pronunciations. Which pronunciations are used in which words mostly just has to be memorized per word.
+Second, unlike in Chinese languages (Mandarin, Cantonese, *et al.*), most of the Japanese kanji have multiple pronunciations. Which pronunciations are used in which words mostly just has to be memorized per word.
 
 Third, many words have alternate spellings with different mixes of kana and kanji or different kanji entirely. In particular, many of the most common verbs can be spelt with two or three different kanji.
 
@@ -22,7 +20,7 @@ Fifth, certain details of pronunciations are not indicated in the text, includin
 
 If your primary interest in Japanese is *speaking*, you might question whether learning to read Japanese is strictly essential, or maybe you wonder if you can get away with learning the spoken language first before dealing with the written language.
 
-Even if you don't care about reading for its own sake, never learning to read is a bad idea because reading is a key vector for acquiring many, many vocabulary words that otherwise don't come up in most day-to-day speech. In a modern literate society, a large chunk of vocabulary is only acquired and maintainted through reading. So while listening and speaking practice can make you conversationally *functional* in the language, without reading, you'll probably lack the vocabulary for many conversations and situations.
+Even if you don't care about reading for its own sake, never learning to read is a bad idea because reading is a key vector for acquiring many, many vocabulary words that otherwise don't come up in most day-to-day speech. In a modern literate society, a large chunk of vocabulary is only acquired and maintainted through reading. Although listening and speaking practice can make you conversationally *functional* in the language, without reading, you'll probably lack the vocabulary for many conversations and situations.
 
 As for waiting to learn to read until after learning the spoken language, this too is usually a bad idea because reading is an extremely useful tool while learning a language. Unlike spoken language, written language allows you to go at your own pace and scan back and forth through the words. Most importantly, you can much more easily and conveniently look up unknown written words than you can look up unknown spoken words.
 
@@ -69,7 +67,7 @@ There are tens of thousands of kanji that have been used throughout Japanese his
 
 Unlike with kana, attempting to memorize all of the kanji through drills is a terrible idea. At most, you should learn your first 200 or 300 kanji through drills, but thereafter you should simply focus on the kanji that come up in your reading and listening material.
 
-Understand that **reading a word does not require fully “knowing” its kanji!** In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. So instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn.
+Understand that **reading a word does not require fully “knowing” its kanji!** In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. So instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn. When looking up a word, note the meanings and pronunciations of the individual kanji, but otherwise don't study or drill the kanji on their own.
 
 ---
 
@@ -78,9 +76,9 @@ Kanji in Japanese names are particularly troublesome:
 - Many kanji have "nanori" readings, pronunciations that are only used in Japanese names.
 - The [jinmeiyou kanji](https://en.wikipedia.org/wiki/Jinmeiy%C5%8D_kanji) are several hundred kanji that are used *only* in Japanese names, not in vocabulary words.
 - Many Japanese names have multiple different kanji spellings.
-- Even native Japanese speakers don't know all kanji spellings of Japanese names, so they often don't know how to spell a name from the pronunciation or how to pronounce a name from the kanji spelling.
+- Even native Japanese speakers don't know all kanji spellings of Japanese names, and they often don't know how to spell a name from the pronunciation or how to pronounce a name from the kanji spelling.
 
-So attempting to brute force memorize the kanji spellings of Japanese names is particularly foolish. Instead, you should simply deal with individual names as they come up in your reading, and eventually, through extensive reading, you will learn many of the most common names and spellings.
+So attempting to brute force memorize the kanji spellings of Japanese names is particularly foolish. Instead, you should simply deal with individual names as they come up in your reading. Eventually, through extensive reading, you will learn many of the most common names and spellings.
 
 ## Should I study caligraphy?
 

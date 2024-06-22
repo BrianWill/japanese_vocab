@@ -357,17 +357,18 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, content, date, video, 
-		words, transcript_en, transcript_ja, start_time, end_time, reps_logged, reps_todo 
+		words, transcript_en, transcript_ja, start_time, end_time, reps_logged, reps_todo, subranges 
 		FROM stories WHERE id = $1;`, id)
 
 	var words string
 	var loggedReps string
 	var todoReps string
+	var subranges string
 	story := Story{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
 		&story.Video, &words,
 		&story.TranscriptEN, &story.TranscriptJA,
-		&story.StartTime, &story.EndTime, &loggedReps, &todoReps); err != nil {
+		&story.StartTime, &story.EndTime, &loggedReps, &todoReps, &subranges); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
@@ -388,6 +389,13 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = json.Unmarshal([]byte(todoReps), &story.RepsTodo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	err = json.Unmarshal([]byte(subranges), &story.Subranges)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -471,60 +479,4 @@ func GetIP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(ips)
-}
-
-func CreateSubrangeStory(w http.ResponseWriter, r *http.Request) {
-	dbPath := MAIN_USER_DB_PATH
-
-	var body CreateSubrangeStoryRequest
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	row := sqldb.QueryRow(`SELECT source, link, video, episode_number FROM stories WHERE id = $1;`, body.ParentStory)
-
-	content, err := getSubtitlesContent(body.TranscriptJA)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	story := Story{
-		Title:         body.Title,
-		StartTime:     body.StartTime,
-		EndTime:       body.EndTime,
-		TranscriptEN:  body.TranscriptEN,
-		TranscriptJA:  body.TranscriptJA,
-		Content:       content,
-		ContentFormat: "text",
-	}
-
-	if err := row.Scan(&story.Source, &story.Link,
-		&story.Video, &story.EpisodeNumber); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
-		return
-	}
-
-	err = importStory(story, sqldb)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": failure importing subrange story:"` + err.Error() + `"}`))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }

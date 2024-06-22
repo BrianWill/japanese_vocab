@@ -99,19 +99,6 @@ var storiesById = {};
 var storiesBySource = {};
 var stories = [];
 
-storyList.onclick = function (evt) {
-    if (evt.target.classList.contains('add_multiple_reps')) {
-        var storyId = evt.target.getAttribute('story_id');
-        let story = storiesById[storyId];
-        addStoryReps(story.id, DEFAULT_REPS,
-            function () {
-                getReps(displayReps);
-                snackbarMessage(`added reps to story: ${story.title}`);
-            }
-        );
-    }
-};
-
 function processCatalog(storyData) {
     stories = storyData;
 
@@ -141,9 +128,6 @@ function processCatalog(storyData) {
 function displayCatalog() {
     function storyRow(s) {
         return `<tr>
-                <td>
-                    <a href="#" story_id="${s.id}" class="add_multiple_reps" title="add several alternating listening and drill reps">add reps to queue</a>
-                </td>
                 <td><span class="story_source">${s.source}</span></td>
                 <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             </tr>`;

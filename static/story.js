@@ -8,14 +8,12 @@ var trackEn = document.getElementById('track_en');
 var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
 var logStoryLink = document.getElementById('mark_story');
-var subStoryLink = document.getElementById('sub_story');
 var repetitionsInfoDiv = document.getElementById('repetitions_info');
 
 var playerControls = document.getElementById('player_controls');
 
 var story = null;
 var selectedLineIdx = 0;
-var youtubePlayer;
 
 var markedStartTime = 0;
 var markedEndTime = 0;
@@ -26,72 +24,6 @@ const PLAYBACK_ADJUSTMENT = 0.05;
 
 trackJa.track.addEventListener('cuechange', displayCurrentCues);
 trackEn.track.addEventListener('cuechange', displayCurrentCues);
-
-function displayCurrentCues() {
-    if (document.getElementById('transcript_en_checkbox').checked) {
-        captionsEn.style.display = 'flex';
-    } else {
-        captionsEn.style.display = 'none';
-    }
-
-    if (document.getElementById('transcript_ja_checkbox').checked) {
-        captionsJa.style.display = 'flex';
-    } else {
-        captionsJa.style.display = 'none';
-    }
-
-    displayCues(trackEn.track.activeCues, captionsEn);
-    displayCues(trackJa.track.activeCues, captionsJa);
-}
-
-function displayCues(cues, target) {
-    let html = '';
-
-    // because of overlap, more than one cue can be active
-    for (let i = 0; i < cues.length; i++) {
-        let cue = cues[i];
-        let lines = cue.text.split('\n');
-        for (let line of lines) {
-            html += `<div>${line}</div>`;
-        }
-    }
-
-    if (cues.length == 0) {
-        target.style.visibility = 'hidden';
-    } else {
-        target.style.visibility = 'visible';
-    }
-
-    target.innerHTML = html;
-}
-
-
-subStoryLink.onclick = function (evt) {
-    evt.preventDefault();
-    let msg = `Create new story from subrange: ${formatTrackTime(markedStartTime)} to ${formatTrackTime(markedEndTime)} of ${story.source} - ${story.title}.`;
-
-    if (markedStartTime < 0 || markedEndTime < markedStartTime) {
-        snackbarMessage("end time must be greater than start time");
-        return
-    }
-
-    let title = window.prompt(msg, 'new title');
-
-    if (title) {
-        let storyInfo = {
-            "parent_story": story.id,
-            "title": story.title + " - " + title,
-            "start_time": markedStartTime,
-            "end_time": markedEndTime,
-            "transcript_ja": textTrackToString(trackJa.track, markedStartTime, markedEndTime),
-            "transcript_en": textTrackToString(trackEn.track, markedStartTime, markedEndTime)
-        };
-
-        createSubrangeStory(storyInfo, () => {
-            snackbarMessage("subrange story has been created");
-        });
-    }
-}
 
 logStoryLink.onclick = function (evt) {
     evt.preventDefault();
@@ -136,120 +68,47 @@ document.body.onkeydown = async function (evt) {
         return;
     }
     //console.log(evt);
-
-    if (youtubePlayer) {
-        let timemark = youtubePlayer.getCurrentTime();
-        if (evt.code === 'KeyA') {
-            evt.preventDefault();
-            youtubePlayer.seekTo(timemark - 2.1, true);
-        } else if (evt.code === 'KeyD') {
-            evt.preventDefault();
-            youtubePlayer.seekTo(timemark + 1.5, true);
-        } else if (evt.code === 'KeyQ') {
-            evt.preventDefault();
-            youtubePlayer.seekTo(timemark - 5, true);
-        } else if (evt.code === 'KeyE') {
-            evt.preventDefault();
-            youtubePlayer.seekTo(timemark + 4, true);
-        } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
-            evt.preventDefault();
-            let state = youtubePlayer.getPlayerState();
-            if (state === 1) {  // playing
-                youtubePlayer.pauseVideo();
-            } else {
-                youtubePlayer.playVideo();
-            }
-        } else if (evt.code.startsWith('Digit')) {
-            if (evt.altKey) {
-                evt.preventDefault();
-                let digit = parseInt(evt.code.slice(-1));
-                let duration = youtubePlayer.getDuration();
-                youtubePlayer.seekTo(duration * (digit / 10), true);
-            }
+    if (!player) {
+        return;
+    }
+    let timemark = player.currentTime;
+    if (evt.code === 'KeyF') {
+        evt.preventDefault();
+        var playerDiv = document.getElementById('player');
+        if (document.fullscreenElement == null) {
+            playerDiv.requestFullscreen();
+        } else {
+            document.exitFullscreen();
         }
-    } else if (player) {
-        let timemark = player.currentTime;
-        if (evt.code === 'KeyF') {
-            evt.preventDefault();
-            var playerDiv = document.getElementById('player');
-            if (document.fullscreenElement == null) {
-                playerDiv.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-
-        } else if (evt.code === 'KeyA') {
-            evt.preventDefault();
-            player.currentTime = timemark - 1.8;
+    } else if (evt.code === 'KeyA') {
+        evt.preventDefault();
+        player.currentTime = timemark - 1.8;
+        displayCurrentCues();
+    } else if (evt.code === 'KeyD') {
+        evt.preventDefault();
+        player.currentTime = timemark + 1;
+        displayCurrentCues();
+    } else if (evt.code === 'KeyQ') {
+        evt.preventDefault();
+        player.currentTime = timemark - 5;
+        displayCurrentCues();
+    } else if (evt.code === 'KeyE') {
+        evt.preventDefault();
+        player.currentTime = timemark + 4;
+        displayCurrentCues();
+    } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
+        evt.preventDefault();
+        if (player.paused) {  // playing
+            player.play();
             displayCurrentCues();
-        } else if (evt.code === 'KeyD') {
-            evt.preventDefault();
-            player.currentTime = timemark + 1;
-            displayCurrentCues();
-        } else if (evt.code === 'KeyQ') {
-            evt.preventDefault();
-            player.currentTime = timemark - 5;
-            displayCurrentCues();
-        } else if (evt.code === 'KeyE') {
-            evt.preventDefault();
-            player.currentTime = timemark + 4;
-            displayCurrentCues();
-        } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
-            evt.preventDefault();
-            if (player.paused) {  // playing
-                player.play();
-                displayCurrentCues();
-            } else {
-                player.pause();
-            }
-        } else if (evt.code === 'Equal' || evt.code === 'Minus') {
-            evt.preventDefault();
+        } else {
+            player.pause();
+        }
+    } else if (evt.code === 'Equal' || evt.code === 'Minus') {
+        evt.preventDefault();
 
-            if (evt.altKey) {
-                let adjustment = (evt.code === 'Equal') ? TEXT_TRACK_TIMING_ADJUSTMENT : -TEXT_TRACK_TIMING_ADJUSTMENT;
-                let lang = 'English and Japanese';
-
-                let english = document.getElementById('transcript_en_checkbox').checked;
-                let japanese = document.getElementById('transcript_ja_checkbox').checked;
-
-                if (!english && !japanese) {
-                    return;
-                }
-
-                if (english) {
-                    lang = 'English';
-                    adjustTextTrackAllTimings(trackEn.track, adjustment);
-                    story.transcript_en = textTrackToString(trackEn.track);
-                    let cues = findCues(trackEn.track, player.currentTime);
-                    displayCues(cues, captionsEn);
-                }
-
-                if (japanese) {
-                    lang = 'Japanese';
-                    adjustTextTrackAllTimings(trackJa.track, adjustment);
-                    story.transcript_ja = textTrackToString(trackJa.track);
-                    let cues = findCues(trackJa.track, player.currentTime);
-                    displayCues(cues, captionsJa);
-                }
-
-                snackbarMessage(`updated ${lang} subtitle timings by ${adjustment} seconds`);
-
-                clearTimeout(subtitleAdjustTimeoutHandle);
-                subtitleAdjustTimeoutHandle = setTimeout(
-                    function () {
-                        updateStory(story, () => {
-                            snackbarMessage(`saved updates to subtitle timings`);
-                        });
-                    },
-                    3000
-                );
-            } else {
-                let adjustment = (evt.code === 'Equal') ? PLAYBACK_ADJUSTMENT : -PLAYBACK_ADJUSTMENT;
-                adjustPlaybackSpeed(adjustment);
-            }
-        } else if (evt.code === 'BracketLeft' && evt.altKey) {
-            evt.preventDefault();
-            let adjustment = TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
+        if (evt.altKey) {
+            let adjustment = (evt.code === 'Equal') ? TEXT_TRACK_TIMING_ADJUSTMENT : -TEXT_TRACK_TIMING_ADJUSTMENT;
             let lang = 'English and Japanese';
 
             let english = document.getElementById('transcript_en_checkbox').checked;
@@ -260,22 +119,22 @@ document.body.onkeydown = async function (evt) {
             }
 
             if (english) {
-                lang = 'English ';
-                bringForwardTextTrackTimings(trackEn.track, player.currentTime);
+                lang = 'English';
+                adjustTextTrackAllTimings(trackEn.track, adjustment);
                 story.transcript_en = textTrackToString(trackEn.track);
                 let cues = findCues(trackEn.track, player.currentTime);
                 displayCues(cues, captionsEn);
             }
 
             if (japanese) {
-                lang = 'Japanese ';
-                bringForwardTextTrackTimings(trackJa.track, player.currentTime);
+                lang = 'Japanese';
+                adjustTextTrackAllTimings(trackJa.track, adjustment);
                 story.transcript_ja = textTrackToString(trackJa.track);
                 let cues = findCues(trackJa.track, player.currentTime);
                 displayCues(cues, captionsJa);
             }
 
-            snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
+            snackbarMessage(`updated ${lang} subtitle timings by ${adjustment} seconds`);
 
             clearTimeout(subtitleAdjustTimeoutHandle);
             subtitleAdjustTimeoutHandle = setTimeout(
@@ -286,62 +145,104 @@ document.body.onkeydown = async function (evt) {
                 },
                 3000
             );
-        } else if (evt.code === 'BracketRight' && evt.altKey) {
-            evt.preventDefault();
-            let adjustment = TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
-            let lang = 'English and Japanese';
-
-            let english = document.getElementById('transcript_en_checkbox').checked;
-            let japanese = document.getElementById('transcript_ja_checkbox').checked;
-
-            if (!english && !japanese) {
-                return;
-            }
-
-            if (english) {
-                lang = 'English ';
-                adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
-                story.transcript_en = textTrackToString(trackEn.track);
-                let cues = findCues(trackEn.track, player.currentTime);
-                displayCues(cues, captionsEn);
-            }
-
-            if (japanese) {
-                lang = 'Japanese ';
-                adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
-                story.transcript_ja = textTrackToString(trackJa.track);
-                let cues = findCues(trackJa.track, player.currentTime);
-                displayCues(cues, captionsJa);
-            }
-
-            snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
-
-            clearTimeout(subtitleAdjustTimeoutHandle);
-            subtitleAdjustTimeoutHandle = setTimeout(
-                function () {
-                    updateStory(story, () => {
-                        snackbarMessage(`saved updates to subtitle timings`);
-                    });
-                },
-                3000
-            );
-        } else if (evt.code.startsWith('Digit')) {
-            if (evt.altKey) {
-                evt.preventDefault();
-                let digit = parseInt(evt.code.slice(-1));
-                let duration = player.duration;
-                player.currentTime = duration * (digit / 10);
-                displayCurrentCues();
-            }
-        } else if (evt.code === 'BracketLeft') {
-            evt.preventDefault();
-            markedStartTime = Math.trunc(player.currentTime);
-            snackbarMessage('subrange start marker set to current position');
-        } else if (evt.code === 'BracketRight') {
-            evt.preventDefault();
-            markedEndTime = Math.trunc(player.currentTime);
-            snackbarMessage('subrange end marker set to current position');
+        } else {
+            let adjustment = (evt.code === 'Equal') ? PLAYBACK_ADJUSTMENT : -PLAYBACK_ADJUSTMENT;
+            adjustPlaybackSpeed(adjustment);
         }
+    } else if (evt.code === 'BracketLeft' && evt.altKey) {
+        evt.preventDefault();
+        let adjustment = TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
+        let lang = 'English and Japanese';
+
+        let english = document.getElementById('transcript_en_checkbox').checked;
+        let japanese = document.getElementById('transcript_ja_checkbox').checked;
+
+        if (!english && !japanese) {
+            return;
+        }
+
+        if (english) {
+            lang = 'English ';
+            bringForwardTextTrackTimings(trackEn.track, player.currentTime);
+            story.transcript_en = textTrackToString(trackEn.track);
+            let cues = findCues(trackEn.track, player.currentTime);
+            displayCues(cues, captionsEn);
+        }
+
+        if (japanese) {
+            lang = 'Japanese ';
+            bringForwardTextTrackTimings(trackJa.track, player.currentTime);
+            story.transcript_ja = textTrackToString(trackJa.track);
+            let cues = findCues(trackJa.track, player.currentTime);
+            displayCues(cues, captionsJa);
+        }
+
+        snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
+
+        clearTimeout(subtitleAdjustTimeoutHandle);
+        subtitleAdjustTimeoutHandle = setTimeout(
+            function () {
+                updateStory(story, () => {
+                    snackbarMessage(`saved updates to subtitle timings`);
+                });
+            },
+            3000
+        );
+    } else if (evt.code === 'BracketRight' && evt.altKey) {
+        evt.preventDefault();
+        let adjustment = TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
+        let lang = 'English and Japanese';
+
+        let english = document.getElementById('transcript_en_checkbox').checked;
+        let japanese = document.getElementById('transcript_ja_checkbox').checked;
+
+        if (!english && !japanese) {
+            return;
+        }
+
+        if (english) {
+            lang = 'English ';
+            adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
+            story.transcript_en = textTrackToString(trackEn.track);
+            let cues = findCues(trackEn.track, player.currentTime);
+            displayCues(cues, captionsEn);
+        }
+
+        if (japanese) {
+            lang = 'Japanese ';
+            adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
+            story.transcript_ja = textTrackToString(trackJa.track);
+            let cues = findCues(trackJa.track, player.currentTime);
+            displayCues(cues, captionsJa);
+        }
+
+        snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
+
+        clearTimeout(subtitleAdjustTimeoutHandle);
+        subtitleAdjustTimeoutHandle = setTimeout(
+            function () {
+                updateStory(story, () => {
+                    snackbarMessage(`saved updates to subtitle timings`);
+                });
+            },
+            3000
+        );
+    } else if (evt.code.startsWith('Digit')) {
+        if (evt.altKey) {
+            evt.preventDefault();
+            let digit = parseInt(evt.code.slice(-1));
+            let duration = player.duration;
+            player.currentTime = duration * (digit / 10);
+            displayCurrentCues();
+        }
+    } else if (evt.code === 'BracketLeft') {
+        evt.preventDefault();
+        markedStartTime = Math.trunc(player.currentTime);
+        snackbarMessage('subrange start marker set to current position');
+    } else if (evt.code === 'BracketRight') {
+        evt.preventDefault();
+        markedEndTime = Math.trunc(player.currentTime);
+        snackbarMessage('subrange end marker set to current position');
     }
 };
 
@@ -353,6 +254,114 @@ function parseTimestamp(timestamp) {
     return mins * 60 + seconds;
 }
 
+function displayCurrentCues() {
+    if (document.getElementById('transcript_en_checkbox').checked) {
+        captionsEn.style.display = 'flex';
+    } else {
+        captionsEn.style.display = 'none';
+    }
+
+    if (document.getElementById('transcript_ja_checkbox').checked) {
+        captionsJa.style.display = 'flex';
+    } else {
+        captionsJa.style.display = 'none';
+    }
+
+    displayCues(trackEn.track.activeCues, captionsEn);
+    displayCues(trackJa.track.activeCues, captionsJa);
+}
+
+function displayCues(cues, target) {
+    let html = '';
+
+    // because of overlap, more than one cue can be active
+    for (let i = 0; i < cues.length; i++) {
+        let cue = cues[i];
+        let lines = cue.text.split('\n');
+        for (let line of lines) {
+            html += `<div>${line}</div>`;
+        }
+    }
+
+    if (cues.length == 0) {
+        target.style.visibility = 'hidden';
+    } else {
+        target.style.visibility = 'visible';
+    }
+
+    target.innerHTML = html;
+}
+
+
+function displaySubranges(story) {
+    function repsHTML(subrange, idx, duration, isActive) {
+        let timeLastRep = 1;
+        let listeningRepCount = 0;
+        let drillRepCount = 0;
+
+        if (subrange.reps_logged) {
+            for (let rep of subrange.reps_logged) {
+                if (rep.type == LISTENING) {
+                    listeningRepCount++;
+                } else if (rep.type == DRILLING) {
+                    drillRepCount++;
+                }
+
+                if (rep.date > timeLastRep) {
+                    timeLastRep = rep.date;
+                }
+            }
+        }
+
+        let todoReps;
+        if (subrange.reps_todo.length == 0) {
+            todoReps = `Queued reps: <a class="add_reps_link" href="#" title="add reps">add reps</a>`
+        } else {
+            todoReps = `Queued reps: `;
+            let i = 0;
+            for (let rep of subrange.reps_todo) {
+                if (rep == LISTENING) {
+                    todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
+                } else if (rep == DRILLING) {
+                    todoReps += `<span class="drill rep" repIdx="${i}" title="vocabulary drill rep">語</span>`;
+                }
+                i++;
+            }
+            todoReps += `<span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">ⓘ</span>`;
+        }
+
+        startTime = subrange.start_time || 0;
+        endTime = subrange.end_time || duration;
+
+        let html = `<div subrange_idx="${idx}">
+            <hr>
+            <a href="#" title="set the start time">${formatTrackTime(startTime, true)}</a>-<a href="#" title="set the end time">${formatTrackTime(endTime, true)}</a>
+            <a class="drill_subrange" href="#" title="Log this excerpt">log</a>
+            <a class="drill_subrange" href="#" title="Drill the words of this excerpt">drill</a>
+            <a class="delete_subrange" href="#" title="Remove this excerpt">remove</a>
+            <br>
+            <span>Time since last rep: ${timeSince(timeLastRep)}<span><br>
+            <span>Completed reps: ${listeningRepCount} listening, ${drillRepCount} drilling</span><br>
+            ${todoReps}<br>`;
+
+        return html + '</div>';
+    }
+
+    let html = `Excerpts:
+    <a class="add_subrange" href="#" title="Add a new excerpt">add</a>
+    <a class="sort_subrange" href="#" title="Reorder the excerpts by start time">reorder</a>`;
+
+    let activeIdx = 0;
+    for (idx in story.subranges) {
+        html += repsHTML(story.subranges[idx], idx, player.duration, idx == activeIdx);
+    }
+
+    if (story.subranges.length == 0) {
+        html = `<a class="add_subrange" href="#">Create a subrange</a>`;
+    }
+
+    document.getElementById('subranges').innerHTML = html;
+}
 
 function displayStoryInfo(story) {
     drillWordsLink.setAttribute('href', `/words.html?storyId=${story.id}`);
@@ -362,18 +371,11 @@ function displayStoryInfo(story) {
         document.getElementById('date_info').innerText = story.date;
     }
 
-    let time = '';
-    if (story.start_time != undefined && story.end_time != undefined) {
-        time = `Start time: ${formatTrackTime(story.start_time, true)}<br> 
-            End time: ${formatTrackTime(story.end_time, true)}<br>`;
-    }
-
-    document.getElementById('time_info').innerHTML = `${time}`;
     displayReps(story);
+    displaySubranges(story);
 }
 
 function displayReps(story) {
-
     let timeLastRep = 1;
     let listeningRepCount = 0;
     let drillRepCount = 0;
@@ -396,8 +398,7 @@ function displayReps(story) {
     if (story.reps_todo.length == 0) {
         todoReps = `<a class="add_reps_link">Add reps to queue</a>`
     } else {
-        todoReps = `<span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">㉄</span>
-        Queued reps: `;
+        todoReps = `Queued reps: `;
         let i = 0;
         for (let rep of story.reps_todo) {
             if (rep == LISTENING) {
@@ -407,6 +408,7 @@ function displayReps(story) {
             }
             i++;
         }
+        todoReps += `<span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">ⓘ</span>`;
     }
 
     document.getElementById('repetitions_info').innerHTML = `Listening reps: ${listeningRepCount}<br>
@@ -428,40 +430,7 @@ function openStory(id) {
             story.reps_logged = story.reps_logged || [];
             story.reps_todo = story.reps_todo || [];
 
-            displayStoryInfo(data);
-            displayStory(data);
-
-            let youtubeId = null;
-
-            if (data.link && data.link.startsWith('https://www.youtube.com/watch?v=')) {
-                youtubeId = data.link.split('https://www.youtube.com/watch?v=')[1];
-            }
-
-            if (data.link && data.link.startsWith('https://youtu.be/')) {
-                youtubeId = data.link.split('https://youtu.be/')[1];
-            }
-
-            if (youtubeId) {
-                youtubePlayer = new YT.Player('player', {
-
-                    videoId: youtubeId,
-
-                    playerVars: {
-                        'playsinline': 1,
-                        'cc_lang_pref': 'ja',
-                        'disablekb': 1
-                    },
-                    events: {
-                        'onReady': onPlayerReady,
-                        'onStateChange': onPlayerStateChange,
-                        //'onPlaybackRateChange': onPlaybackRateChange
-                    }
-                });
-
-                playerControls.style.display = 'inline';
-
-                return;
-            }
+            displayStoryContent(data);
 
             if (story.video) {
                 player.style.display = 'block';
@@ -493,6 +462,8 @@ function openStory(id) {
             trackJa.track.mode = 'hidden';
 
             playerControls.style.display = 'inline';
+
+            setTimeout(() => displayStoryInfo(data), 10);  // timeout because needs the player src to load first
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -501,9 +472,7 @@ function openStory(id) {
 
 
 playerSpeedNumber.onchange = function (evt) {
-    if (youtubePlayer) {
-        youtubePlayer.setPlaybackRate(parseFloat(playerSpeedNumber.value));
-    } else if (player) {
+    if (player) {
         player.playbackRate = parseFloat(playerSpeedNumber.value);
     }
 }
@@ -512,14 +481,12 @@ function adjustPlaybackSpeed(adjustment) {
     let newSpeed = parseFloat(playerSpeedNumber.value) + adjustment
     playerSpeedNumber.value = newSpeed.toFixed(2);
 
-    if (youtubePlayer) {
-        youtubePlayer.setPlaybackRate(newSpeed);
-    } else if (player) {
+    if (player) {
         player.playbackRate = newSpeed;
     }
 }
 
-function displayStory(story) {
+function displayStoryContent(story) {
     var lines = story.content.split('\n').filter(x => x);  // filter out blank lines
 
     let html = '';
@@ -531,17 +498,16 @@ function displayStory(story) {
 }
 
 // loads the IFrame Player API code asynchronously.
-var tag = document.createElement('script');
-tag.src = "https://www.youtube.com/iframe_api";
-var firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+// var tag = document.createElement('script');
+// tag.src = "https://www.youtube.com/iframe_api";
+// var firstScriptTag = document.getElementsByTagName('script')[0];
+// firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-
-function onYouTubeIframeAPIReady() {
-    var url = new URL(window.location.href);
-    var storyId = parseInt(url.searchParams.get("storyId") || undefined);
-    openStory(storyId);
-}
+// function onYouTubeIframeAPIReady() {
+//     var url = new URL(window.location.href);
+//     var storyId = parseInt(url.searchParams.get("storyId") || undefined);
+//     openStory(storyId);
+// }
 
 function onPlayerReady(event) {
     event.target.playVideo();
@@ -559,4 +525,6 @@ function onPlaybackRateChange(val) {
 
 document.body.onload = function (evt) {
     var url = new URL(window.location.href);
+    var storyId = parseInt(url.searchParams.get("storyId") || undefined);
+    openStory(storyId);
 };

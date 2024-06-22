@@ -1,14 +1,36 @@
 # japanese_vocab TODO
 
 daily schedule system:
-    
-    import stories with just katakana words?
-        https://www.youtube.com/watch?v=F8tu5CeVWDM
-        https://www.youtube.com/watch?v=hrjV4VuDfiU
 
     
+    rename subranges to 'excerpts'
 
-    make a kana drilling program
+    reorder button for subranges
+    
+    confirmation dialog for removing a range
+
+    confirmation dialog for logging excerpt?
+
+    drill page needs to know which excerpt is being drilled
+
+
+        adjusting subtitle timings on a story will require updating the words of each subrange
+            maybe when going to drill page, the word set should be computed on the fly from subrange's start/end time
+                ...if story doesn't have subtitles, instead get them from content
+        []StorySubrange
+            each subrange has start/end times, word list, and reps logged/queued
+        on story page, sidebar lists the subranges
+            user clicks a subrange to make it active
+            hotkeys set start and end of current subrange
+            buttons to delete and insert new subranges
+                deleting a subrange effectively erases its rep history
+                a new subrange has default start time equal to end time of the subrange before it
+            subranges can overlap?
+        story 'queued' field simply denotes whether any of its subranges currently has queued reps
+
+    remove audio from 'words' table
+
+    add a kana drilling page
         allow to pick exactly which characters to include?
         or fixed sets of similar characters?
 
@@ -21,24 +43,16 @@ daily schedule system:
 
         exclude the oddball characters that never come up? or just go by words
 
-        
+    import stories with just katakana words?
+        https://www.youtube.com/watch?v=F8tu5CeVWDM
+        https://www.youtube.com/watch?v=hrjV4VuDfiU
+
     
     word counts per story:
         server side: given story id, return the count of unarchived and archived words
         show count for each story in current stories
         show count in story page
-        show in catalog? would be expensive, but not impossible    
-    
-    subrange story:
-        child links to parent
-        parent links to children?
-        updating time markers on child will update the subtitles and words from the parent
-        can delete child stories?
-        set multiple split points on a parent story to divide it into parts (instead of having to create them each individually)
-            once children are created, cannot redo split?
-            from parent page, option to redo the split (delete all current children and create new ones...but this deletes their queues)
-        parent story lists links to its children
-        child story links to its parent
+        show in catalog? would be expensive, but not impossible
         
     
     list of recently completed:

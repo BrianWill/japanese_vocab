@@ -429,7 +429,7 @@ span.verb:hover {
 #story_actions a {
     line-height: 2em;
     font-size: 80%;
-    padding-right: 1.5em;
+    padding: 0 0.3em;
 }
 
 #stories td {
@@ -545,4 +545,10 @@ span.verb:hover {
     font-size: 100%;
     text-decoration: underline;
     cursor: pointer;
+}
+
+#subranges .info_button {
+    border-radius: 4px;
+    background-color: #3c5070;
+    padding: 0 0.4em;
 }

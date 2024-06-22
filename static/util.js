@@ -6,7 +6,6 @@ const DEFAULT_REPS = [
     LISTENING, DRILLING,
     LISTENING, DRILLING,
     LISTENING, DRILLING,
-    LISTENING, DRILLING,
     LISTENING
 ];
 
@@ -406,25 +405,6 @@ function logStory(entryId, storyId, wordIds, successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Log:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function createSubrangeStory(storyInfo, successFn) {
-    fetch(`/create_subrange_story`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(storyInfo)
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log(data);
             if (successFn) {
                 successFn(data);
             }

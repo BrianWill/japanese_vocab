@@ -301,12 +301,14 @@ func importStory(story Story, sqldb *sql.DB) error {
 
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
+	initialSubranges := `[ {"reps_todo": [], "reps_logged": [] }]`
+
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, video, 
-				content, content_format, transcript_en, transcript_ja, words, start_time, end_time) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`,
+				content, content_format, transcript_en, transcript_ja, words, start_time, end_time, subranges) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);`,
 		story.Title, story.Source, story.Date, story.Link, epNumStr,
 		story.Video, story.Content, story.ContentFormat, story.TranscriptEN,
-		story.TranscriptJA, wordIdsJson, story.StartTime, story.EndTime)
+		story.TranscriptJA, wordIdsJson, story.StartTime, story.EndTime, initialSubranges)
 
 	return err
 }

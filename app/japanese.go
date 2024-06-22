@@ -101,7 +101,6 @@ func main() {
 
 	router.HandleFunc("/update_story_info", UpdateStory).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
-	router.HandleFunc("/create_subrange_story", CreateSubrangeStory).Methods("POST")
 	router.HandleFunc("/ip", GetIP).Methods("GET")
 	router.HandleFunc("/stories", GetStories).Methods("GET")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
@@ -220,8 +219,7 @@ func makeUserDB(path string) {
 			audio_end REAL NOT NULL DEFAULT 0,
 			date_added INTEGER NOT NULL,
 			definitions TEXT,
-			kanji TEXT,
-			rank INTEGER NOT NULL)`)
+			kanji TEXT)`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -246,30 +244,6 @@ func makeUserDB(path string) {
 			reps_todo TEXT NOT NULL DEFAULT '',
 			content TEXT,
 			content_format TEXT);`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := statement.Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "schedule_entries" 
-		("id" INTEGER PRIMARY KEY,
-			story INTEGER NOT NULL,
-			day_offset INTEGER NOT NULL,
-			type INTEGER not null);`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := statement.Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "log_entries" 
-	("id" INTEGER PRIMARY KEY,
-		story INTEGER NOT NULL,
-		date INTEGER NOT NULL DEFAULT 0,
-		type INTEGER not null);`)
 	if err != nil {
 		log.Fatal(err)
 	}
