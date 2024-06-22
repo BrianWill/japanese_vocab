@@ -2,10 +2,6 @@
 
 daily schedule system:
     
-    confirmation dialog for logging excerpt?
-
-    test logging of reps
-    
     // todo fix imports for sources with main json file for all stories
 
     remove audio from 'words' table

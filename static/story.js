@@ -125,8 +125,17 @@ storyActions.onclick = function (evt) {
                 }
             );
         }
-
-    } else if (evt.target.classList.contains('start_time')) {
+    } else if (evt.target.classList.contains('play_excerpt')) {
+        let start = Math.trunc(excerpt.start_time);
+        let end = Math.trunc(excerpt.end_time);
+        if (excerpt.end_time == 0) {
+            end = Math.trunc(player.duration);
+        }
+        let time = `#t=${start},${end}`;
+        let path = '/sources/' + story.source + "/" + story.video;
+        player.src = path + time;
+        
+    } else if (evt.target.classList.contains('start_time') && evt.ctrlKey) {
         evt.preventDefault();
         let time = player.currentTime;
         excerpt.start_time = time;
@@ -136,7 +145,7 @@ storyActions.onclick = function (evt) {
                 snackbarMessage(`set start time of excerpt to ${formatTrackTime(time)}`);
             }
         );
-    } else if (evt.target.classList.contains('end_time')) {
+    } else if (evt.target.classList.contains('end_time') && evt.ctrlKey) {
         evt.preventDefault();
         let time = player.currentTime;
         excerpt.end_time = time;
@@ -165,10 +174,12 @@ storyActions.onclick = function (evt) {
     } else if (evt.target.classList.contains('log_excerpt')) {
         evt.preventDefault();
         
-        if (logRep(excerpt), LISTENING) {
-            updateReps(story, function () {
-                window.location.href = '/';
-            });
+        if (window.confirm("Log this excerpt?")) {
+            if (logRep(excerpt, LISTENING)) {
+                updateExcerpts(story, function () {
+                    window.location.href = '/';
+                });
+            }
         }
     }
 };
@@ -436,6 +447,7 @@ function displayExcerpts(story) {
 
         let html = `<div excerpt_idx="${excerptIdx}">
             <hr>
+            <a class="play_excerpt" href="#" title="play the excerpt">play</a>
             <a class="start_time" href="#" title="set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
             <a class="log_excerpt" href="#" title="Log this excerpt">log</a>
             <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}" title="Drill the words of this excerpt">drill</a>

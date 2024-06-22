@@ -180,7 +180,7 @@ func getSubtitlesContentInTimeRange(vtt string, startTime float64, endTime float
 
 	var sb strings.Builder
 	for _, item := range subs.Items {
-		if float64(item.EndAt) < startTime || float64(item.StartAt) > endTime {
+		if item.EndAt.Seconds() < startTime || item.StartAt.Seconds() > endTime {
 			continue
 		}
 		for _, line := range item.Lines {

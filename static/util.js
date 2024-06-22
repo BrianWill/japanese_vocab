@@ -553,7 +553,7 @@ function adjustTextTrackAllTimings(track, adjustment) {
         return false;
     }
 
-    for (let i = index; i < track.cues.length; i++) {
+    for (let i = 0; i < track.cues.length; i++) {
         let cue = track.cues[i];
         cue.startTime += adjustment;
         cue.endTime += adjustment;

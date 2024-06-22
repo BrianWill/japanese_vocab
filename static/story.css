@@ -96,10 +96,17 @@ body {
     font-size: 120%;
     padding-left: 1.5em;
     overflow-y: scroll;
+    margin-top: 1em;
     margin-right: 1em;
     padding-right: 1em;
+    height: 35vh;
 }
 
 #story_lines span {
     white-space: nowrap;
+}
+
+#excerpts {
+  overflow-y: scroll;
+  height: 60vh;
 }
