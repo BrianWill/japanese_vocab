@@ -4,7 +4,7 @@ import (
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
-	//"fmt"
+	"fmt"
 	"regexp"
 
 	// "math"
@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func WordDrill(w http.ResponseWriter, r *http.Request) {
+func GetWords(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 
 	w.Header().Set("Content-Type", "application/json")
@@ -22,8 +22,8 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	gw := gzip.NewWriter(w)
 	defer gw.Close()
 
-	var drillRequest DrillRequest
-	json.NewDecoder(r.Body).Decode(&drillRequest)
+	var body DrillRequest
+	json.NewDecoder(r.Body).Decode(&body)
 
 	sqldb, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -33,59 +33,105 @@ func WordDrill(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	var wordIds []int64
-	wordIdMap := make(map[int64]bool)
-
 	var story_title string
 	var story_source string
 	var story_link string
-	var wordIdsJson string
 
-	row := sqldb.QueryRow(`SELECT title, source, link, words FROM stories WHERE id = $1;`, drillRequest.StoryId)
-	err = row.Scan(&story_title, &story_source, &story_link, &wordIdsJson)
+	row := sqldb.QueryRow(`SELECT title, source, link FROM stories WHERE id = $1;`, body.StoryId)
+	err = row.Scan(&story_title, &story_source, &story_link)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
-	err = json.Unmarshal([]byte(wordIdsJson), &wordIds)
+	words, err := getWordsFromExcerpt(sqldb, body.StoryId, body.ExcerptIdx)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
-	}
-
-	for _, id := range wordIds {
-		wordIdMap[id] = true
-	}
-
-	wordIds = make([]int64, len(wordIdMap))
-	i := 0
-	for id := range wordIdMap {
-		wordIds[i] = id
-		i++
-	}
-
-	words := make([]DrillWord, len(wordIds))
-
-	for i, id := range wordIds {
-		word := &words[i]
-		word.ID = id
-		row := sqldb.QueryRow(`SELECT base_form, archived,
-				audio, audio_start, audio_end, category,
-				repetitions, definitions FROM words WHERE id = $1;`, id)
-		err = row.Scan(&word.BaseForm, &word.Archived, &word.Audio,
-			&word.AudioStart, &word.AudioEnd, &word.Category,
-			&word.Repetitions, &word.Definitions)
-		if err != nil && err != sql.ErrNoRows {
-			w.WriteHeader(http.StatusInternalServerError)
-			gw.Write([]byte(`{ "message": "` + "failure to get word info: " + err.Error() + `"}`))
-			return
-		}
 	}
 
 	json.NewEncoder(gw).Encode(bson.M{"words": words, "story_link": story_link, "story_title": story_title, "story_source": story_source})
+}
+
+func getExcerpt(sqldb *sql.DB, storyId int64, excerptIdx int64) (Excerpt, error) {
+	var excerptsJSON string
+	row := sqldb.QueryRow(`SELECT excerpts FROM stories WHERE id = $1;`, storyId)
+	err := row.Scan(&excerptsJSON)
+	if err != nil {
+		return Excerpt{}, err
+	}
+
+	var excerpts []Excerpt
+	err = json.Unmarshal([]byte(excerptsJSON), &excerpts)
+	if err != nil {
+		return Excerpt{}, err
+	}
+
+	if excerptIdx >= int64(len(excerpts)) {
+		return Excerpt{}, fmt.Errorf("excerpt index is out of range")
+	}
+
+	return excerpts[excerptIdx], nil
+}
+
+func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptIdx int64) ([]DrillWord, error) {
+	excerpt, err := getExcerpt(sqldb, storyId, excerptIdx)
+	if err != nil {
+		return nil, err
+	}
+
+	var transcriptJA string
+	var content string
+	row := sqldb.QueryRow(`SELECT content, transcript_ja FROM stories WHERE id = $1;`, storyId)
+	err = row.Scan(&content, &transcriptJA)
+	if err != nil {
+		return nil, err
+	}
+
+	excerptText := content
+	if transcriptJA != "" {
+		excerptText, err = getSubtitlesContentInTimeRange(transcriptJA, excerpt.StartTime, excerpt.EndTime)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	tokens, _, err := tokenize(excerptText)
+	if err != nil {
+		return nil, err
+	}
+
+	// get word info
+	wordMap := make(map[string]DrillWord)
+
+	for _, token := range tokens {
+		word := DrillWord{}
+		word.BaseForm = token.BaseForm
+		row := sqldb.QueryRow(`SELECT id, archived,
+				audio, audio_start, audio_end, category,
+				repetitions, definitions FROM words WHERE base_form = $1;`, token.BaseForm)
+		err = row.Scan(&word.ID, &word.Archived, &word.Audio,
+			&word.AudioStart, &word.AudioEnd, &word.Category,
+			&word.Repetitions, &word.Definitions)
+		if err == sql.ErrNoRows {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		wordMap[word.BaseForm] = word
+	}
+
+	words := make([]DrillWord, len(wordMap))
+	i := 0
+	for _, word := range wordMap {
+		words[i] = word
+		i++
+	}
+
+	return words, nil
 }
 
 func UpdateWord(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +150,7 @@ func UpdateWord(w http.ResponseWriter, r *http.Request) {
 
 	row := sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1;`, word.BaseForm)
 	var id int64
+
 	err = row.Scan(&id)
 	if err != nil {
 		if err == sql.ErrNoRows {

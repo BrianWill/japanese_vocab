@@ -3,8 +3,10 @@ var sourceSelect = document.getElementById('source_select');
 var ipDiv = document.getElementById('ip');
 
 document.body.onload = function (evt) {
-    getStories(processCatalog);
-    getReps(displayReps);
+    getStories(function (stories) {
+        processCatalog(stories);
+        displayCurrent(stories);
+    });
     getIP((ips) => {
         let html = 'local ip: ';
         for (const ip of ips) {
@@ -14,29 +16,9 @@ document.body.onload = function (evt) {
     });
 };
 
-function displayReps(stories) {
+function displayCurrent(stories) {
 
-    stories = stories.stories;
-
-    for (const s of stories) {
-        s.timeLastRep = 1;
-        s.listeningRepCount = 0;
-        s.drillRepCount = 0;
-
-        if (s.reps_logged) {
-            for (let rep of s.reps_logged) {
-                if (rep.type == LISTENING) {
-                    s.listeningRepCount++;
-                } else if (rep.type == DRILLING) {
-                    s.drillRepCount++;
-                }
-
-                if (rep.date > s.timeLastRep) {
-                    s.timeLastRep = rep.date;
-                }
-            }
-        }
-    }
+    stories = stories.filter((s) => s.has_reps_todo) ;
 
     // sort entries by source, then by title?
     stories.sort((a, b) => {
@@ -48,7 +30,7 @@ function displayReps(stories) {
     });
 
     stories.sort((a, b) => {
-        return (a.timeLastRep < b.timeLastRep) ? -1 : (a.timeLastRep > b.timeLastRep) ? 1 : 0;
+        return (a.date_last_rep < b.date_last_rep) ? -1 : (a.date_last_rep > b.date_last_rep) ? 1 : 0;
     });
 
     let html = `
@@ -62,24 +44,13 @@ function displayReps(stories) {
                 <td>Queued<br>reps</td>
             </tr>`;
 
+    // todo get count of todo reps across all excerpts
+
     for (const s of stories) {
-
-        let todoReps = ``;
-        for (let rep of s.reps_todo) {
-            if (rep == LISTENING) {
-                todoReps += `<span class="listening" title="listening rep">聞</span>`;
-            } else if (rep == DRILLING) {
-                todoReps += `<span class="drill" title="vocabulary drill rep">語</span>`;
-            }
-        }
-
         html += `<tr>
             <td>${s.source}</td>    
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            <td>${s.listeningRepCount}</td>
-            <td>${s.drillRepCount}</td>
-            <td>${timeSince(s.timeLastRep)}</td>
-            <td class="rep_sequence">${todoReps}</td>
+            <td>${timeSince(s.date_last_rep)}</td>
         </tr>`;
     }
 

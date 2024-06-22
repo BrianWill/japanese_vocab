@@ -10,60 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func GetReps(w http.ResponseWriter, r *http.Request) {
-	dbPath := MAIN_USER_DB_PATH
-
-	w.Header().Set("Content-Type", "application/json")
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	rows, err := sqldb.Query(`SELECT id, title, source, reps_logged, reps_todo FROM stories WHERE reps_todo != '[]';`)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
-		return
-	}
-	defer rows.Close()
-
-	stories := make([]Story, 0)
-
-	var repsLoggedStr string
-	var repsTodoStr string
-
-	for rows.Next() {
-		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &repsLoggedStr, &repsTodoStr); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{ "message": "` + "failure to read schedule entry: " + err.Error() + `"}`))
-			return
-		}
-
-		err = json.Unmarshal([]byte(repsLoggedStr), &story.RepsLogged)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{ "message": "` + "failure to unmarshal reps logged: " + err.Error() + `"}`))
-			return
-		}
-
-		err = json.Unmarshal([]byte(repsTodoStr), &story.RepsTodo)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{ "message": "` + "failure to unmarshal reps todo: " + err.Error() + `"}`))
-			return
-		}
-
-		stories = append(stories, story)
-	}
-
-	json.NewEncoder(w).Encode(bson.M{"stories": stories})
-}
-
 func AddReps(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 

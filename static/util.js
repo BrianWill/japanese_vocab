@@ -227,62 +227,6 @@ function getStories(successFn) {
         });
 }
 
-function getSchedule(successFn) {
-    fetch('/schedule', {
-        method: 'GET', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Schedule:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-
-function getReps(successFn) {
-    fetch('/reps', {
-        method: 'GET', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Reps:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function updateReps(story, successFn) {
-    fetch('/update_reps', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "story_id": story.id, "reps_logged": story.reps_logged, "reps_todo": story.reps_todo})
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Update reps:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
 function incWords(words, successFn) {
     fetch('/inc_words', {
         method: 'POST', // or 'PUT'
@@ -312,6 +256,25 @@ function addStoryReps(storyId, reps, successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Res added to story:', data);
+            if (successFn) {
+                successFn(data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function updateExcerpts(story, successFn) {
+    fetch('/update_excerpts', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "story_id": story.id, "excerpts": story.excerpts })
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('updated story excerpts:', data);
             if (successFn) {
                 successFn(data);
             }
@@ -658,9 +621,9 @@ function randomPaletteColor(hash) {
     return colorPalette[idx];
 }
 
-function insertRep(story, repIdx) {
-    let type = story.reps_todo[repIdx]; 
-    story.reps_todo.splice(repIdx, 0, type);
+function insertRep(excerpt, repIdx) {
+    let type = excerpt.reps_todo[repIdx]; 
+    excerpt.reps_todo.splice(repIdx, 0, type);
     
 	updateReps(story, function(data) {
         displayStoryInfo(story);
@@ -691,30 +654,30 @@ function toggleRepType(story, repIdx) {
     });
 }
 
-function logRep(story, type, successFn) {
+function logRep(excerpt, type) {
     let unixtime = Math.floor(Date.now() / 1000);
     let cooldownTime = unixtime - REP_COOLDOWN;
 
-    if (story.reps_logged) {
-        for (let rep of story.reps_logged) {
+    if (excerpt.reps_logged) {
+        for (let rep of excerpt.reps_logged) {
             if (rep.type == type && rep.date > cooldownTime) {
-                snackbarMessage("story has already been logged within the cooldown window");
-                return;
+                snackbarMessage("rep of excerpt has already been logged within the cooldown window");
+                return false;
             }
         }
     }
 
     // remove first rep matching the type
     let i = 0;
-    for (let repType of story.reps_todo) {
+    for (let repType of excerpt.reps_todo) {
         if (repType == type) {
-            story.reps_todo.splice(i, 1);
-            story.reps_logged.push({ "date" : unixtime, "type": type});
-            updateReps(story, successFn);
-            return;
+            excerpt.reps_todo.splice(i, 1);
+            excerpt.reps_logged.push({ "date" : unixtime, "type": type});
+            return true;
         }
         i++;
     }
 
-    snackbarMessage(`no ${type == LISTENING ? 'listening' : 'drill'} reps are currently queued for this story`);
+    snackbarMessage(`no ${type == LISTENING ? 'listening' : 'drill'} reps are currently queued for this excerpt`);
+    return false;
 }

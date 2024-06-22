@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"regexp"
 	"strconv"
@@ -19,56 +20,6 @@ import (
 const SOURCES_PATH = "../static/sources/"
 
 var newlineRegEx *regexp.Regexp
-
-// todo fix imports for sources with main json file for all stories
-
-// func importStories(dbPath string, jsonPath string) error {
-// 	fmt.Println("importing stories...")
-// 	jsonBytes, err := os.ReadFile(jsonPath)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	// parse the json file
-// 	storyJSON := StoryImportJSON{}
-// 	storyJSON.Stories = make([]Story, 0)
-// 	err = json.Unmarshal(jsonBytes, &storyJSON)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	// open the db
-// 	sqldb, err := sql.Open("sqlite3", dbPath)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	defer sqldb.Close()
-
-// 	fmt.Println("Defaults source: ", storyJSON.Source)
-// 	fmt.Println("NUM STORIES: ", len(storyJSON.Stories))
-
-// 	//removeAllStories(sqldb)
-
-// 	for _, s := range storyJSON.Stories {
-
-// 		s.Title = strings.TrimSpace(s.Title)
-
-// 		if s.Source == "" {
-// 			s.Source = storyJSON.Source
-// 		}
-
-// 		if s.ContentFormat == "" {
-// 			s.ContentFormat = storyJSON.ContentFormat
-// 		}
-
-// 		err = importStory(s, sqldb)
-// 		if err != nil {
-// 			log.Fatal(err)
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
 
 func importSources(dbPath string) error {
 	fmt.Println("importing sources...")
@@ -217,6 +168,32 @@ func getSubtitlesContent(vtt string) (string, error) {
 	return sb.String(), nil
 }
 
+func getSubtitlesContentInTimeRange(vtt string, startTime float64, endTime float64) (string, error) {
+	subs, err := astisub.ReadFromWebVTT(bytes.NewReader([]byte(vtt)))
+	if err != nil {
+		return "", err
+	}
+
+	if endTime == 0 {
+		endTime = math.MaxFloat64
+	}
+
+	var sb strings.Builder
+	for _, item := range subs.Items {
+		if float64(item.EndAt) < startTime || float64(item.StartAt) > endTime {
+			continue
+		}
+		for _, line := range item.Lines {
+			for _, lineItem := range line.Items {
+				sb.WriteString(lineItem.Text)
+			}
+			sb.WriteString("\n")
+		}
+	}
+
+	return sb.String(), nil
+}
+
 func storyExists(story Story, sqldb *sql.DB) bool {
 	var id int64
 
@@ -236,7 +213,7 @@ func storyExists(story Story, sqldb *sql.DB) bool {
 // so in this importer, we just check that the data is valid)
 // check that the content can be parsed as the specified format
 func importStory(story Story, sqldb *sql.DB) error {
-	newWordCount, wordIdsJson, err := processStoryWords(story, sqldb)
+	newWordCount, _, err := processStoryWords(story, sqldb)
 	if err != nil {
 		return err
 	}
@@ -289,26 +266,24 @@ func importStory(story Story, sqldb *sql.DB) error {
 				date = $1, link = $2, episode_number = $3, video = $4, 
 				content = $5, content_format = $6, 
 				transcript_en = CASE WHEN transcript_en = '' THEN $7 ELSE transcript_en END,
-				transcript_ja = CASE WHEN transcript_ja = '' THEN $8 ELSE transcript_ja END,
-				words = $9 
+				transcript_ja = CASE WHEN transcript_ja = '' THEN $8 ELSE transcript_ja END
 				WHERE title = $10 and source = $11;`,
 			story.Date, story.Link, epNumStr, story.Video,
 			story.Content, story.ContentFormat, story.TranscriptEN,
-			story.TranscriptJA, wordIdsJson,
-			story.Title, story.Source)
+			story.TranscriptJA, story.Title, story.Source)
 		return err
 	}
 
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
-	initialSubranges := `[ {"reps_todo": [], "reps_logged": [] }]`
+	initialExcerpt := `[ {"reps_todo": [], "reps_logged": [] }]`
 
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, video, 
-				content, content_format, transcript_en, transcript_ja, words, start_time, end_time, subranges) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);`,
+				content, content_format, transcript_en, transcript_ja, words, start_time, end_time, excerpts, date_last_rep) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`,
 		story.Title, story.Source, story.Date, story.Link, epNumStr,
 		story.Video, story.Content, story.ContentFormat, story.TranscriptEN,
-		story.TranscriptJA, wordIdsJson, story.StartTime, story.EndTime, initialSubranges)
+		story.TranscriptJA, initialExcerpt, 0)
 
 	return err
 }

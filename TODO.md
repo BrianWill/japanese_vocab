@@ -1,32 +1,12 @@
 # japanese_vocab TODO
 
 daily schedule system:
-
     
-    rename subranges to 'excerpts'
-
-    reorder button for subranges
-    
-    confirmation dialog for removing a range
-
     confirmation dialog for logging excerpt?
 
-    drill page needs to know which excerpt is being drilled
-
-
-        adjusting subtitle timings on a story will require updating the words of each subrange
-            maybe when going to drill page, the word set should be computed on the fly from subrange's start/end time
-                ...if story doesn't have subtitles, instead get them from content
-        []StorySubrange
-            each subrange has start/end times, word list, and reps logged/queued
-        on story page, sidebar lists the subranges
-            user clicks a subrange to make it active
-            hotkeys set start and end of current subrange
-            buttons to delete and insert new subranges
-                deleting a subrange effectively erases its rep history
-                a new subrange has default start time equal to end time of the subrange before it
-            subranges can overlap?
-        story 'queued' field simply denotes whether any of its subranges currently has queued reps
+    test logging of reps
+    
+    // todo fix imports for sources with main json file for all stories
 
     remove audio from 'words' table
 
@@ -65,10 +45,7 @@ daily schedule system:
 
     story page:      
         when queue is empty, link to queue reps (the standard number)
-        link: delete this story from catalog
-            (with confirmation pop-up)
-            only on subrange stories?
-
+    
     test new subtitle adjustments
 
     way to set start and end points for the current story:

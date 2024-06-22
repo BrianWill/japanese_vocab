@@ -1,7 +1,6 @@
 var storyLines = document.getElementById('story_lines');
 var wordList = document.getElementById('word_list');
 var playerSpeedNumber = document.getElementById('player_speed_number');
-var drillWordsLink = document.getElementById('drill_words_link');
 var player = document.getElementById('video_player');
 var trackJa = document.getElementById('track_ja');
 var trackEn = document.getElementById('track_en');
@@ -9,14 +8,12 @@ var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
 var logStoryLink = document.getElementById('mark_story');
 var repetitionsInfoDiv = document.getElementById('repetitions_info');
+var storyActions = document.getElementById('story_actions');
 
 var playerControls = document.getElementById('player_controls');
 
 var story = null;
 var selectedLineIdx = 0;
-
-var markedStartTime = 0;
-var markedEndTime = 0;
 
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
 const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
@@ -25,39 +22,154 @@ const PLAYBACK_ADJUSTMENT = 0.05;
 trackJa.track.addEventListener('cuechange', displayCurrentCues);
 trackEn.track.addEventListener('cuechange', displayCurrentCues);
 
-logStoryLink.onclick = function (evt) {
-    evt.preventDefault();
-    logRep(story, LISTENING, () => window.location.href = '/');
-};
-
 storyLines.onwheel = function (evt) {
     evt.preventDefault();
     let scrollDelta = evt.wheelDeltaY * 2;
     storyLines.scrollTop -= scrollDelta;
 };
 
-repetitionsInfoDiv.onclick = function (evt) {
-    evt.preventDefault();
+storyActions.onclick = function (evt) {
+    let container = evt.target.closest('#excerpts');
+    if (!container) {
+        return;
+    }
 
-    if (evt.target.classList.contains('rep')) {
+    if (evt.target.classList.contains('add_excerpt')) {
+        evt.preventDefault();
+        story.excerpts.push({ "start_time": 0, "end_time": player.duration, "reps_logged": [], "reps_todo": [] });
+        updateExcerpts(story,
+            function () {
+                displayStoryInfo(story);
+                snackbarMessage(`added excerpt`);
+            }
+        );
+    } else if (evt.target.classList.contains('sort_excerpts')) {
+        evt.preventDefault();
+        story.excerpts.sort((a, b) => {
+            if (a.start_time < b.start_time) {
+                return -1;
+            } else if (a.start_time > b.start_time) {
+                return +1;
+            }
+
+            // use end time as secondary criterea
+            if (a.end_time < b.end_time) {
+                return -1;
+            } else if (a.end_time > b.end_time) {
+                return +1;
+            }
+
+            return 0;
+        });
+        updateExcerpts(story,
+            function () {
+                displayStoryInfo(story);
+                snackbarMessage(`reordered the excerpts by start time`);
+            }
+        );
+    }
+
+    container = evt.target.closest('div[excerpt_idx]');
+    if (!container) {
+        return;
+    }
+
+    let excerptIdx = parseInt(container.getAttribute('excerpt_idx'));
+    if (excerptIdx > story.excerpts.length - 1) {
+        console.log("invalid excerpt idx");
+    }
+    let excerpt = story.excerpts[excerptIdx];
+
+    if (evt.target.classList.contains('add_reps_link')) {
+        evt.preventDefault();
+        excerpt.reps_todo = DEFAULT_REPS;
+
+        updateExcerpts(story,
+            function () {
+                displayStoryInfo(story);
+                snackbarMessage(`reps added to queue of excerpt`);
+            }
+        );
+    } else if (evt.target.classList.contains('rep')) {
         evt.preventDefault();
         let repIdx = parseInt(evt.target.getAttribute('repIdx'));
 
         if (evt.altKey) {
-            insertRep(story, repIdx);
+            let type = excerpt.reps_todo[repIdx];
+            excerpt.reps_todo.splice(repIdx, 0, type);
+            updateExcerpts(story,
+                function () {
+                    displayStoryInfo(story);
+                    snackbarMessage(`rep added to queue of excerpt`);
+                }
+            );
         } else if (evt.ctrlKey) {
-            deleteRep(story, repIdx);
+            excerpt.reps_todo.splice(repIdx, 1);
+            updateExcerpts(story,
+                function () {
+                    displayStoryInfo(story);
+                    snackbarMessage(`rep removed from queue of excerpt`);
+                }
+            );
         } else {
-            toggleRepType(story, repIdx);
+            let priorType = excerpt.reps_todo[repIdx];
+            if (priorType == LISTENING) {
+                excerpt.reps_todo[repIdx] = DRILLING;
+            } else if (priorType == DRILLING) {
+                excerpt.reps_todo[repIdx] = LISTENING;
+            }
+            updateExcerpts(story,
+                function () {
+                    displayStoryInfo(story);
+                    snackbarMessage(`toggled type of rep in queue of excerpt`);
+                }
+            );
         }
-    } else if (evt.target.classList.contains('add_reps_link')) {
-        addStoryReps(story.id, DEFAULT_REPS,
+
+    } else if (evt.target.classList.contains('start_time')) {
+        evt.preventDefault();
+        let time = player.currentTime;
+        excerpt.start_time = time;
+        updateExcerpts(story,
             function () {
-                story.reps_todo = DEFAULT_REPS;
-                displayReps(story);
-                snackbarMessage(`added reps to story: ${story.title}`);
+                displayStoryInfo(story);
+                snackbarMessage(`set start time of excerpt to ${formatTrackTime(time)}`);
             }
         );
+    } else if (evt.target.classList.contains('end_time')) {
+        evt.preventDefault();
+        let time = player.currentTime;
+        excerpt.end_time = time;
+        updateExcerpts(story,
+            function () {
+                displayStoryInfo(story);
+                snackbarMessage(`set end time of excerpt to ${formatTrackTime(time)}`);
+            }
+        );
+    } else if (evt.target.classList.contains('delete_excerpt')) {
+        evt.preventDefault();
+        if (story.excerpts.length == 1) {
+            snackbarMessage(`cannot remove the only excerpt`);
+            return;
+        }
+
+        if (window.confirm("Do you really want to remove the excerpt?")) {
+            story.excerpts.splice(excerptIdx, 1);
+            updateExcerpts(story,
+                function () {
+                    displayStoryInfo(story);
+                    snackbarMessage(`removed excerpt`);
+                }
+            );
+        }
+    } else if (evt.target.classList.contains('log_excerpt')) {
+        evt.preventDefault();
+        
+        if (logRep(excerpt), LISTENING) {
+            updateReps(story, function () {
+                window.location.href = '/';
+            });
+        }
     }
 };
 
@@ -235,14 +347,6 @@ document.body.onkeydown = async function (evt) {
             player.currentTime = duration * (digit / 10);
             displayCurrentCues();
         }
-    } else if (evt.code === 'BracketLeft') {
-        evt.preventDefault();
-        markedStartTime = Math.trunc(player.currentTime);
-        snackbarMessage('subrange start marker set to current position');
-    } else if (evt.code === 'BracketRight') {
-        evt.preventDefault();
-        markedEndTime = Math.trunc(player.currentTime);
-        snackbarMessage('subrange end marker set to current position');
     }
 };
 
@@ -293,14 +397,14 @@ function displayCues(cues, target) {
 }
 
 
-function displaySubranges(story) {
-    function repsHTML(subrange, idx, duration, isActive) {
+function displayExcerpts(story) {
+    function repsHTML(excerpt, excerptIdx) {
         let timeLastRep = 1;
         let listeningRepCount = 0;
         let drillRepCount = 0;
 
-        if (subrange.reps_logged) {
-            for (let rep of subrange.reps_logged) {
+        if (excerpt.reps_logged) {
+            for (let rep of excerpt.reps_logged) {
                 if (rep.type == LISTENING) {
                     listeningRepCount++;
                 } else if (rep.type == DRILLING) {
@@ -314,12 +418,12 @@ function displaySubranges(story) {
         }
 
         let todoReps;
-        if (subrange.reps_todo.length == 0) {
+        if (excerpt.reps_todo.length == 0) {
             todoReps = `Queued reps: <a class="add_reps_link" href="#" title="add reps">add reps</a>`
         } else {
             todoReps = `Queued reps: `;
             let i = 0;
-            for (let rep of subrange.reps_todo) {
+            for (let rep of excerpt.reps_todo) {
                 if (rep == LISTENING) {
                     todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
                 } else if (rep == DRILLING) {
@@ -330,15 +434,12 @@ function displaySubranges(story) {
             todoReps += `<span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">ⓘ</span>`;
         }
 
-        startTime = subrange.start_time || 0;
-        endTime = subrange.end_time || duration;
-
-        let html = `<div subrange_idx="${idx}">
+        let html = `<div excerpt_idx="${excerptIdx}">
             <hr>
-            <a href="#" title="set the start time">${formatTrackTime(startTime, true)}</a>-<a href="#" title="set the end time">${formatTrackTime(endTime, true)}</a>
-            <a class="drill_subrange" href="#" title="Log this excerpt">log</a>
-            <a class="drill_subrange" href="#" title="Drill the words of this excerpt">drill</a>
-            <a class="delete_subrange" href="#" title="Remove this excerpt">remove</a>
+            <a class="start_time" href="#" title="set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
+            <a class="log_excerpt" href="#" title="Log this excerpt">log</a>
+            <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}" title="Drill the words of this excerpt">drill</a>
+            <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
             <span>Time since last rep: ${timeSince(timeLastRep)}<span><br>
             <span>Completed reps: ${listeningRepCount} listening, ${drillRepCount} drilling</span><br>
@@ -348,73 +449,33 @@ function displaySubranges(story) {
     }
 
     let html = `Excerpts:
-    <a class="add_subrange" href="#" title="Add a new excerpt">add</a>
-    <a class="sort_subrange" href="#" title="Reorder the excerpts by start time">reorder</a>`;
+    <a class="add_excerpt" href="#" title="Add a new excerpt">add excerpt</a>
+    <a class="sort_excerpts" href="#" title="Reorder the excerpts by start time">reorder excerpts</a>`;
 
-    let activeIdx = 0;
-    for (idx in story.subranges) {
-        html += repsHTML(story.subranges[idx], idx, player.duration, idx == activeIdx);
+    for (idx in story.excerpts) {
+        html += repsHTML(story.excerpts[idx], idx);
     }
 
-    if (story.subranges.length == 0) {
-        html = `<a class="add_subrange" href="#">Create a subrange</a>`;
-    }
-
-    document.getElementById('subranges').innerHTML = html;
+    document.getElementById('excerpts').innerHTML = html;
 }
 
 function displayStoryInfo(story) {
-    drillWordsLink.setAttribute('href', `/words.html?storyId=${story.id}`);
     document.getElementById('story_title').innerHTML = `<a href="${story.link}">${story.title}</a><hr>`;
     document.getElementById('source_info').innerText = 'Source: ' + story.source;
     if (story.date) {
         document.getElementById('date_info').innerText = story.date;
     }
 
-    displayReps(story);
-    displaySubranges(story);
+    displayExcerpts(story);
 }
+function processStory(story) {
+    story.reps_logged = story.reps_logged || [];
+    story.reps_todo = story.reps_todo || [];
 
-function displayReps(story) {
-    let timeLastRep = 1;
-    let listeningRepCount = 0;
-    let drillRepCount = 0;
-
-    if (story.reps_logged) {
-        for (let rep of story.reps_logged) {
-            if (rep.type == LISTENING) {
-                listeningRepCount++;
-            } else if (rep.type == DRILLING) {
-                drillRepCount++;
-            }
-
-            if (rep.date > timeLastRep) {
-                timeLastRep = rep.date;
-            }
-        }
+    for (let excerpt of story.excerpts) {
+        excerpt.start_time = excerpt.start_time || 0;
+        excerpt.end_time = excerpt.end_time || player.duration;
     }
-
-    let todoReps;
-    if (story.reps_todo.length == 0) {
-        todoReps = `<a class="add_reps_link">Add reps to queue</a>`
-    } else {
-        todoReps = `Queued reps: `;
-        let i = 0;
-        for (let rep of story.reps_todo) {
-            if (rep == LISTENING) {
-                todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
-            } else if (rep == DRILLING) {
-                todoReps += `<span class="drill rep" repIdx="${i}" title="vocabulary drill rep">語</span>`;
-            }
-            i++;
-        }
-        todoReps += `<span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">ⓘ</span>`;
-    }
-
-    document.getElementById('repetitions_info').innerHTML = `Listening reps: ${listeningRepCount}<br>
-        Drilling reps: ${drillRepCount}<br>
-        Time since last rep: ${timeSince(timeLastRep)}<br>
-        ${todoReps}`;
 }
 
 function openStory(id) {
@@ -426,11 +487,6 @@ function openStory(id) {
     }).then((response) => response.json())
         .then((data) => {
             story = data;
-
-            story.reps_logged = story.reps_logged || [];
-            story.reps_todo = story.reps_todo || [];
-
-            displayStoryContent(data);
 
             if (story.video) {
                 player.style.display = 'block';
@@ -463,7 +519,12 @@ function openStory(id) {
 
             playerControls.style.display = 'inline';
 
-            setTimeout(() => displayStoryInfo(data), 10);  // timeout because needs the player src to load first
+            setTimeout(() => {
+                processStory(story);
+                displayStoryInfo(story);
+                displayStoryContent(story);
+            }, 10);  // timeout because needs the player src to load first
+
         })
         .catch((error) => {
             console.error('Error:', error);

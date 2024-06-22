@@ -100,19 +100,15 @@ func main() {
 	//router.Use(middleware)
 
 	router.HandleFunc("/update_story_info", UpdateStory).Methods("POST")
+	router.HandleFunc("/update_excerpts", UpdateExcerpts).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/ip", GetIP).Methods("GET")
 	router.HandleFunc("/stories", GetStories).Methods("GET")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
-	router.HandleFunc("/words", WordDrill).Methods("POST")
+	router.HandleFunc("/words", GetWords).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
-	router.HandleFunc("/", GetMain).Methods("GET")
-
-	// scheduling
-	router.HandleFunc("/add_reps", AddReps).Methods("POST")
-	router.HandleFunc("/reps", GetReps).Methods("GET")
-	router.HandleFunc("/update_reps", UpdateReps).Methods("POST")
 	router.HandleFunc("/inc_words", IncWords).Methods("POST")
+	router.HandleFunc("/", GetMain).Methods("GET")
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
@@ -236,12 +232,11 @@ func makeUserDB(path string) {
 			link TEXT,
 			episode_number TEXT,
 			video TEXT,
-			start_time REAL,
-			end_time REAL,
 			transcript_en TEXT,
 			transcript_ja TEXT,
-			reps_logged TEXT NOT NULL DEFAULT '',
-			reps_todo TEXT NOT NULL DEFAULT '',
+			excerpts TEXT NOT NULL,
+			date_last_rep INTEGER NOT NULL,
+			has_reps_todo INTEGER NOT NULL,
 			content TEXT,
 			content_format TEXT);`)
 	if err != nil {

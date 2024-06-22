@@ -523,6 +523,12 @@ span.verb:hover {
     user-select: none;
 }
 
+#excerpts .rep {
+    padding-right: 0.2em;
+    cursor: pointer;
+    user-select: none;
+}
+
 .story_title {
     color: #cabe7d;
 }
@@ -547,7 +553,7 @@ span.verb:hover {
     cursor: pointer;
 }
 
-#subranges .info_button {
+#excerpts .info_button {
     border-radius: 4px;
     background-color: #3c5070;
     padding: 0 0.4em;

@@ -64,13 +64,6 @@ Because subtitle data from sources may not line up with the video or audio, thes
 - `alt` + `[` : shift the timings of the first subtitle after the current timemark up to the current timemark, and shift all following subtitles forward the same amount (only does something if the current timemark is between subtitles)
 - `alt` + `]` : shift the timings of the first subtitle after the current timemark back by 10 seconds, and shift all following subtitles back the same amount (only does something if the current timemark is between subtitles)
 
-To help break up longer stories into shorter ones:
-
-- `[` : set start time marker to the player's current time
-- `]` : set end time marker to the player's current time
-
-Once you've set start and end markers, you can click the "create story from subrange" link in the sidebar.
-
 ## Drill page
 
 ![](./images/drill.png)

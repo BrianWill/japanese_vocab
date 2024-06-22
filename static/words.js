@@ -234,18 +234,20 @@ function showWord() {
 logLink.onclick = function (evt) {
     evt.preventDefault();
     var url = new URL(window.location.href);
-    var scheduleId = parseInt(url.searchParams.get("scheduleId"));
+    var excerptIdx = parseInt(url.searchParams.get("excerptIdx"));
 
     let wordIds = [];
     for (const word of answeredSet) {
         wordIds.push(word.id);
     }
 
-    logRep(story, DRILLING, function () {
-        incWords(wordIds, function () {
-            window.location.href = '/';
+    if (logRep(story.excerpts[excerptIdx], DRILLING)) {
+        updateExcerpts(story, function () {
+            incWords(wordIds, function () {
+                window.location.href = '/';
+            });
         });
-    });
+    }
 }
 
 document.body.onload = function (evt) {
@@ -253,7 +255,7 @@ document.body.onload = function (evt) {
 
     var url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
-    let set = url.searchParams.get("set");
+    let excerptIdx = parseInt(url.searchParams.get("excerptIdx"));
 
     fetch('words', {
         method: 'POST', // or 'PUT'
@@ -262,7 +264,7 @@ document.body.onload = function (evt) {
         },
         body: JSON.stringify({
             story_id: storyId,
-            set: set,
+            excerpt_idx: excerptIdx
         })
     }).then((response) => response.json())
         .then((data) => {
@@ -288,7 +290,9 @@ document.body.onload = function (evt) {
         .then((data) => {
             story = data;
 
-            story.reps_logged =  story.reps_logged || [];
-            story.reps_todo =  story.reps_todo || [];
+            for (let excerpt of story.excerpts) {
+                excerpt.reps_logged = excerpt.reps_logged || [];
+                excerpt.reps_todo = excerpt.reps_todo || [];
+            }
         });
 };
