@@ -501,6 +501,13 @@ function openStory(id) {
                 if (story.end_time > 0) {
                     time = `#t=${Math.trunc(story.start_time)},${Math.trunc(story.end_time)}`;
                 }
+
+                player.onloadeddata = function (evt) {
+                    processStory(story);
+                    displayStoryInfo(story);
+                    displayStoryContent(story);
+                };
+
                 player.src = path + time;
 
                 console.log("src", player.src);
@@ -518,13 +525,6 @@ function openStory(id) {
             trackJa.track.mode = 'hidden';
 
             playerControls.style.display = 'inline';
-
-            setTimeout(() => {
-                processStory(story);
-                displayStoryInfo(story);
-                displayStoryContent(story);
-            }, 10);  // timeout because needs the player src to load first
-
         })
         .catch((error) => {
             console.error('Error:', error);

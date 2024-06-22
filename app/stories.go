@@ -500,7 +500,7 @@ func UpdateExcerpts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE stories SET excerpts = $1, date_last_rep = $2, hasRepsTodo = $3 := WHERE id = $4;`,
+	_, err = sqldb.Exec(`UPDATE stories SET excerpts = $1, date_last_rep = $2, has_reps_todo = $3 WHERE id = $4;`,
 		excerptsJSON, lastRepTimestamp, hasRepsTodo, body.StoryID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
