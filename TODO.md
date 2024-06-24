@@ -2,9 +2,21 @@
 
 daily schedule system:
     
-    // todo fix imports for sources with main json file for all stories
+    alternate source dir format:
+        main json file includes all info about every story
+        or just always have one json file per story?
 
-    remove audio from 'words' table
+    maybe don't need drill/listening distinction in queue?
+        queue could just be a count of listening reps:
+            norm is that you drill words right before doing a listening rep
+                only logging a listening rep
+
+    in app page for importing / reimporting sources
+        page lists the sources
+        for each source, show number of in directory, show number already imported
+        link to import individual source
+        link to import all sources
+            
 
     add a kana drilling page
         allow to pick exactly which characters to include?
@@ -24,12 +36,11 @@ daily schedule system:
         https://www.youtube.com/watch?v=hrjV4VuDfiU
 
     
-    word counts per story:
+    word counts per story (and per excerpt?):
         server side: given story id, return the count of unarchived and archived words
         show count for each story in current stories
         show count in story page
         show in catalog? would be expensive, but not impossible
-        
     
     list of recently completed:
         stories with no queued reps but with a logged rep within last week
@@ -38,20 +49,14 @@ daily schedule system:
 
     (get rid of rep count in DB and just sum up the logged reps)
         display separate rep count for listening and drills
-
-    story page:      
-        when queue is empty, link to queue reps (the standard number)
     
-    test new subtitle adjustments
-
     way to set start and end points for the current story:
         ctrl plus `[` `]` ?
 
     hotkey to open the current japanese subtitle in google translate
 
     link to get translation of whole story content? (what is the limit?)
-    
-    in app menu for importing / reimporting sources
+
 
     convert podcast content into transcripts?   
 

@@ -307,7 +307,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 		fmt.Println("ip: ", ip)
 	}
 
-	rows, err := sqldb.Query(`SELECT id, title, source, link, episode_number, video, 
+	rows, err := sqldb.Query(`SELECT id, title, source, link, video, 
 			date, date_last_rep, has_reps_todo FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -319,7 +319,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	var stories []Story
 	for rows.Next() {
 		var story Story
-		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link, &story.EpisodeNumber,
+		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link,
 			&story.Video, &story.Date, &story.DateLastRep, &story.HasRepsTodo); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
@@ -384,7 +384,7 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateStory(w http.ResponseWriter, r *http.Request) {
+func UpdateSubtitles(w http.ResponseWriter, r *http.Request) {
 	dbPath := MAIN_USER_DB_PATH
 
 	w.Header().Set("Content-Type", "application/json")
@@ -428,14 +428,14 @@ func UpdateStory(w http.ResponseWriter, r *http.Request) {
 		story.TranscriptEN, story.TranscriptJA, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
+		w.Write([]byte(`{ "message": "` + "failure to update subtitles: " + err.Error() + `"}`))
 		return
 	}
 
-	err = updateStoryJson(story)
+	err = updateStorySubtitleFiles(story)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure updating story json: " + err.Error() + `"}`))
+		w.Write([]byte(`{ "message": "` + "failure updating story subtitle files: " + err.Error() + `"}`))
 		rows.Close()
 	}
 

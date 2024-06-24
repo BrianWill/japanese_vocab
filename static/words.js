@@ -274,7 +274,7 @@ document.body.onload = function (evt) {
                 w.definitions = JSON.parse(w.definitions);
             }
 
-            drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="${data.story_link}">${data.story_title}</a><br>`;
+            drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="story.html?storyId=${storyId}">${data.story_title}</a><br>`;
             newDrill();
         })
         .catch((error) => {

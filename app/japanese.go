@@ -99,11 +99,12 @@ func main() {
 
 	//router.Use(middleware)
 
-	router.HandleFunc("/update_story_info", UpdateStory).Methods("POST")
+	router.HandleFunc("/update_subtitles", UpdateSubtitles).Methods("POST")
 	router.HandleFunc("/update_excerpts", UpdateExcerpts).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/ip", GetIP).Methods("GET")
 	router.HandleFunc("/stories", GetStories).Methods("GET")
+	router.HandleFunc("/sources", GetSources).Methods("GET")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
 	router.HandleFunc("/words", GetWords).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
@@ -227,18 +228,15 @@ func makeUserDB(path string) {
 		("id" INTEGER PRIMARY KEY,
 			title TEXT NOT NULL,
 			source TEXT NOT NULL,
-			archived INTEGER NOT NULL,
 			date TEXT,
 			link TEXT,
-			episode_number TEXT,
 			video TEXT,
 			transcript_en TEXT,
 			transcript_ja TEXT,
 			excerpts TEXT NOT NULL,
 			date_last_rep INTEGER NOT NULL,
 			has_reps_todo INTEGER NOT NULL,
-			content TEXT,
-			content_format TEXT);`)
+			content TEXT);`)
 	if err != nil {
 		log.Fatal(err)
 	}

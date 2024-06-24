@@ -6,7 +6,6 @@ var trackJa = document.getElementById('track_ja');
 var trackEn = document.getElementById('track_en');
 var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
-var logStoryLink = document.getElementById('mark_story');
 var repetitionsInfoDiv = document.getElementById('repetitions_info');
 var storyActions = document.getElementById('story_actions');
 
@@ -134,7 +133,7 @@ storyActions.onclick = function (evt) {
         let time = `#t=${start},${end}`;
         let path = '/sources/' + story.source + "/" + story.video;
         player.src = path + time;
-        
+
     } else if (evt.target.classList.contains('start_time') && evt.ctrlKey) {
         evt.preventDefault();
         let time = player.currentTime;
@@ -262,7 +261,7 @@ document.body.onkeydown = async function (evt) {
             clearTimeout(subtitleAdjustTimeoutHandle);
             subtitleAdjustTimeoutHandle = setTimeout(
                 function () {
-                    updateStory(story, () => {
+                    updateSubtitles(story, () => {
                         snackbarMessage(`saved updates to subtitle timings`);
                     });
                 },
@@ -305,7 +304,7 @@ document.body.onkeydown = async function (evt) {
         clearTimeout(subtitleAdjustTimeoutHandle);
         subtitleAdjustTimeoutHandle = setTimeout(
             function () {
-                updateStory(story, () => {
+                updateSubtitles(story, () => {
                     snackbarMessage(`saved updates to subtitle timings`);
                 });
             },
@@ -344,7 +343,7 @@ document.body.onkeydown = async function (evt) {
         clearTimeout(subtitleAdjustTimeoutHandle);
         subtitleAdjustTimeoutHandle = setTimeout(
             function () {
-                updateStory(story, () => {
+                updateSubtitles(story, () => {
                     snackbarMessage(`saved updates to subtitle timings`);
                 });
             },
@@ -448,13 +447,13 @@ function displayExcerpts(story) {
         let html = `<div excerpt_idx="${excerptIdx}">
             <hr>
             <a class="play_excerpt" href="#" title="play the excerpt">play</a>
-            <a class="start_time" href="#" title="set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
+            <a class="start_time" href="#" title="ctrl-click to set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="ctrl-click to set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
             <a class="log_excerpt" href="#" title="Log this excerpt">log</a>
-            <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}" title="Drill the words of this excerpt">drill</a>
+            <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}" title="Drill the vocab of this excerpt">vocab</a>
             <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
             <span>Time since last rep: ${timeSince(timeLastRep)}<span><br>
-            <span>Completed reps: ${listeningRepCount} listening, ${drillRepCount} drilling</span><br>
+            <span>Completed reps: ${listeningRepCount} listen, ${drillRepCount} vocab</span><br>
             ${todoReps}<br>`;
 
         return html + '</div>';

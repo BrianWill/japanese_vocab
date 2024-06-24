@@ -183,16 +183,15 @@ function displayEntry(entry) {
             </div>`;
 }
 
-function updateStory(story, successFn) {
+function updateSubtitles(story, successFn) {
     story = {
         id: story.id,
         source: story.source,
         title: story.title,
-        archived: story.archived,
         transcript_ja: story.transcript_ja,
         transcript_en: story.transcript_en
     };
-    fetch(`/update_story_info`, {
+    fetch(`/update_subtitles`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -246,25 +245,6 @@ function incWords(words, successFn) {
         });
 }
 
-function addStoryReps(storyId, reps, successFn) {
-    fetch('/add_reps', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "story_id": storyId, "reps": reps })
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Res added to story:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
 function updateExcerpts(story, successFn) {
     fetch('/update_excerpts', {
         method: 'POST', // or 'PUT'
@@ -284,15 +264,15 @@ function updateExcerpts(story, successFn) {
         });
 }
 
-function getLog(successFn) {
-    fetch('/log', {
-        method: 'GET', // or 'PUT'
+function getSources(successFn) {
+    fetch('/sources', {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         }
     }).then((response) => response.json())
         .then((data) => {
-            console.log('Log:', data);
+            console.log('Sources:', data);
             successFn(data);
         })
         .catch((error) => {
@@ -310,67 +290,6 @@ function getIP(successFn) {
         .then((data) => {
             console.log('IP:', data);
             successFn(data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function adjustSchedule(entryId, adjustment, successFn) {
-    fetch('/schedule_adjust', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "offset_adjustment": adjustment, "id": entryId })
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Log:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function scheduleAddRep(entryId, successFn) {
-    fetch('/schedule_add', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "id": entryId })
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Log:', data);
-            if (data.status != "success") {
-                snackbarMessage("new rep not added because the next day already has a rep of this story");
-                return;
-            }
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function logStory(entryId, storyId, wordIds, successFn) {
-    fetch('/log_story', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "story": storyId, "id": entryId, "words": wordIds })
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('Log:', data);
-            if (successFn) {
-                successFn(data);
-            }
         })
         .catch((error) => {
             console.error('Error:', error);

@@ -109,11 +109,9 @@ func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptIdx int64) ([]Dril
 	for _, token := range tokens {
 		word := DrillWord{}
 		word.BaseForm = token.BaseForm
-		row := sqldb.QueryRow(`SELECT id, archived,
-				audio, audio_start, audio_end, category,
+		row := sqldb.QueryRow(`SELECT id, archived, category,
 				repetitions, definitions FROM words WHERE base_form = $1;`, token.BaseForm)
-		err = row.Scan(&word.ID, &word.Archived, &word.Audio,
-			&word.AudioStart, &word.AudioEnd, &word.Category,
+		err = row.Scan(&word.ID, &word.Archived, &word.Category,
 			&word.Repetitions, &word.Definitions)
 		if err == sql.ErrNoRows {
 			continue
@@ -225,4 +223,35 @@ outer:
 	}
 
 	json.NewEncoder(w).Encode(kanjiDefs)
+}
+
+func IncWords(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	var body IncWordsRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	for _, wordId := range body.Words {
+		_, err := sqldb.Exec(`UPDATE words SET repetitions = repetitions + 1 WHERE id = $1;`, wordId)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{ "message": "` + "failure to update word repetition counts: " + err.Error() + `"}`))
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }

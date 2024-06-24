@@ -17,7 +17,6 @@ document.body.onload = function (evt) {
 };
 
 function displayCurrent(stories) {
-
     stories = stories.filter((s) => s.has_reps_todo) ;
 
     // sort entries by source, then by title?
@@ -38,10 +37,7 @@ function displayCurrent(stories) {
             <tr class="day_row logged_row">
                 <td>Source</td>
                 <td>Title</td>
-                <td title="number of completed listening reps">Listening<br>reps</td>
-                <td title="number of completed drill reps">Drill<br>reps</td>
                 <td>Time since<br>last rep</td>
-                <td>Queued<br>reps</td>
             </tr>`;
 
     // todo get count of todo reps across all excerpts
@@ -88,7 +84,8 @@ function processCatalog(storyData) {
     let selectOptionsHTML = ``;
     let i = 0;
     for (let source in storiesBySource) {
-        selectOptionsHTML += `<option value="${i}">${source}</option>`
+        let count = storiesBySource[source].length;
+        selectOptionsHTML += `<option source="${source}" value="${i}">${source} (${count})</option>`
         i++;
     }
     sourceSelect.innerHTML = selectOptionsHTML;
@@ -106,7 +103,7 @@ function displayCatalog() {
 
     let tableHeader = `<table class="story_table">`;
     let html = tableHeader;
-    let source = sourceSelect.options[sourceSelect.selectedIndex].text;
+    let source = sourceSelect.options[sourceSelect.selectedIndex].getAttribute('source');
 
     let list = storiesBySource[source];
     list.sort((a, b) => {
