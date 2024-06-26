@@ -244,13 +244,14 @@ logLink.onclick = function (evt) {
     if (logRep(story.excerpts[excerptIdx], DRILLING)) {
         updateExcerpts(story, function () {
             incWords(wordIds, function () {
-                window.location.href = '/';
+                load();
+                snackbarMessage(`vocab drill logged`);
             });
         });
     }
 }
 
-document.body.onload = function (evt) {
+function load(evt) {
     console.log('on page load');
 
     var url = new URL(window.location.href);
@@ -274,7 +275,7 @@ document.body.onload = function (evt) {
                 w.definitions = JSON.parse(w.definitions);
             }
 
-            drillTitleH.innerHTML = `${data.story_source}<br><hr><a href="story.html?storyId=${storyId}">${data.story_title}</a><br>`;
+            drillTitleH.innerHTML = `<a href="story.html?storyId=${storyId}">${data.story_title}</a><br><hr>${data.story_source}<br>`;
             newDrill();
         })
         .catch((error) => {
@@ -295,4 +296,8 @@ document.body.onload = function (evt) {
                 excerpt.reps_todo = excerpt.reps_todo || [];
             }
         });
+}
+
+document.body.onload = function (evt) {
+    load(evt);
 };

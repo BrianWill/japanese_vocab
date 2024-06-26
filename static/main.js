@@ -6,6 +6,7 @@ document.body.onload = function (evt) {
     getStories(function (stories) {
         processCatalog(stories);
         displayCurrent(stories);
+        displayRecent(stories);
     });
     getIP((ips) => {
         let html = 'local ip: ';
@@ -17,7 +18,7 @@ document.body.onload = function (evt) {
 };
 
 function displayCurrent(stories) {
-    stories = stories.filter((s) => s.has_reps_todo) ;
+    stories = stories.filter((s) => s.has_reps_todo);
 
     // sort entries by source, then by title?
     stories.sort((a, b) => {
@@ -54,6 +55,46 @@ function displayCurrent(stories) {
 
     document.getElementById('reps').innerHTML = html;
 };
+
+
+const TWO_WEEKS_IN_SECONDS = 60 * 60 * 24 * 14;
+
+function displayRecent(stories) {
+    stories = stories.filter((s) => {
+        if (s.date_last_rep <= 1) {
+            return false;
+        }
+    
+        let now = Math.floor(new Date() / 1000);
+        let elapsedSeconds = now - s.date_last_rep;
+        return elapsedSeconds < TWO_WEEKS_IN_SECONDS;
+    });
+
+    stories.sort((a, b) => {
+        return (a.date_last_rep < b.date_last_rep) ? -1 : (a.date_last_rep > b.date_last_rep) ? 1 : 0;
+    });
+
+    let html = `<table class="schedule_table">
+    <tr class="day_row logged_row">
+        <td>Source</td>
+        <td>Title</td>
+        <td>Time since<br>last rep</td>
+    </tr>`
+
+    for (const s of stories) {
+        html += `<tr>
+            <td>${s.source}</td>    
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td>${timeSince(s.date_last_rep)}</td>
+        </tr>`;
+    }
+
+    html += `</table>`;
+
+    document.getElementById('recent_reps').innerHTML = html;
+}
+
+
 
 
 /* CATALOG */

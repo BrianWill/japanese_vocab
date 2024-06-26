@@ -6,6 +6,8 @@ daily schedule system:
         main json file includes all info about every story
         or just always have one json file per story?
 
+    after "stories with queued reps", show stories with recent logged reps (but no queued reps)
+
     maybe don't need drill/listening distinction in queue?
         queue could just be a count of listening reps:
             norm is that you drill words right before doing a listening rep

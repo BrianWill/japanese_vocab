@@ -161,9 +161,8 @@ func UpdateWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE words SET archived = $1, audio = $2, audio_start = $3, 
-			audio_end = $4 WHERE base_form = $5;`,
-		word.Archived, word.Audio, word.AudioStart, word.AudioEnd, word.BaseForm)
+	_, err = sqldb.Exec(`UPDATE words SET archived = $1 WHERE base_form = $2;`,
+		word.Archived, word.BaseForm)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update word: " + err.Error() + `"}`))

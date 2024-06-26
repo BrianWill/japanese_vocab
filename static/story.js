@@ -133,6 +133,7 @@ storyActions.onclick = function (evt) {
         let time = `#t=${start},${end}`;
         let path = '/sources/' + story.source + "/" + story.video;
         player.src = path + time;
+        player.play();
 
     } else if (evt.target.classList.contains('start_time') && evt.ctrlKey) {
         evt.preventDefault();
@@ -176,7 +177,8 @@ storyActions.onclick = function (evt) {
         if (window.confirm("Log this excerpt?")) {
             if (logRep(excerpt, LISTENING)) {
                 updateExcerpts(story, function () {
-                    window.location.href = '/';
+                    load();
+                    snackbarMessage(`listening rep logged`);
                 });
             }
         }
@@ -596,7 +598,11 @@ function onPlaybackRateChange(val) {
 }
 
 document.body.onload = function (evt) {
+    load();
+};
+
+function load(evt) {
     var url = new URL(window.location.href);
     var storyId = parseInt(url.searchParams.get("storyId") || undefined);
     openStory(storyId);
-};
+}

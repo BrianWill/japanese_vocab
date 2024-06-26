@@ -125,14 +125,14 @@ h3 {
 
 
 #words div.drill_word:first-of-type .base_form {
-    font-size: 135%;
+    font-size: 105%;
     color: #ececec;
 }
 
 .rank {
     margin-left: auto;
     margin-right: 20px;
-    font-size: 25%;
+    font-size: 30%;
     color: #828282;
 }
 
@@ -403,6 +403,7 @@ h3 {
 
 #right_sidebar {
     grid-area: sidebar;
+    user-select: none;
 }
 
 #definition {

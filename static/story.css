@@ -26,6 +26,7 @@ body {
 
 #story_sidebar {
     flex: 1 0 0;
+    user-select: none;
 }
 
 
