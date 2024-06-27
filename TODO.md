@@ -8,6 +8,8 @@ daily schedule system:
 
     after "stories with queued reps", show stories with recent logged reps (but no queued reps)
 
+    playback mode where randomly selected words in subtitles are highlighted with their definitions shown in same color
+
     maybe don't need drill/listening distinction in queue?
         queue could just be a count of listening reps:
             norm is that you drill words right before doing a listening rep

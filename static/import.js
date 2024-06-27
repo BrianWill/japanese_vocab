@@ -5,6 +5,18 @@ document.body.onload = function (evt) {
     getSources(displaySources);
 };
 
+
+sourcesDiv.onclick = function (evt) {
+    if (evt.target.classList.contains('import_link')) {
+        evt.preventDefault();
+        let source = evt.target.getAttribute('source');
+
+        importSource(source, () => {
+            snackbarMessage(`imported source: ${source}`);
+        });
+    }
+};
+
 function displaySources(data) {
     let tableHeader = `<table class="sources_table">
         <tr style="text-align: left;"><th></th><th>Source</th><th>Count<br>unimported</th><th>Count<br>imported</th></td>`;
@@ -18,7 +30,7 @@ function displaySources(data) {
         let count = data.storyFilePathsBySource[source].length;
         count = Math.max(0, count - importedCount);
         html += `<tr>
-            <td><a source="${source}" class="import_link">import</a></td>
+            <td><a href="#" source="${source}" class="import_link">import</a></td>
             <td><span class="story_source">${source}</span></td>
             <td><span>${count}</span></td>
             <td><span>${importedCount}</span></td>

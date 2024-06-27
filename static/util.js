@@ -296,6 +296,23 @@ function getIP(successFn) {
         });
 }
 
+function importSource(source, successFn) {
+    fetch('/import_source', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"source": source})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Source:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function timeSince(date) {
     if (date <= 1) {
         return 'never';

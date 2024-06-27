@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"sync"
 
 	"log"
 	"net/http"
@@ -23,6 +24,9 @@ var allKanji KanjiDict
 var allEntries JMDict
 var allEntriesByReading map[string][]*JMDictEntry
 var allEntriesByKanjiSpellings map[string][]*JMDictEntry
+var dictionaryLoaded bool
+
+var importLock sync.Mutex // while any import is in process
 
 var definitionsCache map[string][]JMDictEntry // base form to []JMDictEntry
 
@@ -105,6 +109,7 @@ func main() {
 	router.HandleFunc("/ip", GetIP).Methods("GET")
 	router.HandleFunc("/stories", GetStories).Methods("GET")
 	router.HandleFunc("/sources", GetSources).Methods("GET")
+	router.HandleFunc("/import_source", ImportSource).Methods("POST")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
 	router.HandleFunc("/words", GetWords).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
@@ -137,6 +142,11 @@ func devMiddleware(h http.Handler) http.Handler {
 // }
 
 func loadDictionary() {
+	// only load if dictionary has not already been loaded
+	if dictionaryLoaded {
+		return
+	}
+
 	start := time.Now()
 	bytes, err := unzipSource("./data/kanji.zip")
 	if err != nil {
@@ -170,6 +180,8 @@ func loadDictionary() {
 
 	duration = time.Since(start)
 	fmt.Println("time to build entry maps: ", duration)
+
+	dictionaryLoaded = true
 }
 
 func buildEntryMaps() {

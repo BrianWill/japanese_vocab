@@ -125,7 +125,7 @@ func importSources(dbPath string) error {
 
 	for _, e := range entries {
 		if e.IsDir() {
-			err = importSource(e.Name(), sqldb)
+			_, err := importSource(e.Name(), sqldb)
 			if err != nil {
 				return err
 			}
@@ -135,100 +135,110 @@ func importSources(dbPath string) error {
 	return nil
 }
 
-func importSource(source string, sqldb *sql.DB) error {
-	sourceDir := SOURCES_PATH + source
+func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
+	sourceDir := SOURCES_PATH + sourceName
 	entries, err := os.ReadDir(sourceDir)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	storiesByName := make(map[string]*Story)
+	storiesByTitle := make(map[string]Story)
+	malformedPaths := make([]string, 0)
 
 	for _, entry := range entries {
-		name := entry.Name()
-		components := strings.Split(name, ".")
-		if len(components) < 2 {
-			return fmt.Errorf("malformed file name in source: %s", name)
-		}
+		fileName := entry.Name()
+		path := sourceName + "/" + fileName
+		components := strings.Split(fileName, ".")
 
-		title := components[0]
 		extension := components[len(components)-1]
-		isVideo := extension == "mp4"
-		isSubtitle := extension == "vtt" || extension == "ass" || extension == "srt"
-		if !isVideo && !isSubtitle {
-			continue
-		}
 
-		story, ok := storiesByName[title]
-		if !ok {
-			story = &Story{}
-			storiesByName[title] = story
-		}
-		story.Title = title
-		story.Source = source
+		var title string
 
-		if isVideo {
-			story.Video = name
-		}
-
-		if isSubtitle {
-			path := sourceDir + "/" + name
-
-			if len(components) != 3 {
-				return fmt.Errorf("subtitle file does not specify language")
+		if extension == "mp4" || extension == "m4a" {
+			if len(components) < 2 {
+				malformedPaths = append(malformedPaths, path)
+				continue
 			}
-			lang := components[len(components)-3]
-			switch lang {
-			case "en":
-				story.TranscriptEN, story.Content, err = getSubtitles(path)
+
+			title = strings.Join(components[:len(components)-1], ".")
+			story := storiesByTitle[title]
+			story.Source = sourceName
+			story.Video = fileName
+			storiesByTitle[title] = story
+		} else if extension == "vtt" || extension == "ass" || extension == "srt" {
+			if len(components) < 3 {
+				malformedPaths = append(malformedPaths, path)
+				continue
+			}
+
+			// todo replace .ass or .srt with .vtt
+			lang := components[len(components)-2]
+			title = strings.Join(components[:len(components)-2], ".")
+			story := storiesByTitle[title]
+			story.Source = sourceName
+
+			if lang == "en" {
+				story.TranscriptEN, _, err = getSubtitles(path)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
-				if extension == "vtt" {
-					err := os.WriteFile(path, []byte(story.TranscriptEN), os.ModePerm)
+				// replace .ass or .srt files with
+				if extension != "vtt" {
+					newPath := strings.Join(components[:len(components)-1], ".") + ".vtt"
+					err := os.WriteFile(newPath, []byte(story.TranscriptEN), os.ModePerm)
 					if err != nil {
-						return err
+						return nil, err
+					}
+
+					err = os.Remove(path)
+					if err != nil {
+						return nil, err
 					}
 				}
-			case "ja":
+			} else if lang == "ja" {
 				story.TranscriptJA, story.Content, err = getSubtitles(path)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
-				if extension == "vtt" {
-					err := os.WriteFile(path, []byte(story.TranscriptJA), os.ModePerm)
+				// replace .ass or .srt files with
+				if extension != "vtt" {
+					newPath := strings.Join(components[:len(components)-1], ".") + ".vtt"
+					err := os.WriteFile(newPath, []byte(story.TranscriptEN), os.ModePerm)
 					if err != nil {
-						return err
+						return nil, err
+					}
+
+					err = os.Remove(path)
+					if err != nil {
+						return nil, err
 					}
 				}
-			default:
-				return fmt.Errorf("subtitle file language is invalid: %s", name)
+			} else {
+				malformedPaths = append(malformedPaths, path)
+				continue
 			}
 
-			// delete .ass or .srt files
-			if extension != "vtt" {
-				err = os.Remove(path)
-				if err != nil {
-					return err
-				}
-			}
+			storiesByTitle[title] = story
+		} else {
+			malformedPaths = append(malformedPaths, path)
+			continue
 		}
 	}
 
-	for _, s := range storiesByName {
+	for _, s := range storiesByTitle {
 		if s.Video == "" {
 			continue
 		}
 
-		err = importStory(*s, sqldb)
+		err = importStory(s, sqldb)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return malformedPaths, nil
 }
 
 func getSubtitles(path string) (newSubtitles string, content string, err error) {
@@ -315,9 +325,6 @@ func storyExists(story Story, sqldb *sql.DB) bool {
 	return true
 }
 
-// (the story will be parsed into lines and words only when its added from the catalog to the main story table,
-// so in this importer, we just check that the data is valid)
-// check that the content can be parsed as the specified format
 func importStory(story Story, sqldb *sql.DB) error {
 	newWordCount, _, err := processStoryWords(story, sqldb)
 	if err != nil {
@@ -409,18 +416,6 @@ func GetSources(response http.ResponseWriter, request *http.Request) {
 	}
 	defer sqldb.Close()
 
-	ips, err := GetOutboundIP()
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		response.Write([]byte(`{ "message": "` + "failure to get ip: " + err.Error() + `"}`))
-		fmt.Println(err)
-		return
-	}
-
-	for _, ip := range ips {
-		fmt.Println("ip: ", ip)
-	}
-
 	rows, err := sqldb.Query(`SELECT id, title, source, link, video, 
 			date, date_last_rep, has_reps_todo FROM stories;`)
 	if err != nil {
@@ -460,4 +455,43 @@ func GetSources(response http.ResponseWriter, request *http.Request) {
 
 	json.NewEncoder(response).Encode(bson.M{"storiesBySource": storiesBySource,
 		"storyFilePathsBySource": storyFilePathsBySource, "malformedPaths": malformedPaths})
+}
+
+func ImportSource(w http.ResponseWriter, r *http.Request) {
+	if importLock.TryLock() {
+		defer importLock.Unlock()
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + `Aborting: an import is already in progress` + `"}`))
+		return
+	}
+
+	dbPath := MAIN_USER_DB_PATH
+
+	w.Header().Set("Content-Type", "application/json")
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	loadDictionary()
+
+	var body ImportSourceRequest
+	err = json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	_, err = importSource(body.Source, sqldb)
+	if err != nil {
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"message": "imported source: " + body.Source})
 }
