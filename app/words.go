@@ -45,7 +45,7 @@ func GetWords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	words, err := getWordsFromExcerpt(sqldb, body.StoryId, body.ExcerptIdx)
+	words, err := getWordsFromExcerpt(sqldb, body.StoryId, body.ExcerptHash)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -55,7 +55,7 @@ func GetWords(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(gw).Encode(bson.M{"words": words, "story_link": story_link, "story_title": story_title, "story_source": story_source})
 }
 
-func getExcerpt(sqldb *sql.DB, storyId int64, excerptIdx int64) (Excerpt, error) {
+func getExcerpt(sqldb *sql.DB, storyId int64, excerptHash int64) (Excerpt, error) {
 	var excerptsJSON string
 	row := sqldb.QueryRow(`SELECT excerpts FROM stories WHERE id = $1;`, storyId)
 	err := row.Scan(&excerptsJSON)
@@ -69,15 +69,17 @@ func getExcerpt(sqldb *sql.DB, storyId int64, excerptIdx int64) (Excerpt, error)
 		return Excerpt{}, err
 	}
 
-	if excerptIdx >= int64(len(excerpts)) {
-		return Excerpt{}, fmt.Errorf("excerpt index is out of range")
+	for _, ex := range excerpts {
+		if ex.Hash == excerptHash {
+			return ex, nil
+		}
 	}
 
-	return excerpts[excerptIdx], nil
+	return Excerpt{}, fmt.Errorf("excerpt with matching hash not found")
 }
 
-func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptIdx int64) ([]DrillWord, error) {
-	excerpt, err := getExcerpt(sqldb, storyId, excerptIdx)
+func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptHash int64) ([]DrillWord, error) {
+	excerpt, err := getExcerpt(sqldb, storyId, excerptHash)
 	if err != nil {
 		return nil, err
 	}

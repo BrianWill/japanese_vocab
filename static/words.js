@@ -257,6 +257,7 @@ function load(evt) {
     var url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
     let excerptIdx = parseInt(url.searchParams.get("excerptIdx"));
+    let excerptHash = parseInt(url.searchParams.get("excerptHash"));
 
     fetch('words', {
         method: 'POST', // or 'PUT'
@@ -265,7 +266,7 @@ function load(evt) {
         },
         body: JSON.stringify({
             story_id: storyId,
-            excerpt_idx: excerptIdx
+            excerpt_hash: excerptHash
         })
     }).then((response) => response.json())
         .then((data) => {
@@ -275,7 +276,9 @@ function load(evt) {
                 w.definitions = JSON.parse(w.definitions);
             }
 
-            drillTitleH.innerHTML = `<a href="story.html?storyId=${storyId}">${data.story_title}</a><br><hr>${data.story_source}<br>`;
+            drillTitleH.innerHTML = `<minidenticon-svg username="seed${excerptHash}"></minidenticon-svg>
+                <a href="story.html?storyId=${storyId}">${data.story_title}</a>
+                <br><hr>${data.story_source}<br>`;
             newDrill();
         })
         .catch((error) => {

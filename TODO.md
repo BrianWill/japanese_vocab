@@ -1,26 +1,29 @@
 # japanese_vocab TODO
 
 daily schedule system:
+
+    importing page
+        test source import
+        link to import all sources
+
+    generate transcript file from content:
+        treat every sentence as its own subtitle
+            just make up timing: space them out by a few seconds in order
     
+    display content below story with time-marks
+
+    click timemarks to jump to line
+
     alternate source dir format:
         main json file includes all info about every story
         or just always have one json file per story?
-
-    after "stories with queued reps", show stories with recent logged reps (but no queued reps)
 
     playback mode where randomly selected words in subtitles are highlighted with their definitions shown in same color
 
     maybe don't need drill/listening distinction in queue?
         queue could just be a count of listening reps:
             norm is that you drill words right before doing a listening rep
-                only logging a listening rep
-
-    in app page for importing / reimporting sources
-        page lists the sources
-        for each source, show number of in directory, show number already imported
-        link to import individual source
-        link to import all sources
-            
+                only logging a listening rep            
 
     add a kana drilling page
         allow to pick exactly which characters to include?

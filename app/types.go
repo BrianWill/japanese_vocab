@@ -19,6 +19,7 @@ type Story struct {
 
 type Excerpt struct {
 	StoryID    int64       `json:"story_id,omitempty"` // used in update requests
+	Hash       int64       `json:"hash"`               // a random id for the excerpt
 	StartTime  float64     `json:"start_time"`
 	EndTime    float64     `json:"end_time"`
 	RepsTodo   []int64     `json:"reps_todo"`
@@ -52,8 +53,8 @@ type IncWordsRequest struct {
 }
 
 type DrillRequest struct {
-	StoryId    int64 `json:"story_id"`
-	ExcerptIdx int64 `json:"excerpt_idx"`
+	StoryId     int64 `json:"story_id"`
+	ExcerptHash int64 `json:"excerpt_hash"`
 }
 
 type DrillWord struct {

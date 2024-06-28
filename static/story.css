@@ -58,12 +58,12 @@ body {
     /*transform: translateY(calc(var(--plyr-control-spacing, 10px)*-4));*/
 }
 
-#captions_ja > div {
+#captions_ja>div {
     background-color: black;
     padding: 0.2em;
 }
 
-#captions_en > div {
+#captions_en>div {
     background-color: black;
     padding: 0.2em;
 }
@@ -82,7 +82,8 @@ body {
 }
 
 ::cue {
-    opacity: 0%;   /* we want to hide the default subtitles */
+    opacity: 0%;
+    /* we want to hide the default subtitles */
 }
 
 .story_info {
@@ -108,6 +109,13 @@ body {
 }
 
 #excerpts {
-  overflow-y: scroll;
-  height: 60vh;
+    overflow-y: scroll;
+    height: 60vh;
+}
+
+minidenticon-svg svg {
+    height: 28px;
+    width: 28px;
+    bottom: -5px;
+    position: relative;
 }

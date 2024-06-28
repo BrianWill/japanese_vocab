@@ -437,6 +437,13 @@ h3 {
 .info_symbol {
     padding-right: 1em;
     font-size: 100%;
-    cursor:help;
+    cursor: help;
     color: white;
+}
+
+minidenticon-svg svg {
+    height: 28px;
+    width: 28px;
+    bottom: -5px;
+    position: relative;
 }

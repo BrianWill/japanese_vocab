@@ -18,6 +18,7 @@ import (
 )
 
 const SOURCES_PATH = "../static/sources/"
+const INITTIAL_EXCERPT = `[ {"reps_todo": [], "reps_logged": [], "hash" : 1 }]`
 
 var newlineRegEx *regexp.Regexp
 
@@ -347,14 +348,12 @@ func importStory(story Story, sqldb *sql.DB) error {
 
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
-	initialExcerpt := `[ {"reps_todo": [], "reps_logged": [] }]`
-
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, video, 
 				content, transcript_en, transcript_ja, words, start_time, end_time, excerpts, date_last_rep, has_reps_todo) 
 				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
 		story.Title, story.Source, story.Date, story.Link,
 		story.Video, story.Content, story.TranscriptEN,
-		story.TranscriptJA, initialExcerpt, 0, 0)
+		story.TranscriptJA, INITTIAL_EXCERPT, 0, 0)
 
 	return err
 }

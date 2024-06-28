@@ -18,6 +18,8 @@ const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
 const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
 const PLAYBACK_ADJUSTMENT = 0.05;
 
+const MAX_INTEGER = Math.pow(2, 52) - 1;
+
 trackJa.track.addEventListener('cuechange', displayCurrentCues);
 trackEn.track.addEventListener('cuechange', displayCurrentCues);
 
@@ -35,7 +37,8 @@ storyActions.onclick = function (evt) {
 
     if (evt.target.classList.contains('add_excerpt')) {
         evt.preventDefault();
-        story.excerpts.push({ "start_time": 0, "end_time": player.duration, "reps_logged": [], "reps_todo": [] });
+        let hash = Math.floor(Math.random() * MAX_INTEGER + 1);  // random value [1, MAX_INTEGER];
+        story.excerpts.push({ "start_time": 0, "end_time": player.duration, "reps_logged": [], "reps_todo": [], "hash" : hash });
         updateExcerpts(story,
             function () {
                 displayStoryInfo(story);
@@ -448,10 +451,11 @@ function displayExcerpts(story) {
 
         let html = `<div excerpt_idx="${excerptIdx}">
             <hr>
+            <minidenticon-svg username="seed${excerpt.hash}"></minidenticon-svg>
             <a class="play_excerpt" href="#" title="play the excerpt">play</a>
             <a class="start_time" href="#" title="ctrl-click to set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="ctrl-click to set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
             <a class="log_excerpt" href="#" title="Log this excerpt">log</a>
-            <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}" title="Drill the vocab of this excerpt">vocab</a>
+            <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}&excerptHash=${excerpt.hash}" title="Drill the vocab of this excerpt">vocab</a>
             <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
             <span>Time since last rep: ${timeSince(timeLastRep)}<span><br>

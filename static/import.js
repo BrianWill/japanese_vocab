@@ -19,7 +19,7 @@ sourcesDiv.onclick = function (evt) {
 
 function displaySources(data) {
     let tableHeader = `<table class="sources_table">
-        <tr style="text-align: left;"><th></th><th>Source</th><th>Count<br>unimported</th><th>Count<br>imported</th></td>`;
+        <tr style="text-align: left;"><th></th><th>Source</th><th>Count<br>imported</th><th>Count<br>unimported</th></td>`;
     let html = tableHeader;
 
     for (let source in data.storyFilePathsBySource) {
@@ -32,8 +32,8 @@ function displaySources(data) {
         html += `<tr>
             <td><a href="#" source="${source}" class="import_link">import</a></td>
             <td><span class="story_source">${source}</span></td>
-            <td><span>${count}</span></td>
             <td><span>${importedCount}</span></td>
+            <td><span>${count}</span></td>
             </tr>`;
     }
     html += `</table>`;

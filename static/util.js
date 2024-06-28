@@ -246,6 +246,13 @@ function incWords(words, successFn) {
 }
 
 function updateExcerpts(story, successFn) {
+    // todo: can remove this once legacy stories all have excerpts with hashes
+    for (let ex of story.excerpts) {
+        if (!ex.hash) {
+            ex.hash = Math.floor(Math.random() * MAX_INTEGER + 1);  // random value [1, MAX_INTEGER];
+        }
+    }
+
     fetch('/update_excerpts', {
         method: 'POST', // or 'PUT'
         headers: {
