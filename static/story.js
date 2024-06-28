@@ -138,8 +138,13 @@ storyActions.onclick = function (evt) {
         player.src = path + time;
         player.play();
 
-    } else if (evt.target.classList.contains('start_time') && evt.ctrlKey) {
+    } else if (evt.target.classList.contains('start_time')) {
         evt.preventDefault();
+
+        if (!window.confirm("Set the start time of the excerpt?")) {
+            return;
+        }
+
         let time = player.currentTime;
         excerpt.start_time = time;
         updateExcerpts(story,
@@ -148,8 +153,13 @@ storyActions.onclick = function (evt) {
                 snackbarMessage(`set start time of excerpt to ${formatTrackTime(time)}`);
             }
         );
-    } else if (evt.target.classList.contains('end_time') && evt.ctrlKey) {
+    } else if (evt.target.classList.contains('end_time')) {
         evt.preventDefault();
+
+        if (!window.confirm("Set the end time of the excerpt?")) {
+            return;
+        }
+
         let time = player.currentTime;
         excerpt.end_time = time;
         updateExcerpts(story,

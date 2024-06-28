@@ -19,28 +19,34 @@ For other platforms, you'll need to build the executable first:
 
 ## Importing stories
 
-Stories are imported in sets called "sources", which are represented as directories with files in a certain format. To import a source:
+Stories are imported in sets called "sources", which are represented as directories.
 
-1. Copy or move the source directory to `/static/sources/`
-2. At the command line, run `./japanese.exe import` to (re)import all sources. (Sources that haven't changed since last import will not be updated by reimporting.)
+In a source directory, each mp3 and mp4 file represents an individual stories. For a story named `foo.mp3` or `foo.mp4`, the English and Japanese VTT subtitle files in the same directory should be named, respectively, `foo.en.vtt` and `foo.ja.vtt`.
+
+The import page (link next to "Catalog" on the main page) lists all detected source directories. Clicking the "import" link of a source will:
+
+1. import all stories of the source that have not yet been imported
+2. re-import the subtitles of the already imported stories
 
 ## Main page
 
-The main page displays first the "current stories" (stories with queued repetitions) and then the full story catalog.
+The main page first displays the "stories with queued reps", then the "recently logged stories", and last the full catalog of stories.
 
 In the catalog, select a source from the drop down.
 
-Click "queue reps" on a story to effectively add it to the "current stories". (The "add reps to queue" link adds 5 listening reps alternated with 4 drilling reps. You can edit a story's rep queue on the story's page.)
-
 ## Story page
 
-A story's page displays its title, text content, and a player for its audio or video.
+A story's page displays the title, text content, and an audio or video player.
 
-The "drill the words of this story" link takes you to a page for drilling the words and kanji of the story.
+A story can have one or more "excerpts", which represent subranges of the audio or video.
 
-The "log this story" link will record the date of the rep and remove the first listen rep from the queue.
+Each excerpt of a story has a separate queue of reps.
 
-In "Queued reps":
+The "vocab" link takes you to a drilling page for the words in the excerpt (extracted from the subtitles in the subrange).
+
+The "log" link records a rep of the excerpt and removes a rep from the excerpt's queue.
+
+In an excerpt's queue:
 
 - Clicking a rep toggles its type (between listening and drilling).
 - Alt-clicking a rep inserts another rep of the same kind after it in the queue.
@@ -68,7 +74,7 @@ Because subtitle data from sources may not line up with the video or audio, thes
 
 ![](./images/drill.png)
 
-The words of the drill are displayed in a random-ordered list, with the current word at the top.
+The words of the drill are displayed in a random order, with the current word at the top.
 
 Hotkeys that affect the current word:
 
@@ -78,6 +84,6 @@ Hotkeys that affect the current word:
 
 Once you mark all words in the list correct or incorrect, the words you marked incorrect will be reshuffled for another round of drilling.
 
-Words in the drill list can also be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
+Words in the drill list can be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
 
-The "log this drill" link will record the date of the drill, remove the first drilling rep from the story's queue, and increment the repetition count for the words you drilled.
+The "log this drill" link will record the date of the drill and increment the repetition count for the drilled words.

@@ -11,8 +11,7 @@ daily schedule system:
             just make up timing: space them out by a few seconds in order
     
     display content below story with time-marks
-
-    click timemarks to jump to line
+        clicking timemark jumps player to timestamp
 
     alternate source dir format:
         main json file includes all info about every story
