@@ -1,10 +1,5 @@
 # japanese_vocab TODO
    
-    hotkeys to jump to next/last subtitle
-        if both english and japanese are active, jump to whichever is closest in time
-        maybe need a fraction of second margin so that the start of a line doesn't get cut off
-            ...except then the subtitle wouldn't appear immediately...hmm...
-
     reps:
         reps_todo: instead of array of ints, just make it a single int count of reps
         interface: instead of ctrl-click to remove and alt-click to duplicate, just have + - control for the count

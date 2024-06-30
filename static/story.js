@@ -38,7 +38,7 @@ storyActions.onclick = function (evt) {
     if (evt.target.classList.contains('add_excerpt')) {
         evt.preventDefault();
         let hash = Math.floor(Math.random() * MAX_INTEGER + 1);  // random value [1, MAX_INTEGER];
-        story.excerpts.push({ "start_time": 0, "end_time": player.duration, "reps_logged": [], "reps_todo": [], "hash" : hash });
+        story.excerpts.push({ "start_time": 0, "end_time": player.duration, "reps_logged": [], "reps_todo": [], "hash": hash });
         updateExcerpts(story,
             function () {
                 displayStoryInfo(story);
@@ -173,7 +173,7 @@ storyActions.onclick = function (evt) {
         }
     } else if (evt.target.classList.contains('log_excerpt')) {
         evt.preventDefault();
-        
+
         if (window.confirm("Log this excerpt?")) {
             if (logRep(excerpt)) {
                 updateExcerpts(story, function () {
@@ -191,7 +191,7 @@ document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
         return;
     }
-    //console.log(evt);
+    // console.log(evt, 'code', evt.code);
     if (!player) {
         return;
     }
@@ -219,6 +219,89 @@ document.body.onkeydown = async function (evt) {
     } else if (evt.code === 'KeyE') {
         evt.preventDefault();
         player.currentTime = timemark + 4;
+        displayCurrentCues();
+    } else if (evt.code === 'KeyB') {
+        evt.preventDefault();
+        // jump to start of previous subtitle
+
+        let english = document.getElementById('transcript_en_checkbox').checked;
+        let japanese = document.getElementById('transcript_ja_checkbox').checked;
+
+        if (!english && !japanese) {
+            return;
+        }
+
+        let prevEn = -1;
+        if (english) {
+            for (let cue of trackEn.track.cues) {
+                if (cue.endTime >= player.currentTime) {
+                    break;
+                }
+                prevEn = cue.startTime;
+            }
+        }
+
+        let prevJa = -1;
+        if (japanese) {
+            for (let cue of trackJa.track.cues) {
+                if (cue.endTime >= player.currentTime) {
+                    break;
+                }
+                prevJa = cue.startTime;
+            }
+        }
+
+        let next = Math.max(prevEn, prevJa);
+
+        if (next == -1) {
+            return;
+        }
+
+        player.currentTime = next;
+        displayCurrentCues();
+    } else if (evt.code === 'KeyN') {
+        evt.preventDefault();
+        // jump to start of next subtitle
+
+        let english = document.getElementById('transcript_en_checkbox').checked;
+        let japanese = document.getElementById('transcript_ja_checkbox').checked;
+
+        if (!english && !japanese) {
+            return;
+        }
+
+        let prevEn = -1;
+        if (english) {
+            for (let cue of trackEn.track.cues) {
+                if (cue.startTime > player.currentTime) {
+                    prevEn = cue.startTime;
+                    break;
+                }
+            }
+        }
+
+        let prevJa = -1;
+        if (japanese) {
+            for (let cue of trackJa.track.cues) {
+                if (cue.startTime > player.currentTime) {
+                    prevJa = cue.startTime;
+                    break;
+                }
+            }
+        }
+
+        let next = Math.min(prevEn, prevJa);
+        if (prevEn == -1 && prevJa == -1) {
+            return;
+        } else if (prevEn == -1) {
+            next = prevJa;
+        } else if (prevJa == -1) {
+            next = prevEn;
+        }
+
+        console.log("jump to: ", next);
+
+        player.currentTime = next;
         displayCurrentCues();
     } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
         evt.preventDefault();
@@ -441,12 +524,11 @@ function displayExcerpts(story) {
             <minidenticon-svg username="seed${excerpt.hash}"></minidenticon-svg>
             <a class="play_excerpt" href="#" title="play the excerpt">play</a>
             <a class="start_time" href="#" title="ctrl-click to set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="ctrl-click to set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
-            <a class="log_excerpt" href="#" title="Log this excerpt">log</a>
             <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}&excerptHash=${excerpt.hash}" title="Drill the vocab of this excerpt">vocab</a>
             <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
             <span>Completed reps: ${listeningRepCount} &nbsp;&nbsp; ${timeSinceRep(timeLastRep)}</span><br>
-            ${todoReps}<br>`;
+            ${todoReps} <a class="log_excerpt" href="#" title="Log a rep for this excerpt">log</a><br>`;
 
         return html + '</div>';
     }
