@@ -472,7 +472,7 @@ func UpdateExcerpts(w http.ResponseWriter, r *http.Request) {
 				lastRepTimestamp = rep.Date
 			}
 		}
-		if len(ex.RepsTodo) > 0 {
+		if ex.RepsTodo > 0 {
 			hasRepsTodo = 1
 		}
 	}

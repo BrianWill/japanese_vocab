@@ -113,6 +113,15 @@ body {
     height: 60vh;
 }
 
+.remove_rep_link, .add_rep_link  {
+    text-decoration: none;
+}
+
+#story_actions .add_rep_link {
+    padding-right: 1em;
+}
+
+
 minidenticon-svg svg {
     height: 28px;
     width: 28px;

@@ -1,13 +1,5 @@
 # japanese_vocab TODO
-   
-    reps:
-        reps_todo: instead of array of ints, just make it a single int count of reps
-        interface: instead of ctrl-click to remove and alt-click to duplicate, just have + - control for the count
-            maybe just use a spinner that displays the count of queued reps?
-                when 0, highlight in one color (greyed out?)
-                when >0, highlight in another color
-            move log link next to the count / spinner
-    
+      
     could UpdateWordArchiveState be consolidated with inc word?
 
     test clean install on other computer (mac and windows)

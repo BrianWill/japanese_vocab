@@ -82,38 +82,32 @@ storyActions.onclick = function (evt) {
     }
     let excerpt = story.excerpts[excerptIdx];
 
-    if (evt.target.classList.contains('add_reps_link')) {
+    if (evt.target.classList.contains('add_rep_link')) {
         evt.preventDefault();
-        excerpt.reps_todo = [1, 1, 1, 1];
+        excerpt.reps_todo = excerpt.reps_todo || 0;
+        excerpt.reps_todo++;
 
         updateExcerpts(story,
             function () {
                 displayStoryInfo(story);
-                snackbarMessage(`reps added to queue of excerpt`);
+                snackbarMessage(`one rep added to queue of excerpt`);
             }
         );
-    } else if (evt.target.classList.contains('rep')) {
+    } else if (evt.target.classList.contains('remove_rep_link')) {
         evt.preventDefault();
-        let repIdx = parseInt(evt.target.getAttribute('repIdx'));
-
-        if (evt.altKey) {
-            let type = excerpt.reps_todo[repIdx];
-            excerpt.reps_todo.splice(repIdx, 0, type);
-            updateExcerpts(story,
-                function () {
-                    displayStoryInfo(story);
-                    snackbarMessage(`rep added to queue of excerpt`);
-                }
-            );
-        } else if (evt.ctrlKey) {
-            excerpt.reps_todo.splice(repIdx, 1);
-            updateExcerpts(story,
-                function () {
-                    displayStoryInfo(story);
-                    snackbarMessage(`rep removed from queue of excerpt`);
-                }
-            );
+        excerpt.reps_todo = excerpt.reps_todo || 0;
+        if (excerpt.reps_todo == 0) {
+            snackbarMessage(`excerpt already has no reps`);
+            return;
         }
+        excerpt.reps_todo--;
+
+        updateExcerpts(story,
+            function () {
+                displayStoryInfo(story);
+                snackbarMessage(`one rep removed from queue of excerpt`);
+            }
+        );
     } else if (evt.target.classList.contains('play_excerpt')) {
         let start = Math.trunc(excerpt.start_time);
         let end = Math.trunc(excerpt.end_time);
@@ -124,6 +118,7 @@ storyActions.onclick = function (evt) {
         let path = '/sources/' + story.source + "/" + story.video;
         player.src = path + time;
         player.play();
+        displayCurrentCues();
 
     } else if (evt.target.classList.contains('start_time')) {
         evt.preventDefault();
@@ -506,17 +501,10 @@ function displayExcerpts(story) {
             }
         }
 
-        let todoReps;
-        if (excerpt.reps_todo.length == 0) {
-            todoReps = `Queued reps: <a class="add_reps_link" href="#" title="add reps">add reps</a>`
-        } else {
-            todoReps = `Queued reps: `;
-            let i = 0;
-            for (let rep of excerpt.reps_todo) {
-                todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
-                i++;
-            }
-            todoReps += `<span class="info_symbol" title="alt-click to insert another rep; ctrl-click to remove a rep">ⓘ</span>`;
+        let todoReps = `Queued reps: <a class="remove_rep_link" href="#" title="remove a rep">−</a>
+            <a class="add_rep_link" href="#" title="add a rep">＋</a>`;
+        for (let i = 0; i < excerpt.reps_todo; i++) {
+            todoReps += `<span class="listening rep" title="rep">⭯</span>`;
         }
 
         let html = `<div excerpt_idx="${excerptIdx}">
@@ -524,7 +512,7 @@ function displayExcerpts(story) {
             <minidenticon-svg username="seed${excerpt.hash}"></minidenticon-svg>
             <a class="play_excerpt" href="#" title="play the excerpt">play</a>
             <a class="start_time" href="#" title="ctrl-click to set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="ctrl-click to set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
-            <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}&excerptHash=${excerpt.hash}" title="Drill the vocab of this excerpt">vocab</a>
+            <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptHash=${excerpt.hash}" title="Drill the vocab of this excerpt">vocab</a>
             <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
             <span>Completed reps: ${listeningRepCount} &nbsp;&nbsp; ${timeSinceRep(timeLastRep)}</span><br>

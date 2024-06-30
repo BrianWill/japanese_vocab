@@ -22,7 +22,7 @@ type Excerpt struct {
 	Hash       int64       `json:"hash"`               // a random id for the excerpt
 	StartTime  float64     `json:"start_time"`
 	EndTime    float64     `json:"end_time"`
-	RepsTodo   []int64     `json:"reps_todo"` // integer represents the type of rep (but there is now only one type of rep)
+	RepsTodo   int64       `json:"reps_todo"` // number of reps todo
 	RepsLogged []LoggedRep `json:"reps_logged"`
 }
 

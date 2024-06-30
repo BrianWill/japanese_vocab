@@ -72,8 +72,6 @@ function newDrill() {
         }
     }
 
-    let unixTime = Math.floor(Date.now() / 1000);
-
     drillSet = [];
     for (let word of words) {
         let isOther = (word.category & DRILL_ALL) == 0;

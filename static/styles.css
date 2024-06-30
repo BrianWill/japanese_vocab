@@ -519,13 +519,11 @@ span.verb:hover {
 
 #repetitions_info .rep {
     padding-right: 0.2em;
-    cursor: pointer;
     user-select: none;
 }
 
 #excerpts .rep {
     padding-right: 0.2em;
-    cursor: pointer;
     user-select: none;
 }
 
