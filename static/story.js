@@ -84,7 +84,7 @@ storyActions.onclick = function (evt) {
 
     if (evt.target.classList.contains('add_reps_link')) {
         evt.preventDefault();
-        excerpt.reps_todo = DEFAULT_REPS;
+        excerpt.reps_todo = [1, 1, 1, 1];
 
         updateExcerpts(story,
             function () {
@@ -111,19 +111,6 @@ storyActions.onclick = function (evt) {
                 function () {
                     displayStoryInfo(story);
                     snackbarMessage(`rep removed from queue of excerpt`);
-                }
-            );
-        } else {
-            let priorType = excerpt.reps_todo[repIdx];
-            if (priorType == LISTENING) {
-                excerpt.reps_todo[repIdx] = DRILLING;
-            } else if (priorType == DRILLING) {
-                excerpt.reps_todo[repIdx] = LISTENING;
-            }
-            updateExcerpts(story,
-                function () {
-                    displayStoryInfo(story);
-                    snackbarMessage(`toggled type of rep in queue of excerpt`);
                 }
             );
         }
@@ -188,10 +175,10 @@ storyActions.onclick = function (evt) {
         evt.preventDefault();
         
         if (window.confirm("Log this excerpt?")) {
-            if (logRep(excerpt, LISTENING)) {
+            if (logRep(excerpt)) {
                 updateExcerpts(story, function () {
                     load();
-                    snackbarMessage(`listening rep logged`);
+                    snackbarMessage(`rep of excerpt logged`);
                 });
             }
         }
@@ -327,7 +314,6 @@ document.body.onkeydown = async function (evt) {
         );
     } else if (evt.code === 'BracketRight' && evt.altKey) {
         evt.preventDefault();
-        let adjustment = TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
         let lang = 'English and Japanese';
 
         let english = document.getElementById('transcript_en_checkbox').checked;
@@ -339,7 +325,7 @@ document.body.onkeydown = async function (evt) {
 
         if (english) {
             lang = 'English ';
-            adjustTextTrackTimings(trackEn.track, player.currentTime, adjustment);
+            adjustTextTrackTimings(trackEn.track, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
             story.transcript_en = textTrackToString(trackEn.track);
             let cues = findCues(trackEn.track, player.currentTime);
             displayCues(cues, captionsEn);
@@ -347,13 +333,13 @@ document.body.onkeydown = async function (evt) {
 
         if (japanese) {
             lang = 'Japanese ';
-            adjustTextTrackTimings(trackJa.track, player.currentTime, adjustment);
+            adjustTextTrackTimings(trackJa.track, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
             story.transcript_ja = textTrackToString(trackJa.track);
             let cues = findCues(trackJa.track, player.currentTime);
             displayCues(cues, captionsJa);
         }
 
-        snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
+        snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT} seconds`);
 
         clearTimeout(subtitleAdjustTimeoutHandle);
         subtitleAdjustTimeoutHandle = setTimeout(
@@ -426,15 +412,10 @@ function displayExcerpts(story) {
     function repsHTML(excerpt, excerptIdx) {
         let timeLastRep = 1;
         let listeningRepCount = 0;
-        let drillRepCount = 0;
 
         if (excerpt.reps_logged) {
             for (let rep of excerpt.reps_logged) {
-                if (rep.type == LISTENING) {
-                    listeningRepCount++;
-                } else if (rep.type == DRILLING) {
-                    drillRepCount++;
-                }
+                listeningRepCount++;
 
                 if (rep.date > timeLastRep) {
                     timeLastRep = rep.date;
@@ -449,14 +430,10 @@ function displayExcerpts(story) {
             todoReps = `Queued reps: `;
             let i = 0;
             for (let rep of excerpt.reps_todo) {
-                if (rep == LISTENING) {
-                    todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
-                } else if (rep == DRILLING) {
-                    todoReps += `<span class="drill rep" repIdx="${i}" title="vocabulary drill rep">語</span>`;
-                }
+                todoReps += `<span class="listening rep" repIdx="${i}" title="listening rep">聞</span>`;
                 i++;
             }
-            todoReps += `<span class="info_symbol" title="red = listening; yellow = vocabulary drill; click to toggle type; alt-click to insert another rep; ctrl-click to remove a rep">ⓘ</span>`;
+            todoReps += `<span class="info_symbol" title="alt-click to insert another rep; ctrl-click to remove a rep">ⓘ</span>`;
         }
 
         let html = `<div excerpt_idx="${excerptIdx}">
@@ -469,7 +446,7 @@ function displayExcerpts(story) {
             <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
             <span>Time since last rep: ${timeSince(timeLastRep)}<span><br>
-            <span>Completed reps: ${listeningRepCount} listen, ${drillRepCount} vocab</span><br>
+            <span>Completed reps: ${listeningRepCount}</span><br>
             ${todoReps}<br>`;
 
         return html + '</div>';

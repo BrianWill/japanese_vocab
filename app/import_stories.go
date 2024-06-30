@@ -148,7 +148,7 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 
 	for _, entry := range entries {
 		fileName := entry.Name()
-		path := sourceName + "/" + fileName
+		path := sourceDir + "/" + fileName
 		components := strings.Split(fileName, ".")
 
 		extension := components[len(components)-1]
@@ -163,6 +163,7 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 
 			title = strings.Join(components[:len(components)-1], ".")
 			story := storiesByTitle[title]
+			story.Title = title
 			story.Source = sourceName
 			story.Video = fileName
 			storiesByTitle[title] = story
@@ -176,7 +177,10 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 			lang := components[len(components)-2]
 			title = strings.Join(components[:len(components)-2], ".")
 			story := storiesByTitle[title]
+			story.Title = title
 			story.Source = sourceName
+
+			newPath := sourceDir + "/" + strings.Join(components[:len(components)-1], ".") + ".vtt"
 
 			if lang == "en" {
 				story.TranscriptEN, _, err = getSubtitles(path)
@@ -186,7 +190,6 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 
 				// replace .ass or .srt files with
 				if extension != "vtt" {
-					newPath := strings.Join(components[:len(components)-1], ".") + ".vtt"
 					err := os.WriteFile(newPath, []byte(story.TranscriptEN), os.ModePerm)
 					if err != nil {
 						return nil, err
@@ -205,8 +208,7 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 
 				// replace .ass or .srt files with
 				if extension != "vtt" {
-					newPath := strings.Join(components[:len(components)-1], ".") + ".vtt"
-					err := os.WriteFile(newPath, []byte(story.TranscriptEN), os.ModePerm)
+					err := os.WriteFile(newPath, []byte(story.TranscriptJA), os.ModePerm)
 					if err != nil {
 						return nil, err
 					}
@@ -232,6 +234,8 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 		if s.Video == "" {
 			continue
 		}
+
+		// fmt.Println("importing source: ", s.Source, "title: ", s.Title)
 
 		err = importStory(s, sqldb)
 		if err != nil {
@@ -337,19 +341,18 @@ func importStory(story Story, sqldb *sql.DB) error {
 
 		_, err := sqldb.Exec(`UPDATE stories SET 
 				date = $1, link = $2, video = $3, content = $4,  
-				transcript_en = CASE WHEN transcript_en = '' THEN $5 ELSE transcript_en END,
-				transcript_ja = CASE WHEN transcript_ja = '' THEN $6 ELSE transcript_ja END
+				transcript_en = $5, transcript_ja = $6
 				WHERE title = $7 and source = $8;`,
-			story.Date, story.Link, story.Video,
-			story.Content, story.TranscriptEN,
-			story.TranscriptJA, story.Title, story.Source)
+			story.Date, story.Link, story.Video, story.Content,
+			story.TranscriptEN, story.TranscriptJA,
+			story.Title, story.Source)
 		return err
 	}
 
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
-	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, episode_number, video, 
-				content, transcript_en, transcript_ja, words, start_time, end_time, excerpts, date_last_rep, has_reps_todo) 
+	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
+				content, transcript_en, transcript_ja, excerpts, date_last_rep, has_reps_todo) 
 				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
 		story.Title, story.Source, story.Date, story.Link,
 		story.Video, story.Content, story.TranscriptEN,
@@ -489,6 +492,8 @@ func ImportSource(w http.ResponseWriter, r *http.Request) {
 
 	_, err = importSource(body.Source, sqldb)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 

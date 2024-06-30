@@ -233,22 +233,25 @@ function showWord() {
 
 logLink.onclick = function (evt) {
     evt.preventDefault();
-    var url = new URL(window.location.href);
-    var excerptIdx = parseInt(url.searchParams.get("excerptIdx"));
+
+    let unixTime = Math.floor(Date.now() / 1000);
 
     let wordIds = [];
     for (const word of answeredSet) {
-        wordIds.push(word.id);
+        if ((unixTime - word.date_last_rep) > REP_COOLDOWN) {
+            wordIds.push(word.id);
+        }
     }
 
-    if (logRep(story.excerpts[excerptIdx], DRILLING)) {
-        updateExcerpts(story, function () {
-            incWords(wordIds, function () {
-                load();
-                snackbarMessage(`vocab drill logged`);
-            });
-        });
+    if (wordIds.length== 0) {
+        snackbarMessage(`no reps logged: all answered words are on cooldown`);
+        return;
     }
+
+    incWords(wordIds, function () {
+        load();
+        snackbarMessage(`reps logged for ${wordIds.length} words`);
+    });    
 }
 
 function load(evt) {
@@ -256,7 +259,6 @@ function load(evt) {
 
     var url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
-    let excerptIdx = parseInt(url.searchParams.get("excerptIdx"));
     let excerptHash = parseInt(url.searchParams.get("excerptHash"));
 
     fetch('words', {

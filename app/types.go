@@ -22,13 +22,12 @@ type Excerpt struct {
 	Hash       int64       `json:"hash"`               // a random id for the excerpt
 	StartTime  float64     `json:"start_time"`
 	EndTime    float64     `json:"end_time"`
-	RepsTodo   []int64     `json:"reps_todo"`
+	RepsTodo   []int64     `json:"reps_todo"` // integer represents the type of rep (but there is now only one type of rep)
 	RepsLogged []LoggedRep `json:"reps_logged"`
 }
 
 type LoggedRep struct {
 	Date int64 `json:"date,omitempty"`
-	Type int64 `json:"type,omitempty"`
 }
 
 // paths are relative from source dir
@@ -64,6 +63,7 @@ type DrillWord struct {
 	Category    int    `json:"category"`
 	Definitions string `json:"definitions,omitempty"`
 	Repetitions int    `json:"repetitions"`
+	DateLastRep int64  `json:"date_last_rep"`
 }
 
 type WordUpdate struct {

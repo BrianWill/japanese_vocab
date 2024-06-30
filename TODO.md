@@ -1,12 +1,29 @@
 # japanese_vocab TODO
+   
+    hotkeys to jump to next/last subtitle
+        if both english and japanese are active, jump to whichever is closest in time
+        maybe need a fraction of second margin so that the start of a line doesn't get cut off
+            ...except then the subtitle wouldn't appear immediately...hmm...
 
-daily schedule system:
+    reps:
+        reps_todo: instead of array of ints, just make it a single int count of reps
+        interface: instead of ctrl-click to remove and alt-click to duplicate, just have + - control for the count
+            maybe just use a spinner that displays the count of queued reps?
+                when 0, highlight in one color (greyed out?)
+                when >0, highlight in another color
+            move log link next to the count / spinner
+    
+    could UpdateWordArchiveState be consolidated with inc word?
 
-    importing page
-        test source import
-        link to import all sources
+    test clean install on other computer (mac and windows)
 
-    generate transcript file from content:
+    fix word kanji field
+        many seem to be missing kanji info
+            maybe import error from earlier version?
+            or is this a bug in current importing?
+
+    generate transcript file from text file
+        e.g. foo.ja.txt
         treat every sentence as its own subtitle
             just make up timing: space them out by a few seconds in order
     
@@ -91,6 +108,15 @@ subtitles:
 
 
 for a word, track all sentences that include the word
+
+
+cut video: 
+    
+    ffmpeg -i input.mp4 -ss 00:05:10 -to 00:15:30 -c:v copy -c:a copy output2.mp4
+
+convert all in dir:
+    
+    for f in *.mkv; do ffmpeg -i "$f" "${f%.*}.mp4"; done
 
 
 ffmpeg -i [input] -c:a copy -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]

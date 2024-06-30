@@ -34,10 +34,6 @@ var reHasKanji *regexp.Regexp
 
 var tok *tokenizer.Tokenizer
 
-const DRILL_COOLDOWN_RANK_4 = 60 * 60 * 24 * 1000 // 1000 days in seconds
-const DRILL_COOLDOWN_RANK_3 = 60 * 60 * 24 * 30   // 30 days in seconds
-const DRILL_COOLDOWN_RANK_2 = 60 * 60 * 24 * 4    // 4 days in seconds
-const DRILL_COOLDOWN_RANK_1 = 60 * 60 * 5         // 5 hours in second
 const DRILL_CATEGORY_KATAKANA = 1
 const DRILL_CATEGORY_ICHIDAN = 2
 const DRILL_CATEGORY_GODAN_SU = 8
@@ -53,12 +49,6 @@ const DRILL_CATEGORY_KANJI = 4096
 const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
 	DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU
 
-const READING = 0
-const LISTENING = 1
-const DRILLING = 2
-
-const REP_LOGGING_COOLDOWN = 60 * 60 * 18 // 18 hours (in seconds)
-
 const MAIN_USER_DB_PATH = "./data/data.db"
 
 func main() {
@@ -67,6 +57,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Println("working dir:", wd)
 
 	makeUserDB(MAIN_USER_DB_PATH)
 	reHasKanji = regexp.MustCompile(`[\x{4E00}-\x{9FAF}]`)
@@ -112,7 +108,7 @@ func main() {
 	router.HandleFunc("/import_source", ImportSource).Methods("POST")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
 	router.HandleFunc("/words", GetWords).Methods("POST")
-	router.HandleFunc("/update_word", UpdateWord).Methods("POST")
+	router.HandleFunc("/update_word", UpdateWordArchiveState).Methods("POST")
 	router.HandleFunc("/inc_words", IncWords).Methods("POST")
 	router.HandleFunc("/", GetMain).Methods("GET")
 
@@ -227,6 +223,7 @@ func makeUserDB(path string) {
 			audio_start REAL NOT NULL DEFAULT 0,
 			audio_end REAL NOT NULL DEFAULT 0,
 			date_added INTEGER NOT NULL,
+			date_last_rep INTEGER NOT NULL,
 			definitions TEXT,
 			kanji TEXT)`)
 	if err != nil {

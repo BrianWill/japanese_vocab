@@ -1,14 +1,3 @@
-const READING = 0;
-const LISTENING = 1;
-const DRILLING = 2;
-
-const DEFAULT_REPS = [
-    LISTENING, DRILLING,
-    LISTENING, DRILLING,
-    LISTENING, DRILLING,
-    LISTENING
-];
-
 const REP_COOLDOWN = 60 * 60 * 18;  // 18 hours (in seconds)
 
 function splitOnHighPitch(str, pitch) {
@@ -456,36 +445,39 @@ ${cue.text}\n\n`;
 
 
 // add adjustment to every start and end timing, but only those which overlap or come after 'time'
-function adjustTextTrackTimings(track, time, adjustment) {
+function adjustTextTrackTimings(track, adjustment, time) {
+    time = time || 0;
+
+    
+    // find first cue that ends after time
     let index = track.cues.length;
-
-    const minMargin = 0.5;
-
-    // find first track that overlap 'time'
     for (let i = 0; i < track.cues.length; i++) {
         let cue = track.cues[i];
-
         if (cue.endTime > time) {
-            // return false if adjusting the cue would make it overlap the prior cue
-            let prior = track.cues[i - 1];
-            let adjustedStart = cue.startTime + adjustment;
-            let excessOverlap = prior && adjustedStart < (prior.startTime + minMargin);
-            if (excessOverlap || adjustedStart < 0) {
-                return false;
-            }
-
             index = i;
             break;
         }
     }
 
-    for (let i = index; i < track.cues.length; i++) {
-        let cue = track.cues[i];
+    // we have to work with a copy of the cues because setting startTime or endTime will reorder track.cues
+
+    let copy = []; 
+    copy.length = track.cues.length;
+    for (let i = 0; i < track.cues.length; i++) {
+        copy[i] = track.cues[i];
+    }
+
+    for (let i = index; i < copy.length; i++) {
+        let cue = copy[i];
+        console.log("adjustment: ", adjustment, cue.text);
+
         cue.startTime += adjustment;
         cue.endTime += adjustment;
     }
 
-    return true;
+    for (let i = 0; i < track.cues.length; i++) {
+        track.cues[i] = copy[i];
+    }
 }
 
 // add adjustment to every start and end timing
@@ -496,10 +488,22 @@ function adjustTextTrackAllTimings(track, adjustment) {
         return false;
     }
 
+    // we have to work with a copy of the cues because setting startTime or endTime will reorder track.cues
+
+    let copy = []; 
+    copy.length = track.cues.length;
     for (let i = 0; i < track.cues.length; i++) {
-        let cue = track.cues[i];
+        copy[i] = track.cues[i];
+    }
+
+    for (let i = 0; i < copy.length; i++) {
+        let cue = copy[i];
         cue.startTime += adjustment;
         cue.endTime += adjustment;
+    }
+
+    for (let i = 0; i < copy.length; i++) {
+        copy[i] = track.cues[i];
     }
 
     return true;
@@ -507,7 +511,8 @@ function adjustTextTrackAllTimings(track, adjustment) {
 
 // move next cue after time up to time, and move all cues after up the same amount
 function bringForwardTextTrackTimings(track, time) {
-    let index = track.cues.length;
+    let found = false;
+    let index = 0;
 
     // find first cue which comes after time
     for (let i = 0; i < track.cues.length; i++) {
@@ -520,16 +525,35 @@ function bringForwardTextTrackTimings(track, time) {
 
         if (cue.startTime > time) {
             index = i;
+            found = true;
             break;
         }
     }
 
-    let adjustment = track.cues[i].startTime - time;
+    if (!found) {
+        return;
+    }
 
-    for (let i = index; i < track.cues.length; i++) {
-        let cue = track.cues[i];
+    let adjustment = time - track.cues[index].startTime;
+
+    console.log('adjustment', adjustment);
+    
+    // we have to work with a copy of the cues because setting startTime or endTime will reorder track.cues
+
+    let copy = []; 
+    copy.length = track.cues.length;
+    for (let i = 0; i < track.cues.length; i++) {
+        copy[i] = track.cues[i];
+    }
+
+    for (let i = index; i < copy.length; i++) {
+        let cue = copy[i];
         cue.startTime += adjustment;
         cue.endTime += adjustment;
+    }
+
+    for (let i = 0; i < copy.length; i++) {
+        copy[i] = track.cues[i];
     }
 
     return true;
@@ -583,44 +607,25 @@ function deleteRep(story, repIdx) {
     });
 }
 
-function toggleRepType(story, repIdx) {
-    let priorType = story.reps_todo[repIdx];
-    if (priorType == LISTENING) {
-        story.reps_todo[repIdx] = DRILLING;
-    } else if (priorType == DRILLING) {
-        story.reps_todo[repIdx] = LISTENING;
-    }
-    
-	updateReps(story, function(data) {
-        displayStoryInfo(story);
-        snackbarMessage("toggled type of a queued rep");
-    });
-}
-
-function logRep(excerpt, type) {
+function logRep(excerpt) {
     let unixtime = Math.floor(Date.now() / 1000);
     let cooldownTime = unixtime - REP_COOLDOWN;
 
     if (excerpt.reps_logged) {
         for (let rep of excerpt.reps_logged) {
-            if (rep.type == type && rep.date > cooldownTime) {
-                snackbarMessage("rep of excerpt has already been logged within the cooldown window");
+            if (rep.date > cooldownTime) {
+                snackbarMessage("rep of this excerpt has already been logged within the cooldown window");
                 return false;
             }
         }
     }
 
-    // remove first rep matching the type
-    let i = 0;
-    for (let repType of excerpt.reps_todo) {
-        if (repType == type) {
-            excerpt.reps_todo.splice(i, 1);
-            excerpt.reps_logged.push({ "date" : unixtime, "type": type});
-            return true;
-        }
-        i++;
+    if (excerpt.reps_todo.length > 0) {
+        excerpt.reps_todo.pop();
+        excerpt.reps_logged.push({ "date" : unixtime});
+        return true;
     }
 
-    snackbarMessage(`no ${type == LISTENING ? 'listening' : 'drill'} reps are currently queued for this excerpt`);
+    snackbarMessage(`no reps are currently queued for this excerpt`);
     return false;
 }

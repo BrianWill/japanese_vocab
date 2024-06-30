@@ -5,14 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Import Sources",
-            "type": "go",
-            "request": "launch",
-            "mode": "debug",
-            "program": "${fileDirname}",
-            "args": ["import_sources"]
-        },
-        {
             "name": "Debug",
             "type": "go",
             "request": "launch",

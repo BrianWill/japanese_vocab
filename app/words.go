@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"time"
 
 	// "math"
 	"net/http"
@@ -112,9 +113,9 @@ func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptHash int64) ([]Dri
 		word := DrillWord{}
 		word.BaseForm = token.BaseForm
 		row := sqldb.QueryRow(`SELECT id, archived, category,
-				repetitions, definitions FROM words WHERE base_form = $1;`, token.BaseForm)
+				repetitions, definitions, date_last_rep FROM words WHERE base_form = $1;`, token.BaseForm)
 		err = row.Scan(&word.ID, &word.Archived, &word.Category,
-			&word.Repetitions, &word.Definitions)
+			&word.Repetitions, &word.Definitions, &word.DateLastRep)
 		if err == sql.ErrNoRows {
 			continue
 		}
@@ -134,7 +135,7 @@ func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptHash int64) ([]Dri
 	return words, nil
 }
 
-func UpdateWord(w http.ResponseWriter, r *http.Request) {
+func UpdateWordArchiveState(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var word WordUpdate
@@ -203,8 +204,6 @@ outer:
 		kanjiSet = append(kanjiSet, ch)
 	}
 
-	//fmt.Println("kanji set", kanjiSet)
-
 	kanjiDefs := make([]string, 0)
 	for _, ch := range kanjiSet {
 		row := sqldb.QueryRow(`SELECT kanji FROM words WHERE base_form = $1;`, ch)
@@ -245,8 +244,10 @@ func IncWords(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
+	unixtime := time.Now().Unix()
+
 	for _, wordId := range body.Words {
-		_, err := sqldb.Exec(`UPDATE words SET repetitions = repetitions + 1 WHERE id = $1;`, wordId)
+		_, err := sqldb.Exec(`UPDATE words SET repetitions = repetitions + 1, date_last_rep = $1 WHERE id = $2;`, unixtime, wordId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{ "message": "` + "failure to update word repetition counts: " + err.Error() + `"}`))
