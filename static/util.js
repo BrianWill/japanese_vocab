@@ -383,6 +383,49 @@ function timeSince(date) {
     return 'just now';
 }
 
+
+function timeSinceRep(date) {
+    if (date <= 1) {
+        return '';
+    }
+
+    let now = Math.floor(new Date() / 1000);
+    let elapsedSeconds = now - date;
+    if (elapsedSeconds > 0) {
+        elapsedSeconds++; // adding one second fixes cases like "24 hours" instead of "1 day";
+        let interval = elapsedSeconds / 31536000;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `(${val} ${val == 1 ? 'year' : 'years'} since last rep)`;
+        }
+        interval = elapsedSeconds / 2592000;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `(${val} ${val == 1 ? 'month' : 'months'} since last rep)`;
+        }
+        interval = elapsedSeconds / 86400;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `(${val} ${val == 1 ? 'day' : 'days'} since last rep)`;
+        }
+        interval = elapsedSeconds / 3600;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `(${val} ${val == 1 ? 'hour' : 'hours'} since last rep)`;
+        }
+        interval = elapsedSeconds / 60;
+        if (interval > 1) {
+            var val = Math.floor(interval);
+            return `(${val} ${val == 1 ? 'minute' : 'minutes'} since last rep)`;
+        }
+        if (interval > 1) {
+            var val = Math.floor(elapsedSeconds);
+            return `(${val} ${val == 1 ? 'second' : 'seconds'} since last rep)`;
+        }
+    } 
+    return '(last rep completed just now)';
+}
+
 function addLogEvent(storyId) {
     fetch(`/add_log_event/${storyId}`, {
         method: 'GET',

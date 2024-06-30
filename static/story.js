@@ -445,8 +445,7 @@ function displayExcerpts(story) {
             <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptIdx=${excerptIdx}&excerptHash=${excerpt.hash}" title="Drill the vocab of this excerpt">vocab</a>
             <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
-            <span>Time since last rep: ${timeSince(timeLastRep)}<span><br>
-            <span>Completed reps: ${listeningRepCount}</span><br>
+            <span>Completed reps: ${listeningRepCount} &nbsp;&nbsp; ${timeSinceRep(timeLastRep)}</span><br>
             ${todoReps}<br>`;
 
         return html + '</div>';

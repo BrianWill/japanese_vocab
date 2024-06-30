@@ -61,6 +61,10 @@ const TWO_WEEKS_IN_SECONDS = 60 * 60 * 24 * 14;
 
 function displayRecent(stories) {
     stories = stories.filter((s) => {
+        if (s.has_reps_todo) {
+            return false;
+        }
+
         if (s.date_last_rep <= 1) {
             return false;
         }
@@ -69,6 +73,11 @@ function displayRecent(stories) {
         let elapsedSeconds = now - s.date_last_rep;
         return elapsedSeconds < TWO_WEEKS_IN_SECONDS;
     });
+
+    if (stories.length == 0) {
+        document.getElementById('recent_reps').innerHTML = `<h4 style="margin-left: 2em;">(none)</h4>`;
+        return;    
+    }
 
     stories.sort((a, b) => {
         return (a.date_last_rep < b.date_last_rep) ? -1 : (a.date_last_rep > b.date_last_rep) ? 1 : 0;
