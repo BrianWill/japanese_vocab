@@ -650,13 +650,14 @@ function deleteRep(story, repIdx) {
     });
 }
 
-function logRep(excerpt, story) {
+function logRep(excerpt) {
     let unixtime = Math.floor(Date.now() / 1000);
-    story.date_last_rep = story.date_last_rep || 0;
 
-    if ((unixtime - story.date_last_rep) < REP_COOLDOWN) {
-        snackbarMessage("a rep of this excerpt has already been logged within the cooldown window");
-        return false;
+    for (let rep of excerpt.reps_logged) {
+        if ((unixtime - rep.date) < REP_COOLDOWN) {
+            snackbarMessage("a rep of this excerpt has already been logged within the cooldown window");
+            return false;
+        }
     }
 
     if (excerpt.reps_todo == 0) {
@@ -666,7 +667,6 @@ function logRep(excerpt, story) {
 
     excerpt.reps_todo--;
     excerpt.reps_logged.push({"date": unixtime});
-    story.date_last_rep = unixtime;
 
     return true;
 }

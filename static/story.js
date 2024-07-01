@@ -117,6 +117,8 @@ storyActions.onclick = function (evt) {
         let time = `#t=${start},${end}`;
         let path = '/sources/' + story.source + "/" + story.video;
         player.src = path + time;
+        // setting src resets the playbackRate, so must set it again
+        player.playbackRate = parseFloat(document.getElementById('player_speed_number').value);
         player.play();
         displayCurrentCues();
 
@@ -170,7 +172,7 @@ storyActions.onclick = function (evt) {
         evt.preventDefault();
 
         if (window.confirm("Log this excerpt?")) {
-            if (logRep(excerpt, story)) {
+            if (logRep(excerpt)) {
                 updateExcerpts(story, function () {
                     load();
                     snackbarMessage(`rep of excerpt logged`);
