@@ -38,7 +38,7 @@ storyActions.onclick = function (evt) {
     if (evt.target.classList.contains('add_excerpt')) {
         evt.preventDefault();
         let hash = Math.floor(Math.random() * MAX_INTEGER + 1);  // random value [1, MAX_INTEGER];
-        story.excerpts.push({ "start_time": 0, "end_time": player.duration, "reps_logged": [], "reps_todo": [], "hash": hash });
+        story.excerpts.push({ "start_time": 0, "end_time": player.duration, "reps_logged": [], "reps_todo": 0, "hash": hash });
         updateExcerpts(story,
             function () {
                 displayStoryInfo(story);
@@ -170,7 +170,7 @@ storyActions.onclick = function (evt) {
         evt.preventDefault();
 
         if (window.confirm("Log this excerpt?")) {
-            if (logRep(excerpt)) {
+            if (logRep(excerpt, story)) {
                 updateExcerpts(story, function () {
                     load();
                     snackbarMessage(`rep of excerpt logged`);

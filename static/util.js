@@ -650,25 +650,23 @@ function deleteRep(story, repIdx) {
     });
 }
 
-function logRep(excerpt) {
+function logRep(excerpt, story) {
     let unixtime = Math.floor(Date.now() / 1000);
-    let cooldownTime = unixtime - REP_COOLDOWN;
+    story.date_last_rep = story.date_last_rep || 0;
 
-    if (excerpt.reps_logged) {
-        for (let rep of excerpt.reps_logged) {
-            if (rep.date > cooldownTime) {
-                snackbarMessage("rep of this excerpt has already been logged within the cooldown window");
-                return false;
-            }
-        }
+    if ((unixtime - story.date_last_rep) < REP_COOLDOWN) {
+        snackbarMessage("a rep of this excerpt has already been logged within the cooldown window");
+        return false;
     }
 
-    if (excerpt.reps_todo.length > 0) {
-        excerpt.reps_todo.pop();
-        excerpt.reps_logged.push({ "date" : unixtime});
-        return true;
+    if (excerpt.reps_todo == 0) {
+        snackbarMessage(`no reps are currently queued for this excerpt`);
+        return false;
     }
 
-    snackbarMessage(`no reps are currently queued for this excerpt`);
-    return false;
+    excerpt.reps_todo--;
+    excerpt.reps_logged.push({"date": unixtime});
+    story.date_last_rep = unixtime;
+
+    return true;
 }

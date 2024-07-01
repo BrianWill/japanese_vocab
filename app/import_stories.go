@@ -18,7 +18,7 @@ import (
 )
 
 const SOURCES_PATH = "../static/sources/"
-const INITTIAL_EXCERPT = `[ {"reps_todo": [], "reps_logged": [], "hash" : 1 }]`
+const INITTIAL_EXCERPT = `[ {"reps_todo": 0, "reps_logged": [], "hash" : 1 }]`
 
 var newlineRegEx *regexp.Regexp
 
