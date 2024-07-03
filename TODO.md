@@ -4,6 +4,8 @@
 
     test clean install on other computer (mac and windows)
 
+    when clicking the subtitle checkboxes, redraw the subtitles
+
     fix word kanji field
         many seem to be missing kanji info
             maybe import error from earlier version?

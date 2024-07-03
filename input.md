@@ -97,21 +97,17 @@ In theory, TV shows and movies are a very appealing way to learn a language, but
 - Crosstalk
 - Loud music and sound effects over dialogue
 
-Subtitles alone are not a sufficient solution:
+Furthermore, subtitles are problematic:
 
 - A beginner or intermediate learner often won't know enough vocabulary or kanji to get even the gist of the story from Japanese subtitles.
-- It's hard to concentrate on the Japanese audio while reading English subtitles (processing two languages at once is extremely difficult even if you already have mastered both languages). Furthermore, to the extent that parts of a Japanese and English sentence correspond, they tend to do so in reverse order, so for longer sentences, the part of the English translation currently displayed on screen often doesn't match what is currently being said in the Japanese audio. On top of this, translators often take large liberties, such that the English subtitltes do not accurately convey the original meaning or the way in which the original meaning was expressed.
-- Most video sources don't provide the option to display Japanese and English subtitles simulteously, and besides, processing two written languages adds even more mental overhead that distracts from listening.
+- Just turning off subtitles isn't a great option either because a beginner or intermediate learner watching without subtitles would usually miss most of what is being said and wouldn't be able to follow the story.
+- It's hard to concentrate on the Japanese audio while reading English subtitles (in fact, processing two languages at once is extremely difficult even if you already have mastered both languages). Furthermore, to the extent that parts of a Japanese and English sentence correspond, they tend to do so in reverse order, so for longer sentences, the part of the English translation currently displayed on screen often doesn't match what is currently being said in the Japanese audio. On top of this, translators often take large liberties, such that the English subtitltes do not accurately convey the original meaning or the way in which the original meaning was expressed.
+- Most video sources don't provide the option to display Japanese and English subtitles simulteously (and besides, again, processing two written languages adds even more mental overhead that distracts from listening).
 
-Turning off subtitles isn't a satisfactory solution either because a beginner or intermediate learner watching without subtitles would usually miss most of what is being said and wouldn't be able to follow the story.
+Sadly then, beginner and intermediate learners can't just watch TV and movies as normal to get much language value from them. What can work, though, is using short (2 to 5 minute) excerpts from shows and movies for repeated practice. The chosen excerpts should generally have these qualities:
 
-Sadly then, beginner and intermediate learners can't just watch TV and movies as normal to get much language value from them.
-
-What they can do, though, is use short (2 to 5 minute) excerpts from shows and movies for repeated practice. The excerpts should generally have these qualities:
-
-- Avoid the adverse factors listed above: heavy accents, use of slang, shouting, dialogue drowned out in the sound mix, *etc.*
-- Accurate subtitles should be available in both Japanese and English, preferably in a form where both can be displayed simultaneously and where you can scan the transcripts.
-- Look for extended dialogue scenes where the characters calmly take turns saying their lines.
+- Avoid the adverse factors listed above: heavy accents, use of slang, shouting, dialogue drowned out in the sound mix, *etc.* Look for extended dialogue scenes where the characters calmly take turns saying their lines.
+- Accurate subtitles should be available in both Japanese and English, preferably in a form where both can be displayed simultaneously and copy-pasted (useful when you want to get a machine translation).
 - It helps if the dialogue scenes have a modicum of visual interest. The images don't actually have to relate directly to what's being said: rather, they just need to provide visual cues that help you track where you are in the dialogue. Even just regularly-paced camera cuts between the characters can help a great deal.
 
 Unfortunately, the TV and movies that fit these criteria may not be your favorites or even in your preferred genres. Particularly in anime, there's almost an inverse relationship between quality and appropriateness for learners: the better the anime, often the harder it is to understand due to diverse, complex dialogue, extended action set pieces with shouting and loud sounds and music, and other adverse qualities. So until you reach an advanced level, you may have to venture outside of your normal zone of interest to find appropriate content.

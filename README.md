@@ -18,7 +18,7 @@ For other platforms, you'll need to build the executable first:
 
 ## Main page
 
-The main page first displays the "stories with queued reps", then the "recently logged stories", and last the full catalog of stories.
+The main page first displays the "stories with queued reps", then the "recent stories" (stories that have a rep logged within the last 2 weeks but no remaining queued reps), and last the full catalog of stories.
 
 In the catalog, select a source of stories from the drop down.
 

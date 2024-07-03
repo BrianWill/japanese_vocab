@@ -9,6 +9,9 @@ var captionsEn = document.getElementById('captions_en');
 var repetitionsInfoDiv = document.getElementById('repetitions_info');
 var storyActions = document.getElementById('story_actions');
 
+var englishCheckbox = document.getElementById('transcript_en_checkbox');
+var japaneseCheckbox = document.getElementById('transcript_ja_checkbox');
+
 var playerControls = document.getElementById('player_controls');
 
 var story = null;
@@ -22,6 +25,9 @@ const MAX_INTEGER = Math.pow(2, 52) - 1;
 
 trackJa.track.addEventListener('cuechange', displayCurrentCues);
 trackEn.track.addEventListener('cuechange', displayCurrentCues);
+
+englishCheckbox.addEventListener('change', displayCurrentCues);
+japaneseCheckbox.addEventListener('change', displayCurrentCues);
 
 storyLines.onwheel = function (evt) {
     evt.preventDefault();
