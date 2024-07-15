@@ -4,6 +4,10 @@ A program for [learning Japanese through input](input.md) by listening to storie
 
 ![](./images/story.png)
 
+[Intro video:](https://www.youtube.com/watch?v=cQ0Z6ZM1KyI)
+
+[![INTRO VIDEO](https://img.youtube.com/vi/cQ0Z6ZM1KyI/0.jpg)](https://www.youtube.com/watch?v=cQ0Z6ZM1KyI)
+
 ## Running the program
 
 For Windows, you can just clone the repo and run `app/japanese.exe`, then go to `localhost:8080` in a web browser.
@@ -24,7 +28,7 @@ In the catalog, select a source of stories from the drop down.
 
 ## Importing stories
 
-Stories are imported in sets called "sources", which are represented as directories directly under the "static" directory. For example, the directory "static/example" represents a source named "example".
+Stories are imported in sets called "sources", which are represented as directories directly under the "static/sources" directory. For example, the directory "static/sources/example" represents a source named "example".
 
 In a source directory, each mp3 and mp4 file represents an individual stories. For a story named `thing.mp3` or `thing.mp4`, the English and Japanese VTT subtitle files in the same directory should be named, respectively, `thing.en.vtt` and `thing.ja.vtt`.
 
