@@ -4,6 +4,8 @@ A program for [learning Japanese through input](input.md) by listening to storie
 
 ![](./images/story.png)
 
+[![INTRO VIDEO](https://img.youtube.com/vi/cQ0Z6ZM1KyI/0.jpg)](https://www.youtube.com/watch?v=cQ0Z6ZM1KyI)
+
 ## Running the program
 
 For Windows, you can just clone the repo and run `app/japanese.exe`, then go to `localhost:8080` in a web browser.
