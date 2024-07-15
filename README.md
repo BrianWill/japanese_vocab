@@ -4,6 +4,8 @@ A program for [learning Japanese through input](input.md) by listening to storie
 
 ![](./images/story.png)
 
+[Intro video:](https://www.youtube.com/watch?v=cQ0Z6ZM1KyI)
+
 [![INTRO VIDEO](https://img.youtube.com/vi/cQ0Z6ZM1KyI/0.jpg)](https://www.youtube.com/watch?v=cQ0Z6ZM1KyI)
 
 ## Running the program
