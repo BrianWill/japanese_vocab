@@ -182,7 +182,7 @@ cardsDiv.onclick = function (evt) {
         return;
     }
     var idx = parseInt(ele.getAttribute('index'));
-    if (idx && idx < drillSet.length - 1) {
+    if (idx && idx < drillSet.length) {
         //console.log("clicked card", idx); 
         var front = drillSet.slice(0, idx);
         var back = drillSet.slice(idx + 1);

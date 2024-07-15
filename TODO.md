@@ -2,9 +2,13 @@
       
     could UpdateWordArchiveState be consolidated with inc word?
 
-    test clean install on other computer (mac and windows)
+    a play mode that skips large gaps between subtitles automatically?
+        user can specify a "lead in" margin time, maybe?
 
-    when clicking the subtitle checkboxes, redraw the subtitles
+    import link should just import all sources instead of taking you to another page
+        refresh main page when done
+
+    test clean install on other computer (mac and windows)
 
     fix word kanji field
         many seem to be missing kanji info
