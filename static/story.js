@@ -36,8 +36,20 @@ storyLines.onwheel = function (evt) {
 };
 
 storyActions.onclick = function (evt) {
-    let container = evt.target.closest('#excerpts');
-    if (!container) {
+    if (evt.target.classList.contains('open_transcript')) {
+        let lang = evt.target.classList.contains('en') ? 'en' : 'ja';
+        openTranscript(story.source, story.title, lang, () => { });
+        return;
+    } else if (evt.target.classList.contains('reimport')) {
+        if (!window.confirm("Reimport the story?")) {
+            return;
+        }
+        snackbarMessage(`reimporting story`);
+        importStory(story.source, story.title, function () {
+            window.location.reload();
+        });
+        return;
+    } else if (!evt.target.closest('#excerpts')) {
         return;
     }
 

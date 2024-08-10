@@ -73,3 +73,14 @@ type WordUpdate struct {
 	AudioStart float32 `json:"audio_start"`
 	AudioEnd   float32 `json:"audio_end"`
 }
+
+type OpenTranscriptRequest struct {
+	StoryName  string `json:"story_name"`
+	SourceName string `json:"source_name"`
+	Lang       string `json:"lang"`
+}
+
+type ImportStoryRequest struct {
+	StoryTitle string `json:"story_title"`
+	Source     string `json:"source"`
+}

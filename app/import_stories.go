@@ -237,13 +237,112 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 
 		// fmt.Println("importing source: ", s.Source, "title: ", s.Title)
 
-		err = importStory(s, sqldb)
+		err = storeStory(s, sqldb)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return malformedPaths, nil
+}
+
+// pathExists returns the first path that exists; return "" if none match
+func firstExtensionThatExists(path string, extensions []string) (string, error) {
+	for _, extension := range extensions {
+		_, err := os.Stat(path + extension)
+		if err == nil {
+			return extension, nil
+		}
+		if !os.IsNotExist(err) {
+			return "", err // some kind of error other than the file not existing
+		}
+	}
+	return "", nil // none of the paths exist, but no error occurred
+}
+
+func importStory(sourceName string, storyTitle string, sqldb *sql.DB) error {
+	sourceDir := SOURCES_PATH + sourceName
+
+	storyBasePath := sourceDir + "/" + storyTitle
+
+	var story Story
+	story.Title = storyTitle
+	story.Source = sourceName
+
+	// find video or audio
+	var err error
+	mediaExtension, err := firstExtensionThatExists(storyBasePath, []string{".mp4", ".m4a", ".mp3"})
+	if err != nil {
+		return err
+	}
+	if mediaExtension == "" {
+		return fmt.Errorf("no audio or video file found for story: " + storyTitle + ", in source: " + sourceName)
+	}
+
+	story.Video = storyTitle + mediaExtension
+
+	// get ja subtitles
+	jaSubtitlesExtension, err := firstExtensionThatExists(storyBasePath, []string{".ja.vtt", ".ja.ass", ".ja.srt"})
+	if err != nil {
+		return err
+	}
+	if jaSubtitlesExtension != "" {
+		jaSubtitlesPath := storyBasePath + jaSubtitlesExtension
+		story.TranscriptJA, story.Content, err = getSubtitles(jaSubtitlesPath)
+
+		if err != nil {
+			return err
+		}
+
+		// replace .ass or .srt files with .vtt
+		if jaSubtitlesExtension != ".ja.vtt" {
+			err := os.WriteFile(storyBasePath+".ja.vtt", []byte(story.TranscriptJA), os.ModePerm)
+			if err != nil {
+				return err
+			}
+
+			err = os.Remove(jaSubtitlesPath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// get en subtitles
+	enSubtitlesExtension, err := firstExtensionThatExists(storyBasePath, []string{".en.vtt", ".en.ass", ".en.srt"})
+	if err != nil {
+		return err
+	}
+	if enSubtitlesExtension != "" {
+		enSubtitlesPath := storyBasePath + enSubtitlesExtension
+
+		story.TranscriptEN, _, err = getSubtitles(enSubtitlesPath)
+		if err != nil {
+			return err
+		}
+
+		// replace .ass or .srt files with .vtt
+		if enSubtitlesExtension != ".en.vtt" {
+			err := os.WriteFile(storyBasePath+".en.vtt", []byte(story.TranscriptEN), os.ModePerm)
+			if err != nil {
+				return err
+			}
+
+			err = os.Remove(enSubtitlesPath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	//fmt.Print("story ready to store\n", len())
+
+	err = storeStory(story, sqldb)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getSubtitles(path string) (newSubtitles string, content string, err error) {
@@ -330,7 +429,7 @@ func storyExists(story Story, sqldb *sql.DB) bool {
 	return true
 }
 
-func importStory(story Story, sqldb *sql.DB) error {
+func storeStory(story Story, sqldb *sql.DB) error {
 	newWordCount, _, err := processStoryWords(story, sqldb)
 	if err != nil {
 		return err
@@ -380,7 +479,6 @@ func updateStorySubtitleFiles(story Story) error {
 }
 
 func processStoryWords(story Story, sqldb *sql.DB) (newWordCount int, wordIdsJson string, err error) {
-
 	// remove newlines from the string in case words are split across lines
 	if newlineRegEx == nil {
 		newlineRegEx = regexp.MustCompile(`\x{000D}\x{000A}|[\x{000A}\x{000B}\x{000C}\x{000D}\x{0085}\x{2028}\x{2029}]`)
@@ -498,4 +596,45 @@ func ImportSource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(bson.M{"message": "imported source: " + body.Source})
+}
+
+func ImportStory(w http.ResponseWriter, r *http.Request) {
+	if importLock.TryLock() {
+		defer importLock.Unlock()
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + `Aborting: an import is already in progress` + `"}`))
+		return
+	}
+
+	dbPath := MAIN_USER_DB_PATH
+
+	w.Header().Set("Content-Type", "application/json")
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	loadDictionary()
+
+	var body ImportStoryRequest
+	err = json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	err = importStory(body.Source, body.StoryTitle, sqldb)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"message": "imported story: " + body.StoryTitle + ", from source: " + body.Source})
 }

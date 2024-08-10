@@ -278,7 +278,7 @@ function getSources(successFn) {
 
 function getIP(successFn) {
     fetch('/ip', {
-        method: 'GET', // or 'PUT'
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         }
@@ -294,7 +294,7 @@ function getIP(successFn) {
 
 function importSource(source, successFn) {
     fetch('/import_source', {
-        method: 'POST', // or 'PUT'
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -302,6 +302,40 @@ function importSource(source, successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Source:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function importStory(source, title, successFn) {
+    fetch('/import_story', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"source": source, "story_title": title})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Story imported:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function openTranscript(sourceName, storyName, lang, successFn) {
+    fetch('/open_transcript', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"source_name": sourceName, "story_name": storyName, "lang": lang})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Open transcript response:', data);
             successFn(data);
         })
         .catch((error) => {

@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -522,4 +525,44 @@ func GetIP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(ips)
+}
+
+func OpenTranscript(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var body OpenTranscriptRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get working directory: " + err.Error() + `"}`))
+	}
+
+	path := wd + "\\..\\static\\sources\\" + body.SourceName + "\\" + body.StoryName + "." + body.Lang + ".vtt"
+	fmt.Println("open transcript path: ", path)
+
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("cmd", "/C", "start", "", path)
+		err = cmd.Run()
+	} else if runtime.GOOS == "darwin" { // mac
+		cmd := exec.Command("open", path)
+		err = cmd.Run()
+	} else { // linux
+		cmd := exec.Command("xdg-open", path) // todo untested
+		err = cmd.Run()
+	}
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to open transcript in default program: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
 }

@@ -106,10 +106,12 @@ func main() {
 	router.HandleFunc("/stories", GetStories).Methods("GET")
 	router.HandleFunc("/sources", GetSources).Methods("GET")
 	router.HandleFunc("/import_source", ImportSource).Methods("POST")
+	router.HandleFunc("/import_story", ImportStory).Methods("POST")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
 	router.HandleFunc("/words", GetWords).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWordArchiveState).Methods("POST")
 	router.HandleFunc("/inc_words", IncWords).Methods("POST")
+	router.HandleFunc("/open_transcript", OpenTranscript).Methods("POST")
 	router.HandleFunc("/", GetMain).Methods("GET")
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))

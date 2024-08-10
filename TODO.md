@@ -1,6 +1,25 @@
 # japanese_vocab TODO
-      
-    could UpdateWordArchiveState be consolidated with inc word?
+    subtitle mode that highlights certain words (or only shows those words?) with translation
+        e.g. only show verbs, or only show kango
+
+    for a word, track all stories / sentences that include the word
+
+    play mode that plays once caption at a time
+        b n nav between captions
+        space? plays the caption (restarts the caption if in middle of playing it)
+        need a bit of buffer margin for timings?
+        some caption breaks are awkard, so need hotkey to consolidate this subtitle with next one?
+            or instead mark a caption as continuing into the next
+                how to indicate this on the caption? 
+                color highlighting?
+                insert arrow char at end of the caption?
+
+    furigana for katakana:
+        display hiragana above katakana character
+        allow user to specify which katakana characters to see hiragana for (so they only see it for the ones that give them trouble)
+
+    hotkey to delete the current subtitle (get rid of filler, like sounds)
+        instead of automatically skipping to next subtitle, add manual skip points or ranges?        
 
     a play mode that skips large gaps between subtitles automatically?
         user can specify a "lead in" margin time, maybe?
@@ -28,11 +47,6 @@
         or just always have one json file per story?
 
     playback mode where randomly selected words in subtitles are highlighted with their definitions shown in same color
-
-    maybe don't need drill/listening distinction in queue?
-        queue could just be a count of listening reps:
-            norm is that you drill words right before doing a listening rep
-                only logging a listening rep            
 
     add a kana drilling page
         allow to pick exactly which characters to include?
@@ -62,45 +76,40 @@
         stories with no queued reps but with a logged rep within last week
 
     clicking info marks should show a modal popup with the info
-
-    (get rid of rep count in DB and just sum up the logged reps)
-        display separate rep count for listening and drills
-    
-    way to set start and end points for the current story:
-        ctrl plus `[` `]` ?
-
+   
     hotkey to open the current japanese subtitle in google translate
 
     link to get translation of whole story content? (what is the limit?)
 
-
-    convert podcast content into transcripts?   
-
-    audit for dead code
-
     audit for dead css styles
 
-for current subtitle, show list of all the words with their word info
-    easy way to change the word status and set remaining reps
-    when importing story, need to store word ids for each subtitle? how to get words? 
+    for current subtitle, show list of all the words with their word info
+        easy way to change the word status and set remaining reps
+        when importing story, need to store word ids for each subtitle? how to get words? 
 
 
-deduplicate the word ids in words field of stories
+    deduplicate the word ids in words field of stories
 
 
-drill auto play mode
-    - show a word with its definition (and play audio?) for n seconds, then automatically move to the next
-    - words auto drilled will be temporarily marked
-    - when done with the drill, button to decrement counter for all words that were temporarily marked
-    - show the word very large, play the audio, short pause before next word
-        (only play cards with audio? maybe an option)
+    drill auto play mode
+        - show a word with its definition (and play audio?) for n seconds, then automatically move to the next
+        - words auto drilled will be temporarily marked
+        - when done with the drill, button to decrement counter for all words that were temporarily marked
+        - show the word very large, play the audio, short pause before next word
+            (only play cards with audio? maybe an option)
 
-subtitles: 
-    english: https://subscene.com/   https://www.opensubtitles.org/en/search/subs   https://www.podnapisi.net
-    japanese: https://kitsunekko.net/dirlist.php?dir=subtitles%2Fjapanese%2F 
+    subtitles: 
+        english: https://subscene.com/   https://www.opensubtitles.org/en/search/subs   https://www.podnapisi.net
+        japanese: https://kitsunekko.net/dirlist.php?dir=subtitles%2Fjapanese%2F 
 
 
-for a word, track all sentences that include the word
+    - highlighting for proper names
+        - filter out of vocab? or just make it a word category you can filter for?
+    
+    - definition for transitive / intransitive verb pairs should always show its pair
+
+    - in absence of baseform, maybe should NOT use surface? investigate "引き出し", "飛べる", "鬼滅の" -> "滅"
+        - potential form should not count as verb base form: e.g. 飛べる should be added only as 飛ぶ, not as 飛べる
 
 
 cut video: 
@@ -122,27 +131,6 @@ use podcast-dl (https://www.npmjs.com/package/podcast-dl/v/7.0.0-async.1) to get
 store audio link with timestamps
     any way to capture from stories with youtube audio? probably not
 
-oscilloscope for selecting audio range for a word
-
-<audio id="audio" src="test.mp3"></audio>
-<script type="text/javascript">
-    var context = new webkitAudioContext;
-    var el = document.getElementById('audio');
-    var source = context.createMediaElementSource(el);
-    source.connect(context.destination);
-    el.play();
-</script>
-
-
-
-
-- highlighting for proper names
-    - filter out of vocab? or just make it a word category you can filter for?
-  
-- definition for transitive / intransitive verb pairs should always show its pair
-
-- in absence of baseform, maybe should NOT use surface? investigate "引き出し", "飛べる", "鬼滅の" -> "滅"
-    - potential form should not count as verb base form: e.g. 飛べる should be added only as 飛ぶ, not as 飛べる
 
 - toucan-like stories:
     - use AI to replace some words with Japanese, then just add them as stories?
