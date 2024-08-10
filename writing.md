@@ -39,7 +39,7 @@ In theory, writing kana and kanji by hand can help you memorize the characters, 
 
 Besides, most people today rarely write *their own native language* by hand, so learning to write Japanese by hand is probably not worth the effort unless you have a great interest in calligraphy.
 
-## What about stylzized text?
+## What about stylized text?
 
 Being able to recognize kana and kanji in calligraphy and other stylized forms is a skill that requires its own practice, but until you reach the stage where you can fludily consume native content, trying to read calligraphy will just slow you down.
 
