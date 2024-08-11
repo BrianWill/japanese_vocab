@@ -37,17 +37,21 @@
                     <div class="story_info" id="date_info"></div>
                     <div>
                         <span id="player_controls">
-                            <label><span class="info_symbol" title="- to decrease speed; + to increase speed">ⓘ</span> Playback speed:</label>&nbsp;
+                            <label>Playback speed:</label>&nbsp;
                             <input type="number" id="player_speed_number" value="1" min="0.4" max="1.6" step="0.05"
                                 class="playerspeed" name="playerspeed">
+                            <span class="info_symbol" title="- to decrease speed; + to increase speed">ⓘ</span> 
                         </span>
                     </div>
-                    <input type="checkbox" checked id="transcript_en_checkbox" name="transcript_en">
+                    <input type="checkbox" id="transcript_en_checkbox" name="transcript_en">
                     <label class="story_info" for="transcript_en">English subtitles</label>
                     <a class="open_transcript en" href="#">edit</a><br>
                     <input type="checkbox" checked id="transcript_ja_checkbox" name="transcript_ja">
                     <label class="story_info" for="transcript_ja">Japanese subtitles</label>
                     <a class="open_transcript ja" href="#">edit</a><br>
+                    <input type="checkbox" id="subtitle_mode_checkbox" name="subtitle_mode">
+                    <label class="story_info" for="subtitle_mode_checkbox">Subtitle mode</label>
+                    <span class="info_symbol" title="When enabled, can only move between subtitles with b (previous) and n (next)">ⓘ</span><br>
                     <a class="reimport" href="#">reimport story</a><br>
                     <br>
                     <div class="story_info" id="excerpts"></div>
