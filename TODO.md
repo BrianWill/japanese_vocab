@@ -1,18 +1,19 @@
 # japanese_vocab TODO
-    subtitle mode that highlights certain words (or only shows those words?) with translation
+    another subtitle mode that highlights certain words (or only shows those words?) with translation
         e.g. only show verbs, or only show kango
+    
+    instead of using actual HTML video cue tracks, just display the cues fully manually
+        maybe cues should be stored in db in my own json format instead of vtt?
+            would also be nice to do some other cleanup maybe
+        while in subtitle mode, only show the current subtitle
 
-    for a word, track all stories / sentences that include the word
+    for each word, track all stories / sentences that include the word
 
-    play mode that plays once caption at a time
-        b n nav between captions
-        space? plays the caption (restarts the caption if in middle of playing it)
-        need a bit of buffer margin for timings?
-        some caption breaks are awkard, so need hotkey to consolidate this subtitle with next one?
-            or instead mark a caption as continuing into the next
-                how to indicate this on the caption? 
-                color highlighting?
-                insert arrow char at end of the caption?
+    button to mark current cue as continuing into next (for purpose of playing individual cues)
+        insert arrow char at end of the caption?
+        maybe actually show these subtitles at same time (with marker or highlight indicating which is the current for marking purposes)
+    button to mark current cue as skipped (not counted for purpose of playing individual cues and cue navigation)
+        skipped captions have different color background            
 
     furigana for katakana:
         display hiragana above katakana character
