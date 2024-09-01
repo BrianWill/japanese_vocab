@@ -11,12 +11,10 @@ var storyActions = document.getElementById('story_actions');
 
 var englishCheckbox = document.getElementById('transcript_en_checkbox');
 var japaneseCheckbox = document.getElementById('transcript_ja_checkbox');
-var subtitleModeCheckbox = document.getElementById('subtitle_mode_checkbox');
 
 var playerControls = document.getElementById('player_controls');
 
 var story = null;
-var selectedLineIdx = 0;
 
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
 const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
@@ -212,7 +210,6 @@ document.body.onkeydown = async function (evt) {
         return;
     }
 
-    let subtitleMode = document.getElementById('subtitle_mode_checkbox').checked;
 
     let timemark = player.currentTime;
     if (evt.code === 'KeyF') {
@@ -226,126 +223,110 @@ document.body.onkeydown = async function (evt) {
     } else if (evt.code === 'KeyA') {
         evt.preventDefault();
         let newTime = timemark - 1.8;
-        if (subtitleMode) {
-            getCurrentCue();
-            newTime = Math.max(newTime, currentCue.startTime);
-        }
         player.currentTime = newTime;
         displayCurrentCues();
     } else if (evt.code === 'KeyD') {
         evt.preventDefault();
         let newTime = timemark + 1;
-        if (subtitleMode) {
-            getCurrentCue();
-            newTime = Math.min(newTime, currentCue.endTime);
-        }
         player.currentTime = newTime;
         displayCurrentCues();
     } else if (evt.code === 'KeyQ') {
         evt.preventDefault();
         let newTime = timemark - 5;
-        if (subtitleMode) {
-            getCurrentCue();
-            newTime = Math.max(newTime, currentCue.startTime);
-        }
         player.currentTime = newTime;
         displayCurrentCues();
     } else if (evt.code === 'KeyE') {
         evt.preventDefault();
         let newTime = timemark + 4;
-        if (subtitleMode) {
-            getCurrentCue();
-            newTime = Math.min(newTime, currentCue.endTime);
-        }
         player.currentTime = newTime;
         displayCurrentCues();
-    } else if (evt.code === 'KeyB') {
-        evt.preventDefault();
+    } else if (evt.code === 'KeyX') {
+        // jump to start of current subtitle
 
-        // jump to start of previous subtitle
-
-        let english = document.getElementById('transcript_en_checkbox').checked;
-        let japanese = document.getElementById('transcript_ja_checkbox').checked;
-
-        if (!english && !japanese) {
+        let track = null;
+        if (document.getElementById('transcript_en_checkbox').checked) {
+            track = trackEn.track;
+        }
+        if (document.getElementById('transcript_ja_checkbox').checked) {
+            track = trackJa.track;
+        }
+        if (track === null) {
             return;
         }
 
-        let prevEn = -1;
-        if (english) {
-            for (let cue of trackEn.track.cues) {
-                if (cue.endTime >= player.currentTime) {
-                    break;
-                }
-                prevEn = cue.startTime;
+        for (let index = track.cues.length - 1; index >= 0; index--) {
+            const cue = track.cues[index];
+            if (cue.startTime <= player.currentTime) {
+                player.currentTime = cue.startTime;
+                break;
             }
         }
 
-        let prevJa = -1;
-        if (japanese) {
-            for (let cue of trackJa.track.cues) {
-                if (cue.endTime >= player.currentTime) {
-                    break;
-                }
-                prevJa = cue.startTime;
-            }
-        }
-
-        let prev = Math.max(prevEn, prevJa);
-
-        if (prev == -1) {
-            return;
-        }
-
-        player.currentTime = prev;
-        getCurrentCue();
         displayCurrentCues();
-    } else if (evt.code === 'KeyN') {
-        evt.preventDefault();
 
+        if (evt.shiftKey) {
+            player.play();
+        } else {
+            player.pause();
+        }
+    } else if (evt.code === 'KeyC') {
         // jump to start of next subtitle
 
-        let english = document.getElementById('transcript_en_checkbox').checked;
-        let japanese = document.getElementById('transcript_ja_checkbox').checked;
-
-        if (!english && !japanese) {
+        let track = null;
+        if (document.getElementById('transcript_en_checkbox').checked) {
+            track = trackEn.track;
+        }
+        if (document.getElementById('transcript_ja_checkbox').checked) {
+            track = trackJa.track;
+        }
+        if (track === null) {
             return;
         }
 
-        let prevEn = -1;
-        if (english) {
-            for (let cue of trackEn.track.cues) {
-                if (cue.startTime > player.currentTime) {
-                    prevEn = cue.startTime;
-                    break;
-                }
+        for (let index = 0; index < track.cues.length; index++) {
+            const cue = track.cues[index];
+            if (cue.startTime > player.currentTime) {
+                player.currentTime = cue.startTime;
+                break;
             }
         }
 
-        let prevJa = -1;
-        if (japanese) {
-            for (let cue of trackJa.track.cues) {
-                if (cue.startTime > player.currentTime) {
-                    prevJa = cue.startTime;
-                    break;
-                }
-            }
-        }
-
-        let next = Math.min(prevEn, prevJa);
-        if (prevEn == -1 && prevJa == -1) {
-            return;
-        } else if (prevEn == -1) {
-            next = prevJa;
-        } else if (prevJa == -1) {
-            next = prevEn;
-        }
-
-        console.log("jump to: ", next);
-
-        player.currentTime = next;
-        getCurrentCue();
         displayCurrentCues();
+
+        if (evt.shiftKey) {
+            player.play();
+        } else {
+            player.pause();
+        }
+    } else if (evt.code === 'KeyZ') {
+        // jump to start of prior subtitle
+
+        let track = null;
+        if (document.getElementById('transcript_en_checkbox').checked) {
+            track = trackEn.track;
+        }
+        if (document.getElementById('transcript_ja_checkbox').checked) {
+            track = trackJa.track;
+        }
+        if (track === null) {
+            return;
+        }
+
+        for (let index = track.cues.length - 1; index >= 0; index--) {
+            const cue = track.cues[index];
+            if (cue.endTime < player.currentTime) {
+                player.currentTime = cue.startTime;
+                break;
+            }
+        }
+
+        displayCurrentCues();
+
+        if (evt.shiftKey) {
+            player.play();
+        } else {
+            player.pause();
+        }
     } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
         evt.preventDefault();
         currentCue = null;
@@ -487,9 +468,6 @@ document.body.onkeydown = async function (evt) {
     } else if (evt.code.startsWith('Space')) {
         evt.preventDefault();
 
-        // jump to start of current subtitle
-        getCurrentCue();
-
         if (currentCue) {
             player.currentTime = currentCue.startTime;
             play();
@@ -498,55 +476,10 @@ document.body.onkeydown = async function (evt) {
 };
 
 function play() {
-    let subtitleMode = document.getElementById('subtitle_mode_checkbox').checked;
-    if (subtitleMode) {
-        getCurrentCue();
-    }
     displayCurrentCues();
     player.play();
 }
 
-function getCurrentCue() {
-    let japanese = document.getElementById('transcript_ja_checkbox').checked;
-    if (!japanese) {
-        return;
-    }
-
-    for (let idx in trackJa.track.cues) {
-        let cue = trackJa.track.cues[idx];
-        if (cue.startTime > player.currentTime) {
-            if (idx == 0) {
-                currentCue = cue;
-                return;
-            }
-            currentCue = trackJa.track.cues[idx - 1];
-            return;
-        }
-    }
-}
-
-subtitleModeCheckbox.addEventListener('change', function (evt) {
-    if (evt.target.checked) {
-        getCurrentCue();
-    } else {
-        currentCue = null;
-    }
-});
-
-// used in subtitle mode
-var currentCue = null;
-
-// stop play mode when end time has been reached 
-player.ontimeupdate = function (evt) {
-    let subtitleMode = document.getElementById('subtitle_mode_checkbox').checked;
-    displayCurrentCues();
-    if (subtitleMode && currentCue) {
-        if (player.currentTime > currentCue.endTime) {
-            player.currentTime = currentCue.startTime;
-            player.pause();
-        }
-    }
-};
 
 // returns time in seconds
 function parseTimestamp(timestamp) {

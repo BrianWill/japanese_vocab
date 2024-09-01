@@ -1,11 +1,17 @@
 # japanese_vocab TODO
-    another subtitle mode that highlights certain words (or only shows those words?) with translation
-        e.g. only show verbs, or only show kango
-    
     instead of using actual HTML video cue tracks, just display the cues fully manually
         maybe cues should be stored in db in my own json format instead of vtt?
             would also be nice to do some other cleanup maybe
-        while in subtitle mode, only show the current subtitle
+
+    maybe subtitles should just be read from file instead of loaded from db? might make it slightly less convenient when doing drills?
+    
+    a subtitle mode that highlights certain words (or only shows those words?) with translation
+        e.g. only show verbs, or only show kango
+
+    (session?) cookie that stores your last viewed source
+        currently annoying that you have to navigate the source pulldown every time you go back to the main page
+
+    visual timeline for editing subtitle timings
 
     for each word, track all stories / sentences that include the word
 
@@ -21,9 +27,6 @@
 
     hotkey to delete the current subtitle (get rid of filler, like sounds)
         instead of automatically skipping to next subtitle, add manual skip points or ranges?        
-
-    a play mode that skips large gaps between subtitles automatically?
-        user can specify a "lead in" margin time, maybe?
 
     import link should just import all sources instead of taking you to another page
         refresh main page when done
@@ -119,7 +122,7 @@ cut video:
 
 convert all in dir:
     
-    for f in *.mkv; do ffmpeg -i "$f" "${f%.*}.mp4"; done
+    for f in *.mkv; do ffmpeg -i "$f" -acodec copy -b:v 1500k -maxrate 3000k "${f%.*}.mp4"; done
 
 
 ffmpeg -i [input] -c:a copy -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]

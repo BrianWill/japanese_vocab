@@ -52,8 +52,9 @@ A story has one or more "excerpts", which represent subranges of the audio or vi
 - `a` : jump back less than a second
 - `e` : jump ahead a few seconds
 - `q` : jump back a few seconds
-- `n` : jump ahead to the next subtitle (if subtitles are available and active)
-- `b` : jump back to the previous subtitle (if subtitles are available and active)
+- `c` : jump ahead to the next subtitle (if subtitles are available and active)
+- `z` : jump back to the previous subtitle (if subtitles are available and active)
+- `x` : jump to start of the current subtitle (if subtitles are available and active)
 - `-` : decrease playback speed
 - `+` : increase playback speed
 
