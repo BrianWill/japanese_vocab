@@ -128,3 +128,19 @@ minidenticon-svg svg {
     bottom: -5px;
     position: relative;
 }
+
+#captions_meter {
+    background-color: rgb(191, 65, 65);
+    color: rgb(191, 65, 65);
+    font-size: 80%;
+    height:4px;
+    transform: translateY(-4em);
+    width: 100%;
+    margin: 0 auto;
+    visibility: hidden;
+}
+
+#captions_meter_indicator
+{
+    transform: translateX(-0.5em);
+}

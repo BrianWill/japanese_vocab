@@ -1,4 +1,4 @@
-# japanese_vocab TODO
+# japanese_vocab TODO   
     instead of using actual HTML video cue tracks, just display the cues fully manually
         maybe cues should be stored in db in my own json format instead of vtt?
             would also be nice to do some other cleanup maybe
@@ -6,7 +6,7 @@
     maybe subtitles should just be read from file instead of loaded from db? might make it slightly less convenient when doing drills?
     
     a subtitle mode that highlights certain words (or only shows those words?) with translation
-        e.g. only show verbs, or only show kango
+        e.g. only show verbs, or only show kangoz
 
     (session?) cookie that stores your last viewed source
         currently annoying that you have to navigate the source pulldown every time you go back to the main page

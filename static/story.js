@@ -261,14 +261,6 @@ document.body.onkeydown = async function (evt) {
                 break;
             }
         }
-
-        displayCurrentCues();
-
-        if (evt.shiftKey) {
-            player.play();
-        } else {
-            player.pause();
-        }
     } else if (evt.code === 'KeyC') {
         // jump to start of next subtitle
 
@@ -290,14 +282,6 @@ document.body.onkeydown = async function (evt) {
                 break;
             }
         }
-
-        displayCurrentCues();
-
-        if (evt.shiftKey) {
-            player.play();
-        } else {
-            player.pause();
-        }
     } else if (evt.code === 'KeyZ') {
         // jump to start of prior subtitle
 
@@ -318,14 +302,6 @@ document.body.onkeydown = async function (evt) {
                 player.currentTime = cue.startTime;
                 break;
             }
-        }
-
-        displayCurrentCues();
-
-        if (evt.shiftKey) {
-            player.play();
-        } else {
-            player.pause();
         }
     } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
         evt.preventDefault();
@@ -524,6 +500,8 @@ function displayCues(cues, target) {
         target.style.visibility = 'visible';
     }
 
+    updateCueGuide();
+
     target.innerHTML = html;
 }
 
@@ -553,7 +531,7 @@ function displayExcerpts(story) {
             <hr>
             <minidenticon-svg username="seed${excerpt.hash}"></minidenticon-svg>
             <a class="play_excerpt" href="#" title="play the excerpt">play</a>
-            <a class="start_time" href="#" title="ctrl-click to set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="ctrl-click to set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
+            <a class="start_time" href="#" title="click to set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="click to set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
             <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptHash=${excerpt.hash}" title="Drill the vocab of this excerpt">vocab</a>
             <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
@@ -677,32 +655,6 @@ function displayStoryContent(story) {
     storyLines.innerHTML = html;
 }
 
-// loads the IFrame Player API code asynchronously.
-// var tag = document.createElement('script');
-// tag.src = "https://www.youtube.com/iframe_api";
-// var firstScriptTag = document.getElementsByTagName('script')[0];
-// firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-// function onYouTubeIframeAPIReady() {
-//     var url = new URL(window.location.href);
-//     var storyId = parseInt(url.searchParams.get("storyId") || undefined);
-//     openStory(storyId);
-// }
-
-function onPlayerReady(event) {
-    event.target.playVideo();
-    console.log('starting video');
-}
-
-var done = false;
-function onPlayerStateChange(event) {
-
-}
-
-function onPlaybackRateChange(val) {
-    console.log('changed rate', val);
-}
-
 document.body.onload = function (evt) {
     load();
 };
@@ -712,3 +664,88 @@ function load(evt) {
     var storyId = parseInt(url.searchParams.get("storyId") || undefined);
     openStory(storyId);
 }
+
+let cueGuide = {
+    element: document.getElementById('captions_meter'),
+    indicator: document.getElementById('captions_meter_indicator'),
+    width: 0,
+    cue: null,
+};
+
+function updateCueGuide() {
+    let cues = null;
+    if (document.getElementById('transcript_en_checkbox').checked) {
+        cues = trackEn.track.activeCues;
+    }
+    if (document.getElementById('transcript_ja_checkbox').checked) {
+        cues = trackJa.track.activeCues;
+    }
+    if (cues == null || cues.length == 0) {
+        document.getElementById('captions_meter').style.visibility = 'hidden';
+        return;
+    }
+
+    // because of overlap, more than one cue can be active
+    let longestCue = null;
+    let longestDuration = 0;
+    for (let i = 0; i < cues.length; i++) {
+        let cue = cues[i];
+        let duration = cue.endTime - cue.startTime;
+        if (duration > longestDuration) {
+            longestDuration = duration;
+            longestCue = cue;
+        }
+    }
+
+    if (longestDuration > 0) {
+        document.getElementById('captions_meter').style.visibility = 'visible';
+        cueGuide.cue = longestCue;
+        displayCueGuide();
+    }
+}
+
+function displayCueGuide() {
+    if (!cueGuide.cue) {
+        return;
+    }
+
+    let duration = cueGuide.cue.endTime - cueGuide.cue.startTime;
+    if (duration <= 0) {
+        return;
+    };
+
+    // this can happen some times when seeking because of the event queue order
+    if (player.currentTime < cueGuide.cue.startTime || player.currentTime > cueGuide.cue.endTime) {
+        return;
+    }
+    
+    const widthPercentagePointsPerSecond = 3;
+    const maxWidth = 90;
+    const minWidth = 5;
+    let width = duration * widthPercentagePointsPerSecond;
+    width = Math.min(Math.max(width, minWidth), maxWidth); // clamp 
+
+    cueGuide.width = width;
+    cueGuide.element.style.width = cueGuide.width + '%';
+
+    let cueProgress = (player.currentTime - cueGuide.cue.startTime) / duration;
+    cueGuide.indicator.style.marginLeft = (cueProgress * 100).toFixed(5) + '%';
+}
+
+player.addEventListener("seeked", (evt) => {
+    displayCurrentCues();
+});
+
+var intervalHandle;
+const deltaTime = 0.01;  // in seconds
+
+player.addEventListener("playing", (event) => {
+    window.clearInterval(intervalHandle); // just in case
+    intervalHandle = window.setInterval(function () {
+        displayCueGuide();
+    }, deltaTime * 1000);
+});
+
+player.addEventListener("pause", (event) => {
+    window.clearInterval(intervalHandle);
+});
