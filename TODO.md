@@ -2,8 +2,18 @@
     instead of using actual HTML video cue tracks, just display the cues fully manually
         maybe cues should be stored in db in my own json format instead of vtt?
             would also be nice to do some other cleanup maybe
+        maybe subtitles should just be read from file instead of loaded from db?
 
-    maybe subtitles should just be read from file instead of loaded from db? might make it slightly less convenient when doing drills?
+    in app subtitle editor
+        content view shows the subtitles and allows you to break/join lines and edit the start/end times
+        maybe content view / subtitle editing should be a separate page
+            player will be smaller
+        or maybe just a mode that shows the content and makes the player much smaller + hides the subtitle overlay on the video
+            the edit button on the subtitles would reveal this mode
+                button next to player takes you back to normal mode
+        in edit mode, buttons to shove the timings forward and back
+            this would replace the current hot keys
+            could allow for more fine grained adjustments than the current hotkeys
     
     a subtitle mode that highlights certain words (or only shows those words?) with translation
         e.g. only show verbs, or only show kangoz

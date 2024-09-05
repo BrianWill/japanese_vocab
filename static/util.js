@@ -477,24 +477,33 @@ function addLogEvent(storyId) {
 }
 
 // todo test with negative time
-function formatTrackTime(time, noFraction) {
+function formatTrackTime(time, padding = 3, includeHours = false) {
     let seconds = Math.trunc(time);
 
-    let fractionStr = '000';
-    let arr = String(time).split('.');
+    let fractionStr = '';
+    let arr = time.toFixed(padding).split('.');
     if (arr.length > 1) {
-        fractionStr = arr[1].substring(0, 3).padEnd(3, '0');
+        fractionStr = arr[1].padEnd(padding, '0');
+    } else {
+        fractionStr = ''.padEnd(padding, '0');
     }
 
     let secondsStr = String(seconds % 60).padStart(2, '0');
     let minutesStr = String(Math.trunc(seconds / 60) % 60).padStart(2, '0');
-    let hoursStr = String(Math.trunc(seconds / (60 * 60))).padStart(2, '0');
 
-    if (noFraction) {
-        return `${hoursStr}:${minutesStr}:${secondsStr}`;
+    let str = `${minutesStr}:${secondsStr}`;
+
+    let hours = Math.trunc(seconds / (60 * 60));
+    if (includeHours || hours > 0) {
+        let hoursStr = String(hours).padStart(2, '0');
+        str = hoursStr + ':' + str;
     }
 
-    return `${hoursStr}:${minutesStr}:${secondsStr}.${fractionStr}`;
+    if (padding > 0) {
+        str += '.' + fractionStr;
+    }
+
+    return str;
 }
 
 function textTrackToString(track, startTime, endTime) {
@@ -513,7 +522,7 @@ function textTrackToString(track, startTime, endTime) {
         }
 
         vtt += `${cue.id}
-${formatTrackTime(cue.startTime)} --> ${formatTrackTime(cue.endTime)}
+${formatTrackTime(cue.startTime, 3, true)} --> ${formatTrackTime(cue.endTime, 3, true)}
 ${cue.text}\n\n`;
     }
 

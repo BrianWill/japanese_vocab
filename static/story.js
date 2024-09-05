@@ -232,12 +232,12 @@ document.body.onkeydown = async function (evt) {
         displayCurrentCues();
     } else if (evt.code === 'KeyQ') {
         evt.preventDefault();
-        let newTime = timemark - 5;
+        let newTime = timemark - 6;
         player.currentTime = newTime;
         displayCurrentCues();
     } else if (evt.code === 'KeyE') {
         evt.preventDefault();
-        let newTime = timemark + 4;
+        let newTime = timemark + 5;
         player.currentTime = newTime;
         displayCurrentCues();
     } else if (evt.code === 'KeyX') {
@@ -531,7 +531,7 @@ function displayExcerpts(story) {
             <hr>
             <minidenticon-svg username="seed${excerpt.hash}"></minidenticon-svg>
             <a class="play_excerpt" href="#" title="play the excerpt">play</a>
-            <a class="start_time" href="#" title="click to set the start time">${formatTrackTime(excerpt.start_time, true)}</a>-<a class="end_time" href="#" title="click to set the end time">${formatTrackTime(excerpt.end_time, true)}</a>
+            <a class="start_time" href="#" title="click to set the start time">${formatTrackTime(excerpt.start_time, 0)}</a>-<a class="end_time" href="#" title="click to set the end time">${formatTrackTime(excerpt.end_time, 0)}</a>
             <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptHash=${excerpt.hash}" title="Drill the vocab of this excerpt">vocab</a>
             <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
             <br>
@@ -598,7 +598,6 @@ function openStory(id) {
                 player.onloadeddata = function (evt) {
                     processStory(story);
                     displayStoryInfo(story);
-                    displayStoryContent(story);
                 };
 
                 player.src = path + time;
@@ -615,6 +614,7 @@ function openStory(id) {
             }
 
             player.addEventListener("loadedmetadata", (event) => {
+                displayStoryContent(story);
                 console.log('cues', trackEn.track.cues, trackJa.track.cues);
             });
 
@@ -645,11 +645,40 @@ function adjustPlaybackSpeed(adjustment) {
 }
 
 function displayStoryContent(story) {
-    var lines = story.content.split('\n').filter(x => x);  // filter out blank lines
+    let cues = null;
+    if (document.getElementById('transcript_en_checkbox').checked) {
+        cues = trackEn.track.cues;
+    }
+    if (document.getElementById('transcript_ja_checkbox').checked) {
+        cues = trackJa.track.cues;
+    }
+    if (cues == null) {
+        storyLines.innerHTML = "";
+        return;
+    }
 
     let html = '';
-    for (let i = 0; i < lines.length; i++) {
-        html += `<div>${lines[i]}</div>`
+    console.log(cues);
+    for (let cueIndex = 0; cueIndex < cues.length; cueIndex++) {
+        let cue = cues[cueIndex];
+
+        let lineSpans = ``;
+
+        if (cue.text) {
+            let lines = cue.text.split('\n');
+            for (let line of lines) {
+                lineSpans += `<span class="subtitle_line">${line}</span>`;
+            }
+        } else {
+            console.log('cue with no text', cue);
+        }
+
+        let startTime = formatTrackTime(cue.startTime);
+
+        html += `<div class="subtitle">
+            <div class="subtitle_start">${startTime}</div>
+            <div class="subtitle_lines">${lineSpans}</div>
+        </div>`;
     }
 
     storyLines.innerHTML = html;
@@ -718,7 +747,7 @@ function displayCueGuide() {
     if (player.currentTime < cueGuide.cue.startTime || player.currentTime > cueGuide.cue.endTime) {
         return;
     }
-    
+
     const widthPercentagePointsPerSecond = 3;
     const maxWidth = 90;
     const minWidth = 5;
