@@ -34,6 +34,25 @@ storyLines.onwheel = function (evt) {
     storyLines.scrollTop -= scrollDelta;
 };
 
+storyLines.onclick = function (evt) {
+    if (evt.target.classList.contains('subtitle_start_time')) {
+        evt.preventDefault();
+        let subtitleContainer = evt.target.closest('div[subtitle_index]');
+        if (!subtitleContainer) {
+            return;
+        }
+        let idx = subtitleContainer.getAttribute('subtitle_index');
+        let lang = subtitleContainer.getAttribute('subtitle_lang');
+
+        var cues = (lang == 'ja') ? trackJa.track.cues : trackEn.track.cues;
+
+        var cue = cues[idx];
+
+        player.currentTime = cue.startTime;
+
+    }
+};
+
 storyActions.onclick = function (evt) {
     if (evt.target.classList.contains('open_transcript')) {
         let lang = evt.target.classList.contains('en') ? 'en' : 'ja';
@@ -644,12 +663,14 @@ function adjustPlaybackSpeed(adjustment) {
     }
 }
 
-function displayStoryContent(story) {
+function displayStoryContent() {
     let cues = null;
+    let lang = 'en';
     if (document.getElementById('transcript_en_checkbox').checked) {
         cues = trackEn.track.cues;
     }
     if (document.getElementById('transcript_ja_checkbox').checked) {
+        lang = 'ja';
         cues = trackJa.track.cues;
     }
     if (cues == null) {
@@ -673,10 +694,10 @@ function displayStoryContent(story) {
             console.log('cue with no text', cue);
         }
 
-        let startTime = formatTrackTime(cue.startTime);
+        let startTime = formatTrackTime(cue.startTime, 2);
 
-        html += `<div class="subtitle">
-            <div class="subtitle_start">${startTime}</div>
+        html += `<div class="subtitle" subtitle_index="${cueIndex}" subtitle_lang="${lang}">
+            <div class="subtitle_start"><a href="#" class="subtitle_start_time">${startTime}</a></div>
             <div class="subtitle_lines">${lineSpans}</div>
         </div>`;
     }

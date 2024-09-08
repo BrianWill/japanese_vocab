@@ -144,90 +144,66 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 	}
 
 	storiesByTitle := make(map[string]Story)
-	malformedPaths := make([]string, 0)
+	unusedPaths := make([]string, 0)
 
+	// find stories
 	for _, entry := range entries {
 		fileName := entry.Name()
-		path := sourceDir + "/" + fileName
 		components := strings.Split(fileName, ".")
-
 		extension := components[len(components)-1]
 
 		var title string
 
-		if extension == "mp4" || extension == "m4a" {
-			if len(components) < 2 {
-				malformedPaths = append(malformedPaths, path)
-				continue
-			}
-
+		if extension == "mp4" || extension == "m4a" || extension == "mp3" {
 			title = strings.Join(components[:len(components)-1], ".")
 			story := storiesByTitle[title]
 			story.Title = title
 			story.Source = sourceName
 			story.Video = fileName
-			storiesByTitle[title] = story
-		} else if extension == "vtt" || extension == "ass" || extension == "srt" {
-			if len(components) < 3 {
-				malformedPaths = append(malformedPaths, path)
-				continue
+
+			storyBasePath := sourceDir + "/" + title
+
+			story.SubtitlesJA, err = readWriteSubtitleFiles(storyBasePath, "ja")
+			if err != nil {
+				return nil, err
 			}
-
-			// todo replace .ass or .srt with .vtt
-			lang := components[len(components)-2]
-			title = strings.Join(components[:len(components)-2], ".")
-			story := storiesByTitle[title]
-			story.Title = title
-			story.Source = sourceName
-
-			newPath := sourceDir + "/" + strings.Join(components[:len(components)-1], ".") + ".vtt"
-
-			if lang == "en" {
-				story.TranscriptEN, _, err = getSubtitles(path)
-				if err != nil {
-					return nil, err
-				}
-
-				// replace .ass or .srt files with
-				if extension != "vtt" {
-					err := os.WriteFile(newPath, []byte(story.TranscriptEN), os.ModePerm)
-					if err != nil {
-						return nil, err
-					}
-
-					err = os.Remove(path)
-					if err != nil {
-						return nil, err
-					}
-				}
-			} else if lang == "ja" {
-				story.TranscriptJA, story.Content, err = getSubtitles(path)
-				if err != nil {
-					return nil, err
-				}
-
-				// replace .ass or .srt files with
-				if extension != "vtt" {
-					err := os.WriteFile(newPath, []byte(story.TranscriptJA), os.ModePerm)
-					if err != nil {
-						return nil, err
-					}
-
-					err = os.Remove(path)
-					if err != nil {
-						return nil, err
-					}
-				}
-			} else {
-				malformedPaths = append(malformedPaths, path)
-				continue
+			story.SubtitlesEN, err = readWriteSubtitleFiles(storyBasePath, "en")
+			if err != nil {
+				return nil, err
 			}
 
 			storiesByTitle[title] = story
-		} else {
-			malformedPaths = append(malformedPaths, path)
-			continue
 		}
+	}
+
+	// gather unusedPaths
+	for _, entry := range entries {
+		fileName := entry.Name()
+		components := strings.Split(fileName, ".")
+
+		if len(components) > 1 {
+			extension := components[len(components)-1]
+
+			if extension == "mp4" || extension == "m4a" || extension == "mp3" || extension == "json" {
+				title := strings.Join(components[:len(components)-1], ".")
+				if _, ok := storiesByTitle[title]; ok {
+					continue
+				}
+			}
+
+			if extension == "vtt" || extension == "ass" || extension == "srt" {
+				if len(components) > 2 {
+					lang := components[len(components)-2]
+					validLang := lang == "ja" || lang == "en"
+					title := strings.Join(components[:len(components)-2], ".")
+					if _, ok := storiesByTitle[title]; ok && validLang {
+						continue
+					}
+				}
+			}
+		}
+
+		unusedPaths = append(unusedPaths, fileName)
 	}
 
 	for _, s := range storiesByTitle {
@@ -235,15 +211,13 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 			continue
 		}
 
-		// fmt.Println("importing source: ", s.Source, "title: ", s.Title)
-
 		err = storeStory(s, sqldb)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return malformedPaths, nil
+	return unusedPaths, nil
 }
 
 // pathExists returns the first path that exists; return "" if none match
@@ -281,61 +255,14 @@ func importStory(sourceName string, storyTitle string, sqldb *sql.DB) error {
 
 	story.Video = storyTitle + mediaExtension
 
-	// get ja subtitles
-	jaSubtitlesExtension, err := firstExtensionThatExists(storyBasePath, []string{".ja.vtt", ".ja.ass", ".ja.srt"})
+	story.SubtitlesJA, err = readWriteSubtitleFiles(storyBasePath, "ja")
 	if err != nil {
 		return err
 	}
-	if jaSubtitlesExtension != "" {
-		jaSubtitlesPath := storyBasePath + jaSubtitlesExtension
-		story.TranscriptJA, story.Content, err = getSubtitles(jaSubtitlesPath)
-
-		if err != nil {
-			return err
-		}
-
-		// replace .ass or .srt files with .vtt
-		if jaSubtitlesExtension != ".ja.vtt" {
-			err := os.WriteFile(storyBasePath+".ja.vtt", []byte(story.TranscriptJA), os.ModePerm)
-			if err != nil {
-				return err
-			}
-
-			err = os.Remove(jaSubtitlesPath)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// get en subtitles
-	enSubtitlesExtension, err := firstExtensionThatExists(storyBasePath, []string{".en.vtt", ".en.ass", ".en.srt"})
+	story.SubtitlesEN, err = readWriteSubtitleFiles(storyBasePath, "en")
 	if err != nil {
 		return err
 	}
-	if enSubtitlesExtension != "" {
-		enSubtitlesPath := storyBasePath + enSubtitlesExtension
-
-		story.TranscriptEN, _, err = getSubtitles(enSubtitlesPath)
-		if err != nil {
-			return err
-		}
-
-		// replace .ass or .srt files with .vtt
-		if enSubtitlesExtension != ".en.vtt" {
-			err := os.WriteFile(storyBasePath+".en.vtt", []byte(story.TranscriptEN), os.ModePerm)
-			if err != nil {
-				return err
-			}
-
-			err = os.Remove(enSubtitlesPath)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	//fmt.Print("story ready to store\n", len())
 
 	err = storeStory(story, sqldb)
 	if err != nil {
@@ -345,47 +272,75 @@ func importStory(sourceName string, storyTitle string, sqldb *sql.DB) error {
 	return nil
 }
 
-func getSubtitles(path string) (newSubtitles string, content string, err error) {
-	subs, err := astisub.OpenFile(path)
-	if err != nil {
-		return "", "", err
-	}
+// If json subtitle file already exists, return its content as string.
+// Otherwise, read original subtitle file, write subtitles to json file, and return the json.
+func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
 
-	var sb strings.Builder
-	for _, item := range subs.Items {
-		for _, line := range item.Lines {
-			for _, lineItem := range line.Items {
-				sb.WriteString(lineItem.Text)
-			}
-			sb.WriteString("\n")
+	jsonPath := storyBasePath + "." + lang + ".json"
+
+	// if json already exists, just read from json and ignore the original subtitle file
+	_, err := os.Stat(jsonPath)
+	if err == nil {
+		jsonBytes, err := os.ReadFile(jsonPath)
+		if err != nil {
+			return "", err
+		}
+
+		return string(jsonBytes), nil
+	} else {
+		if !os.IsNotExist(err) {
+			return "", nil
 		}
 	}
 
-	var buf = &bytes.Buffer{}
-	err = subs.WriteToWebVTT(buf)
-	if err != nil {
-		return "", "", err
-	}
-	return buf.String(), sb.String(), nil
-}
+	// json did not exist, so read from the original subtitle file...
 
-func getSubtitlesContent(vtt string) (string, error) {
-	subs, err := astisub.ReadFromWebVTT(bytes.NewReader([]byte(vtt)))
+	subtitlesExtension, err := firstExtensionThatExists(storyBasePath,
+		[]string{"." + lang + ".vtt", "." + lang + ".ass", "." + lang + ".srt"})
+	if err != nil {
+		return "", nil
+	}
+
+	subtitles := make([]Subtitle, 0)
+
+	// read subtitle file if it exists (otherwise we'll write an empty json file)
+	if subtitlesExtension != "" {
+		subs, err := astisub.OpenFile(storyBasePath + subtitlesExtension)
+		if err != nil {
+			return "", err
+		}
+
+		var sb strings.Builder
+		for _, item := range subs.Items {
+			text := ""
+			for _, line := range item.Lines {
+
+				for _, lineItem := range line.Items {
+					text += lineItem.Text
+					sb.WriteString(lineItem.Text)
+				}
+				sb.WriteString("\n")
+			}
+			subtitles = append(subtitles, Subtitle{
+				StartTime: float32(item.StartAt) / (1000 * 1000 * 1000), // convert from nanoseconds to seconds
+				EndTime:   float32(item.EndAt) / (1000 * 1000 * 1000),
+				Text:      text,
+			})
+		}
+	}
+
+	jsonBytes, err := json.MarshalIndent(subtitles, "", "    ")
 	if err != nil {
 		return "", err
 	}
 
-	var sb strings.Builder
-	for _, item := range subs.Items {
-		for _, line := range item.Lines {
-			for _, lineItem := range line.Items {
-				sb.WriteString(lineItem.Text)
-			}
-			sb.WriteString("\n")
-		}
+	// write out subtitle json
+	err = os.WriteFile(storyBasePath+"."+lang+".json", jsonBytes, 0644)
+	if err != nil {
+		return "", err
 	}
 
-	return sb.String(), nil
+	return string(jsonBytes), nil
 }
 
 func getSubtitlesContentInTimeRange(vtt string, startTime float64, endTime float64) (string, error) {
@@ -440,10 +395,10 @@ func storeStory(story Story, sqldb *sql.DB) error {
 
 		_, err := sqldb.Exec(`UPDATE stories SET 
 				date = $1, link = $2, video = $3, content = $4,  
-				transcript_en = $5, transcript_ja = $6
-				WHERE title = $7 and source = $8;`,
+				transcript_en = $5, transcript_ja = $6, subtitles_en = $7, subtitles_ja = $8
+				WHERE title = $9 and source = $10;`,
 			story.Date, story.Link, story.Video, story.Content,
-			story.TranscriptEN, story.TranscriptJA,
+			story.TranscriptEN, story.TranscriptJA, story.SubtitlesEN, story.SubtitlesJA,
 			story.Title, story.Source)
 		return err
 	}
@@ -452,24 +407,24 @@ func storeStory(story Story, sqldb *sql.DB) error {
 
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
 				content, transcript_en, transcript_ja, excerpts, date_last_rep, has_reps_todo) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`,
 		story.Title, story.Source, story.Date, story.Link,
 		story.Video, story.Content, story.TranscriptEN,
-		story.TranscriptJA, INITTIAL_EXCERPT, 0, 0)
+		story.TranscriptJA, story.SubtitlesEN, story.SubtitlesJA, INITTIAL_EXCERPT, 0, 0)
 
 	return err
 }
 
 func updateStorySubtitleFiles(story Story) error {
 	path := SOURCES_PATH + story.Source + "/" + story.Title
-	if story.TranscriptEN != "" {
-		err := os.WriteFile(path+".en.vtt", []byte(story.TranscriptEN), os.ModePerm)
+	if story.SubtitlesEN != "" {
+		err := os.WriteFile(path+".en.json", []byte(story.SubtitlesEN), os.ModePerm)
 		if err != nil {
 			return err
 		}
 	}
-	if story.TranscriptJA != "" {
-		err := os.WriteFile(path+".ja.vtt", []byte(story.TranscriptJA), os.ModePerm)
+	if story.SubtitlesJA != "" {
+		err := os.WriteFile(path+".ja.json", []byte(story.SubtitlesJA), os.ModePerm)
 		if err != nil {
 			return err
 		}

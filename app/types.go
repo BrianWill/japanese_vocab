@@ -14,6 +14,8 @@ type Story struct {
 	HasRepsTodo  int       `json:"has_reps_todo"`
 	TranscriptEN string    `json:"transcript_en,omitempty"`
 	TranscriptJA string    `json:"transcript_ja,omitempty"`
+	SubtitlesEN  string    `json:"subtitles_en,omitempty"`
+	SubtitlesJA  string    `json:"subtitles_ja,omitempty"`
 	Excerpts     []Excerpt `json:"excerpts"`
 }
 
@@ -83,4 +85,10 @@ type OpenTranscriptRequest struct {
 type ImportStoryRequest struct {
 	StoryTitle string `json:"story_title"`
 	Source     string `json:"source"`
+}
+
+type Subtitle struct {
+	StartTime float32 `json:"start_time"`
+	EndTime   float32 `json:"end_time"`
+	Text      string  `json:"text"`
 }

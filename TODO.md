@@ -4,6 +4,13 @@
             would also be nice to do some other cleanup maybe
         maybe subtitles should just be read from file instead of loaded from db?
 
+    getWordsFromExcerpt
+        update to use json subtitles instead of vtt transcript
+
+    openTranscript
+        get rid of this once subtitle editing is done?
+        or maybe keep so users can easily edit the original file?
+
     in app subtitle editor
         content view shows the subtitles and allows you to break/join lines and edit the start/end times
         maybe content view / subtitle editing should be a separate page
