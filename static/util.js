@@ -177,8 +177,8 @@ function updateSubtitles(story, successFn) {
         id: story.id,
         source: story.source,
         title: story.title,
-        transcript_ja: story.transcript_ja,
-        transcript_en: story.transcript_en
+        subtitles_en: JSON.stringify(story.subtitles_en, null, 4),
+        subtitles_ja: JSON.stringify(story.subtitles_ja, null, 4)
     };
     fetch(`/update_subtitles`, {
         method: 'POST',
@@ -531,15 +531,14 @@ ${cue.text}\n\n`;
 
 
 // add adjustment to every start and end timing, but only those which overlap or come after 'time'
-function adjustTextTrackTimings(track, adjustment, time) {
+function adjustTextTrackTimings(cues, adjustment, time) {
     time = time || 0;
-
     
     // find first cue that ends after time
-    let index = track.cues.length;
-    for (let i = 0; i < track.cues.length; i++) {
-        let cue = track.cues[i];
-        if (cue.endTime > time) {
+    let index = cues.length;
+    for (let i = 0; i < cues.length; i++) {
+        let cue = cues[i];
+        if (cue.end_time > time) {
             index = i;
             break;
         }
@@ -548,68 +547,68 @@ function adjustTextTrackTimings(track, adjustment, time) {
     // we have to work with a copy of the cues because setting startTime or endTime will reorder track.cues
 
     let copy = []; 
-    copy.length = track.cues.length;
-    for (let i = 0; i < track.cues.length; i++) {
-        copy[i] = track.cues[i];
+    copy.length = cues.length;
+    for (let i = 0; i < cues.length; i++) {
+        copy[i] = cues[i];
     }
 
     for (let i = index; i < copy.length; i++) {
         let cue = copy[i];
         console.log("adjustment: ", adjustment, cue.text);
 
-        cue.startTime += adjustment;
-        cue.endTime += adjustment;
+        cue.start_time += adjustment;
+        cue.end_time += adjustment;
     }
 
-    for (let i = 0; i < track.cues.length; i++) {
-        track.cues[i] = copy[i];
+    for (let i = 0; i < cues.length; i++) {
+        cues[i] = copy[i];
     }
 }
 
 // add adjustment to every start and end timing
-function adjustTextTrackAllTimings(track, adjustment) {
+function adjustTextTrackAllTimings(cues, adjustment) {
     // do nothing if first cue start time would be less than 0
-    let firstCue = track.cues[0];
-    if (firstCue.startTime + adjustment < 0) {
+    let firstCue = cues[0];
+    if (firstCue.start_time + adjustment < 0) {
         return false;
     }
 
-    // we have to work with a copy of the cues because setting startTime or endTime will reorder track.cues
+    // todo shouldn't need to use a copy now that we aren't using tracks
 
     let copy = []; 
-    copy.length = track.cues.length;
-    for (let i = 0; i < track.cues.length; i++) {
-        copy[i] = track.cues[i];
+    copy.length = cues.length;
+    for (let i = 0; i < cues.length; i++) {
+        copy[i] = cues[i];
     }
 
     for (let i = 0; i < copy.length; i++) {
         let cue = copy[i];
-        cue.startTime += adjustment;
-        cue.endTime += adjustment;
+        cue.start_time += adjustment;
+        cue.end_time += adjustment;
     }
 
     for (let i = 0; i < copy.length; i++) {
-        copy[i] = track.cues[i];
+        copy[i] = cues[i];
     }
 
     return true;
 }
 
 // move next cue after time up to time, and move all cues after up the same amount
-function bringForwardTextTrackTimings(track, time) {
+function bringForwardTextTrackTimings(cues, time) {
     let found = false;
     let index = 0;
 
     // find first cue which comes after time
-    for (let i = 0; i < track.cues.length; i++) {
-        let cue = track.cues[i];
+    for (let i = 0; i < cues.length; i++) {
+        let cue = cues[i];
 
         // do nothing if a track overlaps the time
-        if (cue.startTime < time && cue.endTime > time) {
+        if (cue.start_time < time && cue.end_time > time) {
             return false;
         }
 
-        if (cue.startTime > time) {
+        if (cue.start_time > time) {
             index = i;
             found = true;
             break;
@@ -620,40 +619,40 @@ function bringForwardTextTrackTimings(track, time) {
         return;
     }
 
-    let adjustment = time - track.cues[index].startTime;
+    let adjustment = time - cues[index].start_time;
 
     console.log('adjustment', adjustment);
     
-    // we have to work with a copy of the cues because setting startTime or endTime will reorder track.cues
+    // todo shouldn't have to do a copy anymore
 
     let copy = []; 
-    copy.length = track.cues.length;
-    for (let i = 0; i < track.cues.length; i++) {
-        copy[i] = track.cues[i];
+    copy.length = cues.length;
+    for (let i = 0; i < cues.length; i++) {
+        copy[i] = cues[i];
     }
 
     for (let i = index; i < copy.length; i++) {
         let cue = copy[i];
-        cue.startTime += adjustment;
-        cue.endTime += adjustment;
+        cue.start_time += adjustment;
+        cue.end_time += adjustment;
     }
 
     for (let i = 0; i < copy.length; i++) {
-        copy[i] = track.cues[i];
+        copy[i] = cues[i];
     }
 
     return true;
 }
 
 // find all cues for which time is between the start and end
-function findCues(track, time) {
-    let cues = [];
-    for (let cue of track.cues) {
-        if (cue.startTime <= time && time <= cue.endTime) {
-            cues.push(cue);
+function findCues(cues, time) {
+    let selected = [];
+    for (let cue of cues) {
+        if (cue.start_time <= time && time < cue.end_time) {
+            selected.push(cue);
         }
     }
-    return cues;
+    return selected;
 }
 
 function integerHash(str) {

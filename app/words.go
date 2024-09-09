@@ -85,17 +85,17 @@ func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptHash int64) ([]Dri
 		return nil, err
 	}
 
-	var transcriptJA string
+	var subtitlesJA string
 	var content string
-	row := sqldb.QueryRow(`SELECT content, transcript_ja FROM stories WHERE id = $1;`, storyId)
-	err = row.Scan(&content, &transcriptJA)
+	row := sqldb.QueryRow(`SELECT content, subtitles_ja FROM stories WHERE id = $1;`, storyId)
+	err = row.Scan(&content, &subtitlesJA)
 	if err != nil {
 		return nil, err
 	}
 
 	excerptText := content
-	if transcriptJA != "" {
-		excerptText, err = getSubtitlesContentInTimeRange(transcriptJA, excerpt.StartTime, excerpt.EndTime)
+	if subtitlesJA != "" {
+		excerptText, err = getSubtitlesContentInTimeRange(subtitlesJA, excerpt.StartTime, excerpt.EndTime)
 		if err != nil {
 			return nil, err
 		}

@@ -2,8 +2,6 @@ var storyLines = document.getElementById('story_lines');
 var wordList = document.getElementById('word_list');
 var playerSpeedNumber = document.getElementById('player_speed_number');
 var player = document.getElementById('video_player');
-var trackJa = document.getElementById('track_ja');
-var trackEn = document.getElementById('track_en');
 var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
 var repetitionsInfoDiv = document.getElementById('repetitions_info');
@@ -16,17 +14,17 @@ var playerControls = document.getElementById('player_controls');
 
 var story = null;
 
+var cueGuideElement = document.getElementById('captions_meter');
+var cueGuideIndicator = document.getElementById('captions_meter_indicator');
+
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
 const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
 const PLAYBACK_ADJUSTMENT = 0.05;
 
 const MAX_INTEGER = Math.pow(2, 52) - 1;
 
-trackJa.track.addEventListener('cuechange', displayCurrentCues);
-trackEn.track.addEventListener('cuechange', displayCurrentCues);
-
-englishCheckbox.addEventListener('change', displayCurrentCues);
-japaneseCheckbox.addEventListener('change', displayCurrentCues);
+englishCheckbox.addEventListener('change', displaySubtitles);
+japaneseCheckbox.addEventListener('change', displaySubtitles);
 
 storyLines.onwheel = function (evt) {
     evt.preventDefault();
@@ -44,11 +42,11 @@ storyLines.onclick = function (evt) {
         let idx = subtitleContainer.getAttribute('subtitle_index');
         let lang = subtitleContainer.getAttribute('subtitle_lang');
 
-        var cues = (lang == 'ja') ? trackJa.track.cues : trackEn.track.cues;
+        var cues = (lang == 'ja') ? story.subtitles_ja : story.subtitles_en;
 
         var cue = cues[idx];
 
-        player.currentTime = cue.startTime;
+        player.currentTime = cue.start_time;
 
     }
 };
@@ -156,7 +154,7 @@ storyActions.onclick = function (evt) {
         // setting src resets the playbackRate, so must set it again
         player.playbackRate = parseFloat(document.getElementById('player_speed_number').value);
         play();
-        displayCurrentCues();
+        displaySubtitles();
 
     } else if (evt.target.classList.contains('start_time')) {
         evt.preventDefault();
@@ -243,82 +241,82 @@ document.body.onkeydown = async function (evt) {
         evt.preventDefault();
         let newTime = timemark - 1.8;
         player.currentTime = newTime;
-        displayCurrentCues();
+        displaySubtitles();
     } else if (evt.code === 'KeyD') {
         evt.preventDefault();
         let newTime = timemark + 1;
         player.currentTime = newTime;
-        displayCurrentCues();
+        displaySubtitles();
     } else if (evt.code === 'KeyQ') {
         evt.preventDefault();
         let newTime = timemark - 6;
         player.currentTime = newTime;
-        displayCurrentCues();
+        displaySubtitles();
     } else if (evt.code === 'KeyE') {
         evt.preventDefault();
         let newTime = timemark + 5;
         player.currentTime = newTime;
-        displayCurrentCues();
+        displaySubtitles();
     } else if (evt.code === 'KeyX') {
         // jump to start of current subtitle
 
-        let track = null;
+        let cues = null;
         if (document.getElementById('transcript_en_checkbox').checked) {
-            track = trackEn.track;
+            cues = story.subtitles_en;
         }
         if (document.getElementById('transcript_ja_checkbox').checked) {
-            track = trackJa.track;
+            cues = story.subtitles_ja;
         }
-        if (track === null) {
+        if (cues === null) {
             return;
         }
 
-        for (let index = track.cues.length - 1; index >= 0; index--) {
-            const cue = track.cues[index];
-            if (cue.startTime <= player.currentTime) {
-                player.currentTime = cue.startTime;
+        for (let index = cues.length - 1; index >= 0; index--) {
+            const cue = cues[index];
+            if (cue.start_time <= player.currentTime) {
+                player.currentTime = cue.start_time;
                 break;
             }
         }
     } else if (evt.code === 'KeyC') {
         // jump to start of next subtitle
 
-        let track = null;
+        let cues = null;
         if (document.getElementById('transcript_en_checkbox').checked) {
-            track = trackEn.track;
+            cues = story.subtitles_en;
         }
         if (document.getElementById('transcript_ja_checkbox').checked) {
-            track = trackJa.track;
+            cues = story.subtitles_ja;
         }
-        if (track === null) {
+        if (cues === null) {
             return;
         }
 
-        for (let index = 0; index < track.cues.length; index++) {
-            const cue = track.cues[index];
-            if (cue.startTime > player.currentTime) {
-                player.currentTime = cue.startTime;
+        for (let index = 0; index < cues.length; index++) {
+            const cue = cues[index];
+            if (cue.start_time > player.currentTime) {
+                player.currentTime = cue.start_time;
                 break;
             }
         }
     } else if (evt.code === 'KeyZ') {
         // jump to start of prior subtitle
 
-        let track = null;
+        let cues = null;
         if (document.getElementById('transcript_en_checkbox').checked) {
-            track = trackEn.track;
+            cues = story.subtitles_en;
         }
         if (document.getElementById('transcript_ja_checkbox').checked) {
-            track = trackJa.track;
+            cues = story.subtitles_ja;
         }
-        if (track === null) {
+        if (cues === null) {
             return;
         }
 
-        for (let index = track.cues.length - 1; index >= 0; index--) {
-            const cue = track.cues[index];
-            if (cue.endTime < player.currentTime) {
-                player.currentTime = cue.startTime;
+        for (let index = cues.length - 1; index >= 0; index--) {
+            const cue = cues[index];
+            if (cue.end_time < player.currentTime) {
+                player.currentTime = cue.start_time;
                 break;
             }
         }
@@ -346,19 +344,15 @@ document.body.onkeydown = async function (evt) {
 
             if (english) {
                 lang = 'English';
-                adjustTextTrackAllTimings(trackEn.track, adjustment);
-                story.transcript_en = textTrackToString(trackEn.track);
-                let cues = findCues(trackEn.track, player.currentTime);
-                displayCues(cues, captionsEn);
+                adjustTextTrackAllTimings(story.subtitles_en, adjustment);
             }
 
             if (japanese) {
                 lang = 'Japanese';
-                adjustTextTrackAllTimings(trackJa.track, adjustment);
-                story.transcript_ja = textTrackToString(trackJa.track);
-                let cues = findCues(trackJa.track, player.currentTime);
-                displayCues(cues, captionsJa);
+                adjustTextTrackAllTimings(story.subtitles_ja, adjustment);
             }
+
+            displaySubtitles();
 
             snackbarMessage(`updated ${lang} subtitle timings by ${adjustment} seconds`);
 
@@ -388,20 +382,16 @@ document.body.onkeydown = async function (evt) {
         }
 
         if (english) {
-            lang = 'English ';
-            bringForwardTextTrackTimings(trackEn.track, player.currentTime);
-            story.transcript_en = textTrackToString(trackEn.track);
-            let cues = findCues(trackEn.track, player.currentTime);
-            displayCues(cues, captionsEn);
+            lang = 'English';
+            bringForwardTextTrackTimings(story.subtitles_en, player.currentTime);
         }
 
         if (japanese) {
             lang = 'Japanese ';
-            bringForwardTextTrackTimings(trackJa.track, player.currentTime);
-            story.transcript_ja = textTrackToString(trackJa.track);
-            let cues = findCues(trackJa.track, player.currentTime);
-            displayCues(cues, captionsJa);
+            bringForwardTextTrackTimings(story.subtitles_ja, player.currentTime);
         }
+
+        displaySubtitles();
 
         snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
 
@@ -427,19 +417,15 @@ document.body.onkeydown = async function (evt) {
 
         if (english) {
             lang = 'English ';
-            adjustTextTrackTimings(trackEn.track, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
-            story.transcript_en = textTrackToString(trackEn.track);
-            let cues = findCues(trackEn.track, player.currentTime);
-            displayCues(cues, captionsEn);
+            adjustTextTrackTimings(story.subtitles_en, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
         }
 
         if (japanese) {
             lang = 'Japanese ';
-            adjustTextTrackTimings(trackJa.track, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
-            story.transcript_ja = textTrackToString(trackJa.track);
-            let cues = findCues(trackJa.track, player.currentTime);
-            displayCues(cues, captionsJa);
+            adjustTextTrackTimings(story.subtitles_ja, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
         }
+
+        displaySubtitles();
 
         snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT} seconds`);
 
@@ -458,20 +444,20 @@ document.body.onkeydown = async function (evt) {
             let digit = parseInt(evt.code.slice(-1));
             let duration = player.duration;
             player.currentTime = duration * (digit / 10);
-            displayCurrentCues();
+            displaySubtitles();
         }
     } else if (evt.code.startsWith('Space')) {
         evt.preventDefault();
 
         if (currentCue) {
-            player.currentTime = currentCue.startTime;
+            player.currentTime = currentCue.start_time;
             play();
         }
     }
 };
 
 function play() {
-    displayCurrentCues();
+    displaySubtitles();
     player.play();
 }
 
@@ -484,7 +470,7 @@ function parseTimestamp(timestamp) {
     return mins * 60 + seconds;
 }
 
-function displayCurrentCues() {
+function displaySubtitles() {
     if (document.getElementById('transcript_en_checkbox').checked) {
         captionsEn.style.display = 'flex';
     } else {
@@ -497,8 +483,11 @@ function displayCurrentCues() {
         captionsJa.style.display = 'none';
     }
 
-    displayCues(trackEn.track.activeCues, captionsEn);
-    displayCues(trackJa.track.activeCues, captionsJa);
+    let enSubtitles = findCues(story.subtitles_en, player.currentTime);
+    let jaSubtitles = findCues(story.subtitles_ja, player.currentTime);
+
+    displayCues(enSubtitles, captionsEn);
+    displayCues(jaSubtitles, captionsJa);
 }
 
 function displayCues(cues, target) {
@@ -519,7 +508,7 @@ function displayCues(cues, target) {
         target.style.visibility = 'visible';
     }
 
-    updateCueGuide();
+    updateCueGuide(cues);
 
     target.innerHTML = html;
 }
@@ -580,6 +569,7 @@ function displayStoryInfo(story) {
 
     displayExcerpts(story);
 }
+
 function processStory(story) {
     story.reps_logged = story.reps_logged || [];
     story.reps_todo = story.reps_todo || [];
@@ -588,6 +578,9 @@ function processStory(story) {
         excerpt.start_time = excerpt.start_time || 0;
         excerpt.end_time = excerpt.end_time || player.duration;
     }
+
+    story.subtitles_en = JSON.parse(story.subtitles_en);
+    story.subtitles_ja = JSON.parse(story.subtitles_ja);
 }
 
 function openStory(id) {
@@ -600,6 +593,9 @@ function openStory(id) {
         .then((data) => {
             story = data;
 
+            processStory(story);
+            displayStoryInfo(story);
+
             if (story.video) {
                 player.style.display = 'block';
 
@@ -609,36 +605,17 @@ function openStory(id) {
                 }
 
                 player.setAttribute('type', 'video/mp4');
+                
                 let time = '';
                 if (story.end_time > 0) {
                     time = `#t=${Math.trunc(story.start_time)},${Math.trunc(story.end_time)}`;
                 }
-
-                player.onloadeddata = function (evt) {
-                    processStory(story);
-                    displayStoryInfo(story);
-                };
-
                 player.src = path + time;
 
-                console.log("src", player.src);
+                //console.log("src", player.src);
             }
 
-            if (story.transcript_en) {
-                trackEn.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_en);
-            }
-
-            if (story.transcript_ja) {
-                trackJa.src = `data:text/plain;charset=utf-8,` + encodeURIComponent(story.transcript_ja);
-            }
-
-            player.addEventListener("loadedmetadata", (event) => {
-                displayStoryContent(story);
-                console.log('cues', trackEn.track.cues, trackJa.track.cues);
-            });
-
-            trackEn.track.mode = 'hidden';
-            trackJa.track.mode = 'hidden';
+            displayStoryContent(story);
 
             playerControls.style.display = 'inline';
         })
@@ -667,11 +644,11 @@ function displayStoryContent() {
     let cues = null;
     let lang = 'en';
     if (document.getElementById('transcript_en_checkbox').checked) {
-        cues = trackEn.track.cues;
+        cues = story.subtitles_en;
     }
     if (document.getElementById('transcript_ja_checkbox').checked) {
         lang = 'ja';
-        cues = trackJa.track.cues;
+        cues = story.subtitles_ja;
     }
     if (cues == null) {
         storyLines.innerHTML = "";
@@ -679,7 +656,7 @@ function displayStoryContent() {
     }
 
     let html = '';
-    console.log(cues);
+    //console.log(cues);
     for (let cueIndex = 0; cueIndex < cues.length; cueIndex++) {
         let cue = cues[cueIndex];
 
@@ -694,7 +671,7 @@ function displayStoryContent() {
             console.log('cue with no text', cue);
         }
 
-        let startTime = formatTrackTime(cue.startTime, 2);
+        let startTime = formatTrackTime(cue.start_time, 2);
 
         html += `<div class="subtitle" subtitle_index="${cueIndex}" subtitle_lang="${lang}">
             <div class="subtitle_start"><a href="#" class="subtitle_start_time">${startTime}</a></div>
@@ -715,21 +692,8 @@ function load(evt) {
     openStory(storyId);
 }
 
-let cueGuide = {
-    element: document.getElementById('captions_meter'),
-    indicator: document.getElementById('captions_meter_indicator'),
-    width: 0,
-    cue: null,
-};
 
-function updateCueGuide() {
-    let cues = null;
-    if (document.getElementById('transcript_en_checkbox').checked) {
-        cues = trackEn.track.activeCues;
-    }
-    if (document.getElementById('transcript_ja_checkbox').checked) {
-        cues = trackJa.track.activeCues;
-    }
+function updateCueGuide(cues) {
     if (cues == null || cues.length == 0) {
         document.getElementById('captions_meter').style.visibility = 'hidden';
         return;
@@ -740,7 +704,7 @@ function updateCueGuide() {
     let longestDuration = 0;
     for (let i = 0; i < cues.length; i++) {
         let cue = cues[i];
-        let duration = cue.endTime - cue.startTime;
+        let duration = cue.end_time - cue.start_time;
         if (duration > longestDuration) {
             longestDuration = duration;
             longestCue = cue;
@@ -749,23 +713,18 @@ function updateCueGuide() {
 
     if (longestDuration > 0) {
         document.getElementById('captions_meter').style.visibility = 'visible';
-        cueGuide.cue = longestCue;
-        displayCueGuide();
+        displayCueGuide(longestCue);
     }
 }
 
-function displayCueGuide() {
-    if (!cueGuide.cue) {
-        return;
-    }
-
-    let duration = cueGuide.cue.endTime - cueGuide.cue.startTime;
+function displayCueGuide(cue) {
+    let duration = cue.end_time - cue.start_time;
     if (duration <= 0) {
         return;
     };
 
     // this can happen some times when seeking because of the event queue order
-    if (player.currentTime < cueGuide.cue.startTime || player.currentTime > cueGuide.cue.endTime) {
+    if (player.currentTime < cue.start_time || player.currentTime > cue.end_time) {
         return;
     }
 
@@ -775,15 +734,14 @@ function displayCueGuide() {
     let width = duration * widthPercentagePointsPerSecond;
     width = Math.min(Math.max(width, minWidth), maxWidth); // clamp 
 
-    cueGuide.width = width;
-    cueGuide.element.style.width = cueGuide.width + '%';
+    cueGuideElement.style.width = width + '%';
 
-    let cueProgress = (player.currentTime - cueGuide.cue.startTime) / duration;
-    cueGuide.indicator.style.marginLeft = (cueProgress * 100).toFixed(5) + '%';
+    let cueProgress = (player.currentTime - cue.start_time) / duration;
+    cueGuideIndicator.style.marginLeft = (cueProgress * 100).toFixed(5) + '%';
 }
 
 player.addEventListener("seeked", (evt) => {
-    displayCurrentCues();
+    displaySubtitles();
 });
 
 var intervalHandle;
@@ -792,7 +750,7 @@ const deltaTime = 0.01;  // in seconds
 player.addEventListener("playing", (event) => {
     window.clearInterval(intervalHandle); // just in case
     intervalHandle = window.setInterval(function () {
-        displayCueGuide();
+        displaySubtitles();
     }, deltaTime * 1000);
 });
 

@@ -3,20 +3,18 @@ package main
 import ()
 
 type Story struct {
-	ID           int64     `json:"id,omitempty"`
-	Title        string    `json:"title,omitempty"`
-	Source       string    `json:"source,omitempty"`
-	Date         string    `json:"date,omitempty"`
-	Content      string    `json:"content,omitempty"`
-	Link         string    `json:"link,omitempty"`
-	Video        string    `json:"video,omitempty"`
-	DateLastRep  int64     `json:"date_last_rep"`
-	HasRepsTodo  int       `json:"has_reps_todo"`
-	TranscriptEN string    `json:"transcript_en,omitempty"`
-	TranscriptJA string    `json:"transcript_ja,omitempty"`
-	SubtitlesEN  string    `json:"subtitles_en,omitempty"`
-	SubtitlesJA  string    `json:"subtitles_ja,omitempty"`
-	Excerpts     []Excerpt `json:"excerpts"`
+	ID          int64     `json:"id,omitempty"`
+	Title       string    `json:"title,omitempty"`
+	Source      string    `json:"source,omitempty"`
+	Date        string    `json:"date,omitempty"`
+	Content     string    `json:"content,omitempty"`
+	Link        string    `json:"link,omitempty"`
+	Video       string    `json:"video,omitempty"`
+	DateLastRep int64     `json:"date_last_rep"`
+	HasRepsTodo int       `json:"has_reps_todo"`
+	SubtitlesEN string    `json:"subtitles_en,omitempty"`
+	SubtitlesJA string    `json:"subtitles_ja,omitempty"`
+	Excerpts    []Excerpt `json:"excerpts"`
 }
 
 type Excerpt struct {
@@ -88,7 +86,7 @@ type ImportStoryRequest struct {
 }
 
 type Subtitle struct {
-	StartTime float32 `json:"start_time"`
-	EndTime   float32 `json:"end_time"`
+	StartTime float64 `json:"start_time"`
+	EndTime   float64 `json:"end_time"`
 	Text      string  `json:"text"`
 }

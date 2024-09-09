@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -322,8 +321,8 @@ func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
 				sb.WriteString("\n")
 			}
 			subtitles = append(subtitles, Subtitle{
-				StartTime: float32(item.StartAt) / (1000 * 1000 * 1000), // convert from nanoseconds to seconds
-				EndTime:   float32(item.EndAt) / (1000 * 1000 * 1000),
+				StartTime: float64(item.StartAt) / (1000 * 1000 * 1000), // convert from nanoseconds to seconds
+				EndTime:   float64(item.EndAt) / (1000 * 1000 * 1000),
 				Text:      text,
 			})
 		}
@@ -343,8 +342,9 @@ func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
 	return string(jsonBytes), nil
 }
 
-func getSubtitlesContentInTimeRange(vtt string, startTime float64, endTime float64) (string, error) {
-	subs, err := astisub.ReadFromWebVTT(bytes.NewReader([]byte(vtt)))
+func getSubtitlesContentInTimeRange(subtitlesJSON string, startTime float64, endTime float64) (string, error) {
+	var subtitles []Subtitle
+	err := json.Unmarshal([]byte(subtitlesJSON), &subtitles)
 	if err != nil {
 		return "", err
 	}
@@ -354,16 +354,12 @@ func getSubtitlesContentInTimeRange(vtt string, startTime float64, endTime float
 	}
 
 	var sb strings.Builder
-	for _, item := range subs.Items {
-		if item.EndAt.Seconds() < startTime || item.StartAt.Seconds() > endTime {
+	for _, subtitle := range subtitles {
+		if subtitle.EndTime < startTime || subtitle.StartTime > endTime {
 			continue
 		}
-		for _, line := range item.Lines {
-			for _, lineItem := range line.Items {
-				sb.WriteString(lineItem.Text)
-			}
-			sb.WriteString("\n")
-		}
+		sb.WriteString(subtitle.Text)
+		sb.WriteString("\n")
 	}
 
 	return sb.String(), nil
@@ -395,10 +391,10 @@ func storeStory(story Story, sqldb *sql.DB) error {
 
 		_, err := sqldb.Exec(`UPDATE stories SET 
 				date = $1, link = $2, video = $3, content = $4,  
-				transcript_en = $5, transcript_ja = $6, subtitles_en = $7, subtitles_ja = $8
-				WHERE title = $9 and source = $10;`,
+				subtitles_en = $5, subtitles_ja = $6
+				WHERE title = $7 and source = $8;`,
 			story.Date, story.Link, story.Video, story.Content,
-			story.TranscriptEN, story.TranscriptJA, story.SubtitlesEN, story.SubtitlesJA,
+			story.SubtitlesEN, story.SubtitlesJA,
 			story.Title, story.Source)
 		return err
 	}
@@ -406,11 +402,10 @@ func storeStory(story Story, sqldb *sql.DB) error {
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
-				content, transcript_en, transcript_ja, excerpts, date_last_rep, has_reps_todo) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`,
+				content, subtitles_en, subtitles_ja, excerpts, date_last_rep, has_reps_todo) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
 		story.Title, story.Source, story.Date, story.Link,
-		story.Video, story.Content, story.TranscriptEN,
-		story.TranscriptJA, story.SubtitlesEN, story.SubtitlesJA, INITTIAL_EXCERPT, 0, 0)
+		story.Video, story.Content, story.SubtitlesEN, story.SubtitlesJA, INITTIAL_EXCERPT, 0, 0)
 
 	return err
 }
