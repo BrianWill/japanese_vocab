@@ -89,4 +89,14 @@ type Subtitle struct {
 	StartTime float64 `json:"start_time"`
 	EndTime   float64 `json:"end_time"`
 	Text      string  `json:"text"`
+	Words     []Word  `json:"words"`
+}
+
+type Word struct {
+	/* the text that gets displayed (including trailing whitespace and punctuation)
+	The first word of a line will also potentially include leading puntuation. */
+	Display string `json:"display,omitempty"`
+
+	BaseForm string `json:"base_form"`
+	POS      string `json:"POS"`
 }

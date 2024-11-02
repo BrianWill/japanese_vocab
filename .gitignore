@@ -22,3 +22,4 @@ static/ignore/*
 static/sources/*
 bin/scrape/node_modules
 bin/scrape/*
+tmp/*

@@ -1,8 +1,32 @@
 # japanese_vocab TODO   
-    instead of using actual HTML video cue tracks, just display the cues fully manually
-        maybe cues should be stored in db in my own json format instead of vtt?
-            would also be nice to do some other cleanup maybe
-        maybe subtitles should just be read from file instead of loaded from db?
+
+    drill vocab from all stories with queued reps
+        limit words in drill to 50?
+            user can pick the limit number?
+            pick the words at random?
+        bring back per-word cooldowns?
+    
+    mode that only shows unknown words in the subtitles
+        either make the non-hinted words totally transparent or make them very faint
+        pick words from non-archived set and based on count in the story
+            words that occur more frequently should be prioritized
+        maybe set max of hint words per subtitle
+            perhaps this cap is based on the time duration of the subtitle, i.e. a target hint words per second
+    
+    mode that displays only (or highlights?) the verbs 
+        add coloring or icons that indicate the form
+
+    subtitle jump keys should work even when subtitles are hidden (defaults to japanese subtitle timings)
+
+    while listening, ability to mark times
+        useful for listening without subtitles and marking times when you hear something you don't understand
+            can then come back to the marked times after
+
+    bug: for new stories, the default end time of the excerpt is NaN
+        (this is probably because we need to wait for the video to load before displaying the excerpts?)
+
+    don't reconstruct the subtitle html if it hasn't changed
+        (currently there is flicker if you try to select text while playing because the subtitle is being reconstructed as we play)
 
     getWordsFromExcerpt
         update to use json subtitles instead of vtt transcript
@@ -137,9 +161,13 @@ cut video:
     
     ffmpeg -i input.mp4 -ss 00:05:10 -to 00:15:30 -c:v copy -c:a copy output2.mp4
 
-convert all in dir:
+convert all mkv to mp4 in dir:
     
     for f in *.mkv; do ffmpeg -i "$f" -acodec copy -b:v 1500k -maxrate 3000k "${f%.*}.mp4"; done
+
+convert all mp4 to mp3 in dir:
+
+    for f in *.mp4; do ffmpeg -i "$f" "${f%.*}.mp3"; done
 
 
 ffmpeg -i [input] -c:a copy -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]

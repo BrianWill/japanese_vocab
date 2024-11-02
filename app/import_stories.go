@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/asticode/go-astisub"
+	"github.com/ikawaha/kagome/v2/tokenizer"
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -271,6 +272,145 @@ func importStory(sourceName string, storyTitle string, sqldb *sql.DB) error {
 	return nil
 }
 
+func tokenizeSubtitle(text string) ([]Word, error) {
+	analyzerTokens := tok.Analyze(text, tokenizer.Normal)
+	tokens := make([]*JpToken, len(analyzerTokens))
+
+	for i, t := range analyzerTokens {
+		features := t.Features()
+		if len(features) < 9 {
+			tokens[i] = &JpToken{
+				Surface: t.Surface,
+				POS:     features[0],
+				POS_1:   features[1],
+			}
+		} else {
+			tokens[i] = &JpToken{
+				Surface:          t.Surface,
+				POS:              features[0],
+				POS_1:            features[1],
+				POS_2:            features[2],
+				POS_3:            features[3],
+				InflectionalType: features[4],
+				InflectionalForm: features[5],
+				BaseForm:         features[6],
+				Reading:          features[7],
+				Pronunciation:    features[8],
+			}
+		}
+	}
+
+	words := make([]Word, 0)
+
+	// group tokens into words
+	for len(tokens) > 0 {
+		word, numTokensConsumed := nextWord(tokens)
+		words = append(words, word)
+		tokens = tokens[numTokensConsumed:]
+	}
+
+	return words, nil
+}
+
+// expects tokens len to be > 0
+// return next word and number of tokens consumedv
+func nextWord(tokens []*JpToken) (Word, int) {
+	t := tokens[0]
+	word := Word{Display: t.Surface, BaseForm: t.BaseForm, POS: t.POS}
+
+	if t.POS == "記号" { // is puncuation
+		return nextPunctuation(tokens)
+	} else if t.POS == "感動詞" { // interjection
+		return word, 1
+	} else if t.POS == "名詞" { // noun
+		return word, 1
+	} else if t.POS == "助詞" { // particle
+		return nextParticle(tokens)
+	} else if t.POS == "副詞" { // adverb
+		return word, 1
+	} else if t.POS == "動詞" { // verb
+		return nextVerb(tokens)
+	} else if t.POS == "フィラー" { // filler
+		return word, 1
+	} else if t.POS == "接頭詞" { // prefix
+		return word, 1
+	} else if t.POS == "連体詞" { // na adjective
+		return word, 1
+	} else if t.POS == "接続詞" { // conjunction
+		return word, 1
+	} else if t.POS == "形容詞" { // i-adjective
+		return word, 1
+	} else if t.POS == "助動詞" { // auxillary verb
+		//if t.Surface == "です" || t.Surface == "だ" || t.Surface == "な" || t.Surface == "でしょ" || t.Surface == "う" {
+		return word, 1
+		//}
+		//fmt.Println("Auxillary verb that doesn't follow a verb: ", t.POS)
+		//panic("Auxillary verb that doesn't follow a verb: " + t.POS + " : " + t.POS_1 + " : " + t.Surface)
+		//return Word{Display: t.Surface, BaseForm: t.BaseForm}, 1
+	} else {
+		panic("POS that is not currently accounted for: " + t.POS + " : " + t.Surface)
+	}
+
+	return Word{Display: t.Surface}, 1 // for types of tokens we haven't accounted for
+}
+
+// assumes that the first token is a punctuation mark
+func nextPunctuation(tokens []*JpToken) (Word, int) {
+	token := tokens[0]
+	word := Word{Display: token.Surface}
+	numTokensConsumed := 1
+
+	for _, token := range tokens[1:] {
+		if token.POS == "記号" {
+			word.Display += token.Surface
+			numTokensConsumed++
+		} else {
+			break
+		}
+	}
+
+	return word, numTokensConsumed
+}
+
+// assumes that the first token is a particle
+func nextParticle(tokens []*JpToken) (Word, int) {
+	token := tokens[0]
+	word := Word{Display: token.Surface, POS: "助詞"}
+	numTokensConsumed := 1
+
+	for _, token := range tokens[1:] {
+		if token.POS == "助詞" {
+			word.Display += token.Surface
+			numTokensConsumed++
+		} else {
+			break
+		}
+	}
+
+	word.BaseForm = word.Display
+	return word, numTokensConsumed
+}
+
+// assumes that the first token is a verb
+func nextVerb(tokens []*JpToken) (Word, int) {
+	token := tokens[0]
+	word := Word{Display: token.Surface, BaseForm: token.BaseForm}
+	numTokensConsumed := 1
+
+	for _, token := range tokens[1:] {
+		if token.POS == "助動詞" || // auxillary verb
+			(token.POS == "助詞" && token.POS_1 == "接続助詞") || // conjungtive particle て (maybe other things too?)
+			(token.POS == "動詞" && token.POS_1 == "非自立") { // dependent verb e.g. てる
+			word.Display += token.Surface
+			numTokensConsumed++
+		} else {
+			break
+		}
+	}
+
+	return word, numTokensConsumed
+}
+
 // If json subtitle file already exists, return its content as string.
 // Otherwise, read original subtitle file, write subtitles to json file, and return the json.
 func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
@@ -320,10 +460,26 @@ func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
 				}
 				sb.WriteString("\n")
 			}
+
+			var words []Word = nil
+			if lang == "ja" {
+
+				words, err = tokenizeSubtitle(text)
+				if err != nil {
+					return "", err
+				}
+
+				// fmt.Println("LINE: ", text)
+				// for _, word := range words {
+				// 	fmt.Println("WORD: ", word.BaseForm, " : ", word.Display)
+				// }
+			}
+
 			subtitles = append(subtitles, Subtitle{
 				StartTime: float64(item.StartAt) / (1000 * 1000 * 1000), // convert from nanoseconds to seconds
 				EndTime:   float64(item.EndAt) / (1000 * 1000 * 1000),
 				Text:      text,
+				Words:     words,
 			})
 		}
 	}

@@ -257,6 +257,9 @@ document.body.onkeydown = async function (evt) {
         let newTime = timemark + 5;
         player.currentTime = newTime;
         displaySubtitles();
+    } else if (evt.code === 'KeyG') {
+        evt.preventDefault();
+        translateCurrentSubtitle();
     } else if (evt.code === 'KeyX') {
         // jump to start of current subtitle
 
@@ -468,6 +471,19 @@ function parseTimestamp(timestamp) {
     mins = parseInt(mins);
     seconds = parseFloat(seconds);
     return mins * 60 + seconds;
+}
+
+function translateCurrentSubtitle() {
+    let cues = findCues(story.subtitles_ja, player.currentTime);
+    let text = '';
+    for (let i = 0; i < cues.length; i++) {
+        let cue = cues[i];
+        text += cue.text;
+    }
+    console.log('translate: ', text);
+    let url = `https://translate.google.com/?sl=auto&tl=en&text=${text}&op=translate`;
+    var win = window.open(url, '_blank');
+    win.focus();
 }
 
 function displaySubtitles() {

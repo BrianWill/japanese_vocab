@@ -17,7 +17,7 @@ package main
 import (
 	//	"net/http"
 	//	"net/http/httptest"
-	"database/sql"
+	// "database/sql"
 	"fmt"
 	"os"
 
@@ -35,11 +35,7 @@ const TEST_DB_PATH = "../users/" + USERHASH + ".db"
 
 func setup(t *testing.T) {
 	fmt.Println("testing: setup")
-	var err error
-	tok, err = tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
-	if err != nil {
-		panic(err)
-	}
+
 	//initialize()
 	makeUserDB(USERHASH)
 }
@@ -52,64 +48,94 @@ func teardown(t *testing.T) {
 	}
 }
 
-func TestAddAndGetStory(t *testing.T) {
-	setup(t)
-	defer teardown(t)
+func TestTokenizeSubtitle(t *testing.T) {
+	fmt.Println("tokenize subtitle test")
 
-	sqldb, err := sql.Open("sqlite3", TEST_DB_PATH)
+	var err error
+	tok, err = tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
 	if err != nil {
-		t.Fatal("could not setup database")
+		panic(err)
 	}
-	defer sqldb.Close()
 
-	// story := Story{
-	// 	Title: "My Story",
-	// 	Link:  "http://youtube.com/asdf",
-	// 	Content: `
-	// 	0:15
-	// 	または10分します
-	// 	0:18
-	// 	ぜひ聴いてください今日のポッドキャスト
-	// 	0:21
-	// 	は小ストーリーです
-	// 	0:23
-	// 	日本語で物語を読みます
-	// 	0:26
-	// 	今日の物語は飴玉です
-	// 	0:29
-	// 	新美南吉さんが書いた物語です
-	// 	0:33
-	// 	この物語は jap pn 4レベルです
-	// 	0:37
-	// 	このエピソードのクイズがありますぜひ
-	// 	0:41
-	// 	クイズにチャレンジしてください
-	// 	0:45
-	// 	所ゆるゆりじゃないという
-	// 	0:47
-	// 	33カ所方法5
-	// 	0:50
-	// 	飴玉
-	// 	0:51
-	// 	春のとても暖かい日でした
-	// 	0:54
-	// 	お母さんと2人の子供がいました
-	// 	0:57
-	// 	3人は船に乗りました
-	// 	1:00
-	// 	船が出ようとすると男の声が聞こえました
-	// 	1:04
-	// 	多い
-	// 	1:05
-	// 	ちょっと待ってくれ`,
-	// }
+	text := "もしかしたら、もう皆さんの中には、既に人工知能を使って仕事をしてる人もいるかもしれません。" +
+		"中には語学に役立てている人もいるかもしれません。" +
+		"最近の人工知能の発達ぶりは本当にすごいだね。"
 
-	// fmt.Println("testing: before add story")
-	// id, newWordCount, err := addStory(story, sqldb, false)
-	// if err != nil {
-	// 	t.Error("fail add story: ", err)
-	// }
-	// fmt.Println("total new words added:", newWordCount)
+	words, err := tokenizeSubtitle(text)
+	if err != nil {
+		t.Error("could not teardown database")
+	}
+	fmt.Println("number of words: ", len(words))
 
-	// fmt.Println("testing: before get story")
+	concat := ""
+	for _, word := range words {
+		concat += word.Display
+		fmt.Println("WORD: ", word.BaseForm, " : ", word.Display)
+	}
+
+	if concat != text {
+		t.Error("word surfaces did not match original text")
+	}
 }
+
+// func TestAddAndGetStory(t *testing.T) {
+// 	setup(t)
+// 	defer teardown(t)
+
+// 	sqldb, err := sql.Open("sqlite3", TEST_DB_PATH)
+// 	if err != nil {
+// 		t.Fatal("could not setup database")
+// 	}
+// 	defer sqldb.Close()
+
+// 	// story := Story{
+// 	// 	Title: "My Story",
+// 	// 	Link:  "http://youtube.com/asdf",
+// 	// 	Content: `
+// 	// 	0:15
+// 	// 	または10分します
+// 	// 	0:18
+// 	// 	ぜひ聴いてください今日のポッドキャスト
+// 	// 	0:21
+// 	// 	は小ストーリーです
+// 	// 	0:23
+// 	// 	日本語で物語を読みます
+// 	// 	0:26
+// 	// 	今日の物語は飴玉です
+// 	// 	0:29
+// 	// 	新美南吉さんが書いた物語です
+// 	// 	0:33
+// 	// 	この物語は jap pn 4レベルです
+// 	// 	0:37
+// 	// 	このエピソードのクイズがありますぜひ
+// 	// 	0:41
+// 	// 	クイズにチャレンジしてください
+// 	// 	0:45
+// 	// 	所ゆるゆりじゃないという
+// 	// 	0:47
+// 	// 	33カ所方法5
+// 	// 	0:50
+// 	// 	飴玉
+// 	// 	0:51
+// 	// 	春のとても暖かい日でした
+// 	// 	0:54
+// 	// 	お母さんと2人の子供がいました
+// 	// 	0:57
+// 	// 	3人は船に乗りました
+// 	// 	1:00
+// 	// 	船が出ようとすると男の声が聞こえました
+// 	// 	1:04
+// 	// 	多い
+// 	// 	1:05
+// 	// 	ちょっと待ってくれ`,
+// 	// }
+
+// 	// fmt.Println("testing: before add story")
+// 	// id, newWordCount, err := addStory(story, sqldb, false)
+// 	// if err != nil {
+// 	// 	t.Error("fail add story: ", err)
+// 	// }
+// 	// fmt.Println("total new words added:", newWordCount)
+
+// 	// fmt.Println("testing: before get story")
+// }
