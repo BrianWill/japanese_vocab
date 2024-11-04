@@ -1,12 +1,15 @@
 # japanese_vocab TODO   
 
+    subtitle tokenization: 
+        まとめたので should include ので as part of the verb
+        手触り isn't properly tokenized? The word is not in the words table for some reason
+        怠け者 is not in words table
+
     drill vocab from all stories with queued reps
         limit words in drill to 50?
             user can pick the limit number?
             pick the words at random?
         bring back per-word cooldowns?
-
-    ability to archive a word by clicking on it in subtitle
     
     mode that only shows unknown words in the subtitles
         either make the non-hinted words totally transparent or make them very faint

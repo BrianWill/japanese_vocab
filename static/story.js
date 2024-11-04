@@ -32,7 +32,7 @@ document.getElementById('subtitle_hide_unhighlighted').addEventListener('change'
     ele.classList.toggle('hide_unhighlighted');
 });
 
-document.getElementById('caption_container').addEventListener('click', function (evt) {
+document.getElementById('caption_container').addEventListener('dblclick', function (evt) {
     if (evt.target.classList.contains('subtitle_word')) {
         let baseForm = evt.target.getAttribute('base_form');
         console.log('clicked word: ', baseForm);        
@@ -42,6 +42,7 @@ document.getElementById('caption_container').addEventListener('click', function 
                 w.archived = w.archived == 1 ? 0 : 1;
                 updateWord(w, () => {
                     generateSubtitleHTML(story);
+                    displaySubtitles();
                 });
             }
         }
@@ -681,7 +682,7 @@ function generateSubtitleHTML(story) {
 
         // pick the words to highlight
         let highlightWords = {};
-        let highlightWordsCapped = {};
+        // let highlightWordsCapped = {};
         {
             let candidateWords = {};
             for (word of sub.words) {
@@ -701,20 +702,24 @@ function generateSubtitleHTML(story) {
                 highlightWords[w.base_form] = w;
             }
 
-            for (let w of candidateWords.slice(0, maxHighlightWords)) {
-                highlightWordsCapped[w.base_form] = w;
-            }
+            // for (let w of candidateWords.slice(0, maxHighlightWords)) {
+            //     highlightWordsCapped[w.base_form] = w;
+            // }
         }
 
         let html = '<div>';
         for (word of sub.words) {
-            let _class =  highlightWords[word.base_form] ? 'subtitle_word highlighted' : 'subtitle_word';
-            if (highlightWordsCapped[word.base_form]) {
-                _class += ' capped';
+            //let _class =  'subtitle_word';
+            let _class =  'subtitle_word';
+            if (highlightWords[word.base_form]) {
+                _class += ' highlighted';
             }
             let w = wordMap[word.base_form];
             if (w && w.archived == 1) {
                 _class += ' archived';
+            }
+            if (w && isVerb(w)) {
+                _class += ' verb';
             }
             html += `<span base_form="${word.base_form}" class="${_class}">${word.display}</span>`;
         }
