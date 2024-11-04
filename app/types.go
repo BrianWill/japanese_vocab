@@ -67,11 +67,11 @@ type DrillWord struct {
 }
 
 type WordUpdate struct {
-	BaseForm   string  `json:"base_form"`
-	Archived   int64   `json:"archived"`
-	Audio      string  `json:"audio"`
-	AudioStart float32 `json:"audio_start"`
-	AudioEnd   float32 `json:"audio_end"`
+	BaseForm string `json:"base_form"`
+	Archived int64  `json:"archived"`
+	// Audio      string  `json:"audio"`
+	// AudioStart float32 `json:"audio_start"`
+	// AudioEnd   float32 `json:"audio_end"`
 }
 
 type OpenTranscriptRequest struct {

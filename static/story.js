@@ -13,6 +13,7 @@ var japaneseCheckbox = document.getElementById('transcript_ja_checkbox');
 var playerControls = document.getElementById('player_controls');
 
 var story = null;
+var words = null;
 
 var cueGuideElement = document.getElementById('captions_meter');
 var cueGuideIndicator = document.getElementById('captions_meter_indicator');
@@ -25,6 +26,27 @@ const MAX_INTEGER = Math.pow(2, 52) - 1;
 
 englishCheckbox.addEventListener('change', displaySubtitles);
 japaneseCheckbox.addEventListener('change', displaySubtitles);
+
+document.getElementById('subtitle_hide_unhighlighted').addEventListener('change', function (evt) {
+    var ele = document.getElementById('caption_container');
+    ele.classList.toggle('hide_unhighlighted');
+});
+
+document.getElementById('caption_container').addEventListener('click', function (evt) {
+    if (evt.target.classList.contains('subtitle_word')) {
+        let baseForm = evt.target.getAttribute('base_form');
+        console.log('clicked word: ', baseForm);        
+        if (baseForm) {
+            let w = wordMap[baseForm];
+            if (w) {
+                w.archived = w.archived == 1 ? 0 : 1;
+                updateWord(w, () => {
+                    generateSubtitleHTML(story);
+                });
+            }
+        }
+    }    
+});
 
 storyLines.onwheel = function (evt) {
     evt.preventDefault();
@@ -501,34 +523,32 @@ function displaySubtitles() {
 
     let enSubtitles = findCues(story.subtitles_en, player.currentTime);
     let jaSubtitles = findCues(story.subtitles_ja, player.currentTime);
+    
+    function display(subs, target) {
+        let html = '<div>';
 
-    displayCues(enSubtitles, captionsEn);
-    displayCues(jaSubtitles, captionsJa);
-}
-
-function displayCues(cues, target) {
-    let html = '';
-
-    // because of overlap, more than one cue can be active
-    for (let i = 0; i < cues.length; i++) {
-        let cue = cues[i];
-        let lines = cue.text.split('\n');
-        for (let line of lines) {
-            html += `<div>${line}</div>`;
+        for (sub of subs) {
+            html += sub.html;
         }
+
+        html += '</div>';
+
+        if (subs.length == 0) {
+            target.style.visibility = 'hidden';
+        } else {
+            target.style.visibility = 'visible';
+        }
+
+        if (target.innerHTML != html) {
+            target.innerHTML = html;
+        }
+
+        updateCueGuide(subs);
     }
 
-    if (cues.length == 0) {
-        target.style.visibility = 'hidden';
-    } else {
-        target.style.visibility = 'visible';
-    }
-
-    updateCueGuide(cues);
-
-    target.innerHTML = html;
+    display(enSubtitles, captionsEn);
+    display(jaSubtitles, captionsJa);
 }
-
 
 function displayExcerpts(story) {
     function repsHTML(excerpt, excerptIdx) {
@@ -549,6 +569,10 @@ function displayExcerpts(story) {
             <a class="add_rep_link" href="#" title="add a rep">＋</a>`;
         for (let i = 0; i < excerpt.reps_todo; i++) {
             todoReps += `<span class="listening rep" title="rep">⭯</span>`;
+        }
+
+        if (isNaN(excerpt.end_time)) {
+            excerpt.end_time = player.duration;
         }
 
         let html = `<div excerpt_idx="${excerptIdx}">
@@ -586,7 +610,9 @@ function displayStoryInfo(story) {
     displayExcerpts(story);
 }
 
-function processStory(story) {
+var wordMap = null;
+
+function processStory(story, words) {
     story.reps_logged = story.reps_logged || [];
     story.reps_todo = story.reps_todo || [];
 
@@ -597,6 +623,104 @@ function processStory(story) {
 
     story.subtitles_en = JSON.parse(story.subtitles_en);
     story.subtitles_ja = JSON.parse(story.subtitles_ja);
+
+    wordMap = {};
+    for (word of words) {
+        wordMap[word.base_form] = word;
+        word.count = 0;
+    }
+
+    // count word frequencies
+    for (sub of story.subtitles_ja) {
+        for (word of sub.words) {
+            let w = wordMap[word.base_form];
+            if (w) {
+                w.count++;
+            }
+        }
+    }
+
+    generateSubtitleHTML(story);
+}
+
+function getWords(id) {
+    fetch('words', {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            story_id: id,
+            excerpt_hash: 0,
+        })
+    }).then((response) => response.json())
+        .then((data) => {
+            words = data.words;
+            for (w of words) {
+                w.definitions = JSON.parse(w.definitions);
+            }
+
+            console.log('loaded words', words);
+
+            processStory(story, words);
+            displayStoryInfo(story);
+            displayStoryContent(story);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+const maxHighlightsPerSecond = 1;
+
+function generateSubtitleHTML(story) {
+    for (sub of story.subtitles_ja) {
+
+        let duration = sub.end_time - sub.start_time;
+        let maxHighlightWords = Math.ceil(maxHighlightsPerSecond * duration);
+
+        // pick the words to highlight
+        let highlightWords = {};
+        let highlightWordsCapped = {};
+        {
+            let candidateWords = {};
+            for (word of sub.words) {
+                let w = wordMap[word.base_form];
+                if (w && w.archived == 0 && w.count > 0) {
+                    candidateWords[word.base_form] = w;
+                }
+            }
+            candidateWords = Object.values(candidateWords);
+
+            candidateWords.sort((a, b) => {
+                return a.count < b.count;
+            });
+            shuffle(candidateWords);
+
+            for (let w of candidateWords) {
+                highlightWords[w.base_form] = w;
+            }
+
+            for (let w of candidateWords.slice(0, maxHighlightWords)) {
+                highlightWordsCapped[w.base_form] = w;
+            }
+        }
+
+        let html = '<div>';
+        for (word of sub.words) {
+            let _class =  highlightWords[word.base_form] ? 'subtitle_word highlighted' : 'subtitle_word';
+            if (highlightWordsCapped[word.base_form]) {
+                _class += ' capped';
+            }
+            let w = wordMap[word.base_form];
+            if (w && w.archived == 1) {
+                _class += ' archived';
+            }
+            html += `<span base_form="${word.base_form}" class="${_class}">${word.display}</span>`;
+        }
+        html += '</div>';
+        sub.html = html;
+    }
 }
 
 function openStory(id) {
@@ -609,9 +733,6 @@ function openStory(id) {
         .then((data) => {
             story = data;
 
-            processStory(story);
-            displayStoryInfo(story);
-
             if (story.video) {
                 player.style.display = 'block';
 
@@ -621,19 +742,24 @@ function openStory(id) {
                 }
 
                 player.setAttribute('type', 'video/mp4');
-                
+
                 let time = '';
                 if (story.end_time > 0) {
                     time = `#t=${Math.trunc(story.start_time)},${Math.trunc(story.end_time)}`;
                 }
-                player.src = path + time;
 
-                //console.log("src", player.src);
+                player.addEventListener("durationchange", (event) => {
+                    getWords(id);
+
+                });
+
+                player.src = path + time;
+            } else {
+                getWords(id);
             }
 
-            displayStoryContent(story);
-
             playerControls.style.display = 'inline';
+
         })
         .catch((error) => {
             console.error('Error:', error);

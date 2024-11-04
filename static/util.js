@@ -83,7 +83,7 @@ function getKanji(str) {
     });
 }
 
-function updateWord(word, marking) {
+function updateWord(word, successFn) {
     fetch('/update_word', {
         method: 'POST', // or 'PUT'
         headers: {
@@ -92,6 +92,9 @@ function updateWord(word, marking) {
         body: JSON.stringify(word),
     }).then((response) => response.json()
     ).then((data) => {
+        if (successFn) {
+            successFn(data);
+        }
         // if (marking) {
         //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
         // } else {

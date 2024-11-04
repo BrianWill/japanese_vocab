@@ -5,6 +5,8 @@
             user can pick the limit number?
             pick the words at random?
         bring back per-word cooldowns?
+
+    ability to archive a word by clicking on it in subtitle
     
     mode that only shows unknown words in the subtitles
         either make the non-hinted words totally transparent or make them very faint

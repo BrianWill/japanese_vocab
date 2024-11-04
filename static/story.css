@@ -9,6 +9,26 @@ body {
     gap: 10%;
 }
 
+#caption_container span.subtitle_word:hover {
+    color : red;
+}
+
+#caption_container span.subtitle_word.archived:hover {
+    color : rgb(62, 164, 254);
+}
+
+#caption_container .highlighted {
+    color : rgb(254, 62, 62);
+}
+
+#caption_container .highlighted.capped {
+    color : rgb(255, 255, 73);
+}
+
+#caption_container.hide_unhighlighted :not(.highlighted) {
+    color: rgba(0, 0, 0, 0);
+}
+
 #main_container {
     height: 98vh;
 }

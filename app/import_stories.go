@@ -511,7 +511,7 @@ func getSubtitlesContentInTimeRange(subtitlesJSON string, startTime float64, end
 
 	var sb strings.Builder
 	for _, subtitle := range subtitles {
-		if subtitle.EndTime < startTime || subtitle.StartTime > endTime {
+		if endTime != 0 && (subtitle.EndTime < startTime || subtitle.StartTime > endTime) {
 			continue
 		}
 		sb.WriteString(subtitle.Text)
