@@ -1,9 +1,12 @@
 # japanese_vocab TODO   
 
+    reimport story should ignore the existing json
+    
     subtitle tokenization: 
         まとめたので should include ので as part of the verb
         手触り isn't properly tokenized? The word is not in the words table for some reason
         怠け者 is not in words table
+    
 
     drill vocab from all stories with queued reps
         limit words in drill to 50?
