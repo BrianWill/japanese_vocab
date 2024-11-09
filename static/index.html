@@ -10,21 +10,23 @@
 </head>
 
 <body>
-    <div id="ip"></div>
-    <h2>Stories with queued reps</h2>
-    <div id="reps"></div>
-    <br>
+    <div id="catalog_container">
+        <div id="main_sidebar">
+            <div id="ip"></div>
+            <ul>
+                <li><a href="#" class="action_recently_logged">Stories recently logged</a></li>
+                <li><a href="#" class="action_queued_reps">Stories with queued reps</a></li>
+                <li><a href="#" class="action_recently_completed">Stories completed recently</a></li>
+            </ul>
+            <h2>Story sources <a style="font-size: 50%; padding-left: 1em;" href="import.html">import</a></h2>
+            <ul id="sources_list"></ul>
+        </div>
 
-    <h2 title="Stories with logged reps within last 2 weeks but no queued reps">Recent stories</h2>
-    <div id="recent_reps"></div>
-    <br>
-
-    <h2>Story catalog <a style="font-size: 50%; padding-left: 1em;" href="import.html">import</a></h2>
-    <div>
-        <h3><select id="source_select"></select></h3> 
+        <div id="story_list">
+            <h2>Currently selected source</h2>
+            <br>    
+        </div>
     </div>
-    <div id="story_list"></div>
-
     <div id="snackbar"></div>
 </body>
 <script src="../util.js"></script>

@@ -1,28 +1,56 @@
 # japanese_vocab TODO   
-
-    reimport story should ignore the existing json
+      
+    swap place of story info sidebar and content sidebar
+        or just move content into left sidebar
     
-    subtitle tokenization: 
-        まとめたので should include ので as part of the verb
-        手触り isn't properly tokenized? The word is not in the words table for some reason
-        怠け者 is not in words table
-    
+    should subtitle adjustment set an offset for the video rather than edit the subtitles themselves?
+        for case of gaps, you still need to adjust the subtitles themselves, in which case maybe the original subtitle file itself should be updated
 
-    drill vocab from all stories with queued reps
+    drill words of recently logged stories
+        from all recently logged stories
+        or pick range of stories to include
+        or pick set of individually selected stories?
+
+    drilling:
+        maybe user marks non-archived words?
+            mark by default expires after set period (2 weeks?)
+            user drills all marked words
+                the marked words also have a cooldown so you don't drill them too frequently before they expire?
+        option to pick the most frequent words in a story?
+            or list in story shows most frequent words, and user adds them manually
+        every time a word is added, the user is notified how many words are in their current set
         limit words in drill to 50?
             user can pick the limit number?
             pick the words at random?
         bring back per-word cooldowns?
+
+    debug mode for importing:
+        for story content:
+            show spaces between each word
+            if word baseform is not in db, mark word with an icon
+            on hover over word, show all the info from the analyzer
+
+    subtitle tokenization: 
+        まとめたので should include ので as part of the verb
+        手触り isn't properly tokenized? The word is not in the words table for some reason
+        怠け者 is not in words table
+
+        investigate why a number of words seem to be missing from the word database
     
-    mode that only shows unknown words in the subtitles
-        either make the non-hinted words totally transparent or make them very faint
-        pick words from non-archived set and based on count in the story
-            words that occur more frequently should be prioritized
-        maybe set max of hint words per subtitle
-            perhaps this cap is based on the time duration of the subtitle, i.e. a target hint words per second
+    feature to analyze the story catalog to find stories with right balance of known and unknown words
+        maybe identify appropriate excerpts by looking at run of subtitles
+        for each word, track all stories / sentences that include the word
     
-    mode that displays only (or highlights?) the verbs 
-        add coloring or icons that indicate the form
+    story page story content:
+        highlighted words
+        doubleclick to toggle archive state
+
+    for highlighted words, show kana and definitions
+        how to show it?
+
+    for highlighted verbs, use coloring to indicate the form
+        or maybe use icons?
+        also apply to non-highlighted verbs too?
 
     subtitle jump keys should work even when subtitles are hidden (defaults to japanese subtitle timings)
 
@@ -30,20 +58,12 @@
         useful for listening without subtitles and marking times when you hear something you don't understand
             can then come back to the marked times after
 
-    bug: for new stories, the default end time of the excerpt is NaN
-        (this is probably because we need to wait for the video to load before displaying the excerpts?)
-
-    don't reconstruct the subtitle html if it hasn't changed
-        (currently there is flicker if you try to select text while playing because the subtitle is being reconstructed as we play)
-
-    getWordsFromExcerpt
-        update to use json subtitles instead of vtt transcript
-
     openTranscript
         get rid of this once subtitle editing is done?
         or maybe keep so users can easily edit the original file?
 
-    in app subtitle editor
+    in-app subtitle editor
+        visual timeline for editing subtitle timings
         content view shows the subtitles and allows you to break/join lines and edit the start/end times
         maybe content view / subtitle editing should be a separate page
             player will be smaller
@@ -53,29 +73,14 @@
         in edit mode, buttons to shove the timings forward and back
             this would replace the current hot keys
             could allow for more fine grained adjustments than the current hotkeys
-    
-    a subtitle mode that highlights certain words (or only shows those words?) with translation
-        e.g. only show verbs, or only show kangoz
-
-    (session?) cookie that stores your last viewed source
-        currently annoying that you have to navigate the source pulldown every time you go back to the main page
-
-    visual timeline for editing subtitle timings
-
-    for each word, track all stories / sentences that include the word
+        hotkey to delete the current subtitle (get rid of filler, like sounds)
+            instead of automatically skipping to next subtitle, add manual skip points or ranges?        
 
     button to mark current cue as continuing into next (for purpose of playing individual cues)
         insert arrow char at end of the caption?
         maybe actually show these subtitles at same time (with marker or highlight indicating which is the current for marking purposes)
     button to mark current cue as skipped (not counted for purpose of playing individual cues and cue navigation)
         skipped captions have different color background            
-
-    furigana for katakana:
-        display hiragana above katakana character
-        allow user to specify which katakana characters to see hiragana for (so they only see it for the ones that give them trouble)
-
-    hotkey to delete the current subtitle (get rid of filler, like sounds)
-        instead of automatically skipping to next subtitle, add manual skip points or ranges?        
 
     import link should just import all sources instead of taking you to another page
         refresh main page when done
@@ -94,12 +99,6 @@
     
     display content below story with time-marks
         clicking timemark jumps player to timestamp
-
-    alternate source dir format:
-        main json file includes all info about every story
-        or just always have one json file per story?
-
-    playback mode where randomly selected words in subtitles are highlighted with their definitions shown in same color
 
     add a kana drilling page
         allow to pick exactly which characters to include?
@@ -124,22 +123,12 @@
         show count for each story in current stories
         show count in story page
         show in catalog? would be expensive, but not impossible
-    
-    list of recently completed:
-        stories with no queued reps but with a logged rep within last week
 
     clicking info marks should show a modal popup with the info
-   
-    hotkey to open the current japanese subtitle in google translate
 
     link to get translation of whole story content? (what is the limit?)
 
     audit for dead css styles
-
-    for current subtitle, show list of all the words with their word info
-        easy way to change the word status and set remaining reps
-        when importing story, need to store word ids for each subtitle? how to get words? 
-
 
     deduplicate the word ids in words field of stories
 

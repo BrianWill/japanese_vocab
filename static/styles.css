@@ -556,3 +556,14 @@ span.verb:hover {
     background-color: #3c5070;
     padding: 0 0.4em;
 }
+
+#catalog_container {
+    display: flex;
+}
+
+
+#catalog_container #main_sidebar li {
+    font-size: 125%;
+    margin-bottom: 0.4em;
+ 
+}

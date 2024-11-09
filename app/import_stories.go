@@ -411,29 +411,8 @@ func nextVerb(tokens []*JpToken) (Word, int) {
 	return word, numTokensConsumed
 }
 
-// If json subtitle file already exists, return its content as string.
-// Otherwise, read original subtitle file, write subtitles to json file, and return the json.
+// Read original subtitle file, write subtitles to json file, and return the json.
 func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
-
-	jsonPath := storyBasePath + "." + lang + ".json"
-
-	// if json already exists, just read from json and ignore the original subtitle file
-	_, err := os.Stat(jsonPath)
-	if err == nil {
-		jsonBytes, err := os.ReadFile(jsonPath)
-		if err != nil {
-			return "", err
-		}
-
-		return string(jsonBytes), nil
-	} else {
-		if !os.IsNotExist(err) {
-			return "", nil
-		}
-	}
-
-	// json did not exist, so read from the original subtitle file...
-
 	subtitlesExtension, err := firstExtensionThatExists(storyBasePath,
 		[]string{"." + lang + ".vtt", "." + lang + ".ass", "." + lang + ".srt"})
 	if err != nil {

@@ -1,39 +1,54 @@
 var storyList = document.getElementById('story_list');
-var sourceSelect = document.getElementById('source_select');
+var sourceList = document.getElementById('sources_list');
 var ipDiv = document.getElementById('ip');
 
-document.body.onload = function (evt) {
-    getStories(function (stories) {
-        processCatalog(stories);
-        displayCurrent(stories);
-        displayRecent(stories);
-    });
-    getIP((ips) => {
-        let html = 'local ip: ';
-        for (const ip of ips) {
-            html += ip + '&nbsp;&nbsp;'
-        }
-        ipDiv.innerHTML = html;
-    });
+var stories =
+    document.body.onload = function (evt) {
+        getStories(function (stories) {
+            window.stories = stories;
+            processCatalog(stories);
+            
+            
+        });
+        getIP((ips) => {
+            let html = 'local ip: ';
+            for (const ip of ips) {
+                html += ip + '&nbsp;&nbsp;'
+            }
+            ipDiv.innerHTML = html;
+        });
+    };
+
+document.getElementById('main_sidebar').onclick = function (evt) {
+    if (evt.target.classList.contains('action_recently_logged')) {
+        displayRecentlyLogged(stories);
+    } else if (evt.target.classList.contains('action_queued_reps')) {
+        displayQueued(stories);
+    } else if (evt.target.classList.contains('action_recently_completed')) {
+        displayRecentlyCompleted(stories);
+    } else if (evt.target.classList.contains('source_li')) {
+        let source = evt.target.getAttribute('source');
+        displaySourceStoryList(storiesBySource[source]);
+    }
 };
 
-function displayCurrent(stories) {
+function displayQueued(stories) {
     stories = stories.filter((s) => s.has_reps_todo);
 
     // sort entries by source, then by title?
     stories.sort((a, b) => {
         if (a.source == b.source) {
-            return (a.title < b.title) ? -1 : (a.title > b.title) ? 1 : 0;
+            return (a.title < b.title);
         } else {
-            return (a.source < b.source) ? -1 : (a.source > b.source) ? 1 : 0;
+            return (a.source < b.source);
         }
     });
 
     stories.sort((a, b) => {
-        return (a.date_last_rep < b.date_last_rep) ? -1 : (a.date_last_rep > b.date_last_rep) ? 1 : 0;
+        return (a.date_last_rep < b.date_last_rep);
     });
 
-    let html = `
+    let html = `<h2>Stories with queued reps</h2>
             <table class="schedule_table">
             <tr class="day_row logged_row">
                 <td>Source</td>
@@ -53,13 +68,14 @@ function displayCurrent(stories) {
 
     html += `</table>`;
 
-    document.getElementById('reps').innerHTML = html;
+    storyList.innerHTML = html;
 };
 
 
-const TWO_WEEKS_IN_SECONDS = 60 * 60 * 24 * 14;
+const TWO_WEEKS_IN_SECONDS = 60 * 60 * 24 * 7 * 2;
+const TWO_MONTHS_IN_SECONDS = 60 * 60 * 24 * 7 * 8;
 
-function displayRecent(stories) {
+function displayRecentlyCompleted(stories) {
     stories = stories.filter((s) => {
         if (s.has_reps_todo) {
             return false;
@@ -68,22 +84,25 @@ function displayRecent(stories) {
         if (s.date_last_rep <= 1) {
             return false;
         }
-    
+
         let now = Math.floor(new Date() / 1000);
         let elapsedSeconds = now - s.date_last_rep;
         return elapsedSeconds < TWO_WEEKS_IN_SECONDS;
     });
 
+    let html = `<h2 title="Stories with logged reps within last 2 weeks but no queued reps">Stories with logged reps within last 2 weeks but no queued reps</h2>`;
+
     if (stories.length == 0) {
-        document.getElementById('recent_reps').innerHTML = `<h4 style="margin-left: 2em;">(none)</h4>`;
-        return;    
+        html += `<h4 style="margin-left: 2em;">(none)</h4>`;
+        storyList.innerHTML = html;
+        return;
     }
 
     stories.sort((a, b) => {
-        return (a.date_last_rep < b.date_last_rep) ? -1 : (a.date_last_rep > b.date_last_rep) ? 1 : 0;
+        return (a.date_last_rep < b.date_last_rep);
     });
 
-    let html = `<table class="schedule_table">
+    html += `<table class="schedule_table">
     <tr class="day_row logged_row">
         <td>Source</td>
         <td>Title</td>
@@ -100,17 +119,54 @@ function displayRecent(stories) {
 
     html += `</table>`;
 
-    document.getElementById('recent_reps').innerHTML = html;
+    storyList.innerHTML = html;
 }
 
 
+function displayRecentlyLogged(stories) {
+    stories = stories.filter((s) => {
+        if (s.date_last_rep <= 1) {
+            return false;
+        }
 
+        let now = Math.floor(new Date() / 1000);
+        let elapsedSeconds = now - s.date_last_rep;
+        return elapsedSeconds < TWO_MONTHS_IN_SECONDS;
+    });
 
-/* CATALOG */
+    let html = `<h2 title="Stories with logged reps within last 2 months">Stories with logged reps within last 2 months</h2>`;
 
-sourceSelect.onchange = function (evt) {
-    displayCatalog();
+    if (stories.length == 0) {
+        html += `<h4 style="margin-left: 2em;">(none)</h4>`;
+        storyList.innerHTML = html;
+        return;
+    }
+
+    stories.sort((a, b) => {
+        return (a.date_last_rep < b.date_last_rep);
+    });
+
+    html += `<table class="schedule_table">
+    <tr class="day_row logged_row">
+        <td>Source</td>
+        <td>Title</td>
+        <td>Time since<br>last rep</td>
+    </tr>`
+
+    for (const s of stories) {
+        html += `<tr>
+            <td>${s.source}</td>    
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td>${timeSince(s.date_last_rep)}</td>
+        </tr>`;
+    }
+
+    html += `</table>`;
+
+    storyList.innerHTML = html;
 }
+
+
 
 var storiesById = {};
 var storiesBySource = {};
@@ -131,19 +187,29 @@ function processCatalog(storyData) {
         list.push(s);
     }
 
-    let selectOptionsHTML = ``;
-    let i = 0;
     for (let source in storiesBySource) {
-        let count = storiesBySource[source].length;
-        selectOptionsHTML += `<option source="${source}" value="${i}">${source} (${count})</option>`
-        i++;
+        let stories = storiesBySource[source];
+        stories.sort((a, b) => {
+            return ('' + a.title).localeCompare(b.title);
+        });
     }
-    sourceSelect.innerHTML = selectOptionsHTML;
 
-    displayCatalog();
+    let sourcesSorted = Object.keys(storiesBySource);
+    sourcesSorted.sort((a, b) => {
+        return a > b;
+    });
+
+    let sourcesHTML = ``;
+    for (let source of sourcesSorted) {
+        let count = storiesBySource[source].length;
+        sourcesHTML += `<li><a href="#" source="${source}" class="source_li">${source} (${count})</a></li>`;
+    }
+    sourceList.innerHTML = sourcesHTML;
+
+    displayRecentlyLogged(stories);
 };
 
-function displayCatalog() {
+function displaySourceStoryList(list) {
     function storyRow(s) {
         return `<tr>
                 <td><span class="story_source">${s.source}</span></td>
@@ -153,9 +219,8 @@ function displayCatalog() {
 
     let tableHeader = `<table class="story_table">`;
     let html = tableHeader;
-    let source = sourceSelect.options[sourceSelect.selectedIndex].getAttribute('source');
 
-    let list = storiesBySource[source];
+
     list.sort((a, b) => {
         return a.episode_number - b.episode_number;
     });
