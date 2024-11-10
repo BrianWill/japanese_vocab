@@ -359,21 +359,29 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sqldb.Close()
 
-	row := sqldb.QueryRow(`SELECT title, source, link, content, date, video, 
-		date_last_rep, excerpts, subtitles_en, subtitles_ja
+	row := sqldb.QueryRow(`SELECT title, source, link, date, video, 
+		date_last_rep, excerpts, log, subtitles_en, subtitles_ja
 		FROM stories WHERE id = $1;`, id)
 
 	var excerpts string
+	var log string
 	story := Story{ID: int64(id)}
-	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Content, &story.Date,
-		&story.Video, &story.DateLastRep, &excerpts,
-		&story.SubtitlesEN, &story.SubtitlesJA); err != nil {
+	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Date,
+		&story.Video, &story.DateLastRep, &excerpts, &log,
+		&story.SubtitlesENJson, &story.SubtitlesJAJson); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
 	}
 
 	err = json.Unmarshal([]byte(excerpts), &story.Excerpts)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	err = json.Unmarshal([]byte(log), &story.Log)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -429,7 +437,7 @@ func UpdateSubtitles(w http.ResponseWriter, r *http.Request) {
 			subtitles_en = CASE WHEN $1 = '' THEN subtitles_en ELSE $1 END,
 			subtitles_ja = CASE WHEN $2 = '' THEN subtitles_ja ELSE $2 END
 			WHERE id = $3;`,
-		story.SubtitlesEN, story.SubtitlesJA, story.ID)
+		story.SubtitlesENJson, story.SubtitlesJAJson, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update subtitles: " + err.Error() + `"}`))
@@ -506,6 +514,63 @@ func UpdateExcerpts(w http.ResponseWriter, r *http.Request) {
 
 	_, err = sqldb.Exec(`UPDATE stories SET excerpts = $1, date_last_rep = $2, has_reps_todo = $3 WHERE id = $4;`,
 		excerptsJSON, lastRepTimestamp, hasRepsTodo, body.StoryID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
+func LogStory(w http.ResponseWriter, r *http.Request) {
+	dbPath := MAIN_USER_DB_PATH
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var body LogStoryRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	var logStr string
+	err = sqldb.QueryRow(`SELECT log FROM stories WHERE id = $1;`, body.StoryID).Scan(&logStr)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
+		return
+	}
+
+	var log []LogItem
+	err = json.Unmarshal([]byte(logStr), &log)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	log = append(log, LogItem{Date: body.Date})
+
+	logJson, err := json.Marshal(log)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + "failure to marshall story log: " + err.Error() + `"}`))
+		return
+	}
+
+	_, err = sqldb.Exec(`UPDATE stories SET log = $1 WHERE id = $2;`,
+		logJson, body.StoryID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))

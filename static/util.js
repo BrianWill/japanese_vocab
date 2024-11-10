@@ -1,4 +1,5 @@
 const REP_COOLDOWN = 60 * 60 * 18;  // 18 hours (in seconds)
+const STORY_LOG_COOLDOWN = 60 * 60 * 18;  // 18 hours (in seconds)
 
 
 const DRILL_CATEGORY_KATAKANA = 1;
@@ -308,6 +309,23 @@ function getIP(successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('IP:', data);
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function logStory(storyId, date, successFn) {
+    fetch('/log_story', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"story_id": storyId, "date": date})
+    }).then((response) => response.json())
+        .then((data) => {
+            console.log('Story logged');
             successFn(data);
         })
         .catch((error) => {
@@ -694,46 +712,6 @@ var colorPalette = ['#c7522a', '#e5c185', '#fbf2c4', '#74a892', "#d9042b",
 function randomPaletteColor(hash) {
     let idx = Math.abs(hash) % colorPalette.length;
     return colorPalette[idx];
-}
-
-function insertRep(excerpt, repIdx) {
-    let type = excerpt.reps_todo[repIdx]; 
-    excerpt.reps_todo.splice(repIdx, 0, type);
-    
-	updateReps(story, function(data) {
-        displayStoryInfo(story);
-        snackbarMessage("removed a rep");
-    });
-}
-
-function deleteRep(story, repIdx) {
-    story.reps_todo.splice(repIdx, 1);
-    
-	updateReps(story, function(data) {
-        displayStoryInfo(story);
-        snackbarMessage("removed a rep");
-    });
-}
-
-function logRep(excerpt) {
-    let unixtime = Math.floor(Date.now() / 1000);
-
-    for (let rep of excerpt.reps_logged) {
-        if ((unixtime - rep.date) < REP_COOLDOWN) {
-            snackbarMessage("a rep of this excerpt has already been logged within the cooldown window");
-            return false;
-        }
-    }
-
-    if (excerpt.reps_todo == 0) {
-        snackbarMessage(`no reps are currently queued for this excerpt`);
-        return false;
-    }
-
-    excerpt.reps_todo--;
-    excerpt.reps_logged.push({"date": unixtime});
-
-    return true;
 }
 
 function setCookie(name,value,days) {

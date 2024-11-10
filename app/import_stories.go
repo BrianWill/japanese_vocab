@@ -163,11 +163,11 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 
 			storyBasePath := sourceDir + "/" + title
 
-			story.SubtitlesJA, err = readWriteSubtitleFiles(storyBasePath, "ja")
+			story.SubtitlesJAJson, story.SubtitlesJA, err = readWriteSubtitleFiles(storyBasePath, "ja")
 			if err != nil {
 				return nil, err
 			}
-			story.SubtitlesEN, err = readWriteSubtitleFiles(storyBasePath, "en")
+			story.SubtitlesENJson, story.SubtitlesEN, err = readWriteSubtitleFiles(storyBasePath, "en")
 			if err != nil {
 				return nil, err
 			}
@@ -255,11 +255,11 @@ func importStory(sourceName string, storyTitle string, sqldb *sql.DB) error {
 
 	story.Video = storyTitle + mediaExtension
 
-	story.SubtitlesJA, err = readWriteSubtitleFiles(storyBasePath, "ja")
+	story.SubtitlesJAJson, story.SubtitlesJA, err = readWriteSubtitleFiles(storyBasePath, "ja")
 	if err != nil {
 		return err
 	}
-	story.SubtitlesEN, err = readWriteSubtitleFiles(storyBasePath, "en")
+	story.SubtitlesENJson, story.SubtitlesEN, err = readWriteSubtitleFiles(storyBasePath, "en")
 	if err != nil {
 		return err
 	}
@@ -351,7 +351,7 @@ func nextWord(tokens []*JpToken) (Word, int) {
 		panic("POS that is not currently accounted for: " + t.POS + " : " + t.Surface)
 	}
 
-	return Word{Display: t.Surface}, 1 // for types of tokens we haven't accounted for
+	//return Word{Display: t.Surface}, 1 // for types of tokens we haven't accounted for
 }
 
 // assumes that the first token is a punctuation mark
@@ -412,11 +412,11 @@ func nextVerb(tokens []*JpToken) (Word, int) {
 }
 
 // Read original subtitle file, write subtitles to json file, and return the json.
-func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
+func readWriteSubtitleFiles(storyBasePath string, lang string) (string, []Subtitle, error) {
 	subtitlesExtension, err := firstExtensionThatExists(storyBasePath,
 		[]string{"." + lang + ".vtt", "." + lang + ".ass", "." + lang + ".srt"})
 	if err != nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	subtitles := make([]Subtitle, 0)
@@ -425,7 +425,7 @@ func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
 	if subtitlesExtension != "" {
 		subs, err := astisub.OpenFile(storyBasePath + subtitlesExtension)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 
 		var sb strings.Builder
@@ -445,7 +445,7 @@ func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
 
 				words, err = tokenizeSubtitle(text)
 				if err != nil {
-					return "", err
+					return "", nil, err
 				}
 
 				// fmt.Println("LINE: ", text)
@@ -465,16 +465,16 @@ func readWriteSubtitleFiles(storyBasePath string, lang string) (string, error) {
 
 	jsonBytes, err := json.MarshalIndent(subtitles, "", "    ")
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	// write out subtitle json
 	err = os.WriteFile(storyBasePath+"."+lang+".json", jsonBytes, 0644)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return string(jsonBytes), nil
+	return string(jsonBytes), subtitles, nil
 }
 
 func getSubtitlesContentInTimeRange(subtitlesJSON string, startTime float64, endTime float64) (string, error) {
@@ -525,11 +525,11 @@ func storeStory(story Story, sqldb *sql.DB) error {
 		fmt.Printf(`updating story: "%s"`+"\n", story.Title)
 
 		_, err := sqldb.Exec(`UPDATE stories SET 
-				date = $1, link = $2, video = $3, content = $4,  
-				subtitles_en = $5, subtitles_ja = $6
-				WHERE title = $7 and source = $8;`,
-			story.Date, story.Link, story.Video, story.Content,
-			story.SubtitlesEN, story.SubtitlesJA,
+				date = $1, link = $2, video = $3, 
+				subtitles_en = $4, subtitles_ja = $5
+				WHERE title = $6 and source = $7;`,
+			story.Date, story.Link, story.Video,
+			story.SubtitlesENJson, story.SubtitlesJAJson,
 			story.Title, story.Source)
 		return err
 	}
@@ -537,24 +537,24 @@ func storeStory(story Story, sqldb *sql.DB) error {
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
-				content, subtitles_en, subtitles_ja, excerpts, date_last_rep, has_reps_todo) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
+				subtitles_en, subtitles_ja, excerpts, date_last_rep, has_reps_todo) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
 		story.Title, story.Source, story.Date, story.Link,
-		story.Video, story.Content, story.SubtitlesEN, story.SubtitlesJA, INITTIAL_EXCERPT, 0, 0)
+		story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, INITTIAL_EXCERPT, 0, 0)
 
 	return err
 }
 
 func updateStorySubtitleFiles(story Story) error {
 	path := SOURCES_PATH + story.Source + "/" + story.Title
-	if story.SubtitlesEN != "" {
-		err := os.WriteFile(path+".en.json", []byte(story.SubtitlesEN), os.ModePerm)
+	if story.SubtitlesENJson != "" {
+		err := os.WriteFile(path+".en.json", []byte(story.SubtitlesENJson), os.ModePerm)
 		if err != nil {
 			return err
 		}
 	}
-	if story.SubtitlesJA != "" {
-		err := os.WriteFile(path+".ja.json", []byte(story.SubtitlesJA), os.ModePerm)
+	if story.SubtitlesJAJson != "" {
+		err := os.WriteFile(path+".ja.json", []byte(story.SubtitlesJAJson), os.ModePerm)
 		if err != nil {
 			return err
 		}
@@ -568,11 +568,16 @@ func processStoryWords(story Story, sqldb *sql.DB) (newWordCount int, wordIdsJso
 	if newlineRegEx == nil {
 		newlineRegEx = regexp.MustCompile(`\x{000D}\x{000A}|[\x{000A}\x{000B}\x{000C}\x{000D}\x{0085}\x{2028}\x{2029}]`)
 	}
-	content := newlineRegEx.ReplaceAllString(story.Content, ``)
 
-	tokens, kanjiSet, err := tokenize(content)
-	if err != nil {
-		return 0, "", fmt.Errorf("failure to tokenize story: " + err.Error())
+	tokens := make([]*JpToken, 0)
+	kanjiSet := make([]string, 0)
+	for _, sub := range story.SubtitlesJA {
+		subTokens, subKanjiSet, err := tokenize(newlineRegEx.ReplaceAllString(sub.Text, ``))
+		if err != nil {
+			return 0, "", fmt.Errorf("failure to tokenize story: " + err.Error())
+		}
+		tokens = append(tokens, subTokens...)
+		kanjiSet = append(kanjiSet, subKanjiSet...)
 	}
 
 	newWordIds, newWordCount, err := addWords(tokens, kanjiSet, sqldb)

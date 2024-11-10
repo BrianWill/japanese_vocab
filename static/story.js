@@ -35,7 +35,7 @@ document.getElementById('subtitle_hide_unhighlighted').addEventListener('change'
 document.getElementById('caption_container').addEventListener('dblclick', function (evt) {
     if (evt.target.classList.contains('subtitle_word')) {
         let baseForm = evt.target.getAttribute('base_form');
-        console.log('clicked word: ', baseForm);        
+        console.log('clicked word: ', baseForm);
         if (baseForm) {
             let w = wordMap[baseForm];
             if (w) {
@@ -46,7 +46,7 @@ document.getElementById('caption_container').addEventListener('dblclick', functi
                 });
             }
         }
-    }    
+    }
 });
 
 storyLines.onwheel = function (evt) {
@@ -88,6 +88,26 @@ storyActions.onclick = function (evt) {
             window.location.reload();
         });
         return;
+
+    } else if (evt.target.classList.contains('drill_vocab')) {
+
+    } else if (evt.target.classList.contains('log_story')) {
+        evt.preventDefault();
+
+        if (window.confirm("Log this story?")) {
+            let unixtime = Math.floor(Date.now() / 1000);
+
+            for (let logItem of story.log) {
+                if ((unixtime - logItem.date) < STORY_LOG_COOLDOWN) {
+                    snackbarMessage("this story has already been logged within the cooldown window");
+                    return false;
+                }
+            }
+
+            logStory(story.id, unixtime, function () {
+                snackbarMessage(`story logged`);
+            });
+        }
     } else if (!evt.target.closest('#excerpts')) {
         return;
     }
@@ -524,7 +544,7 @@ function displaySubtitles() {
 
     let enSubtitles = findCues(story.subtitles_en, player.currentTime);
     let jaSubtitles = findCues(story.subtitles_ja, player.currentTime);
-    
+
     function display(subs, target) {
         let html = '<div>';
 
@@ -551,59 +571,8 @@ function displaySubtitles() {
     display(jaSubtitles, captionsJa);
 }
 
-function displayExcerpts(story) {
-    function repsHTML(excerpt, excerptIdx) {
-        let timeLastRep = 1;
-        let listeningRepCount = 0;
-
-        if (excerpt.reps_logged) {
-            for (let rep of excerpt.reps_logged) {
-                listeningRepCount++;
-
-                if (rep.date > timeLastRep) {
-                    timeLastRep = rep.date;
-                }
-            }
-        }
-
-        let todoReps = `Queued reps: <a class="remove_rep_link" href="#" title="remove a rep">−</a>
-            <a class="add_rep_link" href="#" title="add a rep">＋</a>`;
-        for (let i = 0; i < excerpt.reps_todo; i++) {
-            todoReps += `<span class="listening rep" title="rep">⭯</span>`;
-        }
-
-        if (isNaN(excerpt.end_time)) {
-            excerpt.end_time = player.duration;
-        }
-
-        let html = `<div excerpt_idx="${excerptIdx}">
-            <hr>
-            <minidenticon-svg username="seed${excerpt.hash}"></minidenticon-svg>
-            <a class="play_excerpt" href="#" title="play the excerpt">play</a>
-            <a class="start_time" href="#" title="click to set the start time">${formatTrackTime(excerpt.start_time, 0)}</a>-<a class="end_time" href="#" title="click to set the end time">${formatTrackTime(excerpt.end_time, 0)}</a>
-            <a class="drill_excerpt" href="words.html?storyId=${story.id}&excerptHash=${excerpt.hash}" title="Drill the vocab of this excerpt">vocab</a>
-            <a class="delete_excerpt" href="#" title="Remove this excerpt">remove</a>
-            <br>
-            <span>Completed reps: ${listeningRepCount} &nbsp;&nbsp; ${timeSinceRep(timeLastRep)}</span><br>
-            ${todoReps} <a class="log_excerpt" href="#" title="Log a rep for this excerpt">log</a><br>`;
-
-        return html + '</div>';
-    }
-
-    let html = `Excerpts:
-    <a class="add_excerpt" href="#" title="Add a new excerpt">add excerpt</a>
-    <a class="sort_excerpts" href="#" title="Reorder the excerpts by start time">reorder excerpts</a>`;
-
-    for (idx in story.excerpts) {
-        html += repsHTML(story.excerpts[idx], idx);
-    }
-
-    document.getElementById('excerpts').innerHTML = html;
-}
-
 function displayStoryInfo(story) {
     document.getElementById('story_title').innerHTML = `<a href="${story.link}">${story.title}</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#">Source: ${story.source}</a><hr>`;
-    displayExcerpts(story);
 }
 
 var wordMap = null;
@@ -660,7 +629,7 @@ function getWords(id) {
 
             processStory(story, words);
             displayStoryInfo(story);
-            displayStoryContent(story);
+            displayStoryText(story);
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -705,7 +674,7 @@ function generateSubtitleHTML(story) {
         let html = '<div>';
         for (word of sub.words) {
             //let _class =  'subtitle_word';
-            let _class =  'subtitle_word';
+            let _class = 'subtitle_word';
             if (highlightWords[word.base_form]) {
                 _class += ' highlighted';
             }
@@ -782,7 +751,7 @@ function adjustPlaybackSpeed(adjustment) {
     }
 }
 
-function displayStoryContent() {
+function displayStoryText() {
     let cues = null;
     let lang = 'en';
     if (document.getElementById('transcript_en_checkbox').checked) {

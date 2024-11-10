@@ -101,6 +101,7 @@ func main() {
 
 	router.HandleFunc("/update_subtitles", UpdateSubtitles).Methods("POST")
 	router.HandleFunc("/update_excerpts", UpdateExcerpts).Methods("POST")
+	router.HandleFunc("/log_story", LogStory).Methods("POST")
 	router.HandleFunc("/story/{id}", GetStory).Methods("GET")
 	router.HandleFunc("/ip", GetIP).Methods("GET")
 	router.HandleFunc("/stories", GetStories).Methods("GET")
@@ -247,7 +248,7 @@ func makeUserDB(path string) {
 			excerpts TEXT NOT NULL,
 			date_last_rep INTEGER NOT NULL,
 			has_reps_todo INTEGER NOT NULL,
-			content TEXT);`)
+			log TEXT);`)
 	if err != nil {
 		log.Fatal(err)
 	}

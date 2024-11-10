@@ -33,17 +33,18 @@ body {
     color: rgba(0, 0, 0, 0);
 }
 
-#main_container {
-    
-}
-
 #story_container {
     display: flex;
     height: 93vh;
 }
 
-#story_sidebar {
-    
+
+#media {
+    width: 70%;
+}
+
+#story_text {
+    width: 30%;    
 }
 
 #video_player {

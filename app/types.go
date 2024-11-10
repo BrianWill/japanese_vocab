@@ -3,18 +3,20 @@ package main
 import ()
 
 type Story struct {
-	ID          int64     `json:"id,omitempty"`
-	Title       string    `json:"title,omitempty"`
-	Source      string    `json:"source,omitempty"`
-	Date        string    `json:"date,omitempty"`
-	Content     string    `json:"content,omitempty"`
-	Link        string    `json:"link,omitempty"`
-	Video       string    `json:"video,omitempty"`
-	DateLastRep int64     `json:"date_last_rep"`
-	HasRepsTodo int       `json:"has_reps_todo"`
-	SubtitlesEN string    `json:"subtitles_en,omitempty"`
-	SubtitlesJA string    `json:"subtitles_ja,omitempty"`
-	Excerpts    []Excerpt `json:"excerpts"`
+	ID              int64  `json:"id,omitempty"`
+	Title           string `json:"title,omitempty"`
+	Source          string `json:"source,omitempty"`
+	Date            string `json:"date,omitempty"`
+	Link            string `json:"link,omitempty"`
+	Video           string `json:"video,omitempty"`
+	DateLastRep     int64  `json:"date_last_rep"`
+	HasRepsTodo     int    `json:"has_reps_todo"`
+	SubtitlesENJson string `json:"subtitles_en,omitempty"`
+	SubtitlesJAJson string `json:"subtitles_ja,omitempty"`
+	SubtitlesEN     []Subtitle
+	SubtitlesJA     []Subtitle
+	Excerpts        []Excerpt `json:"excerpts"`
+	Log             []LogItem `json:"log"`
 }
 
 type Excerpt struct {
@@ -41,6 +43,11 @@ type StoryFilePaths struct {
 type UpdateExcerptsRequest struct {
 	StoryID  int64     `json:"story_id"`
 	Excerpts []Excerpt `json:"excerpts"`
+}
+
+type LogStoryRequest struct {
+	StoryID int64 `json:"story_id"`
+	Date    int64 `json:"date"`
 }
 
 type ImportSourceRequest struct {
@@ -99,4 +106,8 @@ type Word struct {
 
 	BaseForm string `json:"base_form"`
 	POS      string `json:"POS"`
+}
+
+type LogItem struct {
+	Date int64 `json:"date"`
 }
