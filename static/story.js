@@ -90,7 +90,7 @@ storyActions.onclick = function (evt) {
         return;
 
     } else if (evt.target.classList.contains('drill_vocab')) {
-
+        window.location.href = '/words.html?storyId=' + story.id;
     } else if (evt.target.classList.contains('log_story')) {
         evt.preventDefault();
 

@@ -41,7 +41,9 @@ function displayRecentlyLogged(stories) {
         return elapsedSeconds < TWO_MONTHS_IN_SECONDS;
     });
 
-    let html = `<h2 title="Stories with logged reps within last 2 months">Stories with logged reps within last 2 months</h2>`;
+    let html = `<h2 title="Stories with logged reps within last 2 months">Stories with logged reps within last 2 months</h2>
+        <a href="/words.html?storyId=0">drill vocab of recently logged stories</a><br><br>`;
+    
 
     if (stories.length == 0) {
         html += `<h4 style="margin-left: 2em;">(none)</h4>`;

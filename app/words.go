@@ -37,12 +37,14 @@ func GetWords(w http.ResponseWriter, r *http.Request) {
 	var story_source string
 	var story_link string
 
-	row := sqldb.QueryRow(`SELECT title, source, link FROM stories WHERE id = $1;`, body.StoryId)
-	err = row.Scan(&story_title, &story_source, &story_link)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
+	if body.StoryId != 0 {
+		row := sqldb.QueryRow(`SELECT title, source, link FROM stories WHERE id = $1;`, body.StoryId)
+		err = row.Scan(&story_title, &story_source, &story_link)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+			return
+		}
 	}
 
 	words, err := getWordsFromStory(sqldb, body.StoryId)
@@ -55,7 +57,7 @@ func GetWords(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(gw).Encode(bson.M{"words": words, "story_link": story_link, "story_title": story_title, "story_source": story_source})
 }
 
-func getWordsFromStory(sqldb *sql.DB, storyId int64) ([]DrillWord, error) {
+func getStoryTokens(sqldb *sql.DB, storyId int64) ([]*JpToken, error) {
 	var subtitlesJA string
 	row := sqldb.QueryRow(`SELECT subtitles_ja FROM stories WHERE id = $1;`, storyId)
 	err := row.Scan(&subtitlesJA)
@@ -73,6 +75,69 @@ func getWordsFromStory(sqldb *sql.DB, storyId int64) ([]DrillWord, error) {
 		return nil, err
 	}
 
+	return tokens, nil
+}
+
+func getStoriesRecentlyLogged(sqldb *sql.DB) ([]Story, error) {
+	rows, err := sqldb.Query(`SELECT id, title, source, link, video, 
+			date, log FROM stories;`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	unixtime := time.Now().Unix()
+
+	var stories []Story
+	var log string
+	for rows.Next() {
+		var story Story
+		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link,
+			&story.Video, &story.Date, &log); err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal([]byte(log), &story.Log)
+		if err != nil {
+			return nil, err
+		}
+		var dateLastLogged int64
+		for _, logItem := range story.Log {
+			if logItem.Date > int64(dateLastLogged) {
+				dateLastLogged = logItem.Date
+			}
+		}
+
+		if (unixtime - dateLastLogged) < STORY_RECENTLY_LOGGED_PERIOD {
+			stories = append(stories, story)
+		}
+	}
+
+	return stories, nil
+}
+
+func getWordsFromStory(sqldb *sql.DB, storyId int64) ([]DrillWord, error) {
+	var tokens []*JpToken
+	var err error
+	if storyId == 0 {
+		tokens = make([]*JpToken, 0)
+		stories, err := getStoriesRecentlyLogged(sqldb)
+		if err != nil {
+			return nil, err
+		}
+		for _, story := range stories {
+			tokens_, err := getStoryTokens(sqldb, story.ID)
+			if err != nil {
+				return nil, err
+			}
+			tokens = append(tokens, tokens_...)
+		}
+	} else {
+		tokens, err = getStoryTokens(sqldb, storyId)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// get word info
 	wordMap := make(map[string]DrillWord)
 
@@ -81,7 +146,7 @@ func getWordsFromStory(sqldb *sql.DB, storyId int64) ([]DrillWord, error) {
 		word.BaseForm = token.BaseForm
 		row := sqldb.QueryRow(`SELECT id, archived, category,
 				repetitions, definitions, date_last_rep FROM words WHERE base_form = $1;`, token.BaseForm)
-		err = row.Scan(&word.ID, &word.Archived, &word.Category,
+		err := row.Scan(&word.ID, &word.Archived, &word.Category,
 			&word.Repetitions, &word.Definitions, &word.DateLastRep)
 		if err == sql.ErrNoRows {
 			continue

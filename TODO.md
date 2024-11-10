@@ -1,18 +1,20 @@
 # japanese_vocab TODO   
       
     in story content:
+        highlight the archived words
+            doubleclick to toggle archive state
         highlight the line corresponding to position in the video
         maybe also auto scroll when playing?
     
     should subtitle adjustment set an offset for the video rather than edit the subtitles themselves?
         for case of gaps, you still need to adjust the subtitles themselves, in which case maybe the original subtitle file itself should be updated
 
-    drill words of recently logged stories
-        from all recently logged stories
+    drilling options:
+        limit words in drill to 50?
+            user can pick the limit number?
+            pick the words at random?
         or pick range of stories to include
         or pick set of individually selected stories?
-
-    drilling:
         maybe user marks non-archived words?
             mark by default expires after set period (2 weeks?)
             user drills all marked words
@@ -20,9 +22,6 @@
         option to pick the most frequent words in a story?
             or list in story shows most frequent words, and user adds them manually
         every time a word is added, the user is notified how many words are in their current set
-        limit words in drill to 50?
-            user can pick the limit number?
-            pick the words at random?
         bring back per-word cooldowns?
 
     debug mode for importing:
@@ -31,8 +30,8 @@
             if word baseform is not in db, mark word with an icon
             on hover over word, show all the info from the analyzer
 
-    subtitle tokenization: 
-        まとめたので should include ので as part of the verb
+    subtitle tokenization (might be fixed now?): 
+        まとめたので should not include ので as part of the verb
         手触り isn't properly tokenized? The word is not in the words table for some reason
         怠け者 is not in words table
 
@@ -41,10 +40,6 @@
     feature to analyze the story catalog to find stories with right balance of known and unknown words
         maybe identify appropriate excerpts by looking at run of subtitles
         for each word, track all stories / sentences that include the word
-    
-    story page story content:
-        highlighted words
-        doubleclick to toggle archive state
 
     for highlighted words, show kana and definitions
         how to show it?

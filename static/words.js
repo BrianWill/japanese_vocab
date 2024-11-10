@@ -10,22 +10,6 @@ var definitionsDiv = document.getElementById('definitions');
 var archivedSelect = document.getElementById('archived_select');
 var logLink = document.getElementById('log_link');
 
-const DRILL_CATEGORY_KATAKANA = 1;
-const DRILL_CATEGORY_ICHIDAN = 2;
-const DRILL_CATEGORY_GODAN_SU = 8;
-const DRILL_CATEGORY_GODAN_RU = 16;
-const DRILL_CATEGORY_GODAN_U = 32;
-const DRILL_CATEGORY_GODAN_TSU = 64;
-const DRILL_CATEGORY_GODAN_KU = 128;
-const DRILL_CATEGORY_GODAN_GU = 256;
-const DRILL_CATEGORY_GODAN_MU = 512;
-const DRILL_CATEGORY_GODAN_BU = 1024;
-const DRILL_CATEGORY_GODAN_NU = 2048;
-const DRILL_CATEGORY_KANJI = 4096;
-const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
-    DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU;
-const DRILL_ALL = DRILL_CATEGORY_GODAN | DRILL_CATEGORY_ICHIDAN | DRILL_CATEGORY_KANJI | DRILL_CATEGORY_KATAKANA;
-
 var drillSet = [];
 var answeredSet = [];
 var words;
@@ -257,7 +241,6 @@ function load(evt) {
 
     var url = new URL(window.location.href);
     let storyId = parseInt(url.searchParams.get("storyId"));
-    let excerptHash = parseInt(url.searchParams.get("excerptHash"));
 
     fetch('words', {
         method: 'POST', // or 'PUT'
@@ -266,7 +249,6 @@ function load(evt) {
         },
         body: JSON.stringify({
             story_id: storyId,
-            excerpt_hash: excerptHash
         })
     }).then((response) => response.json())
         .then((data) => {
@@ -276,7 +258,7 @@ function load(evt) {
                 w.definitions = JSON.parse(w.definitions);
             }
 
-            drillTitleH.innerHTML = `<minidenticon-svg username="seed${excerptHash}"></minidenticon-svg>
+            drillTitleH.innerHTML = `
                 <a href="story.html?storyId=${storyId}">${data.story_title}</a>
                 <br><hr>${data.story_source}<br>`;
             newDrill();
