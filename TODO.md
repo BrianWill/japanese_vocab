@@ -1,7 +1,8 @@
 # japanese_vocab TODO   
       
-    swap place of story info sidebar and content sidebar
-        or just move content into left sidebar
+    in story content:
+        highlight the line corresponding to position in the video
+        maybe also auto scroll when playing?
     
     should subtitle adjustment set an offset for the video rather than edit the subtitles themselves?
         for case of gaps, you still need to adjust the subtitles themselves, in which case maybe the original subtitle file itself should be updated

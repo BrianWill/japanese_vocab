@@ -602,12 +602,7 @@ function displayExcerpts(story) {
 }
 
 function displayStoryInfo(story) {
-    document.getElementById('story_title').innerHTML = `<a href="${story.link}">${story.title}</a><hr>`;
-    document.getElementById('source_info').innerText = 'Source: ' + story.source;
-    if (story.date) {
-        document.getElementById('date_info').innerText = story.date;
-    }
-
+    document.getElementById('story_title').innerHTML = `<a href="${story.link}">${story.title}</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#">Source: ${story.source}</a><hr>`;
     displayExcerpts(story);
 }
 

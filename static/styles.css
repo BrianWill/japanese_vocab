@@ -445,10 +445,6 @@ span.verb:hover {
     text-align: left;
 }
 
-#story_actions span {
-    padding-right: 1.5em;
-}
-
 .marked_line {
     color: rgb(255, 251, 0);
 }
