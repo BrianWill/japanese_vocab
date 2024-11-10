@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"regexp"
@@ -477,22 +476,15 @@ func readWriteSubtitleFiles(storyBasePath string, lang string) (string, []Subtit
 	return string(jsonBytes), subtitles, nil
 }
 
-func getSubtitlesContentInTimeRange(subtitlesJSON string, startTime float64, endTime float64) (string, error) {
+func getSubtitlesString(subtitlesJSON string) (string, error) {
 	var subtitles []Subtitle
 	err := json.Unmarshal([]byte(subtitlesJSON), &subtitles)
 	if err != nil {
 		return "", err
 	}
 
-	if endTime == 0 {
-		endTime = math.MaxFloat64
-	}
-
 	var sb strings.Builder
 	for _, subtitle := range subtitles {
-		if endTime != 0 && (subtitle.EndTime < startTime || subtitle.StartTime > endTime) {
-			continue
-		}
 		sb.WriteString(subtitle.Text)
 		sb.WriteString("\n")
 	}
@@ -537,10 +529,10 @@ func storeStory(story Story, sqldb *sql.DB) error {
 	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
 
 	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
-				subtitles_en, subtitles_ja, excerpts, date_last_rep, has_reps_todo) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
+				subtitles_en, subtitles_ja, log) 
+				VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
 		story.Title, story.Source, story.Date, story.Link,
-		story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, INITTIAL_EXCERPT, 0, 0)
+		story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, "[]")
 
 	return err
 }
@@ -607,7 +599,7 @@ func GetSources(response http.ResponseWriter, request *http.Request) {
 	defer sqldb.Close()
 
 	rows, err := sqldb.Query(`SELECT id, title, source, link, video, 
-			date, date_last_rep, has_reps_todo FROM stories;`)
+			date, FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -619,7 +611,7 @@ func GetSources(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link,
-			&story.Video, &story.Date, &story.DateLastRep, &story.HasRepsTodo); err != nil {
+			&story.Video, &story.Date); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return

@@ -4,7 +4,6 @@ import (
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"regexp"
 	"time"
 
@@ -46,7 +45,7 @@ func GetWords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	words, err := getWordsFromExcerpt(sqldb, body.StoryId, body.ExcerptHash)
+	words, err := getWordsFromStory(sqldb, body.StoryId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
@@ -56,42 +55,7 @@ func GetWords(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(gw).Encode(bson.M{"words": words, "story_link": story_link, "story_title": story_title, "story_source": story_source})
 }
 
-func getExcerpt(sqldb *sql.DB, storyId int64, excerptHash int64) (Excerpt, error) {
-	var excerptsJSON string
-	row := sqldb.QueryRow(`SELECT excerpts FROM stories WHERE id = $1;`, storyId)
-	err := row.Scan(&excerptsJSON)
-	if err != nil {
-		return Excerpt{}, err
-	}
-
-	var excerpts []Excerpt
-	err = json.Unmarshal([]byte(excerptsJSON), &excerpts)
-	if err != nil {
-		return Excerpt{}, err
-	}
-
-	for _, ex := range excerpts {
-		if ex.Hash == excerptHash {
-			return ex, nil
-		}
-	}
-
-	return Excerpt{}, fmt.Errorf("excerpt with matching hash not found")
-}
-
-func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptHash int64) ([]DrillWord, error) {
-	var startTime float64 = 0
-	var endTime float64 = 0
-
-	if excerptHash != 0 {
-		excerpt, err := getExcerpt(sqldb, storyId, excerptHash)
-		if err != nil {
-			return nil, err
-		}
-		startTime = excerpt.StartTime
-		endTime = excerpt.EndTime
-	}
-
+func getWordsFromStory(sqldb *sql.DB, storyId int64) ([]DrillWord, error) {
 	var subtitlesJA string
 	row := sqldb.QueryRow(`SELECT subtitles_ja FROM stories WHERE id = $1;`, storyId)
 	err := row.Scan(&subtitlesJA)
@@ -99,7 +63,7 @@ func getWordsFromExcerpt(sqldb *sql.DB, storyId int64, excerptHash int64) ([]Dri
 		return nil, err
 	}
 
-	excerptText, err := getSubtitlesContentInTimeRange(subtitlesJA, startTime, endTime)
+	excerptText, err := getSubtitlesString(subtitlesJA)
 	if err != nil {
 		return nil, err
 	}

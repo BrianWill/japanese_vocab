@@ -293,11 +293,6 @@ function load(evt) {
     }).then((response) => response.json())
         .then((data) => {
             story = data;
-
-            for (let excerpt of story.excerpts) {
-                excerpt.reps_logged = excerpt.reps_logged || [];
-                excerpt.reps_todo = excerpt.reps_todo || [];
-            }
         });
 }
 

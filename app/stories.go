@@ -311,7 +311,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	}
 
 	rows, err := sqldb.Query(`SELECT id, title, source, link, video, 
-			date, date_last_rep, has_reps_todo FROM stories;`)
+			date, log FROM stories;`)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -320,13 +320,19 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	defer rows.Close()
 
 	var stories []Story
+	var log string
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link,
-			&story.Video, &story.Date, &story.DateLastRep, &story.HasRepsTodo); err != nil {
+			&story.Video, &story.Date, &log); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
+		}
+		err = json.Unmarshal([]byte(log), &story.Log)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			response.Write([]byte(`{ "message": "` + "failure to get story log: " + err.Error() + `"}`))
 		}
 		stories = append(stories, story)
 	}
@@ -360,24 +366,16 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, date, video, 
-		date_last_rep, excerpts, log, subtitles_en, subtitles_ja
+		log, subtitles_en, subtitles_ja
 		FROM stories WHERE id = $1;`, id)
 
-	var excerpts string
 	var log string
 	story := Story{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Date,
-		&story.Video, &story.DateLastRep, &excerpts, &log,
+		&story.Video, &log,
 		&story.SubtitlesENJson, &story.SubtitlesJAJson); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
-		return
-	}
-
-	err = json.Unmarshal([]byte(excerpts), &story.Excerpts)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		gw.Write([]byte(`{ "message": "` + err.Error() + `"}`))
 		return
 	}
 
@@ -449,75 +447,6 @@ func UpdateSubtitles(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure updating story subtitle files: " + err.Error() + `"}`))
 		rows.Close()
-	}
-
-	json.NewEncoder(w).Encode(bson.M{"status": "success"})
-}
-
-func UpdateExcerpts(w http.ResponseWriter, r *http.Request) {
-	dbPath := MAIN_USER_DB_PATH
-
-	w.Header().Set("Content-Type", "application/json")
-
-	var body UpdateExcerptsRequest
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-
-	sqldb, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
-		return
-	}
-	defer sqldb.Close()
-
-	hasRepsTodo := 0
-	lastRepTimestamp := int64(0)
-
-	for _, ex := range body.Excerpts {
-		for _, rep := range ex.RepsLogged {
-			if rep.Date > lastRepTimestamp {
-				lastRepTimestamp = rep.Date
-			}
-		}
-		if ex.RepsTodo > 0 {
-			hasRepsTodo = 1
-		}
-	}
-
-	// make sure the story actually exists
-	rows, err := sqldb.Query(`SELECT id FROM stories WHERE id = $1;`, body.StoryID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
-		return
-	}
-
-	if !rows.Next() {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "story with ID does not exist: " + strconv.FormatInt(body.StoryID, 10) + `"}`))
-		rows.Close()
-		return
-	}
-	rows.Close()
-
-	excerptsJSON, err := json.Marshal(body.Excerpts)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to marshall excerpts: " + err.Error() + `"}`))
-		return
-	}
-
-	_, err = sqldb.Exec(`UPDATE stories SET excerpts = $1, date_last_rep = $2, has_reps_todo = $3 WHERE id = $4;`,
-		excerptsJSON, lastRepTimestamp, hasRepsTodo, body.StoryID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))
-		return
 	}
 
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})

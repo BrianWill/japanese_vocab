@@ -9,23 +9,11 @@ type Story struct {
 	Date            string `json:"date,omitempty"`
 	Link            string `json:"link,omitempty"`
 	Video           string `json:"video,omitempty"`
-	DateLastRep     int64  `json:"date_last_rep"`
-	HasRepsTodo     int    `json:"has_reps_todo"`
 	SubtitlesENJson string `json:"subtitles_en,omitempty"`
 	SubtitlesJAJson string `json:"subtitles_ja,omitempty"`
 	SubtitlesEN     []Subtitle
 	SubtitlesJA     []Subtitle
-	Excerpts        []Excerpt `json:"excerpts"`
 	Log             []LogItem `json:"log"`
-}
-
-type Excerpt struct {
-	StoryID    int64       `json:"story_id,omitempty"` // used in update requests
-	Hash       int64       `json:"hash"`               // a random id for the excerpt
-	StartTime  float64     `json:"start_time"`
-	EndTime    float64     `json:"end_time"`
-	RepsTodo   int64       `json:"reps_todo"` // number of reps todo
-	RepsLogged []LoggedRep `json:"reps_logged"`
 }
 
 type LoggedRep struct {
@@ -38,11 +26,6 @@ type StoryFilePaths struct {
 	Video             string
 	JapaneseSubtitles string
 	EnglishSubtitles  string
-}
-
-type UpdateExcerptsRequest struct {
-	StoryID  int64     `json:"story_id"`
-	Excerpts []Excerpt `json:"excerpts"`
 }
 
 type LogStoryRequest struct {
@@ -59,8 +42,7 @@ type IncWordsRequest struct {
 }
 
 type DrillRequest struct {
-	StoryId     int64 `json:"story_id"`
-	ExcerptHash int64 `json:"excerpt_hash"`
+	StoryId int64 `json:"story_id"`
 }
 
 type DrillWord struct {

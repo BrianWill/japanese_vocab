@@ -7,8 +7,6 @@ var stories =
         getStories(function (stories) {
             window.stories = stories;
             processCatalog(stories);
-            
-            
         });
         getIP((ips) => {
             let html = 'local ip: ';
@@ -22,106 +20,15 @@ var stories =
 document.getElementById('main_sidebar').onclick = function (evt) {
     if (evt.target.classList.contains('action_recently_logged')) {
         displayRecentlyLogged(stories);
-    } else if (evt.target.classList.contains('action_queued_reps')) {
-        displayQueued(stories);
-    } else if (evt.target.classList.contains('action_recently_completed')) {
-        displayRecentlyCompleted(stories);
     } else if (evt.target.classList.contains('source_li')) {
         let source = evt.target.getAttribute('source');
         displaySourceStoryList(storiesBySource[source]);
     }
 };
 
-function displayQueued(stories) {
-    stories = stories.filter((s) => s.has_reps_todo);
-
-    // sort entries by source, then by title?
-    stories.sort((a, b) => {
-        if (a.source == b.source) {
-            return (a.title < b.title);
-        } else {
-            return (a.source < b.source);
-        }
-    });
-
-    stories.sort((a, b) => {
-        return (a.date_last_rep < b.date_last_rep);
-    });
-
-    let html = `<h2>Stories with queued reps</h2>
-            <table class="schedule_table">
-            <tr class="day_row logged_row">
-                <td>Source</td>
-                <td>Title</td>
-                <td>Time since<br>last rep</td>
-            </tr>`;
-
-    // todo get count of todo reps across all excerpts
-
-    for (const s of stories) {
-        html += `<tr>
-            <td>${s.source}</td>    
-            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            <td>${timeSince(s.date_last_rep)}</td>
-        </tr>`;
-    }
-
-    html += `</table>`;
-
-    storyList.innerHTML = html;
-};
-
 
 const TWO_WEEKS_IN_SECONDS = 60 * 60 * 24 * 7 * 2;
 const TWO_MONTHS_IN_SECONDS = 60 * 60 * 24 * 7 * 8;
-
-function displayRecentlyCompleted(stories) {
-    stories = stories.filter((s) => {
-        if (s.has_reps_todo) {
-            return false;
-        }
-
-        if (s.date_last_rep <= 1) {
-            return false;
-        }
-
-        let now = Math.floor(new Date() / 1000);
-        let elapsedSeconds = now - s.date_last_rep;
-        return elapsedSeconds < TWO_WEEKS_IN_SECONDS;
-    });
-
-    let html = `<h2 title="Stories with logged reps within last 2 weeks but no queued reps">Stories with logged reps within last 2 weeks but no queued reps</h2>`;
-
-    if (stories.length == 0) {
-        html += `<h4 style="margin-left: 2em;">(none)</h4>`;
-        storyList.innerHTML = html;
-        return;
-    }
-
-    stories.sort((a, b) => {
-        return (a.date_last_rep < b.date_last_rep);
-    });
-
-    html += `<table class="schedule_table">
-    <tr class="day_row logged_row">
-        <td>Source</td>
-        <td>Title</td>
-        <td>Time since<br>last rep</td>
-    </tr>`
-
-    for (const s of stories) {
-        html += `<tr>
-            <td>${s.source}</td>    
-            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            <td>${timeSince(s.date_last_rep)}</td>
-        </tr>`;
-    }
-
-    html += `</table>`;
-
-    storyList.innerHTML = html;
-}
-
 
 function displayRecentlyLogged(stories) {
     stories = stories.filter((s) => {
@@ -185,6 +92,13 @@ function processCatalog(storyData) {
             list = storiesBySource[s.source] = [];
         }
         list.push(s);
+
+        s.date_last_rep = 0;
+        for (let logItem of s.log) {
+            if (logItem.date > s.date_last_rep) {
+                s.date_last_rep = logItem.date
+            }
+        }
     }
 
     for (let source in storiesBySource) {

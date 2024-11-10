@@ -111,152 +111,6 @@ storyActions.onclick = function (evt) {
     } else if (!evt.target.closest('#excerpts')) {
         return;
     }
-
-    if (evt.target.classList.contains('add_excerpt')) {
-        evt.preventDefault();
-        let hash = Math.floor(Math.random() * MAX_INTEGER + 1);  // random value [1, MAX_INTEGER];
-        story.excerpts.push({ "start_time": 0, "end_time": player.duration, "reps_logged": [], "reps_todo": 0, "hash": hash });
-        updateExcerpts(story,
-            function () {
-                displayStoryInfo(story);
-                snackbarMessage(`added excerpt`);
-            }
-        );
-    } else if (evt.target.classList.contains('sort_excerpts')) {
-        evt.preventDefault();
-        story.excerpts.sort((a, b) => {
-            if (a.start_time < b.start_time) {
-                return -1;
-            } else if (a.start_time > b.start_time) {
-                return +1;
-            }
-
-            // use end time as secondary criterea
-            if (a.end_time < b.end_time) {
-                return -1;
-            } else if (a.end_time > b.end_time) {
-                return +1;
-            }
-
-            return 0;
-        });
-        updateExcerpts(story,
-            function () {
-                displayStoryInfo(story);
-                snackbarMessage(`reordered the excerpts by start time`);
-            }
-        );
-    }
-
-    container = evt.target.closest('div[excerpt_idx]');
-    if (!container) {
-        return;
-    }
-
-    let excerptIdx = parseInt(container.getAttribute('excerpt_idx'));
-    if (excerptIdx > story.excerpts.length - 1) {
-        console.log("invalid excerpt idx");
-    }
-    let excerpt = story.excerpts[excerptIdx];
-
-    if (evt.target.classList.contains('add_rep_link')) {
-        evt.preventDefault();
-        excerpt.reps_todo = excerpt.reps_todo || 0;
-        excerpt.reps_todo++;
-
-        updateExcerpts(story,
-            function () {
-                displayStoryInfo(story);
-                snackbarMessage(`one rep added to queue of excerpt`);
-            }
-        );
-    } else if (evt.target.classList.contains('remove_rep_link')) {
-        evt.preventDefault();
-        excerpt.reps_todo = excerpt.reps_todo || 0;
-        if (excerpt.reps_todo == 0) {
-            snackbarMessage(`excerpt already has no reps`);
-            return;
-        }
-        excerpt.reps_todo--;
-
-        updateExcerpts(story,
-            function () {
-                displayStoryInfo(story);
-                snackbarMessage(`one rep removed from queue of excerpt`);
-            }
-        );
-    } else if (evt.target.classList.contains('play_excerpt')) {
-        let start = Math.trunc(excerpt.start_time);
-        let end = Math.trunc(excerpt.end_time);
-        if (excerpt.end_time == 0) {
-            end = Math.trunc(player.duration);
-        }
-        let time = `#t=${start},${end}`;
-        let path = '/sources/' + story.source + "/" + story.video;
-        player.src = path + time;
-        // setting src resets the playbackRate, so must set it again
-        player.playbackRate = parseFloat(document.getElementById('player_speed_number').value);
-        play();
-        displaySubtitles();
-
-    } else if (evt.target.classList.contains('start_time')) {
-        evt.preventDefault();
-
-        if (!window.confirm("Set the start time of the excerpt?")) {
-            return;
-        }
-
-        let time = player.currentTime;
-        excerpt.start_time = time;
-        updateExcerpts(story,
-            function () {
-                displayStoryInfo(story);
-                snackbarMessage(`set start time of excerpt to ${formatTrackTime(time)}`);
-            }
-        );
-    } else if (evt.target.classList.contains('end_time')) {
-        evt.preventDefault();
-
-        if (!window.confirm("Set the end time of the excerpt?")) {
-            return;
-        }
-
-        let time = player.currentTime;
-        excerpt.end_time = time;
-        updateExcerpts(story,
-            function () {
-                displayStoryInfo(story);
-                snackbarMessage(`set end time of excerpt to ${formatTrackTime(time)}`);
-            }
-        );
-    } else if (evt.target.classList.contains('delete_excerpt')) {
-        evt.preventDefault();
-        if (story.excerpts.length == 1) {
-            snackbarMessage(`cannot remove the only excerpt`);
-            return;
-        }
-
-        if (window.confirm("Do you really want to remove the excerpt?")) {
-            story.excerpts.splice(excerptIdx, 1);
-            updateExcerpts(story,
-                function () {
-                    displayStoryInfo(story);
-                    snackbarMessage(`removed excerpt`);
-                }
-            );
-        }
-    } else if (evt.target.classList.contains('log_excerpt')) {
-        evt.preventDefault();
-
-        if (window.confirm("Log this excerpt?")) {
-            if (logRep(excerpt)) {
-                updateExcerpts(story, function () {
-                    load();
-                    snackbarMessage(`rep of excerpt logged`);
-                });
-            }
-        }
-    }
 };
 
 var subtitleAdjustTimeoutHandle = 0;
@@ -578,12 +432,11 @@ function displayStoryInfo(story) {
 var wordMap = null;
 
 function processStory(story, words) {
-    story.reps_logged = story.reps_logged || [];
-    story.reps_todo = story.reps_todo || [];
-
-    for (let excerpt of story.excerpts) {
-        excerpt.start_time = excerpt.start_time || 0;
-        excerpt.end_time = excerpt.end_time || player.duration;
+    story.date_last_rep = 0;
+    for (let logItem of story.log) {
+        if (logItem.date > story.date_last_rep) {
+            story.date_last_rep = logItem.date
+        }
     }
 
     story.subtitles_en = JSON.parse(story.subtitles_en);
