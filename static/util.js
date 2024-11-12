@@ -15,9 +15,9 @@ const DRILL_CATEGORY_GODAN_BU = 1024;
 const DRILL_CATEGORY_GODAN_NU = 2048;
 const DRILL_CATEGORY_KANJI = 4096;
 const DRILL_CATEGORY_GODAN = DRILL_CATEGORY_GODAN_SU | DRILL_CATEGORY_GODAN_RU | DRILL_CATEGORY_GODAN_U | DRILL_CATEGORY_GODAN_TSU |
-	DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU;
+    DRILL_CATEGORY_GODAN_KU | DRILL_CATEGORY_GODAN_GU | DRILL_CATEGORY_GODAN_MU | DRILL_CATEGORY_GODAN_BU | DRILL_CATEGORY_GODAN_NU;
 const DRILL_ALL = DRILL_CATEGORY_GODAN | DRILL_CATEGORY_ICHIDAN | DRILL_CATEGORY_KANJI | DRILL_CATEGORY_KATAKANA;
-    
+
 function isVerb(word) {
     return (word.category & (DRILL_CATEGORY_GODAN | DRILL_CATEGORY_ICHIDAN)) > 0;
 }
@@ -246,7 +246,7 @@ function incWords(words, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"words": words})
+        body: JSON.stringify({ "words": words })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Update reps:', data);
@@ -323,7 +323,7 @@ function logStory(storyId, date, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"story_id": storyId, "date": date})
+        body: JSON.stringify({ "story_id": storyId, "date": date })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Story logged');
@@ -340,7 +340,7 @@ function importSource(source, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"source": source})
+        body: JSON.stringify({ "source": source })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Source:', data);
@@ -357,7 +357,7 @@ function importStory(source, title, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"source": source, "story_title": title})
+        body: JSON.stringify({ "source": source, "story_title": title })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Story imported:', data);
@@ -374,7 +374,7 @@ function openTranscript(sourceName, storyName, lang, successFn) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"source_name": sourceName, "story_name": storyName, "lang": lang})
+        body: JSON.stringify({ "source_name": sourceName, "story_name": storyName, "lang": lang })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Open transcript response:', data);
@@ -498,7 +498,7 @@ function timeSinceRep(date) {
             var val = Math.floor(elapsedSeconds);
             return `(${val} ${val == 1 ? 'second' : 'seconds'} since last rep)`;
         }
-    } 
+    }
     return '(last rep completed just now)';
 }
 
@@ -575,7 +575,7 @@ ${cue.text}\n\n`;
 // add adjustment to every start and end timing, but only those which overlap or come after 'time'
 function adjustTextTrackTimings(cues, adjustment, time) {
     time = time || 0;
-    
+
     // find first cue that ends after time
     let index = cues.length;
     for (let i = 0; i < cues.length; i++) {
@@ -588,7 +588,7 @@ function adjustTextTrackTimings(cues, adjustment, time) {
 
     // we have to work with a copy of the cues because setting startTime or endTime will reorder track.cues
 
-    let copy = []; 
+    let copy = [];
     copy.length = cues.length;
     for (let i = 0; i < cues.length; i++) {
         copy[i] = cues[i];
@@ -617,7 +617,7 @@ function adjustTextTrackAllTimings(cues, adjustment) {
 
     // todo shouldn't need to use a copy now that we aren't using tracks
 
-    let copy = []; 
+    let copy = [];
     copy.length = cues.length;
     for (let i = 0; i < cues.length; i++) {
         copy[i] = cues[i];
@@ -664,10 +664,10 @@ function bringForwardTextTrackTimings(cues, time) {
     let adjustment = time - cues[index].start_time;
 
     console.log('adjustment', adjustment);
-    
+
     // todo shouldn't have to do a copy anymore
 
-    let copy = []; 
+    let copy = [];
     copy.length = cues.length;
     for (let i = 0; i < cues.length; i++) {
         copy[i] = cues[i];
@@ -715,23 +715,33 @@ function randomPaletteColor(hash) {
     return colorPalette[idx];
 }
 
-function setCookie(name,value,days) {
+function setCookie(name, value, days) {
     var expires = "";
     if (days) {
         var date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
         expires = "; expires=" + date.toUTCString();
     }
-    document.cookie = name + "=" + (value || "")  + expires + "; path=/ ; SameSite=Lax; ";
+    document.cookie = name + "=" + (value || "") + expires + "; path=/ ; SameSite=Lax; ";
 }
 
 function getCookie(name) {
     var nameEQ = name + "=";
     var ca = document.cookie.split(';');
-    for(var i=0;i < ca.length;i++) {
+    for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1,c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
+}
+
+function isElementVisible(el, holder) {
+    holder = holder || document.body
+    const { top, bottom, height } = el.getBoundingClientRect()
+    const holderRect = holder.getBoundingClientRect()
+
+    return top <= holderRect.top
+        ? holderRect.top - top <= height
+        : bottom - holderRect.bottom <= height
 }

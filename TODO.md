@@ -1,9 +1,7 @@
 # japanese_vocab TODO   
       
     in story content:
-        highlight the archived words
-            doubleclick to toggle archive state
-        highlight the line corresponding to position in the video
+        highlight the subtitle corresponding to position in the video
         maybe also auto scroll when playing?
     
     should subtitle adjustment set an offset for the video rather than edit the subtitles themselves?
@@ -30,7 +28,7 @@
             if word baseform is not in db, mark word with an icon
             on hover over word, show all the info from the analyzer
 
-    subtitle tokenization (might be fixed now?): 
+    subtitle tokenization (might be fixed now? it seems new words being added to the db): 
         まとめたので should not include ので as part of the verb
         手触り isn't properly tokenized? The word is not in the words table for some reason
         怠け者 is not in words table

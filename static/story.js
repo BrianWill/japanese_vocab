@@ -32,8 +32,9 @@ document.getElementById('subtitle_hide_unhighlighted').addEventListener('change'
     ele.classList.toggle('hide_unhighlighted');
 });
 
-document.getElementById('caption_container').addEventListener('dblclick', function (evt) {
+document.getElementById('story_container').addEventListener('dblclick', function (evt) {
     if (evt.target.classList.contains('subtitle_word')) {
+        evt.preventDefault();
         let baseForm = evt.target.getAttribute('base_form');
         console.log('clicked word: ', baseForm);
         if (baseForm) {
@@ -43,6 +44,7 @@ document.getElementById('caption_container').addEventListener('dblclick', functi
                 updateWord(w, () => {
                     generateSubtitleHTML(story);
                     displaySubtitles();
+                    displayStoryText();
                 });
             }
         }
@@ -70,7 +72,7 @@ storyLines.onclick = function (evt) {
         var cue = cues[idx];
 
         player.currentTime = cue.start_time;
-
+        player.play();
     }
 };
 
@@ -134,6 +136,9 @@ document.body.onkeydown = async function (evt) {
         } else {
             document.exitFullscreen();
         }
+    } else if (evt.code === 'KeyR') {
+        evt.preventDefault();
+        scrollSubtitleIntoView();
     } else if (evt.code === 'KeyA') {
         evt.preventDefault();
         let newTime = timemark - 1.8;
@@ -415,6 +420,28 @@ function displaySubtitles() {
         }
 
         if (target.innerHTML != html) {
+            console.log(subs);
+
+            // change sub highlighting only when a new sub is current 
+            // (in other words, keep the highlight of the last sub until a new one is active)
+            if (subs.length > 0) {
+
+                // unhighlight the currently highlighted subtitles
+                var currentlyHighlighted = document.querySelectorAll(`#story_text .subtitle.highlight`);
+                for (ele of currentlyHighlighted) {
+                    ele.classList.remove('highlight');
+                }
+
+                // set highlighted subs in story text
+                for (subIdx in subs) {
+                    let sub = subs[subIdx];
+                    var ele = document.querySelector(`#story_text [subtitle_index="${sub.idx}"]`);
+                    if (ele) {
+                        ele.classList.add('highlight');
+                    }
+                }
+            }
+
             target.innerHTML = html;
         }
 
@@ -423,6 +450,29 @@ function displaySubtitles() {
 
     display(enSubtitles, captionsEn);
     display(jaSubtitles, captionsJa);
+}
+
+function isSubtitleScrolledIntoView() {
+    var currentlyHighlighted = document.querySelectorAll(`#story_text .subtitle.highlight`);
+    if (!currentlyHighlighted) {
+        return true;
+    }
+    var container = document.getElementById('story_lines');
+    for (ele of currentlyHighlighted) {
+        if (isElementVisible(ele, container)) {
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+function scrollSubtitleIntoView() {
+    var currentlyHighlighted = document.querySelectorAll(`#story_text .subtitle.highlight`);
+    for (ele of currentlyHighlighted) {
+        ele.scrollIntoView();
+        return;
+    }
 }
 
 function displayStoryInfo(story) {
@@ -449,6 +499,7 @@ function processStory(story, words) {
     }
 
     // count word frequencies
+    let idx = 0;
     for (sub of story.subtitles_ja) {
         for (word of sub.words) {
             let w = wordMap[word.base_form];
@@ -456,6 +507,8 @@ function processStory(story, words) {
                 w.count++;
             }
         }
+        sub.idx = idx;
+        idx++;
     }
 
     generateSubtitleHTML(story);
@@ -605,41 +658,29 @@ function adjustPlaybackSpeed(adjustment) {
 }
 
 function displayStoryText() {
-    let cues = null;
+    let subs = null;
     let lang = 'en';
     if (document.getElementById('transcript_en_checkbox').checked) {
-        cues = story.subtitles_en;
+        subs = story.subtitles_en;
     }
     if (document.getElementById('transcript_ja_checkbox').checked) {
         lang = 'ja';
-        cues = story.subtitles_ja;
+        subs = story.subtitles_ja;
     }
-    if (cues == null) {
+    if (subs == null) {
         storyLines.innerHTML = "";
         return;
     }
-
     let html = '';
-    //console.log(cues);
-    for (let cueIndex = 0; cueIndex < cues.length; cueIndex++) {
-        let cue = cues[cueIndex];
+    //let html = '<div class="scroll_subtitle_into_view_msg">Scroll current subtitle into view</div>';
+    for (let subIdx = 0; subIdx < subs.length; subIdx++) {
+        let sub = subs[subIdx];
 
-        let lineSpans = ``;
+        let startTime = formatTrackTime(sub.start_time, 2);
 
-        if (cue.text) {
-            let lines = cue.text.split('\n');
-            for (let line of lines) {
-                lineSpans += `<span class="subtitle_line">${line}</span>`;
-            }
-        } else {
-            console.log('cue with no text', cue);
-        }
-
-        let startTime = formatTrackTime(cue.start_time, 2);
-
-        html += `<div class="subtitle" subtitle_index="${cueIndex}" subtitle_lang="${lang}">
+        html += `<div class="subtitle" subtitle_index="${subIdx}" subtitle_lang="${lang}">
             <div class="subtitle_start"><a href="#" class="subtitle_start_time">${startTime}</a></div>
-            <div class="subtitle_lines">${lineSpans}</div>
+            <div class="subtitle_lines">${sub.html}</div>
         </div>`;
     }
 

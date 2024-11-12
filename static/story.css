@@ -9,28 +9,37 @@ body {
     gap: 10%;
 }
 
-#caption_container span.subtitle_word:hover {
+#story_container span.subtitle_word:hover {
     color : red;
 }
 
-#caption_container span.subtitle_word.archived:hover {
+#story_container span.subtitle_word.archived:hover {
     color : rgb(62, 164, 254);
 }
 
-#caption_container .highlighted {
+#story_container .highlighted {
     color : rgb(254, 62, 62);
 }
 
-#caption_container .highlighted.capped {
+#story_container .highlighted.capped {
     color : rgb(255, 255, 73);
 }
 
-#caption_container span.highlighted.verb {
+#story_container span.highlighted.verb {
     color : rgb(255, 255, 73);
 }
 
-#caption_container.hide_unhighlighted :not(.highlighted) {
+#story_container.hide_unhighlighted :not(.highlighted) {
     color: rgba(0, 0, 0, 0);
+}
+
+#story_lines .scroll_subtitle_into_view_msg.active {
+    padding: 0.6em;
+    text-align:center;
+    width: 100%;
+    font-size: 70%;
+    border-radius: 10px;
+    background-color: rgba(183, 72, 18, 0.81);
 }
 
 #story_container {
@@ -150,6 +159,11 @@ minidenticon-svg svg {
 .subtitle {
     display: flex;
     flex-direction: row;
+}
+
+.subtitle.highlight .subtitle_start_time {
+    color: white;
+    font-size: 130%; 
 }
 
 .subtitle_start {
