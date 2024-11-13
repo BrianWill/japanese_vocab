@@ -23,3 +23,5 @@ static/sources/*
 bin/scrape/node_modules
 bin/scrape/*
 tmp/*
+sources/*
+!sources/ignore_me

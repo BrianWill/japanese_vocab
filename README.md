@@ -20,7 +20,7 @@ For other platforms, you'll need to build the executable first:
 
 ## Importing stories
 
-Stories are imported in sets called "sources", which are represented as directories directly under the "static/sources" directory. For example, the directory "static/sources/example" represents a source named "example".
+Stories are imported in sets called "sources", which are represented as directories directly under the "sources" directory. For example, the directory "sources/example" represents a source named "example".
 
 In a source directory, each mp3 and mp4 file represents an individual story. For a story named `thing.mp3` or `thing.mp4`, the English and Japanese VTT subtitle files in the same directory should be named, respectively, `thing.en.vtt` and `thing.ja.vtt`.
 
