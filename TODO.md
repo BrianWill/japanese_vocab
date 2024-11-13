@@ -1,16 +1,18 @@
 # japanese_vocab TODO   
-      
-    in story content:
-        highlight the subtitle corresponding to position in the video
-        maybe also auto scroll when playing?
-    
+         
+    test clean install
+   
+    for highlighted words, show kana and definitions
+        on story page, show them below the video
+        but need very short definitions (and hiragana spelling)...
+
     should subtitle adjustment set an offset for the video rather than edit the subtitles themselves?
         for case of gaps, you still need to adjust the subtitles themselves, in which case maybe the original subtitle file itself should be updated
 
     drilling options:
         limit words in drill to 50?
             user can pick the limit number?
-            pick the words at random?
+            pick the words at random?xs
         or pick range of stories to include
         or pick set of individually selected stories?
         maybe user marks non-archived words?
@@ -38,9 +40,6 @@
     feature to analyze the story catalog to find stories with right balance of known and unknown words
         maybe identify appropriate excerpts by looking at run of subtitles
         for each word, track all stories / sentences that include the word
-
-    for highlighted words, show kana and definitions
-        how to show it?
 
     for highlighted verbs, use coloring to indicate the form
         or maybe use icons?
@@ -90,9 +89,6 @@
         e.g. foo.ja.txt
         treat every sentence as its own subtitle
             just make up timing: space them out by a few seconds in order
-    
-    display content below story with time-marks
-        clicking timemark jumps player to timestamp
 
     add a kana drilling page
         allow to pick exactly which characters to include?
@@ -123,9 +119,6 @@
     link to get translation of whole story content? (what is the limit?)
 
     audit for dead css styles
-
-    deduplicate the word ids in words field of stories
-
 
     drill auto play mode
         - show a word with its definition (and play audio?) for n seconds, then automatically move to the next

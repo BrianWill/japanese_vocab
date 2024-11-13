@@ -14,6 +14,7 @@ var playerControls = document.getElementById('player_controls');
 
 var story = null;
 var words = null;
+var wordMap = null;
 
 var cueGuideElement = document.getElementById('captions_meter');
 var cueGuideIndicator = document.getElementById('captions_meter_indicator');
@@ -478,8 +479,6 @@ function scrollSubtitleIntoView() {
 function displayStoryInfo(story) {
     document.getElementById('story_title').innerHTML = `<a href="${story.link}">${story.title}</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#">Source: ${story.source}</a><hr>`;
 }
-
-var wordMap = null;
 
 function processStory(story, words) {
     story.date_last_rep = 0;

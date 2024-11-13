@@ -2,11 +2,7 @@
 
 A program for [learning Japanese through input](input.md) by listening to stories and drilling their vocabulary.
 
-![](./images/story.png)
-
-[Intro video:](https://www.youtube.com/watch?v=cQ0Z6ZM1KyI)
-
-[![INTRO VIDEO](https://img.youtube.com/vi/cQ0Z6ZM1KyI/0.jpg)](https://www.youtube.com/watch?v=cQ0Z6ZM1KyI)
+![](./images/story.jpg)
 
 ## Running the program
 
@@ -20,31 +16,25 @@ For other platforms, you'll need to build the executable first:
 1. Run `go get` to fetch the package dependencies.
 1. Run `go build` to build the executable.
 
-## Main page
-
-The main page first displays the "stories with queued reps", then the "recent stories" (stories that have a rep logged within the last 2 weeks but no remaining queued reps), and last the full catalog of stories.
-
-In the catalog, select a source of stories from the drop down.
-
 ## Importing stories
 
 Stories are imported in sets called "sources", which are represented as directories directly under the "static/sources" directory. For example, the directory "static/sources/example" represents a source named "example".
 
-In a source directory, each mp3 and mp4 file represents an individual stories. For a story named `thing.mp3` or `thing.mp4`, the English and Japanese VTT subtitle files in the same directory should be named, respectively, `thing.en.vtt` and `thing.ja.vtt`.
+In a source directory, each mp3 and mp4 file represents an individual story. For a story named `thing.mp3` or `thing.mp4`, the English and Japanese VTT subtitle files in the same directory should be named, respectively, `thing.en.vtt` and `thing.ja.vtt`.
 
-The import page (link next to "Catalog" on the main page) lists all detected source directories. Clicking the `import` button of a source imports or re-imports all the stories in that source. (Re-importing a story update its subtitles if its subtitle files have changed.)
+The import page (linked in the sidebar on main page) lists all detected source directories. Clicking the `import` button of a source imports or re-imports all the stories in that source. (Re-importing a story reprocesses its subtitle files.)
 
-## Story page
+## Words
 
-The story page displays the story's title, text content, and an audio or video player.
+The words of all imported stories are stored in the database by their "base form", e.g. all variations of a verb are stored in their so-called "dictionary form".
 
-A story has one or more "excerpts", which represent subranges of the audio or video:
+Words can be 'archived', meaning they are normally filtered out in drills. You can toggle a word's archived status by double clicking it in a subtitle or in the sidebar transcript.
 
-- Each excerpt of a story has a separate queue of reps. Use the + and - buttons to add and remove reps from the queue.
-- The `log` button records a rep of the excerpt (and removes a rep from the excerpt's queue).
-- The `vocab` button takes you to a page for drilling the words in the excerpt. (The words are extracted from the subtitles in the subrange.)
+Unarchived words are highlighted in subtitles and the sidebar transcript (with unarchived verbs given a distinct color).
 
-### Video and audio player hotkey controls
+TIP: Rather than wait to archive words once you've mastered them, you should archive words when they are just reasonably familiar. If you think when looking up a word, 'oh yeah, I knew that', it's probably time to archive the word.
+
+## Player hotkey controls
 
 - `f` : toggle fullscreen
 - `s` : toggle play/pause
@@ -52,24 +42,30 @@ A story has one or more "excerpts", which represent subranges of the audio or vi
 - `a` : jump back less than a second
 - `e` : jump ahead a few seconds
 - `q` : jump back a few seconds
-- `c` : jump ahead to the next subtitle (if subtitles are available and active)
-- `z` : jump back to the previous subtitle (if subtitles are available and active)
-- `x` : jump to start of the current subtitle (if subtitles are available and active)
+- `c` : jump ahead to the next subtitle
+- `z` : jump back to the previous subtitle
+- `x` : jump to start of the current subtitle
+- `g` : open the current subtitle in Google Translate
+- `r` : scroll the current subtitle into view in the sidebar
 - `-` : decrease playback speed
 - `+` : increase playback speed
 
-To align the subtitles with the audio:
+## Adjusting subtitles
+
+Sometimes your subtitles may not match your video source timings or have other flaws. In a story page, the "edit" link opens the subtitle file in a text editor for easy editing, and the "reimport" link reimports this individual story.
+
+You can also adjust the subtitle timings with some hotkeys:
 
 - `alt` + `-` : shift all subtitle timings forward by 0.2 seconds
 - `alt` + `+` : shift all subtitle timings back by 0.2 seconds
 - `alt` + `[` : shift all subtitles after the current timemark forward such that the next subtitle begins at the current timemark
 - `alt` + `]` : shift all subtitles after the current timemark back by 10 seconds
 
-## Drill page
+## Vocab drills
 
 ![](./images/drill.png)
 
-The words of the drill are displayed in a random order, with the current word at the top.
+On the drill page, the words are displayed in a random order, with the current word at the top.
 
 Hotkeys that affect the current word:
 
@@ -80,5 +76,3 @@ Hotkeys that affect the current word:
 Once you mark all words in the list correct or incorrect, the words you marked incorrect will be reshuffled for another round of drilling.
 
 Words in the drill list can be filtered by type: kanji characters, words spelt in katakana, ichidan verbs, or godan verbs.
-
-The `log the answered words` button will increment the rep count of each answered word and mark them with the current date and time.

@@ -8,7 +8,6 @@ var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var definitionsDiv = document.getElementById('definitions');
 var archivedSelect = document.getElementById('archived_select');
-var logLink = document.getElementById('log_link');
 
 var drillSet = [];
 var answeredSet = [];
@@ -211,29 +210,6 @@ function loadWordDefinition(word) {
 function showWord() {
     kanjiResultsDiv.style.visibility = 'visible';
     definitionsDiv.style.visibility = 'visible';
-}
-
-logLink.onclick = function (evt) {
-    evt.preventDefault();
-
-    let unixTime = Math.floor(Date.now() / 1000);
-
-    let wordIds = [];
-    for (const word of answeredSet) {
-        if ((unixTime - word.date_last_rep) > REP_COOLDOWN) {
-            wordIds.push(word.id);
-        }
-    }
-
-    if (wordIds.length== 0) {
-        snackbarMessage(`no reps logged: all answered words are on cooldown`);
-        return;
-    }
-
-    incWords(wordIds, function () {
-        load();
-        snackbarMessage(`reps logged for ${wordIds.length} words`);
-    });    
 }
 
 function load(evt) {

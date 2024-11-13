@@ -10,7 +10,7 @@ body {
 }
 
 #story_container span.subtitle_word:hover {
-    color : red;
+    color : rgb(197, 13, 13);
 }
 
 #story_container span.subtitle_word.archived:hover {
@@ -18,7 +18,7 @@ body {
 }
 
 #story_container .highlighted {
-    color : rgb(254, 62, 62);
+    color : #ff6060;
 }
 
 #story_container .highlighted.capped {
