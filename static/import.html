@@ -10,16 +10,47 @@
     <title>Japan Vocab</title>
 </head>
 
-<body>
+<body style="padding-left: 2em;">
+    <a href="/">home</a>
     <div id="home_link">
-        <a href="/">home</a>
+        
     </div>
 
     <h2>Importing</h2>
+
+    <div class="import_instructions">
+        Stories are imported in sets called "sources", which are represented as directories directly under the
+        "static/sources" directory. For example, the directory "static/sources/example" represents a source named
+        "example".
+    </div>
+
+    <div class="import_instructions">
+        In a source directory, each mp3 and mp4 file represents an individual story. For a story named `thing.mp3` or
+        `thing.mp4`, the English and Japanese VTT subtitle files in the same directory should be named, respectively,
+        `thing.en.vtt` and `thing.ja.vtt`.
+    </div>
+
+    <div class="import_instructions">
+        This import page lists all detected source directories. Clicking the `import` button of a source imports or
+        re-imports all the stories in that source. (Re-importing a story reprocesses its subtitle files.)
+    </div>
+
+    <div class="import_instructions">
+    WARNING: Importing each story, say a typical 30 minute episode of a TV show, may take a couple seconds, so
+    sources with many stories may take minutes.
+    </div>
+
     <div id="sources">
     </div>
 
     <br>
+
+    <h3 style="margin-left: 0;">Invalid import files</h3>
+
+    <div class="import_instructions">
+        The following file paths were found under the "sources" directory but are not importable. They will be ignored when
+        importing sources.
+    </div>
 
     <div id="malformed_paths">
     </div>

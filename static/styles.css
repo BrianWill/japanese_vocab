@@ -563,3 +563,13 @@ span.verb:hover {
     margin-bottom: 0.4em;
  
 }
+
+#main_sidebar {
+    padding-right: 3em;
+}
+
+.import_instructions {
+    max-width: 50em;
+    padding-bottom: 1em;
+    color: rgb(159, 159, 159);
+}

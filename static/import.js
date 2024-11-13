@@ -11,8 +11,16 @@ sourcesDiv.onclick = function (evt) {
         evt.preventDefault();
         let source = evt.target.getAttribute('source');
 
+        // very large duration to make it practically indefinite
+        snackbarMessage(`importing source "${source}". This may take a while.`, 10000 * 1000);
+
         importSource(source, () => {
-            snackbarMessage(`imported source: ${source}`);
+            clearSnackbarMessage();
+            snackbarMessage(`COMPLETED IMPORT: source "${source}"`);
+        }, 
+        () => {
+            clearSnackbarMessage();
+            snackbarMessage(`FAILED IMPORT: source "${source}"`);
         });
     }
 };

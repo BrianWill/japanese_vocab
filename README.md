@@ -6,7 +6,9 @@ A program for [learning Japanese through input](input.md) by listening to storie
 
 ## Running the program
 
-For Windows, you can just clone the repo and run `app/japanese.exe`, then go to `localhost:8080` in a web browser.
+WARNING: The repo history is much larger than the releases, so you should just download the latest release unless you actually want to modify the code and submit PR's.
+
+For Windows, you can just download the latest release and run `app/japanese.exe`, then go to `localhost:8080` in a web browser.
 
 For other platforms, you'll need to build the executable first:
 

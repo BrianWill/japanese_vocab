@@ -129,20 +129,28 @@ function updateWord(word, successFn) {
 
 var snackebarTimeoutHandle = null;
 
-function snackbarMessage(msg) {
+function snackbarMessage(msg, duration) {
+    duration = duration || 3000;
+
     // Get the snackbar DIV
     var el = document.getElementById("snackbar");
 
     // Add the "show" class to DIV
-    el.classList.add("show");
     el.innerHTML = msg;
+    el.classList.add("show");
 
     clearTimeout(snackebarTimeoutHandle);
 
     // After 3 seconds, remove the show class from DIV
     snackebarTimeoutHandle = setTimeout(function () {
         el.classList.remove('show');
-    }, 3000);
+    }, duration);
+}
+
+function clearSnackbarMessage() {
+    // Get the snackbar DIV
+    var el = document.getElementById("snackbar");
+    el.classList.remove('show');
 }
 
 function shuffle(array) {
@@ -334,7 +342,7 @@ function logStory(storyId, date, successFn) {
         });
 }
 
-function importSource(source, successFn) {
+function importSource(source, successFn, failFn) {
     fetch('/import_source', {
         method: 'POST',
         headers: {
@@ -348,6 +356,7 @@ function importSource(source, successFn) {
         })
         .catch((error) => {
             console.error('Error:', error);
+            failFn();
         });
 }
 
