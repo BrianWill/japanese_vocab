@@ -19,9 +19,11 @@ var stories =
 
 document.getElementById('main_sidebar').onclick = function (evt) {
     if (evt.target.classList.contains('action_recently_logged')) {
+        window.history.replaceState(null, null, "?");
         displayRecentlyLogged(stories);
     } else if (evt.target.classList.contains('source_li')) {
         let source = evt.target.getAttribute('source');
+        window.history.replaceState(null, null, `?source=${encodeURIComponent(source)}`);
         displaySourceStoryList(storiesBySource[source]);
     }
 };
@@ -121,7 +123,13 @@ function processCatalog(storyData) {
     }
     sourceList.innerHTML = sourcesHTML;
 
-    displayRecentlyLogged(stories);
+    var url = new URL(window.location.href);
+    let source = url.searchParams.get("source");
+    if (source) {
+        displaySourceStoryList(storiesBySource[source]);
+    } else {
+        displayRecentlyLogged(stories);
+    }
 };
 
 function displaySourceStoryList(list) {
@@ -134,7 +142,6 @@ function displaySourceStoryList(list) {
 
     let tableHeader = `<table class="story_table">`;
     let html = tableHeader;
-
 
     list.sort((a, b) => {
         return a.episode_number - b.episode_number;

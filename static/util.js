@@ -520,7 +520,7 @@ function addLogEvent(storyId) {
 
 // todo test with negative time
 function formatTrackTime(time, padding = 3, includeHours = false) {
-    let seconds = Math.trunc(time);
+    let seconds = Math.round(time);
 
     let fractionStr = '';
     let arr = time.toFixed(padding).split('.');

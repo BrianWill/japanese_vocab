@@ -1,6 +1,8 @@
 # japanese_vocab TODO   
          
     test clean install
+
+    when displaying both english and japanese subtitles, highlighting would match up key corresponding words
    
     for highlighted words, show kana and definitions
         on story page, show them below the video

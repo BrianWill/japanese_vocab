@@ -178,7 +178,7 @@ document.body.onkeydown = async function (evt) {
         }
 
         for (let index = cues.length - 1; index >= 0; index--) {
-            const cue = cues[index];
+            let cue = cues[index];
             if (cue.start_time <= player.currentTime) {
                 player.currentTime = cue.start_time;
                 break;
@@ -199,7 +199,7 @@ document.body.onkeydown = async function (evt) {
         }
 
         for (let index = 0; index < cues.length; index++) {
-            const cue = cues[index];
+            let cue = cues[index];
             if (cue.start_time > player.currentTime) {
                 player.currentTime = cue.start_time;
                 break;
@@ -220,7 +220,7 @@ document.body.onkeydown = async function (evt) {
         }
 
         for (let index = cues.length - 1; index >= 0; index--) {
-            const cue = cues[index];
+            let cue = cues[index];
             if (cue.end_time < player.currentTime) {
                 player.currentTime = cue.start_time;
                 break;
@@ -258,6 +258,7 @@ document.body.onkeydown = async function (evt) {
                 adjustTextTrackAllTimings(story.subtitles_ja, adjustment);
             }
 
+            displayStoryText();
             displaySubtitles();
 
             snackbarMessage(`updated ${lang} subtitle timings by ${adjustment} seconds`);
