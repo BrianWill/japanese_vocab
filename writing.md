@@ -2,7 +2,7 @@
 
 ## Why is the Japanese writing system difficult to learn?
 
-The first problem, of course, Japanese uses a very large number of characters:
+The first problem, of course, is that Japanese uses a very large number of characters:
 
 - **hiragana**, a set of phonetic characters consisting of about 50-100 characters (depending on what you count as distinct characters)
 - **katakana**, a correponding set of phonetic characters, used mainly for writing foreign words and a few other niche purposes
@@ -16,9 +16,9 @@ Fourth, Japanese does not put spaces between its words, so just distinguishing w
 
 Fifth, certain details of pronunciations are not indicated in the text, including "pitch accent" (which is somewhat analogous to "stress accent" in English) and blending (*e.g.* whether to ellide the "u" in "su", as is done in some words). So like English, Japanese writing doesn't tell the reader *exactly* how to pronounce the words. Instead, the reader just has to already know the words.
 
-## Do I really need to *read* Japanese?
+## Do I really need to read Japanese?
 
-If your primary interest in Japanese is *speaking*, you might question 1) whether learning to read Japanese is strictly essential, or 1) maybe you wonder if you can get away with learning the spoken language first before dealing with the written language.
+If your primary interest in Japanese is *speaking*, you might question, first, whether learning to read Japanese is strictly essential at all, or second, whether learning to read can't wait until after acquiring the spoken language:
 
 1. Even if you don't care about reading for its own sake, never learning to read is a bad idea because reading is a key vector for acquiring many, many vocabulary words that otherwise don't come up in most day-to-day speech. In a modern literate society, a large chunk of vocabulary is only acquired and maintainted through reading. Although listening and speaking practice can make you conversationally *functional* in the language, without reading, you'll probably lack the vocabulary for many conversations and situations.
 1. As for waiting to learn to read until after learning the spoken language, this too is usually a bad idea because reading is an extremely useful tool while learning a language. Unlike spoken language, written language allows you to go at your own pace and scan back and forth through the words. Most importantly, you can much more easily and conveniently look up unknown written words than you can look up unknown spoken words.
@@ -33,7 +33,7 @@ As valuable as reading can be, understand that reading alone is not sufficient f
 - The natural language processing that occurs when listening is sequential and keeps moving, unlike reading, which can be processed out of order and at your own pace. On the upside, even slow and hesitant reading is a good way to engage with vocabulary, but such kind of reading doesn't necessarily properly engage and exercise your natural language faculty. So until you can read with reasonable fluency, you'll need to focus on listening practice to develop your core comprehension skills.
 - According to the best research, fluent reading is mapped in the brain through phonemes, meaning it relies upon triggering phonetic memories of words. Surprisingly, this applies even in Japanese even though its writing is not fully phonetic. The implication is that you will not be able to fluently read until you already have advanced listening skills. Until then, your reading will remain halting and labored no matter how well you know the characters.
 
-## Do I really need to *write* Japanese?
+## Do I really need to write Japanese by hand?
 
 In theory, writing kana and kanji by hand can help you memorize the characters, but how much this actually helps is questionable, and handwriting practice is extremely slow and tedious.
 
@@ -48,7 +48,7 @@ Likewise, reading vertical text can induce mental overhead, so it's best avoided
 ## How should I learn kana?
 
 Rather than rely upon the crutch of romaji, you're best off learning kana from the start. In just a few weeks, you should be able to have the kana mostly memorized through drilling (see [here](https://kana-quiz.tofugu.com/) and [here](
-https://laits.utexas.edu/japanese/joshu/kana/katakana.php)). However, it's normal to confuse certain less-commonly used and similar looking characters with each other for a long time after, even for multiple years.
+https://laits.utexas.edu/japanese/joshu/kana/katakana.php)). However, it's normal to confuse certain less-commonly used and similar looking characters with each other for a long time after, even for multiple years. For example, learners may take years before they can fluently read the katakana characters フ, ブ,　プ,　ラ,　ワ, and　ウ　without sometimes having to consciously remind themselves which is which.
 
 Once you have the kana reasonably well memorized, you should practice reading whole words, starting first with very short words and working your way up to longer ones.
 
@@ -66,7 +66,7 @@ So you may find that your katakana reading lags behind your hiragana reading for
 
 There are tens of thousands of kanji that have been used throughout Japanese history, but only ~6000 kanji are used in modern Japanese with any frequency, and most native Japanese do not know all of these 6000. A typical educated native speaker can reliably read perhaps 3000-4000 kanji *in the context of words and names*, but the number of kanji they can recognize and define as *isolated characters* is somewhat smaller, and the number of kanji they can *write by hand from memory* is even smaller (say, perhaps, 2500 on the high end).
 
-**The most frequently used 1500-2000 kanji account for 99%+ of the kanji characters on a typical page of modern Japanese writing. An additional 1000-1500 kanji cover most of the remaining 1%.**
+**The most frequently used 1500-2000 kanji account for 99%+ of the kanji characters in typical modern Japanese writing. An additional 1000-1500 kanji cover most of the remaining 1%.**
 
 ---
 

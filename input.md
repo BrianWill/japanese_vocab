@@ -149,7 +149,7 @@ An interesting question then is what else beginner and intermediate learners cou
 
 There are many possible exercises or games that might work well for this, but probably the simplest would be if both parties brought a story for the other person to read aloud. For example, if I bring my partner a story in Japanese, they would read it aloud to me sentence-by-sentence, and after each sentence, I would attempt to give them my translation in English. Both my partner and I could ask each other questions and prompt each other for clarification, but I would stick to speaking English while they speak Japanese (except perhaps when we prompt each other about specific words, *e.g.* 'What does X mean?'). Before moving on to the next sentence, we would check a proper translation to make sure we both understood correctly.
 
-This listening only approach would have at least a few key advantages over conversation practice:
+This listening-only approach would have at least a few key advantages over conversation practice:
 
 - Removing the requirement to speak the target language makes the activity more accessible at lower levels, and for many people it would induce less anxiety.
 - One reason finding a language partner is quite difficult is because it requires that both people are ready to start speaking, something which take several months or more of study. In contrast, basic listening is something that learners can try in the first month or even on the first day.
