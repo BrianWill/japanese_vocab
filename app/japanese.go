@@ -244,9 +244,8 @@ func makeUserDB(path string) {
 			date TEXT,
 			link TEXT,
 			video TEXT,
-			transcript_en TEXT,
-			transcript_ja TEXT,
-			excerpts TEXT NOT NULL,
+			subtitles_en TEXT,
+			subtitles_ja TEXT,
 			log TEXT);`)
 	if err != nil {
 		log.Fatal(err)

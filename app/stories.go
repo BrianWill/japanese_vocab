@@ -239,9 +239,9 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []in
 		}
 
 		insertResult, err := sqldb.Exec(`INSERT INTO words (base_form, 
-			date_added, category, repetitions, definitions, kanji, date_last_rep) 
-			VALUES($1, $2, $3, $4, $5, $6, $7);`,
-			baseForm, unixtime, category, 0, entriesJSON, kanjiDefJSON, 1)
+			date_added, category, repetitions, definitions, kanji, date_last_rep, archived) 
+			VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+			baseForm, unixtime, category, 0, entriesJSON, kanjiDefJSON, 1, 0)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failure to insert word: " + err.Error())
 		}
