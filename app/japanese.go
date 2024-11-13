@@ -114,8 +114,8 @@ func main() {
 	router.HandleFunc("/update_word", UpdateWordArchiveState).Methods("POST")
 	router.HandleFunc("/inc_words", IncWords).Methods("POST")
 	router.HandleFunc("/open_transcript", OpenTranscript).Methods("POST")
+	router.PathPrefix("/sources").Handler(http.StripPrefix("/sources/", http.FileServer(http.Dir("../sources"))))
 	router.HandleFunc("/", GetMain).Methods("GET")
-
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 
 	log.Printf("Running on port: %s", port)

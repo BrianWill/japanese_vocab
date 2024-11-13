@@ -6,7 +6,7 @@ A program for [learning Japanese through input](input.md) by listening to storie
 
 ## Running the program
 
-WARNING: The repo history is much larger than the releases, so you should just download the latest release unless you actually want to modify the code and submit PR's.
+> WARNING: The repo history is much larger than the releases, so you should just download the latest release unless you actually want to modify the code and submit PR's.
 
 For Windows, you can just download the latest release and run `app/japanese.exe`, then go to `localhost:8080` in a web browser.
 
@@ -34,7 +34,7 @@ Words can be 'archived', meaning they are normally filtered out in drills. You c
 
 Unarchived words are highlighted in subtitles and the sidebar transcript (with unarchived verbs given a distinct color).
 
-TIP: Rather than wait to archive words once you've mastered them, you should archive words when they are just reasonably familiar. If you think when looking up a word, 'oh yeah, I knew that', it's probably time to archive the word.
+> TIP: Rather than wait to archive words once you've mastered them, you should archive words when they are just reasonably familiar. If you think when looking up a word, 'oh yeah, I knew that', it's probably time to archive the word.
 
 ## Player hotkey controls
 
