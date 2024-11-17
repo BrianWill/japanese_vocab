@@ -1,6 +1,12 @@
 # japanese_vocab TODO   
          
-    test clean install
+    check why 置けません is highlighted in red (issue with potential form?)
+    
+    display count / percentage of archived words in story list of sources
+        update this count every time user updates archived status of a word
+            for drill page, we need the story id
+                for the drill of all recently logged stories, we need all of their story data?
+                    or handle this when we update the archived status? (would make UpdateWord expensive)
 
     when displaying both english and japanese subtitles, highlighting would match up key corresponding words
    
@@ -14,7 +20,7 @@
     drilling options:
         limit words in drill to 50?
             user can pick the limit number?
-            pick the words at random?xs
+            pick the words at random?x
         or pick range of stories to include
         or pick set of individually selected stories?
         maybe user marks non-archived words?

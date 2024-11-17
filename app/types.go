@@ -90,6 +90,11 @@ type Word struct {
 	POS      string `json:"POS"`
 }
 
+type StoryWordStats struct {
+	NumUnique   int
+	NumArchived int
+}
+
 type LogItem struct {
 	Date int64 `json:"date"`
 }

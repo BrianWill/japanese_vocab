@@ -164,6 +164,7 @@ minidenticon-svg svg {
 .subtitle.highlight .subtitle_start_time {
     color: white;
     font-size: 130%; 
+    font-weight: bold;
 }
 
 .subtitle_start {

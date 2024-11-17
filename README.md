@@ -30,11 +30,14 @@ The import page (linked in the sidebar on main page) lists all detected source d
 
 The words of all imported stories are stored in the database by their "base form", e.g. all variations of a verb are stored in their so-called "dictionary form".
 
-Words can be 'archived', meaning they are normally filtered out in drills. You can toggle a word's archived status by double clicking it in a subtitle or in the sidebar transcript.
+Words can be 'archived':
 
-Unarchived words are highlighted in subtitles and the sidebar transcript (with unarchived verbs given a distinct color).
+- archived words are filtered out by default in drills
+- unarchived words are highlighted in subtitles and the sidebar transcript (with unarchived verbs given a distinct color)
 
-> TIP: Rather than wait to archive words once you've mastered them, you should archive words when they are just reasonably familiar. If you think when looking up a word, 'oh yeah, I knew that', it's probably time to archive the word.
+You can toggle a word's archived status by double clicking it in a subtitle or in the sidebar transcript.
+
+> TIP: Rather than wait to archive words once you've mastered them, you should archive words when they are just reasonably familiar. When looking up a word, if you think 'Oh yeah, I knew that!', it's probably time to archive the word.
 
 ## Player hotkey controls
 
@@ -48,7 +51,6 @@ Unarchived words are highlighted in subtitles and the sidebar transcript (with u
 - `z` : jump back to the previous subtitle
 - `x` : jump to start of the current subtitle
 - `g` : open the current subtitle in Google Translate
-- `r` : scroll the current subtitle into view in the sidebar
 - `-` : decrease playback speed
 - `+` : increase playback speed
 

@@ -696,14 +696,28 @@ function bringForwardTextTrackTimings(cues, time) {
 }
 
 // find all cues for which time is between the start and end
-function findCues(cues, time) {
+function findSubsAtTimemark(subs, time) {
     let selected = [];
-    for (let cue of cues) {
-        if (cue.start_time <= time && time < cue.end_time) {
-            selected.push(cue);
+    for (let sub of subs) {
+        if (sub.start_time <= time && time < sub.end_time) {
+            selected.push(sub);
         }
     }
     return selected;
+}
+
+function findSubBeforeTimemark(subs, time) {
+    if (subs.length == 0) {
+        return [];
+    }
+    let selected = subs[0];
+    for (let sub of subs) {
+        selected = sub;
+        if (sub.start_time >= time) {
+            break;
+        }
+    }
+    return [selected];
 }
 
 function integerHash(str) {
@@ -754,3 +768,7 @@ function isElementVisible(el, holder) {
         ? holderRect.top - top <= height
         : bottom - holderRect.bottom <= height
 }
+
+Element.prototype.documentOffsetTop = function () {
+    return this.offsetTop + (this.offsetParent ? this.offsetParent.documentOffsetTop() : 0);
+};

@@ -539,7 +539,7 @@ func OpenTranscript(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{ "message": "` + "failure to get working directory: " + err.Error() + `"}`))
 	}
 
-	path := wd + "\\..\\static\\sources\\" + body.SourceName + "\\" + body.StoryName + "." + body.Lang + ".vtt"
+	path := wd + "\\..\\sources\\" + body.SourceName + "\\" + body.StoryName + "." + body.Lang + ".vtt"
 	fmt.Println("open transcript path: ", path)
 
 	if runtime.GOOS == "windows" {
@@ -560,4 +560,9 @@ func OpenTranscript(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
+}
+
+func GetArchivedWordStats(storyId int) ([]StoryWordStats, error) {
+
+	return nil, nil
 }
