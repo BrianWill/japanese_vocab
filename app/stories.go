@@ -148,8 +148,6 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []in
 	newWordCount = 0
 	unixtime := time.Now().Unix()
 
-	wordIds = make([]int64, 0)
-
 	keptTokens := make([]*JpToken, 0)
 
 	// filter out tokens that have no part of speech
@@ -227,14 +225,13 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []in
 
 		var id int64
 		err = sqldb.QueryRow(`SELECT id FROM words WHERE base_form = $1`, baseForm).Scan(&id)
+		// if error other than no rows
 		if err != nil && err != sql.ErrNoRows {
 			return nil, 0, err
 		}
+		// if no error and
 		if err == nil {
-			if _, ok := wordIdsMap[id]; !ok {
-				wordIdsMap[id] = true
-				wordIds = append(wordIds, id)
-			}
+			wordIdsMap[id] = true
 			continue
 		}
 
@@ -254,8 +251,12 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []in
 		fmt.Println("inserted word: ", baseForm, id)
 
 		newWordCount++
-		wordIds = append(wordIds, id)
 		wordIdsMap[id] = true
+	}
+
+	wordIds = make([]int64, 0, len(wordIdsMap))
+	for id, _ := range wordIdsMap {
+		wordIds = append(wordIds, id)
 	}
 
 	return wordIds, newWordCount, nil

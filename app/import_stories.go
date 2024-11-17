@@ -492,49 +492,121 @@ func getSubtitlesString(subtitlesJSON string) (string, error) {
 	return sb.String(), nil
 }
 
-func storyExists(story Story, sqldb *sql.DB) bool {
+func storyExists(story *Story, sqldb *sql.DB) (bool, error) {
 	var id int64
 
 	err := sqldb.QueryRow(`SELECT id FROM stories WHERE title = $1 and source = $2;`,
 		story.Title, story.Source).Scan(&id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false
+			return false, nil
 		}
-		log.Fatal(err)
+		return false, err
 	}
 
-	return true
+	story.ID = id
+	return true, nil
+}
+
+func wordsOfStory(storyId int64, sqldb *sql.DB) (map[int64]bool, error) {
+	rows, err := sqldb.Query(`SELECT word_id FROM stories_x_words
+				WHERE story_id = $1;`,
+		storyId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := make(map[int64]bool)
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids[id] = true
+	}
+
+	return ids, nil
 }
 
 func storeStory(story Story, sqldb *sql.DB) error {
-	newWordCount, _, err := processStoryWords(story, sqldb)
+	wordIds, newWordCount, err := processStoryWords(story, sqldb)
 	if err != nil {
 		return err
 	}
 
-	if storyExists(story, sqldb) {
+	storyExists, err := storyExists(&story, sqldb)
+	if err != nil {
+		return err
+	}
+	if storyExists {
 		fmt.Printf(`updating story: "%s"`+"\n", story.Title)
-
 		_, err := sqldb.Exec(`UPDATE stories SET 
-				date = $1, link = $2, video = $3, 
-				subtitles_en = $4, subtitles_ja = $5
-				WHERE title = $6 and source = $7;`,
+								date = $1, link = $2, video = $3, 
+								subtitles_en = $4, subtitles_ja = $5
+								WHERE title = $6 and source = $7;`,
 			story.Date, story.Link, story.Video,
 			story.SubtitlesENJson, story.SubtitlesJAJson,
 			story.Title, story.Source)
+		if err != nil {
+			return err
+		}
+	} else {
+		row, err := sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
+									subtitles_en, subtitles_ja, log) 
+									VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+			story.Title, story.Source, story.Date, story.Link,
+			story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, "[]")
+		if err != nil {
+			return err
+		}
+		story.ID, err = row.LastInsertId()
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("imported story: %s, has %d new words \n", story.Title, newWordCount)
+	fmt.Printf("story has %d words total\n", len(wordIds))
+
+	existingWords, err := wordsOfStory(story.ID, sqldb)
+	if err != nil {
 		return err
 	}
 
-	fmt.Printf("importing story: %s, has %d new words \n", story.Title, newWordCount)
+	insertStr := "INSERT INTO stories_x_words (story_id, word_id) VALUES "
+	vals := []interface{}{}
 
-	_, err = sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
-				subtitles_en, subtitles_ja, log) 
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
-		story.Title, story.Source, story.Date, story.Link,
-		story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, "[]")
+	// add words to stories_x_words
+	for _, wordId := range wordIds {
+		if _, ok := existingWords[wordId]; !ok {
+			insertStr += "(?, ?),"
+			vals = append(vals, story.ID, wordId)
+		}
+	}
 
-	return err
+	if len(vals) == 0 {
+		fmt.Printf("inserted 0 rows in stories_x_words\n")
+		return nil
+	}
+
+	insertStr = insertStr[0 : len(insertStr)-1]
+	stmt, err := sqldb.Prepare(insertStr)
+	if err != nil {
+		return err
+	}
+	res, err := stmt.Exec(vals...)
+	if err != nil {
+		return err
+	}
+	rowsInserted, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("inserted %d rows in stories_x_words\n", rowsInserted)
+
+	return nil
 }
 
 func updateStorySubtitleFiles(story Story) error {
@@ -555,7 +627,7 @@ func updateStorySubtitleFiles(story Story) error {
 	return nil
 }
 
-func processStoryWords(story Story, sqldb *sql.DB) (newWordCount int, wordIdsJson string, err error) {
+func processStoryWords(story Story, sqldb *sql.DB) (wordIds []int64, newWordCount int, err error) {
 	// remove newlines from the string in case words are split across lines
 	if newlineRegEx == nil {
 		newlineRegEx = regexp.MustCompile(`\x{000D}\x{000A}|[\x{000A}\x{000B}\x{000C}\x{000D}\x{0085}\x{2028}\x{2029}]`)
@@ -566,23 +638,18 @@ func processStoryWords(story Story, sqldb *sql.DB) (newWordCount int, wordIdsJso
 	for _, sub := range story.SubtitlesJA {
 		subTokens, subKanjiSet, err := tokenize(newlineRegEx.ReplaceAllString(sub.Text, ``))
 		if err != nil {
-			return 0, "", fmt.Errorf("failure to tokenize story: " + err.Error())
+			return nil, 0, fmt.Errorf("failure to tokenize story: " + err.Error())
 		}
 		tokens = append(tokens, subTokens...)
 		kanjiSet = append(kanjiSet, subKanjiSet...)
 	}
 
-	newWordIds, newWordCount, err := addWords(tokens, kanjiSet, sqldb)
+	wordIds, newWordCount, err = addWords(tokens, kanjiSet, sqldb)
 	if err != nil {
-		return 0, "", err
+		return nil, 0, err
 	}
 
-	wordIdsJsonBytes, err := json.Marshal(newWordIds)
-	if err != nil {
-		return 0, "", fmt.Errorf("failure to jsonify word ids: " + err.Error())
-	}
-
-	return newWordCount, string(wordIdsJsonBytes), nil
+	return wordIds, newWordCount, nil
 }
 
 func GetSources(response http.ResponseWriter, request *http.Request) {
@@ -607,7 +674,7 @@ func GetSources(response http.ResponseWriter, request *http.Request) {
 	}
 	defer rows.Close()
 
-	var stories []Story
+	stories := make([]Story, 0)
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link,

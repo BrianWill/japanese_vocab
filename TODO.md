@@ -1,12 +1,13 @@
 # japanese_vocab TODO   
          
     check why 置けません is highlighted in red (issue with potential form?)
+
+    check why 釣られてしまいました is not one word (釣ら is separate from れてしまいました)
     
     display count / percentage of archived words in story list of sources
-        update this count every time user updates archived status of a word
-            for drill page, we need the story id
-                for the drill of all recently logged stories, we need all of their story data?
-                    or handle this when we update the archived status? (would make UpdateWord expensive)
+        add stories_x_words table when importing
+            then can join to get all archived and unarchived words for each story
+                can use group_by (or count?) to collapse rows into one result per story        
 
     when displaying both english and japanese subtitles, highlighting would match up key corresponding words
    

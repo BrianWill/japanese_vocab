@@ -237,8 +237,8 @@ func makeUserDB(path string) {
 		log.Fatal(err)
 	}
 
-	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS "stories" 
-		("id" INTEGER PRIMARY KEY,
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS stories
+		(id INTEGER PRIMARY KEY,
 			title TEXT NOT NULL,
 			source TEXT NOT NULL,
 			unique_word_count INTEGER NOT NULL DEFAULT 0,
@@ -249,6 +249,19 @@ func makeUserDB(path string) {
 			subtitles_en TEXT,
 			subtitles_ja TEXT,
 			log TEXT);`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := statement.Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	statement, err = sqldb.Prepare(`CREATE TABLE IF NOT EXISTS stories_x_words 
+		(id INTEGER PRIMARY KEY,
+			story_id INTEGER,
+			word_id INTEGER,
+			FOREIGN KEY (story_id) REFERENCES stories(id)
+			FOREIGN KEY (word_id) REFERENCES words(id));`)
 	if err != nil {
 		log.Fatal(err)
 	}
