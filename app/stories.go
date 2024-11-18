@@ -311,8 +311,21 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 		fmt.Println("ip: ", ip)
 	}
 
-	rows, err := sqldb.Query(`SELECT id, title, source, link, video, 
-			date, log FROM stories;`)
+	stmt := `SELECT s.id, s.title, s.source, s.link, s.video, s.date, s.log, ifnull(q1.word_count, 0), ifnull(q2.archived_word_count, 0)
+				FROM stories s
+				LEFT JOIN (SELECT story_id, count(*) AS word_count
+							FROM stories_x_words
+							GROUP BY story_id) q1
+					ON s.id = q1.story_id
+				LEFT JOIN (SELECT story_id, count(*) AS archived_word_count
+							FROM stories_x_words
+							INNER JOIN words ON words.id = stories_x_words.word_id
+							WHERE words.archived = 1
+							GROUP BY story_id) q2
+					ON s.id = q2.story_id`
+
+	rows, err := sqldb.Query(stmt)
+
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -325,7 +338,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link,
-			&story.Video, &story.Date, &log); err != nil {
+			&story.Video, &story.Date, &log, &story.WordCount, &story.ArchivedWordCount); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -561,9 +574,4 @@ func OpenTranscript(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(bson.M{"status": "success"})
-}
-
-func GetArchivedWordStats(storyId int) ([]StoryWordStats, error) {
-
-	return nil, nil
 }

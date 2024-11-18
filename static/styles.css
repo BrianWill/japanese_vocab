@@ -137,18 +137,15 @@ a {
     margin-left: 2em;
 }
 
-.story_table th,
-.schedule_table th {
-    color: rgb(98, 98, 98);
+.story_table th {
     padding-right: 2em;
-    font-size: 70%;
+    padding-top: 1em;
+    padding-bottom: 1em;
 }
 
-.story_table td,
-.schedule_table td {
+.story_table td {
     padding: 0.3em 0em;
 }
-
 
 #story_list input[type=number] {
     background-color: #232323;
@@ -159,18 +156,18 @@ a {
 }
 
 #story_list table,
-.schedule_table {
+.story_table {
     margin-left: 2em;
 }
 
 
 #story_list td,
-.schedule_table td {
+.story_table td {
     padding-right: 1em;
 }
 
 
-.schedule_table {
+.story_table {
     border-spacing: 0px 0.5em;
     /* Removes the cell spacing via CSS */
     border-collapse: separate;
@@ -572,4 +569,20 @@ span.verb:hover {
     max-width: 50em;
     padding-bottom: 1em;
     color: rgb(159, 159, 159);
+}
+
+.story_table .archived_percentage {
+    font-size:70%;
+}
+
+.story_table .green {
+    color: #5cce5c;
+}
+
+.story_table .yellow {
+    color: #e5e53d;
+}
+
+.story_table .red {
+    color: #df3838;
 }

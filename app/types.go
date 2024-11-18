@@ -3,17 +3,19 @@ package main
 import ()
 
 type Story struct {
-	ID              int64  `json:"id,omitempty"`
-	Title           string `json:"title,omitempty"`
-	Source          string `json:"source,omitempty"`
-	Date            string `json:"date,omitempty"`
-	Link            string `json:"link,omitempty"`
-	Video           string `json:"video,omitempty"`
-	SubtitlesENJson string `json:"subtitles_en,omitempty"`
-	SubtitlesJAJson string `json:"subtitles_ja,omitempty"`
-	SubtitlesEN     []Subtitle
-	SubtitlesJA     []Subtitle
-	Log             []LogItem `json:"log"`
+	ID                int64  `json:"id,omitempty"`
+	Title             string `json:"title,omitempty"`
+	Source            string `json:"source,omitempty"`
+	Date              string `json:"date,omitempty"`
+	Link              string `json:"link,omitempty"`
+	Video             string `json:"video,omitempty"`
+	WordCount         int    `json:"word_count"`
+	ArchivedWordCount int    `json:"archived_word_count"`
+	SubtitlesENJson   string `json:"subtitles_en,omitempty"`
+	SubtitlesJAJson   string `json:"subtitles_ja,omitempty"`
+	SubtitlesEN       []Subtitle
+	SubtitlesJA       []Subtitle
+	Log               []LogItem `json:"log"`
 }
 
 type LoggedRep struct {
@@ -88,11 +90,6 @@ type Word struct {
 
 	BaseForm string `json:"base_form"`
 	POS      string `json:"POS"`
-}
-
-type StoryWordStats struct {
-	NumUnique   int
-	NumArchived int
 }
 
 type LogItem struct {

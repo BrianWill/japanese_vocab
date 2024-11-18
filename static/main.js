@@ -56,11 +56,13 @@ function displayRecentlyLogged(stories) {
         return (a.date_last_rep < b.date_last_rep);
     });
 
-    html += `<table class="schedule_table">
+    html += `<table class="story_table">
     <tr class="day_row logged_row">
-        <td>Source</td>
-        <td>Title</td>
-        <td>Time since<br>last rep</td>
+        <th>Source</th>
+        <th>Title</th>
+        <th>Time since<br>last rep</th>
+        <th>Word<br>Count</th>
+        <th>Words<br>Archived</th>
     </tr>`
 
     for (const s of stories) {
@@ -68,6 +70,8 @@ function displayRecentlyLogged(stories) {
             <td>${s.source}</td>    
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             <td>${timeSince(s.date_last_rep)}</td>
+            <td>${s.word_count}</td>
+            <td>${archivedWordPercentage(s)}</td>
         </tr>`;
     }
 
@@ -76,7 +80,21 @@ function displayRecentlyLogged(stories) {
     storyList.innerHTML = html;
 }
 
+function archivedWordPercentage(story) {
+    if (story.word_count == 0) {
+        return 'n/a';
+    }
+    var percentage = Math.floor((story.archived_word_count / story.word_count) * 100);
+    var color = 'red';
+    if (percentage >= 70) {
+        color = 'yellow';
+    }
+    if (percentage >= 85) {
+        color = 'green';
+    }
 
+    return `<span class="${color}">${percentage}</span> <span class="archived_percentage ${color}"> %<span>`;
+}
 
 var storiesById = {};
 var storiesBySource = {};
@@ -135,12 +153,23 @@ function processCatalog(storyData) {
 function displaySourceStoryList(list) {
     function storyRow(s) {
         return `<tr>
-                <td><span class="story_source">${s.source}</span></td>
-                <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
-            </tr>`;
+            <td>${s.source}</td>    
+            <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td>${timeSince(s.date_last_rep)}</td>
+            <td>${s.word_count}</td>
+            <td>${archivedWordPercentage(s)}</td>
+        </tr>`;
     }
 
-    let tableHeader = `<table class="story_table">`;
+    let tableHeader = `<table class="story_table">
+     <tr class="day_row logged_row">
+        <th>Source</th>
+        <th>Title</th>
+        <th>Time since<br>last rep</th>
+        <th>Word<br>Count</th>
+        <th>Words<br>Archived</th>
+    </tr>`;
+
     let html = tableHeader;
 
     list.sort((a, b) => {
