@@ -340,12 +340,9 @@ func nextWord(tokens []*JpToken) (Word, int) {
 	} else if t.POS == "形容詞" { // i-adjective
 		return word, 1
 	} else if t.POS == "助動詞" { // auxillary verb
-		//if t.Surface == "です" || t.Surface == "だ" || t.Surface == "な" || t.Surface == "でしょ" || t.Surface == "う" {
 		return word, 1
-		//}
-		//fmt.Println("Auxillary verb that doesn't follow a verb: ", t.POS)
-		//panic("Auxillary verb that doesn't follow a verb: " + t.POS + " : " + t.POS_1 + " : " + t.Surface)
-		//return Word{Display: t.Surface, BaseForm: t.BaseForm}, 1
+	} else if t.POS == "その他" && t.POS_1 == "間投" { // interjection
+		return word, 1
 	} else {
 		panic("POS that is not currently accounted for: " + t.POS + " : " + t.Surface)
 	}

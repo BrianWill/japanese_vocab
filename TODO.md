@@ -1,22 +1,23 @@
 # japanese_vocab TODO   
-         
+
+    make player controls into a better help pop-up     
+    
+    add subtitle offset field to videos
+        if user adjusts the subtitles such that first subtitle timemark goes under 0, then this offset becomes non-zero
+            so each subtitles timemarks are their stored timemarks - the offset
+                subtitles in story_text will be displayed with this offset factored in
+                subtitles with end timemarks below 0 will still be shown in the story text
+                    but you can't jump to a timemark below 0 (doing so just jumps to 0)
+    
     check why 置けません is highlighted in red (issue with potential form?)
 
     check why 釣られてしまいました is not one word (釣ら is separate from れてしまいました)
-    
-    display count / percentage of archived words in story list of sources
-        add stories_x_words table when importing
-            then can join to get all archived and unarchived words for each story
-                can use group_by (or count?) to collapse rows into one result per story        
-
-    when displaying both english and japanese subtitles, highlighting would match up key corresponding words
+        
+    when displaying both english and japanese subtitles, highlighting should match up key corresponding words
    
     for highlighted words, show kana and definitions
         on story page, show them below the video
         but need very short definitions (and hiragana spelling)...
-
-    should subtitle adjustment set an offset for the video rather than edit the subtitles themselves?
-        for case of gaps, you still need to adjust the subtitles themselves, in which case maybe the original subtitle file itself should be updated
 
     drilling options:
         limit words in drill to 50?

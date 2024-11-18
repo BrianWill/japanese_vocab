@@ -21,7 +21,7 @@ var cueGuideIndicator = document.getElementById('captions_meter_indicator');
 
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
 const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
-const PLAYBACK_ADJUSTMENT = 0.05;
+const PLAYBACK_SPEED_ADJUSTMENT = 0.05;
 
 const MAX_INTEGER = Math.pow(2, 52) - 1;
 
@@ -55,6 +55,28 @@ document.getElementById('story_container').addEventListener('dblclick', function
     }
 });
 
+document.getElementById('subtitle_actions').addEventListener('click', function (evt) {
+    if (evt.target.classList.contains('shift_neg_1')) {
+        evt.preventDefault();
+        shiftSubtitleTimings(-1);
+    } else if (evt.target.classList.contains('shift_pos_1')) {
+        evt.preventDefault();
+        shiftSubtitleTimings(1);
+    } else if (evt.target.classList.contains('shift_neg_fraction')) {
+        evt.preventDefault();
+        shiftSubtitleTimings(-0.1);
+    } else if (evt.target.classList.contains('shift_pos_fraction')) {
+        evt.preventDefault();
+        shiftSubtitleTimings(0.1);
+    } else if (evt.target.classList.contains('shift_back')) {
+        evt.preventDefault();
+        shiftSubtitleTimingsBack();
+    } else if (evt.target.classList.contains('shift_forward')) {
+        evt.preventDefault();
+        shiftSubtitleTimingsForward();
+    }
+});
+
 storyLines.onwheel = function (evt) {
     evt.preventDefault();
     let scrollDelta = evt.wheelDeltaY * 2;
@@ -82,24 +104,27 @@ storyLines.onclick = function (evt) {
 
 storyActions.onclick = function (evt) {
     if (evt.target.classList.contains('open_transcript')) {
+        evt.preventDefault();
         let lang = evt.target.classList.contains('en') ? 'en' : 'ja';
         openTranscript(story.source, story.title, lang, () => { });
         return;
     } else if (evt.target.classList.contains('reimport')) {
+        evt.preventDefault();
         if (!window.confirm("Reimport the story?")) {
             return;
         }
         snackbarMessage(`reimporting story`);
         importStory(story.source, story.title, function () {
-            window.location.reload();
+            load();
+            snackbarMessage(`story was reimported`);
         });
         return;
 
     } else if (evt.target.classList.contains('drill_vocab')) {
+        evt.preventDefault();
         window.location.href = '/words.html?storyId=' + story.id;
     } else if (evt.target.classList.contains('log_story')) {
         evt.preventDefault();
-
         if (window.confirm("Log this story?")) {
             let unixtime = Math.floor(Date.now() / 1000);
 
@@ -114,8 +139,6 @@ storyActions.onclick = function (evt) {
                 snackbarMessage(`story logged`);
             });
         }
-    } else if (!evt.target.closest('#excerpts')) {
-        return;
     }
 };
 
@@ -232,117 +255,8 @@ document.body.onkeydown = async function (evt) {
         }
     } else if (evt.code === 'Equal' || evt.code === 'Minus') {
         evt.preventDefault();
-
-        if (evt.altKey) {
-            let adjustment = (evt.code === 'Equal') ? TEXT_TRACK_TIMING_ADJUSTMENT : -TEXT_TRACK_TIMING_ADJUSTMENT;
-            let lang = 'English and Japanese';
-
-            let english = document.getElementById('subtitles_en_checkbox').checked;
-            let japanese = document.getElementById('subtitles_ja_checkbox').checked;
-
-            if (!english && !japanese) {
-                return;
-            }
-
-            if (english) {
-                lang = 'English';
-                adjustTextTrackAllTimings(story.subtitles_en, adjustment);
-            }
-
-            if (japanese) {
-                lang = 'Japanese';
-                adjustTextTrackAllTimings(story.subtitles_ja, adjustment);
-            }
-
-            displayStoryText();
-            displaySubtitles();
-
-            snackbarMessage(`updated ${lang} subtitle timings by ${adjustment} seconds`);
-
-            clearTimeout(subtitleAdjustTimeoutHandle);
-            subtitleAdjustTimeoutHandle = setTimeout(
-                function () {
-                    updateSubtitles(story, () => {
-                        snackbarMessage(`saved updates to subtitle timings`);
-                    });
-                },
-                3000
-            );
-        } else {
-            let adjustment = (evt.code === 'Equal') ? PLAYBACK_ADJUSTMENT : -PLAYBACK_ADJUSTMENT;
-            adjustPlaybackSpeed(adjustment);
-        }
-    } else if (evt.code === 'BracketLeft' && evt.altKey) {
-        evt.preventDefault();
-        let adjustment = TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
-        let lang = 'English and Japanese';
-
-        let english = document.getElementById('subtitles_en_checkbox').checked;
-        let japanese = document.getElementById('subtitles_ja_checkbox').checked;
-
-        if (!english && !japanese) {
-            return;
-        }
-
-        if (english) {
-            lang = 'English';
-            bringForwardTextTrackTimings(story.subtitles_en, player.currentTime);
-        }
-
-        if (japanese) {
-            lang = 'Japanese ';
-            bringForwardTextTrackTimings(story.subtitles_ja, player.currentTime);
-        }
-
-        displayStoryText();
-        displaySubtitles();
-
-        snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${adjustment} seconds`);
-
-        clearTimeout(subtitleAdjustTimeoutHandle);
-        subtitleAdjustTimeoutHandle = setTimeout(
-            function () {
-                updateSubtitles(story, () => {
-                    snackbarMessage(`saved updates to subtitle timings`);
-                });
-            },
-            3000
-        );
-    } else if (evt.code === 'BracketRight' && evt.altKey) {
-        evt.preventDefault();
-        let lang = 'English and Japanese';
-
-        let english = document.getElementById('subtitles_en_checkbox').checked;
-        let japanese = document.getElementById('subtitles_ja_checkbox').checked;
-
-        if (!english && !japanese) {
-            return;
-        }
-
-        if (english) {
-            lang = 'English ';
-            adjustTextTrackTimings(story.subtitles_en, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
-        }
-
-        if (japanese) {
-            lang = 'Japanese ';
-            adjustTextTrackTimings(story.subtitles_ja, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
-        }
-
-        displayStoryText();
-        displaySubtitles();
-
-        snackbarMessage(`updated ${lang} subtitle timings past the current mark by ${TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT} seconds`);
-
-        clearTimeout(subtitleAdjustTimeoutHandle);
-        subtitleAdjustTimeoutHandle = setTimeout(
-            function () {
-                updateSubtitles(story, () => {
-                    snackbarMessage(`saved updates to subtitle timings`);
-                });
-            },
-            3000
-        );
+        let adjustment = (evt.code === 'Equal') ? PLAYBACK_SPEED_ADJUSTMENT : -PLAYBACK_SPEED_ADJUSTMENT;
+        adjustPlaybackSpeed(adjustment);    
     } else if (evt.code.startsWith('Digit')) {
         if (evt.altKey) {
             evt.preventDefault();
@@ -359,6 +273,114 @@ document.body.onkeydown = async function (evt) {
         }
     }
 };
+
+function shiftSubtitleTimings(shift) {
+    let lang = 'English and Japanese';
+
+    let english = document.getElementById('subtitles_en_checkbox').checked;
+    let japanese = document.getElementById('subtitles_ja_checkbox').checked;
+
+    if (!english && !japanese) {
+        return;
+    }
+
+    if (english) {
+        lang = 'English';
+        adjustTextTrackAllTimings(story.subtitles_en, shift);
+    }
+
+    if (japanese) {
+        lang = 'Japanese';
+        adjustTextTrackAllTimings(story.subtitles_ja, shift);
+    }
+
+    displayStoryText();
+    displaySubtitles();
+
+    snackbarMessage(`updated ${lang} subtitle timings by ${shift} seconds`);
+
+    clearTimeout(subtitleAdjustTimeoutHandle);
+    subtitleAdjustTimeoutHandle = setTimeout(
+        function () {
+            updateSubtitles(story, () => {
+                snackbarMessage(`saved updates to subtitle timings`);
+            });
+        },
+        3000
+    );
+}
+
+function shiftSubtitleTimingsBack() {
+    let lang = 'English and Japanese';
+
+    let english = document.getElementById('subtitles_en_checkbox').checked;
+    let japanese = document.getElementById('subtitles_ja_checkbox').checked;
+
+    if (!english && !japanese) {
+        return;
+    }
+
+    if (english) {
+        lang = 'English ';
+        adjustTextTrackTimings(story.subtitles_en, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
+    }
+
+    if (japanese) {
+        lang = 'Japanese ';
+        adjustTextTrackTimings(story.subtitles_ja, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
+    }
+
+    displayStoryText();
+    displaySubtitles();
+
+    snackbarMessage(`shifted ${lang} all subtitles past the current mark down by ${TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT} seconds`);
+
+    clearTimeout(subtitleAdjustTimeoutHandle);
+    subtitleAdjustTimeoutHandle = setTimeout(
+        function () {
+            updateSubtitles(story, () => {
+                snackbarMessage(`saved updates to subtitle timings`);
+            });
+        },
+        3000
+    );
+}
+
+function shiftSubtitleTimingsForward() {
+    let lang = 'English and Japanese';
+
+    let english = document.getElementById('subtitles_en_checkbox').checked;
+    let japanese = document.getElementById('subtitles_ja_checkbox').checked;
+
+    if (!english && !japanese) {
+        return;
+    }
+
+    if (english) {
+        lang = 'English';
+        bringForwardTextTrackTimings(story.subtitles_en, player.currentTime);
+    }
+
+    if (japanese) {
+        lang = 'Japanese ';
+        bringForwardTextTrackTimings(story.subtitles_ja, player.currentTime);
+    }
+
+    displayStoryText();
+    displaySubtitles();
+
+    snackbarMessage(`shifted ${lang} all subtitles past the current time mark up to the current time mark`);
+
+    clearTimeout(subtitleAdjustTimeoutHandle);
+    subtitleAdjustTimeoutHandle = setTimeout(
+        function () {
+            updateSubtitles(story, () => {
+                snackbarMessage(`saved updates to subtitle timings`);
+            });
+        },
+        3000
+    );
+}
 
 function play() {
     displaySubtitles();
@@ -400,10 +422,11 @@ function displaySubtitles(afterSeek) {
         captionsJa.style.display = 'none';
     }
 
-    let enSubtitles = findSubsAtTimemark(story.subtitles_en, player.currentTime);
-    let jaSubtitles = findSubsAtTimemark(story.subtitles_ja, player.currentTime);
+    let time = player.currentTime;
+    let enSubtitles = findSubsAtTimemark(story.subtitles_en, time);
+    let jaSubtitles = findSubsAtTimemark(story.subtitles_ja, time);
 
-    function display(subs, target) {
+    function display(subs, target, updateStoryText) {
         let html = '<div>';
 
         for (sub of subs) {
@@ -419,7 +442,7 @@ function displaySubtitles(afterSeek) {
         }
 
         // change which sub is highlighted in story text when a new sub is current
-        if (target.innerHTML != html || afterSeek) {
+        if (updateStoryText && (target.innerHTML != html || afterSeek)) {
             if (subs.length == 0) {
                 subs = findSubBeforeTimemark(story.subtitles_ja, player.currentTime);
             }
@@ -450,7 +473,7 @@ function displaySubtitles(afterSeek) {
     }
 
     display(enSubtitles, captionsEn);
-    display(jaSubtitles, captionsJa);
+    display(jaSubtitles, captionsJa, true);
 }
 
 function isSubtitleScrolledIntoView() {

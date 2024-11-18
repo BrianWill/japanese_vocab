@@ -44,9 +44,8 @@ body {
 
 #story_container {
     display: flex;
-    height: 93vh;
+    height: 90vh;
 }
-
 
 #media {
     width: 70%;
@@ -171,8 +170,8 @@ minidenticon-svg svg {
     font-size: 50%;
     color: #a7a4a4;;
     padding-right: 2em;
+    padding-top: 0.5em;
     flex: 0 0 4em;
-    align-content: center;
 }
 
 .subtitle_lines {
@@ -181,4 +180,16 @@ minidenticon-svg svg {
 
 #story_actions .action_item {
     padding-right: 1.3em;
+}
+
+#subtitle_actions {
+    font-size: 70%;
+}
+
+#subtitle_actions label {
+    padding-right: 1em;
+}
+
+#subtitle_actions .action_item {
+    padding-right: 1em;
 }

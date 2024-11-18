@@ -54,17 +54,6 @@ You can toggle a word's archived status by double clicking it in a subtitle or i
 - `-` : decrease playback speed
 - `+` : increase playback speed
 
-## Adjusting subtitles
-
-Sometimes your subtitles may not match your video source timings or have other flaws. In a story page, the "edit" link opens the subtitle file in a text editor for easy editing, and the "reimport" link reimports this individual story.
-
-You can also adjust the subtitle timings with some hotkeys:
-
-- `alt` + `-` : shift all subtitle timings forward by 0.2 seconds
-- `alt` + `+` : shift all subtitle timings back by 0.2 seconds
-- `alt` + `[` : shift all subtitles after the current timemark forward such that the next subtitle begins at the current timemark
-- `alt` + `]` : shift all subtitles after the current timemark back by 10 seconds
-
 ## Vocab drills
 
 ![](./images/drill.png)
