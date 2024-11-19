@@ -117,11 +117,6 @@ function updateWord(word, successFn) {
         if (successFn) {
             successFn(data);
         }
-        // if (marking) {
-        //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> marked as reviewed`);
-        // } else {
-        //     snackbarMessage(`word <span class="snackbar_word">${data.base_form}</span> set to archived: ${data.archived}`);
-        // }
     }).catch((error) => {
         console.error('Error:', error);
     });
@@ -260,32 +255,6 @@ function incWords(words, successFn) {
     }).then((response) => response.json())
         .then((data) => {
             console.log('Update reps:', data);
-            if (successFn) {
-                successFn(data);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function updateExcerpts(story, successFn) {
-    // todo: can remove this once legacy stories all have excerpts with hashes
-    for (let ex of story.excerpts) {
-        if (!ex.hash) {
-            ex.hash = Math.floor(Math.random() * MAX_INTEGER + 1);  // random value [1, MAX_INTEGER];
-        }
-    }
-
-    fetch('/update_excerpts', {
-        method: 'POST', // or 'PUT'
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "story_id": story.id, "excerpts": story.excerpts })
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log('updated story excerpts:', data);
             if (successFn) {
                 successFn(data);
             }
@@ -470,65 +439,6 @@ function timeSince(date) {
     return 'just now';
 }
 
-
-function timeSinceRep(date) {
-    if (date <= 1) {
-        return '';
-    }
-
-    let now = Math.floor(new Date() / 1000);
-    let elapsedSeconds = now - date;
-    if (elapsedSeconds > 0) {
-        elapsedSeconds++; // adding one second fixes cases like "24 hours" instead of "1 day";
-        let interval = elapsedSeconds / 31536000;
-        if (interval > 1) {
-            var val = Math.floor(interval);
-            return `(${val} ${val == 1 ? 'year' : 'years'} since last rep)`;
-        }
-        interval = elapsedSeconds / 2592000;
-        if (interval > 1) {
-            var val = Math.floor(interval);
-            return `(${val} ${val == 1 ? 'month' : 'months'} since last rep)`;
-        }
-        interval = elapsedSeconds / 86400;
-        if (interval > 1) {
-            var val = Math.floor(interval);
-            return `(${val} ${val == 1 ? 'day' : 'days'} since last rep)`;
-        }
-        interval = elapsedSeconds / 3600;
-        if (interval > 1) {
-            var val = Math.floor(interval);
-            return `(${val} ${val == 1 ? 'hour' : 'hours'} since last rep)`;
-        }
-        interval = elapsedSeconds / 60;
-        if (interval > 1) {
-            var val = Math.floor(interval);
-            return `(${val} ${val == 1 ? 'minute' : 'minutes'} since last rep)`;
-        }
-        if (interval > 1) {
-            var val = Math.floor(elapsedSeconds);
-            return `(${val} ${val == 1 ? 'second' : 'seconds'} since last rep)`;
-        }
-    }
-    return '(last rep completed just now)';
-}
-
-function addLogEvent(storyId) {
-    fetch(`/add_log_event/${storyId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).then((response) => response.json())
-        .then((data) => {
-            console.log(data);
-            snackbarMessage(data.message);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
 // todo test with negative time
 function formatTrackTime(time, padding = 3, includeHours = false) {
     let seconds = Math.floor(time);
@@ -558,30 +468,6 @@ function formatTrackTime(time, padding = 3, includeHours = false) {
 
     return str;
 }
-
-function textTrackToString(track, startTime, endTime) {
-    if (startTime === undefined) {
-        startTime = Number.MIN_VALUE;
-    }
-    if (endTime === undefined) {
-        endTime = Number.MAX_VALUE;
-    }
-
-    let vtt = 'WEBVTT\n\n';
-
-    for (let cue of track.cues) {
-        if (cue.startTime > endTime || cue.endTime < startTime) {
-            continue;
-        }
-
-        vtt += `${cue.id}
-${formatTrackTime(cue.startTime, 3, true)} --> ${formatTrackTime(cue.endTime, 3, true)}
-${cue.text}\n\n`;
-    }
-
-    return vtt;
-}
-
 
 // add adjustment to every start and end timing, but only those which overlap or come after 'time'
 function adjustTextTrackTimings(cues, adjustment, time) {
@@ -720,45 +606,6 @@ function findSubBeforeTimemark(subs, time) {
         }
     }
     return [selected];
-}
-
-function integerHash(str) {
-    let hash = 0;
-    str.split('').forEach(char => {
-        hash = char.charCodeAt(0) + ((hash << 5) - hash)
-    });
-    return hash;
-}
-
-var colorPalette = ['#c7522a', '#e5c185', '#fbf2c4', '#74a892', "#d9042b",
-    "#730220", "#03658c", "#f29f05", "#f27b50", "#c7522a", "#e5c185",
-    "#f0daa5", "#fbf2c4", "#b8cdab", "#74a892", "#008585"
-];
-
-function randomPaletteColor(hash) {
-    let idx = Math.abs(hash) % colorPalette.length;
-    return colorPalette[idx];
-}
-
-function setCookie(name, value, days) {
-    var expires = "";
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/ ; SameSite=Lax; ";
-}
-
-function getCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
 }
 
 function isElementVisible(el, holder) {

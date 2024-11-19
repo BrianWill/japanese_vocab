@@ -65,12 +65,12 @@ func getStoryTokens(sqldb *sql.DB, storyId int64) ([]*JpToken, error) {
 		return nil, err
 	}
 
-	excerptText, err := getSubtitlesString(subtitlesJA)
+	text, err := getSubtitlesString(subtitlesJA)
 	if err != nil {
 		return nil, err
 	}
 
-	tokens, _, err := tokenize(excerptText)
+	tokens, _, err := tokenize(text)
 	if err != nil {
 		return nil, err
 	}

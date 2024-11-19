@@ -4,7 +4,6 @@ var playerSpeedNumber = document.getElementById('player_speed_number');
 var player = document.getElementById('video_player');
 var captionsJa = document.getElementById('captions_ja');
 var captionsEn = document.getElementById('captions_en');
-var repetitionsInfoDiv = document.getElementById('repetitions_info');
 var storyActions = document.getElementById('story_actions');
 
 var englishCheckbox = document.getElementById('subtitles_en_checkbox');
@@ -16,8 +15,8 @@ var story = null;
 var words = null;
 var wordMap = null;
 
-var cueGuideElement = document.getElementById('captions_meter');
-var cueGuideIndicator = document.getElementById('captions_meter_indicator');
+var subGuideLineElement = document.getElementById('captions_meter');
+var subGuideLineIndicator = document.getElementById('captions_meter_indicator');
 
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
 const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
@@ -538,8 +537,7 @@ function getWords(id) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            story_id: id,
-            excerpt_hash: 0,
+            story_id: id
         })
     }).then((response) => response.json())
         .then((data) => {
@@ -749,10 +747,10 @@ function displaySubGuideLine(time, sub) {
     let width = duration * widthPercentagePointsPerSecond;
     width = Math.min(Math.max(width, minWidth), maxWidth); // clamp 
 
-    cueGuideElement.style.width = width + '%';
+    subGuideLineElement.style.width = width + '%';
 
     let subProgress = (time - sub.start_time) / duration;
-    cueGuideIndicator.style.marginLeft = (subProgress * 100).toFixed(5) + '%';
+    subGuideLineIndicator.style.marginLeft = (subProgress * 100).toFixed(5) + '%';
 }
 
 player.addEventListener("seeked", (evt) => {

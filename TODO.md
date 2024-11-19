@@ -1,5 +1,7 @@
 # japanese_vocab TODO   
 
+    show global count of words and percentage archived
+  
     drills:
         split words into subsets
             size of subsets can be customized
@@ -44,10 +46,6 @@
         怠け者 is not in words table
 
         investigate why a number of words seem to be missing from the word database
-    
-    feature to analyze the story catalog to find stories with right balance of known and unknown words
-        maybe identify appropriate excerpts by looking at run of subtitles
-        for each word, track all stories / sentences that include the word
 
     for highlighted verbs, use coloring to indicate the form
         or maybe use icons?
@@ -114,13 +112,7 @@
     import stories with just katakana words?
         https://www.youtube.com/watch?v=F8tu5CeVWDM
         https://www.youtube.com/watch?v=hrjV4VuDfiU
-
     
-    word counts per story (and per excerpt?):
-        server side: given story id, return the count of unarchived and archived words
-        show count for each story in current stories
-        show count in story page
-        show in catalog? would be expensive, but not impossible
 
     clicking info marks should show a modal popup with the info
 

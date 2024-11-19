@@ -510,16 +510,6 @@ span.verb:hover {
     margin-right: 0.5em;
 }
 
-#repetitions_info .rep {
-    padding-right: 0.2em;
-    user-select: none;
-}
-
-#excerpts .rep {
-    padding-right: 0.2em;
-    user-select: none;
-}
-
 .story_title {
     color: #cabe7d;
 }
@@ -538,22 +528,9 @@ span.verb:hover {
     color: white;
 }
 
-#repetitions_info .add_reps_link {
-    font-size: 100%;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-#excerpts .info_button {
-    border-radius: 4px;
-    background-color: #3c5070;
-    padding: 0 0.4em;
-}
-
 #catalog_container {
     display: flex;
 }
-
 
 #catalog_container #main_sidebar li {
     font-size: 125%;
