@@ -540,7 +540,7 @@ func storeStory(story Story, sqldb *sql.DB) error {
 		fmt.Printf(`updating story: "%s"`+"\n", story.Title)
 		_, err := sqldb.Exec(`UPDATE stories SET 
 								date = $1, link = $2, video = $3, 
-								subtitles_en = $4, subtitles_ja = $5
+								subtitles_en = $4, subtitles_ja = $5,
 								WHERE title = $6 and source = $7;`,
 			story.Date, story.Link, story.Video,
 			story.SubtitlesENJson, story.SubtitlesJAJson,
@@ -550,10 +550,10 @@ func storeStory(story Story, sqldb *sql.DB) error {
 		}
 	} else {
 		row, err := sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
-									subtitles_en, subtitles_ja, log) 
-									VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+									subtitles_en, subtitles_ja, log, subtitles_ja_offset, subtitles_en_offset) 
+									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
 			story.Title, story.Source, story.Date, story.Link,
-			story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, "[]")
+			story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, "[]", 0.0, 0.0)
 		if err != nil {
 			return err
 		}

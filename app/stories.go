@@ -380,14 +380,14 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, date, video, 
-		log, subtitles_en, subtitles_ja
+		log, subtitles_en, subtitles_ja, subtitles_ja_offset, subtitles_en_offset
 		FROM stories WHERE id = $1;`, id)
 
 	var log string
 	story := Story{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Date,
 		&story.Video, &log,
-		&story.SubtitlesENJson, &story.SubtitlesJAJson); err != nil {
+		&story.SubtitlesENJson, &story.SubtitlesJAJson, &story.SubtitlesJAOffset, &story.SubtitlesENOffset); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
@@ -447,9 +447,11 @@ func UpdateSubtitles(w http.ResponseWriter, r *http.Request) {
 
 	_, err = sqldb.Exec(`UPDATE stories SET 
 			subtitles_en = CASE WHEN $1 = '' THEN subtitles_en ELSE $1 END,
-			subtitles_ja = CASE WHEN $2 = '' THEN subtitles_ja ELSE $2 END
-			WHERE id = $3;`,
-		story.SubtitlesENJson, story.SubtitlesJAJson, story.ID)
+			subtitles_ja = CASE WHEN $2 = '' THEN subtitles_ja ELSE $2 END,
+			subtitles_en_offset = $3,
+			subtitles_ja_offset = $4
+			WHERE id = $5;`,
+		story.SubtitlesENJson, story.SubtitlesJAJson, story.SubtitlesENOffset, story.SubtitlesJAOffset, story.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update subtitles: " + err.Error() + `"}`))

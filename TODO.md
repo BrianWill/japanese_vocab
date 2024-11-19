@@ -1,13 +1,11 @@
 # japanese_vocab TODO   
 
-    make player controls into a better help pop-up     
+    drills:
+        split words into subsets
+            size of subsets can be customized
+                slider bar?
     
-    add subtitle offset field to videos
-        if user adjusts the subtitles such that first subtitle timemark goes under 0, then this offset becomes non-zero
-            so each subtitles timemarks are their stored timemarks - the offset
-                subtitles in story_text will be displayed with this offset factored in
-                subtitles with end timemarks below 0 will still be shown in the story text
-                    but you can't jump to a timemark below 0 (doing so just jumps to 0)
+    make player controls into a better help pop-up
     
     check why 置けません is highlighted in red (issue with potential form?)
 

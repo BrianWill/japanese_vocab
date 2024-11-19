@@ -95,9 +95,9 @@ storyLines.onclick = function (evt) {
 
         var cues = (lang == 'ja') ? story.subtitles_ja : story.subtitles_en;
 
-        var cue = cues[idx];
+        var sub = cues[idx];
 
-        player.currentTime = cue.start_time;
+        player.currentTime = sub.start_time + story.subtitles_ja_offset;
         player.play();
     }
 };
@@ -153,7 +153,6 @@ document.body.onkeydown = async function (evt) {
         return;
     }
 
-
     let timemark = player.currentTime;
     if (evt.code === 'KeyF') {
         evt.preventDefault();
@@ -185,69 +184,74 @@ document.body.onkeydown = async function (evt) {
     } else if (evt.code === 'KeyX') {
         // jump to start of current subtitle
 
-        let cues = null;
+        let subs = null;
         if (document.getElementById('subtitles_en_checkbox').checked) {
-            cues = story.subtitles_en;
+            subs = story.subtitles_en;
         }
         if (document.getElementById('subtitles_ja_checkbox').checked) {
-            cues = story.subtitles_ja;
+            subs = story.subtitles_ja;
         }
-        if (cues === null) {
+        if (subs === null) {
             return;
         }
 
-        for (let index = cues.length - 1; index >= 0; index--) {
-            let cue = cues[index];
-            if (cue.start_time <= player.currentTime) {
-                player.currentTime = cue.start_time;
+        let time = player.currentTime - story.subtitles_ja_offset;
+
+        for (let index = subs.length - 1; index >= 0; index--) {
+            let sub = subs[index];
+            if (sub.start_time <= time) {
+                player.currentTime = Math.max(sub.start_time + story.subtitles_ja_offset, 0);
                 break;
             }
         }
     } else if (evt.code === 'KeyC') {
         // jump to start of next subtitle
 
-        let cues = null;
+        let subs = null;
         if (document.getElementById('subtitles_en_checkbox').checked) {
-            cues = story.subtitles_en;
+            subs = story.subtitles_en;
         }
         if (document.getElementById('subtitles_ja_checkbox').checked) {
-            cues = story.subtitles_ja;
+            subs = story.subtitles_ja;
         }
-        if (cues === null) {
+        if (subs === null) {
             return;
         }
 
-        for (let index = 0; index < cues.length; index++) {
-            let cue = cues[index];
-            if (cue.start_time > player.currentTime) {
-                player.currentTime = cue.start_time;
+        let time = player.currentTime - story.subtitles_ja_offset;
+
+        for (let index = 0; index < subs.length; index++) {
+            let sub = subs[index];
+            if (sub.start_time > time) {
+                player.currentTime = Math.max(sub.start_time + story.subtitles_ja_offset, 0);
                 break;
             }
         }
     } else if (evt.code === 'KeyZ') {
         // jump to start of prior subtitle
 
-        let cues = null;
+        let subs = null;
         if (document.getElementById('subtitles_en_checkbox').checked) {
-            cues = story.subtitles_en;
+            subs = story.subtitles_en;
         }
         if (document.getElementById('subtitles_ja_checkbox').checked) {
-            cues = story.subtitles_ja;
+            subs = story.subtitles_ja;
         }
-        if (cues === null) {
+        if (subs === null) {
             return;
         }
 
-        for (let index = cues.length - 1; index >= 0; index--) {
-            let cue = cues[index];
-            if (cue.end_time < player.currentTime) {
-                player.currentTime = cue.start_time;
+        let time = player.currentTime - story.subtitles_ja_offset;
+
+        for (let index = subs.length - 1; index >= 0; index--) {
+            let sub = subs[index];
+            if (sub.end_time < time) {
+                player.currentTime = Math.max(sub.start_time + story.subtitles_ja_offset, 0);
                 break;
             }
         }
     } else if (evt.code === 'KeyP' || evt.code === 'KeyS') {
         evt.preventDefault();
-        currentCue = null;
         if (player.paused) {  // playing
             play();
         } else {
@@ -256,21 +260,7 @@ document.body.onkeydown = async function (evt) {
     } else if (evt.code === 'Equal' || evt.code === 'Minus') {
         evt.preventDefault();
         let adjustment = (evt.code === 'Equal') ? PLAYBACK_SPEED_ADJUSTMENT : -PLAYBACK_SPEED_ADJUSTMENT;
-        adjustPlaybackSpeed(adjustment);    
-    } else if (evt.code.startsWith('Digit')) {
-        if (evt.altKey) {
-            evt.preventDefault();
-            let digit = parseInt(evt.code.slice(-1));
-            let duration = player.duration;
-            player.currentTime = duration * (digit / 10);
-        }
-    } else if (evt.code.startsWith('Space')) {
-        evt.preventDefault();
-
-        if (currentCue) {
-            player.currentTime = currentCue.start_time;
-            play();
-        }
+        adjustPlaybackSpeed(adjustment);
     }
 };
 
@@ -286,12 +276,14 @@ function shiftSubtitleTimings(shift) {
 
     if (english) {
         lang = 'English';
-        adjustTextTrackAllTimings(story.subtitles_en, shift);
+        story.subtitles_en_offset += shift;
+        story.subtitles_en_offset = parseFloat(story.subtitles_en_offset.toFixed(3));
     }
 
     if (japanese) {
         lang = 'Japanese';
-        adjustTextTrackAllTimings(story.subtitles_ja, shift);
+        story.subtitles_ja_offset += shift;
+        story.subtitles_ja_offset = parseFloat(story.subtitles_ja_offset.toFixed(3));
     }
 
     displayStoryText();
@@ -322,12 +314,12 @@ function shiftSubtitleTimingsBack() {
 
     if (english) {
         lang = 'English ';
-        adjustTextTrackTimings(story.subtitles_en, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
+        adjustTextTrackTimings(story.subtitles_en, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime - story.subtitles_en_offset);
     }
 
     if (japanese) {
         lang = 'Japanese ';
-        adjustTextTrackTimings(story.subtitles_ja, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime);
+        adjustTextTrackTimings(story.subtitles_ja, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime - story.subtitles_ja_offset);
     }
 
     displayStoryText();
@@ -358,12 +350,12 @@ function shiftSubtitleTimingsForward() {
 
     if (english) {
         lang = 'English';
-        bringForwardTextTrackTimings(story.subtitles_en, player.currentTime);
+        bringForwardTextTrackTimings(story.subtitles_en, player.currentTime - story.subtitles_en_offset);
     }
 
     if (japanese) {
         lang = 'Japanese ';
-        bringForwardTextTrackTimings(story.subtitles_ja, player.currentTime);
+        bringForwardTextTrackTimings(story.subtitles_ja, player.currentTime - story.subtitles_ja_offset );
     }
 
     displayStoryText();
@@ -397,7 +389,7 @@ function parseTimestamp(timestamp) {
 }
 
 function translateCurrentSubtitle() {
-    let cues = findSubsAtTimemark(story.subtitles_ja, player.currentTime);
+    let cues = findSubsAtTimemark(story.subtitles_ja, player.currentTime - story.subtitles_ja_offset);
     let text = '';
     for (let i = 0; i < cues.length; i++) {
         let cue = cues[i];
@@ -423,10 +415,10 @@ function displaySubtitles(afterSeek) {
     }
 
     let time = player.currentTime;
-    let enSubtitles = findSubsAtTimemark(story.subtitles_en, time);
-    let jaSubtitles = findSubsAtTimemark(story.subtitles_ja, time);
+    let enSubtitles = findSubsAtTimemark(story.subtitles_en, time - story.subtitles_en_offset);
+    let jaSubtitles = findSubsAtTimemark(story.subtitles_ja, time - story.subtitles_ja_offset);
 
-    function display(subs, target, updateStoryText) {
+    function display(time, subs, target, updateStoryText) {
         let html = '<div>';
 
         for (sub of subs) {
@@ -444,7 +436,7 @@ function displaySubtitles(afterSeek) {
         // change which sub is highlighted in story text when a new sub is current
         if (updateStoryText && (target.innerHTML != html || afterSeek)) {
             if (subs.length == 0) {
-                subs = findSubBeforeTimemark(story.subtitles_ja, player.currentTime);
+                subs = findSubBeforeTimemark(story.subtitles_ja, time);
             }
 
             if (subs.length > 0) {
@@ -469,11 +461,11 @@ function displaySubtitles(afterSeek) {
             target.innerHTML = html;
         }
 
-        updateCueGuide(subs);
+        updateSubGuideLine(time, subs);
     }
 
-    display(enSubtitles, captionsEn);
-    display(jaSubtitles, captionsJa, true);
+    display(time - story.subtitles_en_offset, enSubtitles, captionsEn);
+    display(time - story.subtitles_ja_offset, jaSubtitles, captionsJa, true);
 }
 
 function isSubtitleScrolledIntoView() {
@@ -683,15 +675,8 @@ function adjustPlaybackSpeed(adjustment) {
 }
 
 function displayStoryText() {
-    let subs = null;
-    let lang = 'en';
-    if (document.getElementById('subtitles_en_checkbox').checked) {
-        subs = story.subtitles_en;
-    }
-    if (document.getElementById('subtitles_ja_checkbox').checked) {
-        lang = 'ja';
-        subs = story.subtitles_ja;
-    }
+    let lang = 'ja';
+    let subs = story.subtitles_ja;
     if (subs == null) {
         storyLines.innerHTML = "";
         return;
@@ -701,7 +686,7 @@ function displayStoryText() {
     for (let subIdx = 0; subIdx < subs.length; subIdx++) {
         let sub = subs[subIdx];
 
-        let startTime = formatTrackTime(sub.start_time, 2);
+        let startTime = formatTrackTime(sub.start_time + story.subtitles_ja_offset, 2);
 
         html += `<div class="subtitle" subtitle_index="${subIdx}" subtitle_lang="${lang}">
             <div class="subtitle_start"><a href="#" class="subtitle_start_time">${startTime}</a></div>
@@ -723,8 +708,8 @@ function load(evt) {
 }
 
 
-function updateCueGuide(cues) {
-    if (cues == null || cues.length == 0) {
+function updateSubGuideLine(time, subs) {
+    if (subs == null || subs.length == 0) {
         document.getElementById('captions_meter').style.visibility = 'hidden';
         return;
     }
@@ -732,29 +717,29 @@ function updateCueGuide(cues) {
     // because of overlap, more than one cue can be active
     let longestCue = null;
     let longestDuration = 0;
-    for (let i = 0; i < cues.length; i++) {
-        let cue = cues[i];
-        let duration = cue.end_time - cue.start_time;
+    for (let i = 0; i < subs.length; i++) {
+        let sub = subs[i];
+        let duration = sub.end_time - sub.start_time;
         if (duration > longestDuration) {
             longestDuration = duration;
-            longestCue = cue;
+            longestCue = sub;
         }
     }
 
     if (longestDuration > 0) {
         document.getElementById('captions_meter').style.visibility = 'visible';
-        displayCueGuide(longestCue);
+        displaySubGuideLine(time, longestCue);
     }
 }
 
-function displayCueGuide(cue) {
-    let duration = cue.end_time - cue.start_time;
+function displaySubGuideLine(time, sub) {
+    let duration = sub.end_time - sub.start_time;
     if (duration <= 0) {
         return;
     };
 
     // this can happen some times when seeking because of the event queue order
-    if (player.currentTime < cue.start_time || player.currentTime > cue.end_time) {
+    if (time < sub.start_time || time > sub.end_time) {
         return;
     }
 
@@ -766,8 +751,8 @@ function displayCueGuide(cue) {
 
     cueGuideElement.style.width = width + '%';
 
-    let cueProgress = (player.currentTime - cue.start_time) / duration;
-    cueGuideIndicator.style.marginLeft = (cueProgress * 100).toFixed(5) + '%';
+    let subProgress = (time - sub.start_time) / duration;
+    cueGuideIndicator.style.marginLeft = (subProgress * 100).toFixed(5) + '%';
 }
 
 player.addEventListener("seeked", (evt) => {

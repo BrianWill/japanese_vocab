@@ -243,6 +243,8 @@ func makeUserDB(path string) {
 			video TEXT,
 			subtitles_en TEXT,
 			subtitles_ja TEXT,
+			subtitles_ja_offset REAL NOT NULL,
+			subtitles_en_offset REAL NOT NULL,
 			log TEXT);`)
 	if err != nil {
 		log.Fatal(err)

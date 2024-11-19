@@ -3,16 +3,18 @@ package main
 import ()
 
 type Story struct {
-	ID                int64  `json:"id,omitempty"`
-	Title             string `json:"title,omitempty"`
-	Source            string `json:"source,omitempty"`
-	Date              string `json:"date,omitempty"`
-	Link              string `json:"link,omitempty"`
-	Video             string `json:"video,omitempty"`
-	WordCount         int    `json:"word_count"`
-	ArchivedWordCount int    `json:"archived_word_count"`
-	SubtitlesENJson   string `json:"subtitles_en,omitempty"`
-	SubtitlesJAJson   string `json:"subtitles_ja,omitempty"`
+	ID                int64   `json:"id,omitempty"`
+	Title             string  `json:"title,omitempty"`
+	Source            string  `json:"source,omitempty"`
+	Date              string  `json:"date,omitempty"`
+	Link              string  `json:"link,omitempty"`
+	Video             string  `json:"video,omitempty"`
+	WordCount         int     `json:"word_count"`
+	ArchivedWordCount int     `json:"archived_word_count"`
+	SubtitlesENJson   string  `json:"subtitles_en,omitempty"`
+	SubtitlesJAJson   string  `json:"subtitles_ja,omitempty"`
+	SubtitlesENOffset float64 `json:"subtitles_en_offset"`
+	SubtitlesJAOffset float64 `json:"subtitles_ja_offset"`
 	SubtitlesEN       []Subtitle
 	SubtitlesJA       []Subtitle
 	Log               []LogItem `json:"log"`

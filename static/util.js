@@ -211,7 +211,9 @@ function updateSubtitles(story, successFn) {
         source: story.source,
         title: story.title,
         subtitles_en: JSON.stringify(story.subtitles_en, null, 4),
-        subtitles_ja: JSON.stringify(story.subtitles_ja, null, 4)
+        subtitles_ja: JSON.stringify(story.subtitles_ja, null, 4),
+        subtitles_en_offset: story.subtitles_en_offset,
+        subtitles_ja_offset: story.subtitles_ja_offset
     };
     fetch(`/update_subtitles`, {
         method: 'POST',
@@ -529,7 +531,7 @@ function addLogEvent(storyId) {
 
 // todo test with negative time
 function formatTrackTime(time, padding = 3, includeHours = false) {
-    let seconds = Math.round(time);
+    let seconds = Math.floor(time);
 
     let fractionStr = '';
     let arr = time.toFixed(padding).split('.');
