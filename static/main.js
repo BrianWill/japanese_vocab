@@ -2,20 +2,22 @@ var storyList = document.getElementById('story_list');
 var sourceList = document.getElementById('sources_list');
 var ipDiv = document.getElementById('ip');
 
-var stories =
-    document.body.onload = function (evt) {
-        getStories(function (stories) {
-            window.stories = stories;
-            processCatalog(stories);
-        });
-        getIP((ips) => {
-            let html = 'local ip: ';
-            for (const ip of ips) {
-                html += ip + '&nbsp;&nbsp;'
-            }
-            ipDiv.innerHTML = html;
-        });
-    };
+var storiesById = {};
+var storiesBySource = {};
+var stories = [];
+
+document.body.onload = function (evt) {
+    getStories(function (data) {
+        processCatalog(data.stories, data.word_stats);
+    });
+    getIP((ips) => {
+        let html = 'local ip: ';
+        for (const ip of ips) {
+            html += ip + '&nbsp;&nbsp;'
+        }
+        ipDiv.innerHTML = html;
+    });
+};
 
 document.getElementById('main_sidebar').onclick = function (evt) {
     if (evt.target.classList.contains('action_recently_logged')) {
@@ -96,11 +98,7 @@ function archivedWordPercentage(story) {
     return `<span class="${color}">${percentage}</span> <span class="archived_percentage ${color}"> %<span>`;
 }
 
-var storiesById = {};
-var storiesBySource = {};
-var stories = [];
-
-function processCatalog(storyData) {
+function processCatalog(storyData, wordStats) {
     stories = storyData;
 
     storiesById = {};
@@ -148,7 +146,16 @@ function processCatalog(storyData) {
     } else {
         displayRecentlyLogged(stories);
     }
+
+    displayWordStats(wordStats);
 };
+
+function displayWordStats(wordStats) {
+    var total = document.querySelector('#word_stats .total');
+    total.innerHTML = wordStats.total;
+    var archived = document.querySelector('#word_stats .archived');
+    archived.innerHTML = wordStats.archived;
+}
 
 function displaySourceStoryList(list) {
     function storyRow(s) {

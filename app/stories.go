@@ -325,7 +325,6 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 					ON s.id = q2.story_id`
 
 	rows, err := sqldb.Query(stmt)
-
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		response.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
@@ -351,7 +350,43 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 		stories = append(stories, story)
 	}
 
-	json.NewEncoder(response).Encode(stories)
+	wordStats, err := getWordStats(sqldb)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		response.Write([]byte(`{ "message": "` + "failure to get word stats: " + err.Error() + `"}`))
+	}
+
+	json.NewEncoder(response).Encode(bson.M{"stories": stories, "word_stats": wordStats})
+}
+
+func getWordStats(sqldb *sql.DB) (bson.M, error) {
+	stmt := `SELECT archived, count(*) as word_count
+				FROM words
+				GROUP BY archived`
+
+	rows, err := sqldb.Query(stmt)
+	if err != nil {
+		return bson.M{}, nil
+	}
+	defer rows.Close()
+
+	var wordsTotal int64
+	var wordsArchived int64
+
+	var archived int64
+	var wordCount int64
+	for rows.Next() {
+		if err := rows.Scan(&archived, &wordCount); err != nil {
+			return bson.M{}, nil
+		}
+		if archived == 1 {
+			wordsArchived = wordCount
+		} else if archived == 0 {
+			wordsTotal = wordCount
+		}
+	}
+
+	return bson.M{"total": wordsTotal, "archived": wordsArchived}, nil
 }
 
 func GetStory(w http.ResponseWriter, r *http.Request) {

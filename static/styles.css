@@ -563,3 +563,11 @@ span.verb:hover {
 .story_table .red {
     color: #df3838;
 }
+
+#word_stats span {
+    color: grey;
+}
+
+#word_stats label {
+    padding-right: 1em;
+}

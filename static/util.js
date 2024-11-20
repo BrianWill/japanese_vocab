@@ -235,7 +235,7 @@ function getStories(successFn) {
         }
     }).then((response) => response.json())
         .then((data) => {
-            console.log('Stories list success:', data);
+            console.log('Get stories success:', data);
             if (successFn) {
                 successFn(data);
             }
