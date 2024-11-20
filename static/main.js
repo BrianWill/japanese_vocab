@@ -45,7 +45,7 @@ function displayRecentlyLogged(stories) {
         return elapsedSeconds < TWO_MONTHS_IN_SECONDS;
     });
 
-    let html = `<h2>Stories logged within last 2 months</h2>
+    let html = `<h2>Stories recently logged <span class="story_recency">(last 2 months)</span></h2>
         <a href="/words.html?storyId=0">drill vocab of all recently logged stories</a><br><br>`;
 
     if (stories.length == 0) {
