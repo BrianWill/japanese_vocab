@@ -1,7 +1,7 @@
 body {
     background-color: rgb(35, 35, 35);
     color: #dfdfdf;
-    font-size: 130%;
+    font-size: 100%;
     font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
     overflow-y: scroll;
 }
@@ -114,7 +114,7 @@ h3 {
     cursor: default;
     padding: 2px 0px 13px 30px;
     margin: 22px;
-    font-size: 340%;
+    font-size: 270%;
     color: #b2b2b2;
     background-color: black;
     border-radius: 8px;
@@ -148,7 +148,7 @@ h3 {
     color: #767676;
 }
 
-.drill_word:not(.answered):nth-child(2) {
+.drill_word:not(.answered):nth-child(1) {
     border: #dfdfdf solid 3px;
 }
 
@@ -446,4 +446,13 @@ minidenticon-svg svg {
     width: 28px;
     bottom: -5px;
     position: relative;
+}
+
+.word_count_archived {
+    font-size: 80%;
+    color: grey;
+}
+
+#drill_count_span {
+    padding-right: 1em;
 }

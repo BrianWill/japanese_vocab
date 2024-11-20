@@ -1,12 +1,5 @@
 # japanese_vocab TODO   
-
-    show global count of words and percentage archived
-  
-    drills:
-        split words into subsets
-            size of subsets can be customized
-                slider bar?
-    
+   
     make player controls into a better help pop-up
     
     check why 置けません is highlighted in red (issue with potential form?)

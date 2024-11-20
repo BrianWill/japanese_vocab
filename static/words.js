@@ -8,6 +8,7 @@ var drillComlpeteDiv = document.getElementById('drill_complete');
 var kanjiResultsDiv = document.getElementById('kanji_results');
 var definitionsDiv = document.getElementById('definitions');
 var archivedSelect = document.getElementById('archived_select');
+var drillCountRange = document.getElementById('drill_count_range');
 
 var drillSet = [];
 var answeredSet = [];
@@ -17,6 +18,10 @@ var story;
 
 archivedSelect.onchange = function (evt) {
     newDrill();
+};
+
+drillCountRange.oninput = function (evt) {
+    newDrill();  
 };
 
 function newDrill() {
@@ -56,10 +61,15 @@ function newDrill() {
     }
 
     drillSet = [];
+    let numArchived = 0;
     for (let word of words) {
         let isOther = (word.category & DRILL_ALL) == 0;
         let isCategoryMatch = (word.category & categoryMask) != 0;
         let categoryFilter = isCategoryMatch || (includeOther && isOther);
+
+        if (word.archived) {
+            numArchived++;
+        }
 
         let statusFilter = (includeNotArchived && word.archived == 0) ||
             (includeArchived && word.archived == 1);
@@ -74,9 +84,13 @@ function newDrill() {
 
     drillComlpeteDiv.style.display = 'none';
     shuffle(drillSet);
+
+    var setLimit = parseInt(drillCountRange.value);
+    drillSet = drillSet.slice(0, setLimit);
+
     answeredSet = [];
 
-    drillInfoH.innerHTML = `${words.length} words in story`;
+    drillInfoH.innerHTML = `${words.length} words in story <span class="word_count_archived">(${numArchived} archived)</span>`;
     displayWords();
 }
 
@@ -94,7 +108,10 @@ function displayWords() {
                 </div>`;
     }
 
-    html = `<h3 id="current_repetitions">${drillSet.length} words of ${drillSet.length + answeredSet.length}</h3>`;
+    var drillCountSpan = document.getElementById('drill_count_span');
+    drillCountSpan.innerHTML = `${drillSet.length} words of ${drillSet.length + answeredSet.length}`;
+
+    html = '';
 
     idx = 0;
     for (let word of drillSet) {
