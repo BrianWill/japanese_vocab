@@ -539,7 +539,7 @@ func storeStory(story Story, sqldb *sql.DB) error {
 		fmt.Printf(`updating story: "%s"`+"\n", story.Title)
 		_, err := sqldb.Exec(`UPDATE stories SET 
 								date = $1, link = $2, video = $3, 
-								subtitles_en = $4, subtitles_ja = $5,
+								subtitles_en = $4, subtitles_ja = $5
 								WHERE title = $6 and source = $7;`,
 			story.Date, story.Link, story.Video,
 			story.SubtitlesENJson, story.SubtitlesJAJson,
