@@ -470,117 +470,109 @@ function formatTrackTime(time, padding = 3, includeHours = false) {
 }
 
 // add adjustment to every start and end timing, but only those which overlap or come after 'time'
-function adjustTextTrackTimings(cues, adjustment, time) {
+function adjustAllSubtitlesAfter(subs, time) {
     time = time || 0;
 
     // find first cue that ends after time
-    let index = cues.length;
-    for (let i = 0; i < cues.length; i++) {
-        let cue = cues[i];
-        if (cue.end_time > time) {
+    let index = subs.length;
+    for (let i = 0; i < subs.length; i++) {
+        let sub = subs[i];
+        if (sub.end_time > time) {
             index = i;
             break;
         }
     }
 
-    // we have to work with a copy of the cues because setting startTime or endTime will reorder track.cues
+    for (let i = index; i < subs.length; i++) {
+        let sub = subs[i];
+        //console.log("adjustment: ", TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, sub.text);
 
-    let copy = [];
-    copy.length = cues.length;
-    for (let i = 0; i < cues.length; i++) {
-        copy[i] = cues[i];
-    }
-
-    for (let i = index; i < copy.length; i++) {
-        let cue = copy[i];
-        console.log("adjustment: ", adjustment, cue.text);
-
-        cue.start_time += adjustment;
-        cue.end_time += adjustment;
-    }
-
-    for (let i = 0; i < cues.length; i++) {
-        cues[i] = copy[i];
+        sub.start_time += TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
+        sub.end_time += TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT;
     }
 }
 
-// add adjustment to every start and end timing
-function adjustTextTrackAllTimings(cues, adjustment) {
-    // do nothing if first cue start time would be less than 0
-    let firstCue = cues[0];
-    if (firstCue.start_time + adjustment < 0) {
-        return false;
-    }
-
-    // todo shouldn't need to use a copy now that we aren't using tracks
-
-    let copy = [];
-    copy.length = cues.length;
-    for (let i = 0; i < cues.length; i++) {
-        copy[i] = cues[i];
-    }
-
-    for (let i = 0; i < copy.length; i++) {
-        let cue = copy[i];
-        cue.start_time += adjustment;
-        cue.end_time += adjustment;
-    }
-
-    for (let i = 0; i < copy.length; i++) {
-        copy[i] = cues[i];
-    }
-
-    return true;
-}
+const MIN_SUB_LENGTH = 0.5;
+const EXTEND_DURATION = 5;
+const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
 
 // move next cue after time up to time, and move all cues after up the same amount
-function bringForwardTextTrackTimings(cues, time) {
-    let found = false;
+function bringForwardSubtitles(subs, time) {
     let index = 0;
 
     // find first cue which comes after time
-    for (let i = 0; i < cues.length; i++) {
-        let cue = cues[i];
+    for (let i = 0; i < subs.length; i++) {
+        let sub = subs[i];
 
-        // do nothing if a track overlaps the time
-        if (cue.start_time < time && cue.end_time > time) {
-            return false;
+        if (sub.start_time < time && sub.end_time > time) {
+            // truncate the current subtitle to end at time
+            // ... unless that would make it too short
+            if (time < (sub.start_time + MIN_SUB_LENGTH)) {
+                return;
+            }
+
+            index = i + 1;
+            sub.end_time = time;
+            break;
         }
 
-        if (cue.start_time > time) {
+        if (sub.start_time > time) {
             index = i;
-            found = true;
             break;
         }
     }
 
-    if (!found) {
+    if (index > subs.length - 1) {
         return;
     }
 
-    let adjustment = time - cues[index].start_time;
+    let adjustment = time - subs[index].start_time;
 
     console.log('adjustment', adjustment);
 
-    // todo shouldn't have to do a copy anymore
-
-    let copy = [];
-    copy.length = cues.length;
-    for (let i = 0; i < cues.length; i++) {
-        copy[i] = cues[i];
-    }
-
-    for (let i = index; i < copy.length; i++) {
-        let cue = copy[i];
-        cue.start_time += adjustment;
-        cue.end_time += adjustment;
-    }
-
-    for (let i = 0; i < copy.length; i++) {
-        copy[i] = cues[i];
+    for (let i = index; i < subs.length; i++) {
+        let sub = subs[i];
+        sub.start_time += adjustment;
+        sub.end_time += adjustment;
     }
 
     return true;
+}
+
+function extendSubtitle(subs, time) {
+    // find first sub overlapping the time
+    let index = subs.length;
+    for (let i = 0; i < subs.length; i++) {
+        let sub = subs[i];
+        if (time > sub.start_time && time < sub.end_time) {
+            sub.end_time += EXTEND_DURATION;
+            index = i + 1;
+            break;
+        }
+    }
+
+    // shift all after by same amount
+    for (let i = index; i < subs.length; i++) {
+        let sub = subs[i];
+        sub.start_time += EXTEND_DURATION;
+        sub.end_time += EXTEND_DURATION;
+    }
+}
+
+function truncateSubtitle(subs, time) {
+    // find first sub overlapping the time
+    for (let i = 0; i < subs.length; i++) {
+        let sub = subs[i];
+        if (time > sub.start_time && time < sub.end_time) {
+            // truncate the current subtitle to end at time
+            // ... unless that would make it too short
+            if (time < (sub.start_time + MIN_SUB_LENGTH)) {
+                return;
+            }
+            sub.end_time = time;
+            return;
+        }
+    }
 }
 
 // find all cues for which time is between the start and end

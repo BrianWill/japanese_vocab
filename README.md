@@ -54,6 +54,10 @@ You can toggle a word's archived status by double clicking it in a subtitle or i
 - `-` : decrease playback speed
 - `+` : increase playback speed
 
+## Subtitle timing adjustments
+
+In the story page's right sidebar, you'll see the subtitles presented in a list. Buttons at the top of the sidebar allow you to adjust the timings of the subtitles. You can also split a subtitle into two by ctrl-clicking the word which you want to be the start of the new second subtitle.
+
 ## Vocab drills
 
 ![](./images/drill.png)

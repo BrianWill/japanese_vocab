@@ -66,30 +66,45 @@
                 <a href="/">home</a>
             </div>
             <div id="subtitle_actions">
-                <label class="">Shift subtitles (in seconds)</label>
-                <span class="action_item">
-                    <a class="shift_neg_1" href="#">-1</a>
-                </span>
-                <span class="action_item">
-                    <a class="shift_neg_fraction" href="#">-0.1</a>
-                </span>
-                <span class="action_item">
-                    <a class="shift_pos_fraction" href="#">+0.1</a>
-                </span>
-                <span class="action_item">
-                    <a class="shift_pos_1" href="#">+1</a>
-                </span>
-                <label class="">Shift all after timemark</label>
-                <span class="action_item">
-                    <a class="shift_back" 
-                        title="shift all subtitles after the current timemark back by 10 seconds"
-                        href="#">back</a>
-                </span>
-                <span class="action_item">
-                    <a class="shift_forward" 
-                        title="shift all subtitles after the current timemark forward such that the next subtitle begins at the current timemark" 
-                        href="#">forward</a>
-                </span>
+                <div>
+                    <label class="">Shift subtitles (in seconds)</label>
+                    <span class="action_item">
+                        <a class="shift_neg_1" href="#">-1</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="shift_neg_fraction" href="#">-0.1</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="shift_pos_fraction" href="#">+0.1</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="shift_pos_1" href="#">+1</a>
+                    </span>
+                </div>
+                <div style="padding-top: 0.5em;">
+                    <label class="">Shift all subtitles after timemark</label>
+                    <span class="action_item">
+                        <a class="shift_forward"
+                            title="shift all subtitles after the current timemark forward such that the next subtitle begins at the current timemark"
+                            href="#">forward</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="shift_back" title="shift all subtitles after the current timemark back by 10 seconds"
+                            href="#">back</a>
+                    </span>
+                </div>
+                <div style="padding-top: 0.5em;">
+                    <label class="">Adjust current subtitle length</label>
+                    <span class="action_item">
+                        <a class="extend"
+                            title="extend the length of the current timestamp by 5 seconds"
+                            href="#">extend</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="truncate" title="truncate length of the current subtitle to the current timemark"
+                            href="#">truncate</a>
+                    </span>
+                </div>
             </div>
             <div id="story_lines"></div>
         </div>

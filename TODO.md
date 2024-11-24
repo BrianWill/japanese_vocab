@@ -1,5 +1,9 @@
 # japanese_vocab TODO   
    
+    ctrl click the timestamp of a subtitle to consolidate it with previous subtitle
+
+    mark words for drills?
+
     word dictionary should have rank for how common each word is
         e.g. foo is the nth most common word in the language
         could then do word highlighting and drilling that filters words based on how common they are

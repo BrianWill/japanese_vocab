@@ -19,7 +19,6 @@ var subGuideLineElement = document.getElementById('captions_meter');
 var subGuideLineIndicator = document.getElementById('captions_meter_indicator');
 
 const TEXT_TRACK_TIMING_ADJUSTMENT = 0.2;
-const TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT = 10;
 const PLAYBACK_SPEED_ADJUSTMENT = 0.05;
 
 const MAX_INTEGER = Math.pow(2, 52) - 1;
@@ -43,7 +42,7 @@ document.getElementById('story_container').addEventListener('dblclick', function
                 w.archived = w.archived == 1 ? 0 : 1;
                 updateWord(w, () => {
                     snackbarMessage(`Word "${baseForm}" ${w.archived == 1 ? 'archived' : 'unarchived'}`);
-                    generateSubtitleHTML(story);
+                    generateAllSubtitleHTML(story);
 
                     // must call displayStoryText() before displaySubtitles() because displaySubtitles()
                     // marks the current line in the story text:
@@ -51,6 +50,30 @@ document.getElementById('story_container').addEventListener('dblclick', function
                     displaySubtitles();
                 });
             }
+        }
+    }
+});
+
+document.getElementById('story_container').addEventListener('click', function (evt) {
+    if (evt.target.classList.contains('subtitle_word')) {
+        evt.preventDefault();
+        
+        let wordIdx = parseInt(evt.target.getAttribute('word_idx'));
+        console.log('word idx: ', wordIdx, evt.ctrlKey);
+
+        let baseForm = evt.target.getAttribute('base_form');
+
+        // split subtitle 
+        if (baseForm && evt.ctrlKey) {
+            
+            if (!window.confirm(`Split this subtitle, starting at ${evt.target.textContent}?`)) {
+                return;
+            }
+
+            var subtitleEle = evt.target.closest('.subtitle');
+            let subtitleIdx = parseInt(subtitleEle.getAttribute('subtitle_index'));
+
+            splitSubtitle(story.subtitles_ja, subtitleIdx, wordIdx);
         }
     }
 });
@@ -70,10 +93,16 @@ document.getElementById('subtitle_actions').addEventListener('click', function (
         shiftSubtitleTimings(0.1);
     } else if (evt.target.classList.contains('shift_back')) {
         evt.preventDefault();
-        shiftSubtitleTimingsBack();
+        editSubtitles(adjustAllSubtitlesAfter, `shifted all subtitles past the current mark down by ${TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT} seconds`)
     } else if (evt.target.classList.contains('shift_forward')) {
         evt.preventDefault();
-        shiftSubtitleTimingsForward();
+        editSubtitles(bringForwardSubtitles, `shifted all subtitles past the current timemark up to the current time mark`)
+    } else if (evt.target.classList.contains('extend')) {
+        evt.preventDefault();
+        editSubtitles(extendSubtitle, 'extended the duration of the current subtitle');
+    } else if (evt.target.classList.contains('truncate')) {
+        evt.preventDefault();
+        editSubtitles(truncateSubtitle, 'trucated the duration of the current subtitle');
     }
 });
 
@@ -302,9 +331,7 @@ function shiftSubtitleTimings(shift) {
     );
 }
 
-function shiftSubtitleTimingsBack() {
-    let lang = 'English and Japanese';
-
+function editSubtitles(fn, message) {
     let english = document.getElementById('subtitles_en_checkbox').checked;
     let japanese = document.getElementById('subtitles_ja_checkbox').checked;
 
@@ -313,55 +340,17 @@ function shiftSubtitleTimingsBack() {
     }
 
     if (english) {
-        lang = 'English ';
-        adjustTextTrackTimings(story.subtitles_en, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime - story.subtitles_en_offset);
+        fn(story.subtitles_en, player.currentTime - story.subtitles_en_offset);
     }
 
     if (japanese) {
-        lang = 'Japanese ';
-        adjustTextTrackTimings(story.subtitles_ja, TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT, player.currentTime - story.subtitles_ja_offset);
+        fn(story.subtitles_ja, player.currentTime - story.subtitles_ja_offset);
     }
 
     displayStoryText();
     displaySubtitles();
 
-    snackbarMessage(`shifted ${lang} all subtitles past the current mark down by ${TEXT_TRACK_TIMING_PUSH_BACK_ADJUSTMENT} seconds`);
-
-    clearTimeout(subtitleAdjustTimeoutHandle);
-    subtitleAdjustTimeoutHandle = setTimeout(
-        function () {
-            updateSubtitles(story, () => {
-                snackbarMessage(`saved updates to subtitle timings`);
-            });
-        },
-        3000
-    );
-}
-
-function shiftSubtitleTimingsForward() {
-    let lang = 'English and Japanese';
-
-    let english = document.getElementById('subtitles_en_checkbox').checked;
-    let japanese = document.getElementById('subtitles_ja_checkbox').checked;
-
-    if (!english && !japanese) {
-        return;
-    }
-
-    if (english) {
-        lang = 'English';
-        bringForwardTextTrackTimings(story.subtitles_en, player.currentTime - story.subtitles_en_offset);
-    }
-
-    if (japanese) {
-        lang = 'Japanese ';
-        bringForwardTextTrackTimings(story.subtitles_ja, player.currentTime - story.subtitles_ja_offset );
-    }
-
-    displayStoryText();
-    displaySubtitles();
-
-    snackbarMessage(`shifted ${lang} all subtitles past the current time mark up to the current time mark`);
+    snackbarMessage(message);
 
     clearTimeout(subtitleAdjustTimeoutHandle);
     subtitleAdjustTimeoutHandle = setTimeout(
@@ -468,6 +457,58 @@ function displaySubtitles(afterSeek) {
     display(time - story.subtitles_ja_offset, jaSubtitles, captionsJa, true);
 }
 
+function splitSubtitle(subs, subtitleIdx, wordIdx) {
+
+    subs.splice(subtitleIdx, 0, structuredClone(subs[subtitleIdx]));
+
+    var original = subs[subtitleIdx];
+    var copy = subs[subtitleIdx + 1];
+
+    const duration = 10;
+
+    copy.start_time = original.end_time;
+    copy.end_time = copy.start_time + duration;
+    
+    original.words = original.words.splice(0, wordIdx);
+    copy.words = copy.words.slice(wordIdx);
+
+    generateSubtitleHTML(original);
+    generateSubtitleHTML(copy);
+
+    generateSubtitleText(original);
+    generateSubtitleText(copy);
+
+    // shift all the following subtitles back
+    for (let i = subtitleIdx + 2; i < subs.length; i++) {
+        let sub = subs[i];
+        sub.start_time += duration;
+        sub.end_time += duration;
+    }
+
+    let idx = 0;
+    for (let sub of subs) {
+        sub.idx = idx;
+        idx++;
+    }
+
+    console.log(original, copy);
+
+    displayStoryText();
+    displaySubtitles(true);
+
+    snackbarMessage('Split subtitle');
+
+    clearTimeout(subtitleAdjustTimeoutHandle);
+    subtitleAdjustTimeoutHandle = setTimeout(
+        function () {
+            updateSubtitles(story, () => {
+                snackbarMessage(`saved updates to subtitle timings`);
+            });
+        },
+        3000
+    );
+}
+
 function isSubtitleScrolledIntoView() {
     var currentlyHighlighted = document.querySelectorAll(`#story_lines .subtitle.highlight`);
     if (!currentlyHighlighted) {
@@ -528,7 +569,7 @@ function processStory(story, words) {
         idx++;
     }
 
-    generateSubtitleHTML(story);
+    generateAllSubtitleHTML(story);
 }
 
 function getWords(id) {
@@ -558,59 +599,50 @@ function getWords(id) {
         });
 }
 
-const maxHighlightsPerSecond = 1;
-
-function generateSubtitleHTML(story) {
-    for (sub of story.subtitles_ja) {
-
-        let duration = sub.end_time - sub.start_time;
-        let maxHighlightWords = Math.ceil(maxHighlightsPerSecond * duration);
-
-        // pick the words to highlight
-        let highlightWords = {};
-        // let highlightWordsCapped = {};
-        {
-            let candidateWords = {};
-            for (word of sub.words) {
-                let w = wordMap[word.base_form];
-                if (w && w.archived == 0 && w.count > 0) {
-                    candidateWords[word.base_form] = w;
-                }
-            }
-            candidateWords = Object.values(candidateWords);
-
-            candidateWords.sort((a, b) => {
-                return a.count < b.count;
-            });
-            shuffle(candidateWords);
-
-            for (let w of candidateWords) {
+function generateSubtitleHTML(sub) {
+    let highlightWords = {};
+    {
+        for (word of sub.words) {
+            let w = wordMap[word.base_form];
+            if (w && w.archived == 0 && w.count > 0) {
                 highlightWords[w.base_form] = w;
             }
-
-            // for (let w of candidateWords.slice(0, maxHighlightWords)) {
-            //     highlightWordsCapped[w.base_form] = w;
-            // }
         }
+    }
 
-        let html = '<div>';
-        for (word of sub.words) {
-            //let _class =  'subtitle_word';
-            let _class = 'subtitle_word';
-            if (highlightWords[word.base_form]) {
-                _class += ' highlighted';
-            }
-            let w = wordMap[word.base_form];
-            if (w && w.archived == 1) {
-                _class += ' archived';
-            }
-            if (w && isVerb(w)) {
-                _class += ' verb';
-            }
-            html += `<span base_form="${word.base_form}" class="${_class}">${word.display}</span>`;
+    let idx = 0;
+    let html = '<div>';
+    for (word of sub.words) {
+        let _class = 'subtitle_word';
+        if (highlightWords[word.base_form]) {
+            _class += ' highlighted';
         }
-        html += '</div>';
-        sub.html = html;
+        let w = wordMap[word.base_form];
+        if (w && w.archived == 1) {
+            _class += ' archived';
+        }
+        if (w && isVerb(w)) {
+            _class += ' verb';
+        }
+        html += `<span word_idx="${idx}" base_form="${word.base_form}" class="${_class}">${word.display}</span>`;
+        idx++;
+    }
+    html += '</div>';
+    sub.html = html;
+}
+
+
+function generateSubtitleText(sub) {
+    let text = '';
+    for (word of sub.words) {
+        text += word.display;
+    }
+    sub.text = text;
+}
+
+function generateAllSubtitleHTML(story) {
+    for (sub of story.subtitles_ja) {
+        generateSubtitleHTML(sub);
     }
 }
 
