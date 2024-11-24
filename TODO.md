@@ -1,5 +1,18 @@
 # japanese_vocab TODO   
    
+    word dictionary should have rank for how common each word is
+        e.g. foo is the nth most common word in the language
+        could then do word highlighting and drilling that filters words based on how common they are
+
+    seems to be an import issue for stories that have periods in the name
+
+    openTranscript
+        get rid of this once subtitle editing is done?
+        or maybe keep so users can easily edit the original file?
+
+    story deletion
+        need to get rid of all FK refs in stories_x_word before removing the story itself
+
     make player controls into a better help pop-up
     
     check why 置けません is highlighted in red (issue with potential form?)
@@ -12,47 +25,25 @@
         on story page, show them below the video
         but need very short definitions (and hiragana spelling)...
 
-    drilling options:
-        limit words in drill to 50?
-            user can pick the limit number?
-            pick the words at random?x
-        or pick range of stories to include
-        or pick set of individually selected stories?
-        maybe user marks non-archived words?
+    drilling:
+        bring back word cooldown filtering?
+        maybe user marks words that they want to drill
             mark by default expires after set period (2 weeks?)
-            user drills all marked words
+            user can filter drill for all marked words
                 the marked words also have a cooldown so you don't drill them too frequently before they expire?
         option to pick the most frequent words in a story?
             or list in story shows most frequent words, and user adds them manually
         every time a word is added, the user is notified how many words are in their current set
         bring back per-word cooldowns?
 
-    debug mode for importing:
-        for story content:
-            show spaces between each word
-            if word baseform is not in db, mark word with an icon
-            on hover over word, show all the info from the analyzer
-
     subtitle tokenization (might be fixed now? it seems new words being added to the db): 
         まとめたので should not include ので as part of the verb
         手触り isn't properly tokenized? The word is not in the words table for some reason
         怠け者 is not in words table
 
-        investigate why a number of words seem to be missing from the word database
-
     for highlighted verbs, use coloring to indicate the form
         or maybe use icons?
         also apply to non-highlighted verbs too?
-
-    subtitle jump keys should work even when subtitles are hidden (defaults to japanese subtitle timings)
-
-    while listening, ability to mark times
-        useful for listening without subtitles and marking times when you hear something you don't understand
-            can then come back to the marked times after
-
-    openTranscript
-        get rid of this once subtitle editing is done?
-        or maybe keep so users can easily edit the original file?
 
     in-app subtitle editor
         visual timeline for editing subtitle timings

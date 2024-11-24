@@ -42,6 +42,7 @@ document.getElementById('story_container').addEventListener('dblclick', function
             if (w) {
                 w.archived = w.archived == 1 ? 0 : 1;
                 updateWord(w, () => {
+                    snackbarMessage(`Word "${baseForm}" ${w.archived == 1 ? 'archived' : 'unarchived'}`);
                     generateSubtitleHTML(story);
 
                     // must call displayStoryText() before displaySubtitles() because displaySubtitles()
@@ -628,26 +629,19 @@ function openStory(id) {
 
                 let path = '/sources/' + story.source + "/" + story.video;
                 if (!path.endsWith('mp4')) {
+                    document.getElementById('caption_container').style.transform = 'translate(0px, 0px)';
                     player.style.height = '60px';
                 }
-
-                player.setAttribute('type', 'video/mp4');
 
                 let time = '';
                 if (story.end_time > 0) {
                     time = `#t=${Math.trunc(story.start_time)},${Math.trunc(story.end_time)}`;
                 }
 
-                player.addEventListener("durationchange", (event) => {
-                    getWords(id);
-
-                });
-
                 player.src = path + time;
-            } else {
-                getWords(id);
             }
 
+            getWords(id);
             playerControls.style.display = 'inline';
 
         })

@@ -21,9 +21,11 @@ document.body.onload = function (evt) {
 
 document.getElementById('main_sidebar').onclick = function (evt) {
     if (evt.target.classList.contains('action_recently_logged')) {
+        evt.preventDefault();
         window.history.replaceState(null, null, "?");
         displayRecentlyLogged(stories);
     } else if (evt.target.classList.contains('source_li')) {
+        evt.preventDefault();
         let source = evt.target.getAttribute('source');
         window.history.replaceState(null, null, `?source=${encodeURIComponent(source)}`);
         displaySourceStoryList(storiesBySource[source]);

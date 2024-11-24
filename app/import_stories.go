@@ -442,16 +442,11 @@ func readWriteSubtitleFiles(storyBasePath string, lang string) (string, []Subtit
 				if err != nil {
 					return "", nil, err
 				}
-
-				// fmt.Println("LINE: ", text)
-				// for _, word := range words {
-				// 	fmt.Println("WORD: ", word.BaseForm, " : ", word.Display)
-				// }
 			}
 
 			subtitles = append(subtitles, Subtitle{
-				StartTime: float64(item.StartAt) / (1000 * 1000 * 1000), // convert from nanoseconds to seconds
-				EndTime:   float64(item.EndAt) / (1000 * 1000 * 1000),
+				StartTime: item.StartAt.Seconds(), // / (1000 * 1000 * 1000), // convert from nanoseconds to seconds
+				EndTime:   item.EndAt.Seconds(),   // / (1000 * 1000 * 1000),
 				Text:      text,
 				Words:     words,
 			})
