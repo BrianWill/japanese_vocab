@@ -37,7 +37,7 @@ Words can be 'archived':
 
 You can toggle a word's archived status by double clicking it in a subtitle or in the sidebar transcript.
 
-> TIP: Rather than wait to archive words once you've mastered them, you should archive words when they are just reasonably familiar. When looking up a word, if you think 'Oh yeah, I knew that!', it's probably time to archive the word.
+> TIP: Rather than wait to archive words once you've mastered them, you should archive words when they are just reasonably familiar. When looking up a word, if you think 'Oh yeah, I knew that!', it's probably time to archive the word. Or another way to think of it: if you can remember that you've seen a word and its definition several times or more, you already have the foundation for acquiring the word, even if you don't yet "know" it.
 
 ## Player hotkey controls
 
@@ -56,7 +56,10 @@ You can toggle a word's archived status by double clicking it in a subtitle or i
 
 ## Subtitle timing adjustments
 
-In the story page's right sidebar, you'll see the subtitles presented in a list. Buttons at the top of the sidebar allow you to adjust the timings of the subtitles. You can also split a subtitle into two by ctrl-clicking the word which you want to be the start of the new second subtitle.
+In the story page's right sidebar, you'll see the subtitles presented in a list. Buttons at the top of the sidebar allow you to adjust the timings of the subtitles. You can also in the sidebar:
+
+- split a subtitle into two by ctrl-clicking the word which you want to be the start of the new second subtitle.
+- merge a subtitle with the previous by ctrl-clicking its timestamp
 
 ## Vocab drills
 

@@ -57,7 +57,7 @@ document.getElementById('story_container').addEventListener('dblclick', function
 document.getElementById('story_container').addEventListener('click', function (evt) {
     if (evt.target.classList.contains('subtitle_word')) {
         evt.preventDefault();
-        
+
         let wordIdx = parseInt(evt.target.getAttribute('word_idx'));
         console.log('word idx: ', wordIdx, evt.ctrlKey);
 
@@ -65,7 +65,7 @@ document.getElementById('story_container').addEventListener('click', function (e
 
         // split subtitle 
         if (baseForm && evt.ctrlKey) {
-            
+
             if (!window.confirm(`Split this subtitle, starting at ${evt.target.textContent}?`)) {
                 return;
             }
@@ -74,6 +74,33 @@ document.getElementById('story_container').addEventListener('click', function (e
             let subtitleIdx = parseInt(subtitleEle.getAttribute('subtitle_index'));
 
             splitSubtitle(story.subtitles_ja, subtitleIdx, wordIdx);
+        }
+    } else if (evt.target.classList.contains('subtitle_start_time')) {
+        evt.preventDefault();
+        let subtitleContainer = evt.target.closest('div[subtitle_index]');
+        if (!subtitleContainer) {
+            return;
+        }
+        let idx = subtitleContainer.getAttribute('subtitle_index');
+        let lang = subtitleContainer.getAttribute('subtitle_lang');
+
+        var subs = (lang == 'ja') ? story.subtitles_ja : story.subtitles_en;
+
+        var sub = subs[idx];
+
+        if (evt.ctrlKey) {
+            // merge this sub with the previous
+
+            if (!window.confirm(`Merge this subtitle with the previous?`)) {
+                return;
+            }
+            
+            mergeSubtitle(subs, idx);
+        } else {
+            // jump to time
+
+            player.currentTime = sub.start_time + story.subtitles_ja_offset;
+            player.play();
         }
     }
 });
@@ -110,25 +137,6 @@ storyLines.onwheel = function (evt) {
     evt.preventDefault();
     let scrollDelta = evt.wheelDeltaY * 2;
     storyLines.scrollTop -= scrollDelta;
-};
-
-storyLines.onclick = function (evt) {
-    if (evt.target.classList.contains('subtitle_start_time')) {
-        evt.preventDefault();
-        let subtitleContainer = evt.target.closest('div[subtitle_index]');
-        if (!subtitleContainer) {
-            return;
-        }
-        let idx = subtitleContainer.getAttribute('subtitle_index');
-        let lang = subtitleContainer.getAttribute('subtitle_lang');
-
-        var cues = (lang == 'ja') ? story.subtitles_ja : story.subtitles_en;
-
-        var sub = cues[idx];
-
-        player.currentTime = sub.start_time + story.subtitles_ja_offset;
-        player.play();
-    }
 };
 
 storyActions.onclick = function (evt) {
@@ -390,7 +398,7 @@ function translateCurrentSubtitle() {
     win.focus();
 }
 
-function displaySubtitles(afterSeek) {
+function displaySubtitles(afterSeek, noScroll) {
     if (document.getElementById('subtitles_en_checkbox').checked) {
         captionsEn.style.display = 'flex';
     } else {
@@ -444,7 +452,9 @@ function displaySubtitles(afterSeek) {
                     }
                 }
 
-                scrollSubtitleIntoView();
+                if (!noScroll) {
+                    scrollSubtitleIntoView();
+                }
             }
 
             target.innerHTML = html;
@@ -468,7 +478,7 @@ function splitSubtitle(subs, subtitleIdx, wordIdx) {
 
     copy.start_time = original.end_time;
     copy.end_time = copy.start_time + duration;
-    
+
     original.words = original.words.splice(0, wordIdx);
     copy.words = copy.words.slice(wordIdx);
 
@@ -491,12 +501,50 @@ function splitSubtitle(subs, subtitleIdx, wordIdx) {
         idx++;
     }
 
-    console.log(original, copy);
-
     displayStoryText();
-    displaySubtitles(true);
+    displaySubtitles(true, player.paused);
 
     snackbarMessage('Split subtitle');
+
+    clearTimeout(subtitleAdjustTimeoutHandle);
+    subtitleAdjustTimeoutHandle = setTimeout(
+        function () {
+            updateSubtitles(story, () => {
+                snackbarMessage(`saved updates to subtitle timings`);
+            });
+        },
+        3000
+    );
+}
+
+
+function mergeSubtitle(subs, subtitleIdx) {
+    if (subtitleIdx == 0) {
+        snackbarMessage('Cannot merge the first subtitle.');
+        return;
+    }
+
+    var removed = subs[subtitleIdx];
+    var prior = subs[subtitleIdx - 1];
+
+    subs.splice(subtitleIdx, 1);
+
+    prior.end_time = removed.end_time;
+    prior.words = prior.words.concat(removed.words);
+    generateSubtitleHTML(prior);
+    generateSubtitleText(prior);
+    
+    // renumber the subtitle indexes
+    let idx = 0;
+    for (let sub of subs) {
+        sub.idx = idx;
+        idx++;
+    }
+
+    displayStoryText();
+    displaySubtitles(true, player.paused);
+
+    snackbarMessage('Merged subtitle with the subtitle before it.');
 
     clearTimeout(subtitleAdjustTimeoutHandle);
     subtitleAdjustTimeoutHandle = setTimeout(
