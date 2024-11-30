@@ -331,6 +331,23 @@ function importSource(source, successFn, failFn) {
         });
 }
 
+function removeSource(source, successFn, failFn) {
+    fetch('/remove_source', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "source": source })
+    }).then((response) => response.json())
+        .then((data) => {
+            successFn(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            failFn();
+        });
+}
+
 function importStory(source, title, successFn) {
     fetch('/import_story', {
         method: 'POST',

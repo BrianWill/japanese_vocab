@@ -64,7 +64,8 @@ function displayRecentlyLogged(stories) {
     <tr class="day_row logged_row">
         <th>Source</th>
         <th>Title</th>
-        <th>Time since<br>last rep</th>
+        <th>Time since<br>last logged</th>
+        <th>Number of<br>times logged</th>
         <th>Word<br>Count</th>
         <th>Words<br>Archived</th>
     </tr>`
@@ -74,6 +75,7 @@ function displayRecentlyLogged(stories) {
             <td>${s.source}</td>    
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             <td>${timeSince(s.date_last_rep)}</td>
+            <td>${s.log.length}</td>
             <td>${s.word_count}</td>
             <td>${archivedWordPercentage(s)}</td>
         </tr>`;
@@ -165,6 +167,7 @@ function displaySourceStoryList(list) {
             <td>${s.source}</td>    
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             <td>${timeSince(s.date_last_rep)}</td>
+            <td>${s.log.length}</td>
             <td>${s.word_count}</td>
             <td>${archivedWordPercentage(s)}</td>
         </tr>`;
@@ -174,7 +177,8 @@ function displaySourceStoryList(list) {
      <tr class="day_row logged_row">
         <th>Source</th>
         <th>Title</th>
-        <th>Time since<br>last rep</th>
+        <th>Time since<br>last logged</th>
+        <th>Number of<br>times logged</th>
         <th>Word<br>Count</th>
         <th>Words<br>Archived</th>
     </tr>`;

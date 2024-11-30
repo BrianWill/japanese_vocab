@@ -109,6 +109,7 @@ func main() {
 	router.HandleFunc("/sources", GetSources).Methods("GET")
 	router.HandleFunc("/import_source", ImportSource).Methods("POST")
 	router.HandleFunc("/import_story", ImportStory).Methods("POST")
+	router.HandleFunc("/remove_source", RemoveSource).Methods("POST")
 	router.HandleFunc("/kanji", GetKanji).Methods("POST")
 	router.HandleFunc("/words", GetWords).Methods("POST")
 	router.HandleFunc("/update_word", UpdateWordArchiveState).Methods("POST")

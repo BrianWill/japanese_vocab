@@ -456,3 +456,7 @@ minidenticon-svg svg {
 #drill_count_span {
     padding-right: 1em;
 }
+
+#drill_count_range {
+    width: 60%;
+}

@@ -41,6 +41,10 @@ type ImportSourceRequest struct {
 	Source string `json:"source"`
 }
 
+type RemoveSourceRequest struct {
+	Source string `json:"source"`
+}
+
 type IncWordsRequest struct {
 	Words []int64 `json:"words,omitempty"` // the words whose repetitions needs to be incremented
 }

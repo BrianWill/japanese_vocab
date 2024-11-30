@@ -1,8 +1,18 @@
 # japanese_vocab TODO   
-   
-    ctrl click the timestamp of a subtitle to consolidate it with previous subtitle
 
+    drill page:
+        option to sort words in kana order
+        option to show full definition of each word with each word (instead of just showing def for the current word)                 
+
+    translation of full story
+        how to get the translation back from google automatically?
+        how to work around the character limit?
+    
     mark words for drills?
+
+    audio/podcast mode:
+        use text-to-speech to generate mp3's with word definitions inserted (text-to-speech):
+        alternatively, a listening app that shows you definitions for highlighted words in current sentence            
 
     word dictionary should have rank for how common each word is
         e.g. foo is the nth most common word in the language
@@ -13,9 +23,6 @@
     openTranscript
         get rid of this once subtitle editing is done?
         or maybe keep so users can easily edit the original file?
-
-    story deletion
-        need to get rid of all FK refs in stories_x_word before removing the story itself
 
     make player controls into a better help pop-up
     

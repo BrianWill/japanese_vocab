@@ -35,7 +35,6 @@ document.getElementById('story_container').addEventListener('dblclick', function
     if (evt.target.classList.contains('subtitle_word')) {
         evt.preventDefault();
         let baseForm = evt.target.getAttribute('base_form');
-        console.log('clicked word: ', baseForm);
         if (baseForm) {
             let w = wordMap[baseForm];
             if (w) {
@@ -59,8 +58,6 @@ document.getElementById('story_container').addEventListener('click', function (e
         evt.preventDefault();
 
         let wordIdx = parseInt(evt.target.getAttribute('word_idx'));
-        console.log('word idx: ', wordIdx, evt.ctrlKey);
-
         let baseForm = evt.target.getAttribute('base_form');
 
         // split subtitle 
@@ -94,7 +91,7 @@ document.getElementById('story_container').addEventListener('click', function (e
             if (!window.confirm(`Merge this subtitle with the previous?`)) {
                 return;
             }
-            
+
             mergeSubtitle(subs, idx);
         } else {
             // jump to time
@@ -185,7 +182,7 @@ document.body.onkeydown = async function (evt) {
     if (evt.ctrlKey) {
         return;
     }
-    // console.log(evt, 'code', evt.code);
+
     if (!player) {
         return;
     }
@@ -392,7 +389,7 @@ function translateCurrentSubtitle() {
         let cue = cues[i];
         text += cue.text;
     }
-    console.log('translate: ', text);
+
     let url = `https://translate.google.com/?sl=auto&tl=en&text=${text}&op=translate`;
     var win = window.open(url, '_blank');
     win.focus();
@@ -533,7 +530,7 @@ function mergeSubtitle(subs, subtitleIdx) {
     prior.words = prior.words.concat(removed.words);
     generateSubtitleHTML(prior);
     generateSubtitleText(prior);
-    
+
     // renumber the subtitle indexes
     let idx = 0;
     for (let sub of subs) {
@@ -635,8 +632,6 @@ function getWords(id) {
             for (w of words) {
                 w.definitions = JSON.parse(w.definitions);
             }
-
-            console.log('loaded words', words);
 
             processStory(story, words);
             displayStoryInfo(story);

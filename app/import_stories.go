@@ -778,3 +778,82 @@ func ImportStory(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(bson.M{"message": "imported story: " + body.StoryTitle + ", from source: " + body.Source})
 }
+
+func RemoveSource(w http.ResponseWriter, r *http.Request) {
+	if importLock.TryLock() {
+		defer importLock.Unlock()
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + `Aborting: an import is already in progress` + `"}`))
+		return
+	}
+	dbPath := MAIN_USER_DB_PATH
+
+	w.Header().Set("Content-Type", "application/json")
+
+	sqldb, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+	defer sqldb.Close()
+
+	var body RemoveSourceRequest
+	err = json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	err = removeAllStoriesOfSource(sqldb, body.Source)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"message": "removed all stories of source: " + body.Source})
+}
+
+func removeAllStoriesOfSource(sqldb *sql.DB, source string) error {
+	transaction, err := sqldb.Begin()
+	if err != nil {
+		return err
+	}
+
+	// remove the stories_x_words entries
+	stmt := `DELETE FROM stories_x_words
+			WHERE stories_x_words.story_id IN (
+				SELECT stories_x_words.story_id FROM stories_x_words
+				INNER JOIN stories
+					ON (stories.id = stories_x_words.story_id)
+				WHERE stories.source = $1 
+			);`
+
+	_, err = sqldb.Exec(stmt, source)
+	if err != nil {
+		return err
+	}
+
+	// remove the stories themselves
+	stmt = `DELETE FROM stories
+			WHERE stories.source = $1;`
+	res, err := sqldb.Exec(stmt, source)
+	if err != nil {
+		return err
+	}
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	fmt.Println("number of stories deleted", numRows)
+
+	err = transaction.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -85,6 +85,8 @@ function newDrill() {
     drillComlpeteDiv.style.display = 'none';
     shuffle(drillSet);
 
+    drillCountRange.max = `${Math.ceil(drillSet.length / 10) * 10}`;
+
     var setLimit = parseInt(drillCountRange.value);
     drillSet = drillSet.slice(0, setLimit);
 

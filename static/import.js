@@ -17,17 +17,38 @@ sourcesDiv.onclick = function (evt) {
         importSource(source, () => {
             clearSnackbarMessage();
             snackbarMessage(`COMPLETED IMPORT: source "${source}"`);
+            getSources(displaySources);
         }, 
         () => {
             clearSnackbarMessage();
             snackbarMessage(`FAILED IMPORT: source "${source}"`);
+        });
+    } else if (evt.target.classList.contains('remove_link')) {
+        evt.preventDefault();
+        let source = evt.target.getAttribute('source');
+
+        if (!window.confirm(`Remove all previously imported stories of ${source}?`)) {
+            return;
+        }
+
+        // very large duration to make it practically indefinite
+        snackbarMessage(`removing all previously imported stories of "${source}". This may take a while.`, 10000 * 1000);
+
+        removeSource(source, () => {
+            clearSnackbarMessage();
+            snackbarMessage(`COMPLETED REMOVAL OF STORIES: source "${source}"`);
+            getSources(displaySources);
+        }, 
+        () => {
+            clearSnackbarMessage();
+            snackbarMessage(`FAILED REMOVAL OF STORIES: source "${source}"`);
         });
     }
 };
 
 function displaySources(data) {
     let tableHeader = `<table class="sources_table">
-        <tr style="text-align: left;"><th></th><th>Source</th><th>Imported</th><th>Unimported</th></td>`;
+        <tr style="text-align: left;"><th></th><th></th><th>Source</th><th>Imported</th><th>Unimported</th></td>`;
     let html = tableHeader;
 
     for (let source in data.storyFilePathsBySource) {
@@ -39,6 +60,7 @@ function displaySources(data) {
         count = Math.max(0, count - importedCount);
         html += `<tr>
             <td><a href="#" source="${source}" class="import_link">import</a></td>
+            <td><a href="#" source="${source}" class="remove_link">remove</a></td>
             <td><span class="story_source">${source}</span></td>
             <td><span>${importedCount}</span></td>
             <td><span>${count}</span></td>
