@@ -1,13 +1,11 @@
 # japanese_vocab TODO   
 
+    test mac and linux builds
+    
     drill page:
         option to sort words in kana order
         option to show full definition of each word with each word (instead of just showing def for the current word)                 
 
-    translation of full story
-        how to get the translation back from google automatically?
-        how to work around the character limit?
-    
     mark words for drills?
 
     audio/podcast mode:
@@ -135,6 +133,11 @@
     - in absence of baseform, maybe should NOT use surface? investigate "引き出し", "飛べる", "鬼滅の" -> "滅"
         - potential form should not count as verb base form: e.g. 飛べる should be added only as 飛ぶ, not as 飛べる
 
+
+cross compile:
+
+    GOOS=darwin GOARCH=amd64 go build -o japanese_mac
+    GOOS=linux GOARCH=amd64 go build -o japanese_linux
 
 cut video: 
     

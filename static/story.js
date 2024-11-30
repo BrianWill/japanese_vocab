@@ -141,7 +141,6 @@ storyActions.onclick = function (evt) {
         evt.preventDefault();
         let lang = evt.target.classList.contains('en') ? 'en' : 'ja';
         openTranscript(story.source, story.title, lang, () => { });
-        return;
     } else if (evt.target.classList.contains('reimport')) {
         evt.preventDefault();
         if (!window.confirm("Reimport the story?")) {
@@ -152,8 +151,9 @@ storyActions.onclick = function (evt) {
             load();
             snackbarMessage(`story was reimported`);
         });
-        return;
-
+    } else if (evt.target.classList.contains('translate_story')) {
+        evt.preventDefault();
+        translateWholeStory();
     } else if (evt.target.classList.contains('drill_vocab')) {
         evt.preventDefault();
         window.location.href = '/words.html?storyId=' + story.id;
@@ -383,16 +383,49 @@ function parseTimestamp(timestamp) {
 }
 
 function translateCurrentSubtitle() {
-    let cues = findSubsAtTimemark(story.subtitles_ja, player.currentTime - story.subtitles_ja_offset);
+    let subs = findSubsAtTimemark(story.subtitles_ja, player.currentTime - story.subtitles_ja_offset);
     let text = '';
-    for (let i = 0; i < cues.length; i++) {
-        let cue = cues[i];
+    for (let i = 0; i < subs.length; i++) {
+        let cue = subs[i];
         text += cue.text;
     }
 
     let url = `https://translate.google.com/?sl=auto&tl=en&text=${text}&op=translate`;
     var win = window.open(url, '_blank');
     win.focus();
+}
+
+function translateWholeStory() {
+    const chunkCharLimit = 1000;  // seems to satisfy Google URL size limit
+    let subs = story.subtitles_ja;
+    let chunks = [];
+    let text = '';
+    for (let sub of subs) {
+        text += sub.text + '\n\n';
+        if (text.length > chunkCharLimit) {
+            chunks.push(text);
+            text = '';
+        }    
+    }
+    if (text.length > 0) {
+        chunks.push(text);
+    }
+
+    if (chunks.length > 1 && !window.confirm(`This will open ${chunks.length} tabs because the story exceeds Google Translate's single page limit. Proceed?`) ) {
+        return;
+    }
+
+    let delay = 0;
+    for (let chunk of chunks) {
+        setTimeout(() => translateChunk(chunk), delay);
+        delay += 1000;
+    }
+
+    function translateChunk(chunk) {
+        let url = `https://translate.google.com/?sl=auto&tl=en&text=${encodeURIComponent(chunk)}&op=translate`;
+        console.log('length', url.length, new Blob([url]).size);
+        window.open(url, '_blank');
+    }
 }
 
 function displaySubtitles(afterSeek, noScroll) {
