@@ -38,7 +38,8 @@ type LogStoryRequest struct {
 }
 
 type ImportSourceRequest struct {
-	Source string `json:"source"`
+	Source   string `json:"source"`
+	Reimport bool   `json:"reimport"`
 }
 
 type RemoveSourceRequest struct {

@@ -14,6 +14,8 @@ Third, many words have alternate spellings with different mixes of kana and kanj
 
 Fourth, Japanese does not put spaces between its words, so just distinguishing where one word ends and the next begins is its own challenge. Ultimately, discerning individual words in Japanese text relies upon solid knowledge of the written vocabulary and an internalized feel for the grammar and language patterns.
 
+> In some cases, the lack of spaces can create ambiguities. For example, 今日本 could be read as the two words 今 (now) and 日本 (Japan), but it could also be read as the two words 今日 (today) and 本 (book). Which is the intended reading can only be discerned from context.
+
 Fifth, certain details of pronunciations are not indicated in the text, including "pitch accent" (which is somewhat analogous to "stress accent" in English) and blending (*e.g.* whether to ellide the "u" in "su", as is done in some words). So like English, Japanese writing doesn't tell the reader *exactly* how to pronounce the words. Instead, the reader just has to already know the words.
 
 ## Do I really need to read Japanese?

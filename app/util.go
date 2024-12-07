@@ -2,9 +2,7 @@ package main
 
 import (
 	"archive/zip"
-	"fmt"
 	"io"
-	"math"
 	"net"
 )
 
@@ -34,18 +32,6 @@ func unzipFile(f *zip.File) ([]byte, error) {
 		return nil, err
 	}
 	return bytes, nil
-}
-
-func secondsToTimestamp(seconds float64) string {
-	minutes := math.Floor(seconds / 60)
-	seconds -= minutes * 60
-	wholeSeconds := math.Floor(seconds)
-	fracSeconds := seconds - wholeSeconds
-	s := fmt.Sprintf("%d:%02d", int(minutes), int(seconds))
-	if fracSeconds > 0 {
-		s += ".5"
-	}
-	return s
 }
 
 func getVerbCategory(sense JMDictSense) int {

@@ -1,7 +1,10 @@
 # japanese_vocab TODO   
 
     test mac and linux builds
-    
+
+    allow for splitting subtitle on punctuation marks
+        maybe allow for everything but spaces?
+
     drill page:
         option to sort words in kana order
         option to show full definition of each word with each word (instead of just showing def for the current word)                 

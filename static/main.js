@@ -64,20 +64,20 @@ function displayRecentlyLogged(stories) {
     <tr class="day_row logged_row">
         <th>Source</th>
         <th>Title</th>
+        <th>Words<br>Archived</th>
+        <th>Word<br>Count</th>
         <th>Time since<br>last logged</th>
         <th>Number of<br>times logged</th>
-        <th>Word<br>Count</th>
-        <th>Words<br>Archived</th>
     </tr>`
 
     for (const s of stories) {
         html += `<tr>
             <td>${s.source}</td>    
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td>${archivedWordPercentage(s)}</td>
+            <td>${s.word_count}</td>
             <td>${timeSince(s.date_last_rep)}</td>
             <td>${s.log.length}</td>
-            <td>${s.word_count}</td>
-            <td>${archivedWordPercentage(s)}</td>
         </tr>`;
     }
 
@@ -166,10 +166,10 @@ function displaySourceStoryList(list) {
         return `<tr>
             <td>${s.source}</td>    
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
+            <td>${archivedWordPercentage(s)}</td>
+            <td>${s.word_count}</td>
             <td>${timeSince(s.date_last_rep)}</td>
             <td>${s.log.length}</td>
-            <td>${s.word_count}</td>
-            <td>${archivedWordPercentage(s)}</td>
         </tr>`;
     }
 
@@ -177,10 +177,10 @@ function displaySourceStoryList(list) {
      <tr class="day_row logged_row">
         <th>Source</th>
         <th>Title</th>
+        <th>Words<br>Archived</th>
+        <th>Word<br>Count</th>
         <th>Time since<br>last logged</th>
         <th>Number of<br>times logged</th>
-        <th>Word<br>Count</th>
-        <th>Words<br>Archived</th>
     </tr>`;
 
     let html = tableHeader;

@@ -313,13 +313,13 @@ function logStory(storyId, date, successFn) {
         });
 }
 
-function importSource(source, successFn, failFn) {
+function importSource(source, reimport, successFn, failFn) {
     fetch('/import_source', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ "source": source })
+        body: JSON.stringify({ "source": source, "reimport": reimport })
     }).then((response) => response.json())
         .then((data) => {
             console.log('Source:', data);

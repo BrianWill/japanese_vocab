@@ -124,7 +124,7 @@ func importSources(dbPath string) error {
 
 	for _, e := range entries {
 		if e.IsDir() {
-			_, err := importSource(e.Name(), sqldb)
+			_, err := importSource(e.Name(), true, sqldb)
 			if err != nil {
 				return err
 			}
@@ -134,7 +134,7 @@ func importSources(dbPath string) error {
 	return nil
 }
 
-func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
+func importSource(sourceName string, reimport bool, sqldb *sql.DB) ([]string, error) {
 	sourceDir := SOURCES_PATH + sourceName
 	entries, err := os.ReadDir(sourceDir)
 	if err != nil {
@@ -209,7 +209,7 @@ func importSource(sourceName string, sqldb *sql.DB) ([]string, error) {
 			continue
 		}
 
-		err = storeStory(s, sqldb)
+		err = storeStory(s, reimport, sqldb)
 		if err != nil {
 			return nil, err
 		}
@@ -262,7 +262,7 @@ func importStory(sourceName string, storyTitle string, sqldb *sql.DB) error {
 		return err
 	}
 
-	err = storeStory(story, sqldb)
+	err = storeStory(story, true, sqldb)
 	if err != nil {
 		return err
 	}
@@ -520,7 +520,7 @@ func wordsOfStory(storyId int64, sqldb *sql.DB) (map[int64]bool, error) {
 	return ids, nil
 }
 
-func storeStory(story Story, sqldb *sql.DB) error {
+func storeStory(story Story, allowUpdate bool, sqldb *sql.DB) error {
 	wordIds, newWordCount, err := processStoryWords(story, sqldb)
 	if err != nil {
 		return err
@@ -530,6 +530,11 @@ func storeStory(story Story, sqldb *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
+	if storyExists && !allowUpdate {
+		return nil
+	}
+
 	if storyExists {
 		fmt.Printf(`updating story: "%s"`+"\n", story.Title)
 		_, err := sqldb.Exec(`UPDATE stories SET 
@@ -728,7 +733,7 @@ func ImportSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = importSource(body.Source, sqldb)
+	_, err = importSource(body.Source, body.Reimport, sqldb)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + err.Error() + `"}`))

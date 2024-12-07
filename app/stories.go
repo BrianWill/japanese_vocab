@@ -255,7 +255,7 @@ func addWords(tokens []*JpToken, kanjiSet []string, sqldb *sql.DB) (wordIds []in
 	}
 
 	wordIds = make([]int64, 0, len(wordIdsMap))
-	for id, _ := range wordIdsMap {
+	for id := range wordIdsMap {
 		wordIds = append(wordIds, id)
 	}
 
