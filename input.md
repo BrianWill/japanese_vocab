@@ -2,54 +2,155 @@
 
 There are two key milestones on the path to acquiring a second language:
 
-- COMPREHENSION MILESTONE: You are able to consume interesting content (text, audio, video, etc.) in the language with a reasonable degree of understanding and fluidity.
-- SPEAKING MILESTONE: You have sufficient listening skills and vocabulary to attempt non-trivial spoken communication.
+- Comprehension milestone: you are able to consume interesting content (text, audio, video, etc.) in the language with a reasonable degree of understanding and fluidity.
+- Speaking milestone: you have sufficient listening skills and vocabulary to attempt non-trivial spoken communication.
 
-The second miletone generally depends upon the first because speaking rests upon a foundation of listening.
+The speaking miletone comes second because speaking rests upon a foundation of listening comprehension.
 
 How long it takes to reach these milestones depends upon the distance between your own language and the target language. For a Spanish speaker learning Italian or *vice versa*, this might be as short as a few months. For an English speaker learning Japanese or *vice versa*, this easliy takes two years or even more.
 
-> NOTE: For the special case of living in country with daily immersion, you can reach basic functional spoken Japanese in several months, but there will be large holes in your skills, especially with the written language. Besides, this pathway is not really relevant to the discussion because it's an unrealistic life circumstance for the vast majority of learners.
+> NOTE: For the special case of living in country with daily immersion, you can reach basic functional spoken Japanese in several months, but there will be large holes in your skills, especially with the written language. In any case, this pathway is not really relevant to the discussion because it's an unrealistic life circumstance for the vast majority of learners.
 
-Once you reach these two milestones, the path forward is clear: consume tons of content and do lots of speaking practice. But how do you reach these milestones in the first place? That's the hard question, especially for languages like Japanese that take a long time to acquire.
+Once you reach these two milestones, the path forward is clear: consume tons of content and do lots of speaking practice. But the hard question is how to reach these milestones in the first place, especially for languages like Japanese that take a long time to acquire.
 
-To tackle this problem, I've developed a system from personal experience which focuses on three core kinds of practice:
+Here's my advise on how reach those milestones *via* listening and reading practice.
 
-- Listening practice
-- Reading practice
-- Vocab drilling
+## Levels of listening and reading practice
 
-## Listening practice
+Levels of listening and reading practice should be categorized based on how much you comprehend. In order from least understanding to most, the levels are:
 
-In listening practice, you repeatedly listen to a video or piece of audio until you fullly understand it, with the goal of improving your listening comprehension. 
+### 1. Scanning for words and phrases
 
-The selected audio or video material, which we’ll call “stories”, should meet these criteria:
+At this level, you catch isolated words, phrases, and perhaps occasional whole clauses or sentences, and you may often recognize the outline of many sentences (verb auxiliaries, conjunctions, and other connective words or phrases).
 
-- The stories should be monologues or dialogues by native speakers (not text-to-speech).
-- The stories should have accurate transcripts.
-- The stories should be [“comprehensible input”](https://ellevationeducation.com/blog/teaching-comprehensible-input-definition-examples), meaning content targeted for non-native speakers.
-- The stories should range from 2 to 10 minutes long. (5 minutes is a good average. If you want to use longer content, break it into shorter chunks.)
-- The stories should be sufficiently within your level that you understand at least 70-80% on your first listen. Generally this means each story will have no more than a handful of new words.
+However, you're not able to follow what's happening sentence-to-sentence nor consistently discern the topic.
 
-On average, you should repeat a story about 4 times, with the repetitions spaced out by a few days (so taking about 1 or 2 weeks in total).
+> *Something about a cow and magic beans. A giant is involved for some reason?*
+
+### 2. Following the topic
+
+You can follow the topic, but you're missing too many things to follow sentence-by-sentence.
+
+> *Someone buys magic beans. There's a big plant, lots of climbing, and a castle. Also some clouds and a giant? Someone dies at the end?*
+
+### 3. Partial understanding of the sentences
+
+You can now understand the essence of many sentences, but details still get lost.
+
+> *A kid gets magic beans. His mother is upset about a cow for some reason. Jack climbs a big plant that somehow appears. Jack finds a castle in the clouds and robs a giant.*
+
+### 4. Full understanding of the sentences
+
+You now catch basically all the information.
+
+> *Oh I see, Jack traded the cow for the beans, and the plant grew from the beans which he tossed out the window.*
+
+### 5. Full understanding of the nuance
+
+You not only get all the concrete information conveyed, you understand the nuances like a native speaker. In Japanese, this would include things like the choice of end sentence particles or choice of pronouns or honorifics. (Japanese has a lot of 'coloring' options like this, meaning ways of changing the feel of a sentence without changing the concrete information.)
+
+> *Jack is a disrepectful trickster comic hero who speaks in kansai dialect. The giant talks like a tough yakuza guy.*
+
+## Reading while listening
+
+Reading along with the transcript as you listen can help you understand more and stay engaged with the content. However, it's critical to also practice pure listening without text because the mental overhead of reading will distract your focus from the spoken language. Without listening-only practice, your listening comprehension development may be hindered or even stalled. (Besides, fluent reading ultimately rests on a foundation of the spoken language, so you're best off prioritizing your pure listening skills first anyway.)
+
+## Word acquisition
+
+1. acquire a phonetic memory of the word
+1. map meaning to the phonetic memory of the word by experiencing the spoken word in meaningful contexts
+1. map your phonetic memory of the word to the written word
+1. integrate the word into your active vocabulary by using it
+1. acquire nuances of the word (shades of meaning, connotations, colocations) through further encounters in the spoken and written language
+
+(The process won't always follow this sequence strictly. In particular, the last two steps may overlap.)
+
+### Phonetic memory of a word
+
+human brains are remarkably good at absorbing the unique sound signature of a word, sometimes even with only a handful of exposures, and then you'll be able to fairly reliably pick these individual words out from a stream of unknown words and unparsable sentences.
+
+Note that recognizing the sound of a word when you hear it does not translate automatically to recognizing the word in written form or being able to reproduce the sound reliably. For example, even if you reliably recognize 面白い when you hear it, you may not reliably be able to remember the exact sequence of syllables when you try to speak the word. (For English speakers, it's particularly easy to mix up A and O vowel sounds of Japanese words, or flip the order of two adjacent syllables.) So though speaking is built on a foundation of listening, reliably speaking individual words correctly may take some actual speaking practice.
+
+Or for example, easy to mix up しっぱい (failure) with しんぱい (worry), particularly in this case because the meanings are somewhat related.
+
+Also particularly accute in Japanese is the preponderance of homonyms. So you'll hear 放す and think that it's 話す, another word you may already know.
+
+### Word meaning through experience
+
+asdf
+
+
+Translating in your head:
+
+'おんがく? I've heard that word'
+
+'おんがく? That means "music"'
+
+Eventually you'll get to a point where you don't translate the word, but you still take a moment to consciously register it and perhaps repeat it to yourself in your head:
+
+'おんがく? Oh yeah, おんがく'
+
+Finally, you hear the word and just understand it automatically without conscious thought:
+
+'おんがく’
+
+
+For a long time, you'll likely have a large set of words that aren't fully acquired. Don't get frustrated when you catch yourself consciously translating or acknowleding a word that you know you've heard a thousand times already.
+
+In fact, until you can listen to interesting content with a high degree of comprehension, many words will probably hover at the border of this final threshold. Only once the language is really useful to you such that you can actually consume content for the content's own sake will the vocabulary and language patterns become truly ingrained.
+
+
+### Reading a word
+
+asdf
+
+### Active use of a word
+
+
+### Nuances of a word
+
+
+### Vocabulary tracking
+
+
+
+
+
+
+
+
+## Repeated listening practice
+
+One effective form of practice is to repeatedly listen to a piece of content until you understand it without aid of a transcript or translation.
+
+For such practice, the content should generally meet these criteria:
+
+- The content should be monologues or dialogues by native speakers (not text-to-speech).
+- The content should have an accurate transcript so that you can verify that you heard the words correctly and can easily look up any words or get a full translation.
+- Especially in the beginner and intermediate stages, the content should generally be [“comprehensible input”](https://ellevationeducation.com/blog/teaching-comprehensible-input-definition-examples), meaning content targeted for non-native speakers.
+- The content should be short, say 3 to 10 minutes long. The shorter, the easier it is to repeat. 
+- The content should be sufficiently within your level that you understand at least 70-80% on your first listen.
 
 After each repetition, you can look at the transcript if you need to verify your understanding and fill in gaps: lookup any unknown words, analyze the grammar, use machine translation, or whatever else it takes to fully understand the text.
 
-If, after ~4 repetitions, you still can't fully understand the story, the story was probably too difficult for listening practice. If it takes only 1 or 2 repetitions, it was perhaps too easy.
+You generally should repeat a piece of content no more than 3 or 4 times, and generally these repetitions should be spaced out by at least a few days.
 
-## Reading practice
+If, after a few repetitions, you still have trouble following a piece of content, it was probably too difficult for listening practice at your current level. Don't worry--the exercise still had value--but consider picking simpler content for future practice.
 
-In reading practice, you repeatedly read the transcript of an audio or video story to get contextual exposure to new words, kanji, points of grammar, and language patterns. As you read, you look up every unknown word and puzzle out how all the words fit together, using translation tools and grammatical analysis or any other necessary means.
+> NOTE: Depending on the original speaking speed, you may be able to slow the playback rate to 70% or 80% speed while still maintaining reasonable audio quality. Don't feel guilty about doing this if it helps! Better to understand as much as you can than to let the words pass over you as a stream of noise.
 
-Rather than constantly pause and rewind the audio or video, you may prefer to let it play once through, following the transcript as best you can, and then afterwards go back to the start to closely read the full transcript.
 
-Like with listening practice, you should repeat each story about 4 times spread out over 1 or two 2 weeks, and the stories selected for reading practice should generally be comprehensible input that averages 5 minutes long (as read by a native speaker).
+## Intensive reading practice
 
-Unlike with listening practice, the stories should be significantly above your current level such that they include a good number of words and language patterns that you've never encountered before. Rougly, for every 5 minutes of audio or video, you want 20 to 40 new words.
+In intensive reading, you analyze a text to get contextual exposure to new words, kanji, points of grammar, and language patterns. As you read, you look up every unknown word and puzzle out how all the words fit together, using translation tools and grammatical analysis or any other necessary means.
 
-Because you are studying the text rather than naturally reading it, reading practice is a slow process. For a 5 minute story, it often may take more than 30 minutes to study, especially for the first repetition. The good news is that each subsequent repetition should go faster.
+Because beginners and intermediate learners should prioritize listening comprehension, I recommend using transcripts of audio or video content so that you can also listen to the content spoken by a native speaker.
 
-For both reading and listening practice, feel free to drop a story at any time because it’s too hard, too easy, too boring, or you just feel like doing something else. Keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**.
+Intensive reading is an opportunity to reach above your current natural comprehension level, so the selected content should contain a good number of words and language patterns that you've never encountered before. Roughly, for every 5 minutes of audio or video, you want about 20 to 40 new words.
+
+Because you are studying the text rather than naturally reading it, intensive reading is a slow process. For a 5 minute piece of audio or video, it often may take more than 30 minutes to study the first time you go through it. 
+
+Like with all language practice, feel free to abandon a piece of intensive reading content at any time because it’s too hard, too easy, too boring, or you just feel like doing something else. Keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**.
 
 ## Vocab drilling
 
@@ -67,7 +168,7 @@ Real mastery of words only comes through encounters in meaningful context, but b
 It's important to have the right expectations:
 
 - For a long time, you wont understand most of what you encounter, and that which you do understand will often require conscious effort. “Natural” (automatic) understanding comes slowly and in pieces.
-- As long as the language itself distracts you from focusing on the content of what you read and hear, your input consumption will be [*intensive* rather than *extensive*](https://en.wikipedia.org/wiki/Extensive_reading). This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and pondering how the words fit together, a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day.
+- As long as the language itself distracts you from focusing on the content of what you read and hear, your input consumption will be [*intensive* rather than *extensive*](https://en.wikipedia.org/wiki/Extensive_reading). This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and consciously pondering how the words fit together, a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day.
 - Comfort with a particular topic and style of content doesn’t necessarily translate to comfort with other topics or styles.
 - Accept that it will typically require many exposures before a word or kanji is fully memorized. Instead of consciously trying to force memorization, you should lean heavily on tools that make it quick and easy to look up words and kanji. **Depend upon reminders, not memorization.**
 - A single aspect of a language cannot be truly mastered in isolation, and attempting to do so is generally inefficient. **Don’t try to master one aspect or “level” of the language before moving on.**
@@ -154,6 +255,10 @@ This listening-only approach would have at least a few key advantages over conve
 - Removing the requirement to speak the target language makes the activity more accessible at lower levels, and for many people it would induce less anxiety.
 - One reason finding a language partner is quite difficult is because it requires that both people are ready to start speaking, something which take several months or more of study. In contrast, basic listening is something that learners can try in the first month or even on the first day.
 - Both participants get practice throughout the whole session, not just when the conversation switches to their target language. Even when my partner reads my story in Japanese, they are getting English input from me when I give my translation and ask them questions. Hopefully then they're less liable to feel impatient while waiting for me to read their story in English.
+
+## Summary of listening and reading practice advice
+
+
 
 ## Sources of comprehensible input
 

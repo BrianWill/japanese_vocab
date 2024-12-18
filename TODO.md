@@ -155,21 +155,13 @@ convert all mp4 to mp3 in dir:
     for f in *.mp4; do ffmpeg -i "$f" "${f%.*}.mp3"; done
 
 
-ffmpeg -i [input] -c:a copy -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]
+    ffmpeg -i [input] -c:a copy -c:v libx265 -an -r 24000/1001 -crf 23 -preset slow -tune animation -x265-params limit-sao=1:deblock=1,1:bframes=8:ref=6:psy-rd=1.5:psy-rdoq=2:aq-mode=3 -pix_fmt yuv420p10le [output]
 
 
 use puppeteer to scrape for transcripts and meta info
 use podcast-dl (https://www.npmjs.com/package/podcast-dl/v/7.0.0-async.1) to get audio files
     npx podcast-dl --url <PODCAST_RSS_URL>
 
-store audio link with timestamps
-    any way to capture from stories with youtube audio? probably not
-
-
-- toucan-like stories:
-    - use AI to replace some words with Japanese, then just add them as stories?
-    - for English text story, identify the commonly reoccuring words and replace them with Japanese equivalents. (might be tricky to do accurate translation)
-        - generally stick to nouns, adjectives and verbs?
 
 - When encountering a new compound word, should include parts as related words.
 
