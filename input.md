@@ -55,17 +55,17 @@ You not only get all the concrete information conveyed, you understand the nuanc
 
 Reading along with the transcript as you listen can help you understand more and stay engaged with the content. However, it's critical to also practice pure listening without text because the mental overhead of reading will distract your focus from the spoken language. Without listening-only practice, your listening comprehension development may be hindered or even stalled. (Besides, fluent reading ultimately rests on a foundation of the spoken language, so you're best off prioritizing your pure listening skills first anyway.)
 
+## Using AI translations and summaries
+
+When tackling content that is above your level (mainly measured by having a significant number of new words), try first reading through an AI chat translation or English summary. Particularly for a piece of content which you have difficulty understanding, this ticks helps you stay engaged as you listen: your memory of the summary will often fill in the gaps of understanding without having to stop and look up words or translate sentences.
+
+On the other hand, for fiction, this practice may actually *diminish* your engagement because it takes away the surprise of what comes next. So perhaps for fiction, you might instead only use AI summaries to quickly *review* the parts you've already listened to.
+
 ## Word acquisition
 
-1. acquire a phonetic memory of the word
-1. map meaning to the phonetic memory of the word by experiencing the spoken word in meaningful contexts
-1. map your phonetic memory of the word to the written word
-1. integrate the word into your active vocabulary by using it
-1. acquire nuances of the word (shades of meaning, connotations, colocations) through further encounters in the spoken and written language
+Acquisition of a word broadly follows this sequence:
 
-(The process won't always follow this sequence strictly. In particular, the last two steps may overlap.)
-
-### Phonetic memory of a word
+### 1. Phonetic memory of a word
 
 human brains are remarkably good at absorbing the unique sound signature of a word, sometimes even with only a handful of exposures, and then you'll be able to fairly reliably pick these individual words out from a stream of unknown words and unparsable sentences.
 
@@ -75,7 +75,9 @@ Or for example, easy to mix up しっぱい (failure) with しんぱい (worry),
 
 Also particularly accute in Japanese is the preponderance of homonyms. So you'll hear 放す and think that it's 話す, another word you may already know.
 
-### Word meaning through experience
+### 2. Map meaning to phonetic memory of word through experience
+
+map meaning to the phonetic memory of the word by experiencing the spoken word in meaningful contexts
 
 asdf
 
@@ -100,14 +102,22 @@ For a long time, you'll likely have a large set of words that aren't fully acqui
 In fact, until you can listen to interesting content with a high degree of comprehension, many words will probably hover at the border of this final threshold. Only once the language is really useful to you such that you can actually consume content for the content's own sake will the vocabulary and language patterns become truly ingrained.
 
 
-### Reading a word
+### 3. Reading a word
+
+1. map your phonetic memory of the word to the written word
 
 asdf
 
-### Active use of a word
+### 4. Active use of a word
 
 
-### Nuances of a word
+1. integrate the word into your active vocabulary by using it
+
+### 5. Nuances of a word
+
+1. acquire nuances of the word (shades of meaning, connotations, colocations) through further encounters in the spoken and written language
+
+(This last step often overlaps the prior: at the same time as you're integrating a word into your active vocabulary, you're picking up its nuances. Generaly though, you'll have active commmand of a word's most common uses before picking up more nuances.)
 
 
 ### Vocabulary tracking
@@ -257,7 +267,6 @@ This listening-only approach would have at least a few key advantages over conve
 - Both participants get practice throughout the whole session, not just when the conversation switches to their target language. Even when my partner reads my story in Japanese, they are getting English input from me when I give my translation and ask them questions. Hopefully then they're less liable to feel impatient while waiting for me to read their story in English.
 
 ## Summary of listening and reading practice advice
-
 
 
 ## Sources of comprehensible input

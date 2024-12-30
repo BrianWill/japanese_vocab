@@ -15,6 +15,7 @@ type Story struct {
 	SubtitlesJAJson   string  `json:"subtitles_ja,omitempty"`
 	SubtitlesENOffset float64 `json:"subtitles_en_offset"`
 	SubtitlesJAOffset float64 `json:"subtitles_ja_offset"`
+	TrackingDate      int64   `json:"tracking_date"`
 	SubtitlesEN       []Subtitle
 	SubtitlesJA       []Subtitle
 	Log               []LogItem `json:"log"`

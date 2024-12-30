@@ -20,10 +20,10 @@ document.body.onload = function (evt) {
 };
 
 document.getElementById('main_sidebar').onclick = function (evt) {
-    if (evt.target.classList.contains('action_recently_logged')) {
+    if (evt.target.classList.contains('action_tracked_stories')) {
         evt.preventDefault();
         window.history.replaceState(null, null, "?");
-        displayRecentlyLogged(stories);
+        displayTrackedStories(stories);
     } else if (evt.target.classList.contains('source_li')) {
         evt.preventDefault();
         let source = evt.target.getAttribute('source');
@@ -36,19 +36,19 @@ document.getElementById('main_sidebar').onclick = function (evt) {
 const TWO_WEEKS_IN_SECONDS = 60 * 60 * 24 * 7 * 2;
 const TWO_MONTHS_IN_SECONDS = 60 * 60 * 24 * 7 * 8;
 
-function displayRecentlyLogged(stories) {
+function displayTrackedStories(stories) {
     stories = stories.filter((s) => {
-        if (s.date_last_rep <= 1) {
+        if (s.tracking_date <= 1) {
             return false;
         }
 
         let now = Math.floor(new Date() / 1000);
-        let elapsedSeconds = now - s.date_last_rep;
+        let elapsedSeconds = now - s.tracking_date;
         return elapsedSeconds < TWO_MONTHS_IN_SECONDS;
     });
 
-    let html = `<h2>Stories recently logged <span class="story_recency">(last 2 months)</span></h2>
-        <a href="/words.html?storyId=0">drill vocab of all recently logged stories</a><br><br>`;
+    let html = `<h2>Tracked stories <span class="story_recency">(last 2 months)</span></h2>
+        <a href="/words.html?storyId=0">drill vocab of all tracked stories</a><br><br>`;
 
     if (stories.length == 0) {
         html += `<h4 style="margin-left: 2em;">(none)</h4>`;
@@ -148,7 +148,7 @@ function processCatalog(storyData, wordStats) {
     if (source) {
         displaySourceStoryList(storiesBySource[source]);
     } else {
-        displayRecentlyLogged(stories);
+        displayTrackedStories(stories);
     }
 
     displayWordStats(wordStats);

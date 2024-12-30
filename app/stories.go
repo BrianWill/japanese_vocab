@@ -311,7 +311,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 		fmt.Println("ip: ", ip)
 	}
 
-	stmt := `SELECT s.id, s.title, s.source, s.link, s.video, s.date, s.log, ifnull(q1.word_count, 0), ifnull(q2.archived_word_count, 0)
+	stmt := `SELECT s.id, s.title, s.source, s.link, s.video, s.date, s.log, s.tracking_date, ifnull(q1.word_count, 0), ifnull(q2.archived_word_count, 0)
 				FROM stories s
 				LEFT JOIN (SELECT story_id, count(*) AS word_count
 							FROM stories_x_words
@@ -337,7 +337,7 @@ func GetStories(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link,
-			&story.Video, &story.Date, &log, &story.WordCount, &story.ArchivedWordCount); err != nil {
+			&story.Video, &story.Date, &log, &story.TrackingDate, &story.WordCount, &story.ArchivedWordCount); err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			response.Write([]byte(`{ "message": "` + "failure to read story list: " + err.Error() + `"}`))
 			return
@@ -415,14 +415,14 @@ func GetStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	row := sqldb.QueryRow(`SELECT title, source, link, date, video, 
-		log, subtitles_en, subtitles_ja, subtitles_ja_offset, subtitles_en_offset
+		log, subtitles_en, subtitles_ja, subtitles_ja_offset, subtitles_en_offset, tracking_date
 		FROM stories WHERE id = $1;`, id)
 
 	var log string
 	story := Story{ID: int64(id)}
 	if err := row.Scan(&story.Title, &story.Source, &story.Link, &story.Date,
 		&story.Video, &log,
-		&story.SubtitlesENJson, &story.SubtitlesJAJson, &story.SubtitlesJAOffset, &story.SubtitlesENOffset); err != nil {
+		&story.SubtitlesENJson, &story.SubtitlesJAJson, &story.SubtitlesJAOffset, &story.SubtitlesENOffset, &story.TrackingDate); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		gw.Write([]byte(`{ "message": failure to scan story row:"` + err.Error() + `"}`))
 		return
@@ -525,11 +525,20 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 	defer sqldb.Close()
 
 	var logStr string
-	err = sqldb.QueryRow(`SELECT log FROM stories WHERE id = $1;`, body.StoryID).Scan(&logStr)
+	var trackingDate int64
+	err = sqldb.QueryRow(`SELECT log, tracking_date FROM stories WHERE id = $1;`, body.StoryID).Scan(&logStr, &trackingDate)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to get story: " + err.Error() + `"}`))
 		return
+	}
+
+	unixtime := time.Now().Unix()
+	const TWO_MONTHS_IN_SECONDS = 60 * 60 * 24 * 7 * 8
+
+	// if tracking date is not within last two months, set new tracking date
+	if unixtime > trackingDate+TWO_MONTHS_IN_SECONDS {
+		trackingDate = unixtime
 	}
 
 	var log []LogItem
@@ -549,8 +558,8 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = sqldb.Exec(`UPDATE stories SET log = $1 WHERE id = $2;`,
-		logJson, body.StoryID)
+	_, err = sqldb.Exec(`UPDATE stories SET log = $1, tracking_date = $2 WHERE id = $3;`,
+		logJson, trackingDate, body.StoryID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{ "message": "` + "failure to update story: " + err.Error() + `"}`))

@@ -549,10 +549,10 @@ func storeStory(story Story, allowUpdate bool, sqldb *sql.DB) error {
 		}
 	} else {
 		row, err := sqldb.Exec(`INSERT INTO stories (title, source, date, link, video, 
-									subtitles_en, subtitles_ja, log, subtitles_ja_offset, subtitles_en_offset) 
-									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
+									subtitles_en, subtitles_ja, log, subtitles_ja_offset, subtitles_en_offset, tracking_date) 
+									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
 			story.Title, story.Source, story.Date, story.Link,
-			story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, "[]", 0.0, 0.0)
+			story.Video, story.SubtitlesENJson, story.SubtitlesJAJson, "[]", 0.0, 0.0, 0)
 		if err != nil {
 			return err
 		}

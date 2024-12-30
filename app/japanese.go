@@ -246,6 +246,7 @@ func makeUserDB(path string) {
 			subtitles_ja TEXT,
 			subtitles_ja_offset REAL NOT NULL,
 			subtitles_en_offset REAL NOT NULL,
+			tracking_date INTEGER NOT NULL,
 			log TEXT);`)
 	if err != nil {
 		log.Fatal(err)

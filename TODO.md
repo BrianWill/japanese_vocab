@@ -1,4 +1,10 @@
 # japanese_vocab TODO   
+    
+    in story list, show count of kanji in the story? 
+        number of unique kanji total throughout the text
+            compute this at import time?
+            new column in stories table
+        also report how many archived vs unarchived?
 
     test mac and linux builds
 
