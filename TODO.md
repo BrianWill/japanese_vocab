@@ -1,5 +1,10 @@
 # japanese_vocab TODO   
     
+    drill words:
+        choose only from the recent stories? 
+            mostly from?
+            or favor selection from words that appear most often across the recent stories?
+    
     in story list, show count of kanji in the story? 
         number of unique kanji total throughout the text
             compute this at import time?

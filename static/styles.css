@@ -565,6 +565,10 @@ span.verb:hover {
     color: #df3838;
 }
 
+.story_table .times_logged {
+    text-align: center;
+}
+
 #word_stats span {
     color: grey;
 }

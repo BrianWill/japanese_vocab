@@ -17,117 +17,116 @@ Here's my advise on how reach those milestones *via* listening and reading pract
 
 ## Levels of listening and reading practice
 
-Levels of listening and reading practice should be categorized based on how much you comprehend. In order from least understanding to most, the levels are:
+Listening and reading practice can be broken into levels based on how much you comprehend. In order of least understanding to most, the levels are:
 
 ### 1. Scanning for words and phrases
 
-At this level, you catch isolated words, phrases, and perhaps occasional whole clauses or sentences, and you may often recognize the outline of many sentences (verb auxiliaries, conjunctions, and other connective words or phrases).
-
-However, you're not able to follow what's happening sentence-to-sentence nor consistently discern the topic.
+At this level, you catch isolated words, phrases, and perhaps occasional whole clauses or sentences, and you may often recognize the 'outline' of many sentences (verb auxiliaries, conjunctions, and other connective words or phrases). However, you're not able to follow what's happening sentence-to-sentence nor consistently discern the topic. For example:
 
 > *Something about a cow and magic beans. A giant is involved for some reason?*
 
 ### 2. Following the topic
 
-You can follow the topic, but you're missing too many things to follow sentence-by-sentence.
+You can follow the topic, but you're missing too many things to follow sentence-by-sentence:
 
 > *Someone buys magic beans. There's a big plant, lots of climbing, and a castle. Also some clouds and a giant? Someone dies at the end?*
 
 ### 3. Partial understanding of the sentences
 
-You can now understand the essence of many sentences, but details still get lost.
+You can now understand the essence of many sentences, but details still get lost:
 
-> *A kid gets magic beans. His mother is upset about a cow for some reason. Jack climbs a big plant that somehow appears. Jack finds a castle in the clouds and robs a giant.*
+> *A kid gets magic beans. His mother is upset about the cow for some reason. Jack climbs a big plant that somehow appears. Jack finds a castle in the clouds and robs a giant, who dies when he falls.*
 
 ### 4. Full understanding of the sentences
 
-You now catch basically all the information.
+You now catch basically all the information:
 
-> *Oh I see, Jack traded the cow for the beans, and the plant grew from the beans which he tossed out the window.*
+> *Oh I see, Jack traded the cow for the beans, and the plant grew from the beans which he tossed out the window. Jack stole the giant's goose, the giant chased him, and Jack kills the giant by chopping down the beanstalk.*
 
 ### 5. Full understanding of the nuance
 
-You not only get all the concrete information conveyed, you understand the nuances like a native speaker. In Japanese, this would include things like the choice of end sentence particles or choice of pronouns or honorifics. (Japanese has a lot of 'coloring' options like this, meaning ways of changing the feel of a sentence without changing the concrete information.)
+You not only get all the concrete information conveyed, you understand the nuances like a native speaker. In Japanese, this would include things like the choice of end sentence particles or choice of pronouns or honorifics. (Japanese has a lot of 'coloring' options, meaning ways of changing the feel of what's being said without changing the concrete information conveyed.)
 
-> *Jack is a disrepectful trickster comic hero who speaks in kansai dialect. The giant talks like a tough yakuza guy.*
+> *Jack is a disrepectful trickster comic hero who speaks in kansai dialect. The giant talks like a tough yakuza guy. The story is narrated from an authoritative, impartial, 3rd-person perspective,*
 
 ## Reading while listening
 
-Reading along with the transcript as you listen can help you understand more and stay engaged with the content. However, it's critical to also practice pure listening without text because the mental overhead of reading will distract your focus from the spoken language. Without listening-only practice, your listening comprehension development may be hindered or even stalled. (Besides, fluent reading ultimately rests on a foundation of the spoken language, so you're best off prioritizing your pure listening skills first anyway.)
+Reading along with the transcript as you listen can help you understand more and stay engaged with the content. However, keep in mind that fluent reading relies upon engaging the listening comprhension pathways in the brain. This implies:
+
+1. Your reading fluency cannot exceed your listening comprehension.
+2. When listening to something you struggle to understand, reading along with a transcript is an *unnatural* act.
+
+So it's critical to practice pure listening without text because the mental overhead of reading will distract your focus from the spoken language. Without listening-only practice, your listening comprehension development may be hindered or even stalled.
 
 ## Using AI translations and summaries
 
-When tackling content that is above your level (mainly measured by having a significant number of new words), try first reading through an AI chat translation or English summary. Particularly for a piece of content which you have difficulty understanding, this ticks helps you stay engaged as you listen: your memory of the summary will often fill in the gaps of understanding without having to stop and look up words or translate sentences.
+When tackling content that is above your level (mainly indicated by the content having a significant number of new or unfamiliar words), try first reading through an AI chat translation or English summary. Particularly for a piece of content which you have difficulty understanding, this trick helps you stay engaged as you listen: your memory of the summary will often fill in the gaps of understanding without having to stop and look up words or translate sentences.
 
-On the other hand, for fiction, this practice may actually *diminish* your engagement because it takes away the surprise of what comes next. So perhaps for fiction, you might instead only use AI summaries to quickly *review* the parts you've already listened to.
+On the other hand, this practice may actually *diminish* your engagement because it takes away the surprise of what comes next. So for some content, particularly fiction, you might instead only use AI summaries to *review* what you've read and listened to.
 
 ## Word acquisition
 
-Acquisition of a word broadly follows this sequence:
+Acquisition of a new word broadly follows this sequence:
 
 ### 1. Phonetic memory of a word
 
-human brains are remarkably good at absorbing the unique sound signature of a word, sometimes even with only a handful of exposures, and then you'll be able to fairly reliably pick these individual words out from a stream of unknown words and unparsable sentences.
+Human brains are remarkably good at absorbing the unique sound signatures of words. Often it takes hearing a word just a handful of times before you can fairly reliably recognize the sound of a word when you hear it, even in sentences that otherwise consist of totally unknown words. 
 
-Note that recognizing the sound of a word when you hear it does not translate automatically to recognizing the word in written form or being able to reproduce the sound reliably. For example, even if you reliably recognize 面白い when you hear it, you may not reliably be able to remember the exact sequence of syllables when you try to speak the word. (For English speakers, it's particularly easy to mix up A and O vowel sounds of Japanese words, or flip the order of two adjacent syllables.) So though speaking is built on a foundation of listening, reliably speaking individual words correctly may take some actual speaking practice.
+However, recognizing the sound of a word does not mean you neecessarily understand it. That comes later.
 
-Or for example, easy to mix up しっぱい (failure) with しんぱい (worry), particularly in this case because the meanings are somewhat related.
+Nor does recognizing the sound of a word translate automatically to recognizing the written form or being able to *reproduce* the sound reliably. For example, even if you reliably recognize 面白い when you hear it, you may not reliably be able to remember the exact sequence of syllables when you try to speak the word. So even though speaking is built on a foundation of listening, reliably speaking a word correctly generally takes some actual speaking practice.
 
-Also particularly accute in Japanese is the preponderance of homonyms. So you'll hear 放す and think that it's 話す, another word you may already know.
+### 2. Map meaning of a word to the phonetic memory
 
-### 2. Map meaning to phonetic memory of word through experience
+Although conscious recall of a word's meaning has some value in the learning process, ultimately, fluent listening comprehension requires direct, automatic mapping from the sound of a word to its meaning.
 
-map meaning to the phonetic memory of the word by experiencing the spoken word in meaningful contexts
+The only way to form these direct connections in your brain is to *experience* the meaning of a word when you hear it. The experiences do not have to be sensory (though that can help): rather the experiences can simply be occurances where you are *engaged* with the meaning *as you hear the word*.
 
-asdf
+Artificial encounters with words, such as in drills, generally lack this engagement: you can consciouly note that アライグマ means "racoon", and with enough repetitions you can recall this fact when prompted, yet the direct connection between the sound and meaning will only be formed by experiencing アライグマ in a meaningful context. These contexts could be:
 
+- Seeing an アライグマ and hearing someone say, "アライグマ！"
+- Being advised to keep your garbage bins sealed to ward off アライグマ.
+- Hearing an engrossing fable about an アライグマ.
+- Etc.
 
-Translating in your head:
+The critical part is that the meaning of the word has immediate value to you in these situations, such that you are really paying attention and actually care in the moment what this arbitrary sound means.
 
-'おんがく? I've heard that word'
+### 3. Nuances of a word
 
-'おんがく? That means "music"'
-
-Eventually you'll get to a point where you don't translate the word, but you still take a moment to consciously register it and perhaps repeat it to yourself in your head:
-
-'おんがく? Oh yeah, おんがく'
-
-Finally, you hear the word and just understand it automatically without conscious thought:
-
-'おんがく’
-
-
-For a long time, you'll likely have a large set of words that aren't fully acquired. Don't get frustrated when you catch yourself consciously translating or acknowleding a word that you know you've heard a thousand times already.
-
-In fact, until you can listen to interesting content with a high degree of comprehension, many words will probably hover at the border of this final threshold. Only once the language is really useful to you such that you can actually consume content for the content's own sake will the vocabulary and language patterns become truly ingrained.
-
-
-### 3. Reading a word
-
-1. map your phonetic memory of the word to the written word
-
-asdf
+Beyond the "simple" meanings, words often have many nuances: shades of meaning, connotations, and colocations. The only practical way to acquired these nuances is simply by listening and reading a ton of the language.
 
 ### 4. Active use of a word
 
+Finally, words eventually move from your passive vocabularly into your active vocabulary. Again, the only practical way to do this is by lots of speaking practice, and no artificial exercise is better than conversation and other scenarios where you genuinely need to communicate.
 
-1. integrate the word into your active vocabulary by using it
-
-### 5. Nuances of a word
-
-1. acquire nuances of the word (shades of meaning, connotations, colocations) through further encounters in the spoken and written language
-
-(This last step often overlaps the prior: at the same time as you're integrating a word into your active vocabulary, you're picking up its nuances. Generaly though, you'll have active commmand of a word's most common uses before picking up more nuances.)
+(Note that this last step often overlaps the prior: at the same time as you're integrating a word into your active vocabulary, you're picking up its nuances.)
 
 
-### Vocabulary tracking
+## Translating in your head
 
+A common lament of language learners is that they feel stuck "translating in their head" as they read, listen, or speak rather than their language use feeling automatic and transparent like their own native language. Unfortunately, there's no mental techinique that will help you consciouly stop yourself from doing this mental translation. The only fix is just more practice: more listening, more reading, and more speaking. Eventually you'll stop translating in your head because you will no longer need to.
 
+For individual words and phrases, there is often an in-between phase, where the meaning of a word you hear does not fully register automatically, so you consciously repeat the word to yourself but don't actually translate it.
 
+Again, word acquisition starts with just phonetic recognition without understanding of the meaning:
 
+> おんがく? I've heard that word
 
+Then comes conscious recognition with translation:
 
+> おんがく? That means "music"
 
+Then comes conscious recognition:
+
+> おんがく? Oh yeah, おんがく
+
+Finally, once a word is fully in your passive vocabulary, the meaning will register automatically when you hear it without any conscious thought:
+
+> おんがく
+
+It's common to have a large set of words that seem stuck in the earlier stages, but understand that this is normal. Don't get frustrated when you catch yourself consciously translating or acknowleding a word that you know you've heard a thousand times already.
+
+In fact, until you can listen to interesting content with a high degree of comprehension, many words will probably hover at the border of this final threshold. Only once the language is really useful to you such that you can actually consume content for the content's own sake will the vocabulary and language patterns become truly ingrained.
 
 ## Repeated listening practice
 
@@ -145,47 +144,22 @@ After each repetition, you can look at the transcript if you need to verify your
 
 You generally should repeat a piece of content no more than 3 or 4 times, and generally these repetitions should be spaced out by at least a few days.
 
-If, after a few repetitions, you still have trouble following a piece of content, it was probably too difficult for listening practice at your current level. Don't worry--the exercise still had value--but consider picking simpler content for future practice.
+If, after a few repetitions, you still have trouble following a piece of content, it was probably too difficult for listening practice at your current level. Don't worry&mdash;the exercise still had value&mdash;but consider picking simpler content for future practice.
 
-> NOTE: Depending on the original speaking speed, you may be able to slow the playback rate to 70% or 80% speed while still maintaining reasonable audio quality. Don't feel guilty about doing this if it helps! Better to understand as much as you can than to let the words pass over you as a stream of noise.
+> NOTE: Depending on the original speaking speed, you may be able to slow the playback rate down to 80% or even 70% speed without significantly distorting the speech. Don't feel guilty about doing this if it helps! Better to understand as much as you can than to let the words pass over you as a stream of noise.
 
 
 ## Intensive reading practice
 
-In intensive reading, you analyze a text to get contextual exposure to new words, kanji, points of grammar, and language patterns. As you read, you look up every unknown word and puzzle out how all the words fit together, using translation tools and grammatical analysis or any other necessary means.
+In intensive reading, you analyze a text to get contextual exposure to new words, kanji, points of grammar, and language patterns. As you read, you look up every unknown word and puzzle out how all the words fit together, using grammatical analysis and computer translation or any other means necessary.
 
 Because beginners and intermediate learners should prioritize listening comprehension, I recommend using transcripts of audio or video content so that you can also listen to the content spoken by a native speaker.
 
-Intensive reading is an opportunity to reach above your current natural comprehension level, so the selected content should contain a good number of words and language patterns that you've never encountered before. Roughly, for every 5 minutes of audio or video, you want about 20 to 40 new words.
+Intensive reading is an opportunity to reach above your current natural comprehension level, so the selected content should contain a good number of words and language patterns that you've never encountered before. Roughly, for every 5 minutes of audio or video, you want about 20 to 40 new or unfamiliar words.
 
 Because you are studying the text rather than naturally reading it, intensive reading is a slow process. For a 5 minute piece of audio or video, it often may take more than 30 minutes to study the first time you go through it. 
 
-Like with all language practice, feel free to abandon a piece of intensive reading content at any time because it’s too hard, too easy, too boring, or you just feel like doing something else. Keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**.
-
-## Vocab drilling
-
-For drilling, follow four rules:
-
-1. **Drill only the words in stories you are currently repeating for listening and reading practice.**
-2. **For words and kanji with multiple meanings and pronunciations, focus only on the meanings and pronunciations used in the stories.**
-3. **Do not test yourself on the words**: drilling is an opportunity to get systematic repeated exposure, so just seeing and hearing the word with its definition is sufficient.
-4. **Drill an individual word no more than 10-20 times total.** You most likely won't master a word after just 10 to 20 drills, but the goal of vocab drilling should not be to master words but rather to make the words more familiar.
-
-Real mastery of words only comes through encounters in meaningful context, but by drilling words to a certain level of familiarity, each subsequent individual contextual encounter becomes much more impactful. In other words, drilling a word 'primes' you for when you later encounter it in your listening and reading practice or in the wild.
-
-## Expectations
-
-It's important to have the right expectations:
-
-- For a long time, you wont understand most of what you encounter, and that which you do understand will often require conscious effort. “Natural” (automatic) understanding comes slowly and in pieces.
-- As long as the language itself distracts you from focusing on the content of what you read and hear, your input consumption will be [*intensive* rather than *extensive*](https://en.wikipedia.org/wiki/Extensive_reading). This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and consciously pondering how the words fit together, a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day.
-- Comfort with a particular topic and style of content doesn’t necessarily translate to comfort with other topics or styles.
-- Accept that it will typically require many exposures before a word or kanji is fully memorized. Instead of consciously trying to force memorization, you should lean heavily on tools that make it quick and easy to look up words and kanji. **Depend upon reminders, not memorization.**
-- A single aspect of a language cannot be truly mastered in isolation, and attempting to do so is generally inefficient. **Don’t try to master one aspect or “level” of the language before moving on.**
-
-## Kana and Kanji
-
-For how to approach the writing system, see [the writing system](writing.md).
+Like with all language practice, feel free to abandon a piece of intensive reading content at any time because it’s too hard, too easy, too boring, or you just feel like doing something else. Always keep in mind that **your attention and interest is critical in language acquisition, so you should follow your own impulses**.
 
 ## Random practice
 
@@ -193,7 +167,7 @@ In addition to systematic listening and reading practice, it's also good to cons
 
 So for random practice, you should consume audio, video, or text of various kinds and a variety of levels. Depending on the level, you may understand anywhere from 10% to 100% of what you consume. Reaching above your level exposes you to new vocabulary and grammar, while revisiting lower levels helps develop the ease and fluidity with which you process the language.
 
-Unlike with systematic practice, these random pieces of content will be consumed only once, and for the most part, you should let anything you don't understand pass you by.
+Unlike with systematic practice, these random pieces of content will be consumed only once, and for the most part, you should let anything you don't understand pass you by rather than stop to look things up or translate.
 
 ## TV and movies
 
@@ -213,19 +187,42 @@ Furthermore, subtitles are problematic:
 - A beginner or intermediate learner often won't know enough vocabulary or kanji to get even the gist of the story from Japanese subtitles.
 - Just turning off subtitles isn't a great option either because a beginner or intermediate learner watching without subtitles would usually miss most of what is being said and wouldn't be able to follow the story.
 - It's hard to concentrate on the Japanese audio while reading English subtitles (in fact, processing two languages at once is extremely difficult even if you already have mastered both languages). Furthermore, to the extent that parts of a Japanese and English sentence correspond, they tend to do so in reverse order, so for longer sentences, the part of the English translation currently displayed on screen often doesn't match what is currently being said in the Japanese audio. On top of this, translators often take large liberties, such that the English subtitltes do not accurately convey the original meaning or the way in which the original meaning was expressed.
-- Most video sources don't provide the option to display Japanese and English subtitles simulteously (and besides, again, processing two written languages adds even more mental overhead that distracts from listening).
+- Most video sources don't provide the option to display English and Japanese subtitles simulteously, making it impossible to check the English subtitles for understanding while also checking the Japanese subtitles for words you missed. (Again though, exercising this option where available isn't optimal because processing two written languages adds even more mental overhead that distracts from listening.)
 
-Sadly then, beginner and intermediate learners can't just watch TV and movies as normal to get much language value from them. What can work, though, is using short (2 to 5 minute) excerpts from shows and movies for repeated practice. The chosen excerpts should generally have these qualities:
+Sadly then, beginner and intermediate learners can't just watch TV and movies as normal for entertainment to get much language value from them. 
+
+What can work, though, is using TV and movie excerpts (as short as 1 or 2 minutes) for repeated listening and intensive reading practice. The chosen excerpts should generally have these qualities:
 
 - Avoid the adverse factors listed above: heavy accents, use of slang, shouting, dialogue drowned out in the sound mix, *etc.* Look for extended dialogue scenes where the characters calmly take turns saying their lines.
 - Accurate subtitles should be available in both Japanese and English, preferably in a form where both can be displayed simultaneously and copy-pasted (useful when you want to get a machine translation).
-- It helps if the dialogue scenes have a modicum of visual interest. The images don't actually have to relate directly to what's being said: rather, they just need to provide visual cues that help you track where you are in the dialogue. Even just regularly-paced camera cuts between the characters can help a great deal.
+- It helps if the dialogue scenes have a modicum of visual interest. The images don't actually have to relate directly to what's being said: rather, they just need to provide visual cues that help you track where you are in the dialogue. (Even just regularly-paced camera cuts between the characters can help a great deal.)
 
-Unfortunately, the TV and movies that fit these criteria may not be your favorites or even in your preferred genres. Particularly in anime, there's almost an inverse relationship between quality and appropriateness for learners: the better the anime, often the harder it is to understand due to diverse, complex dialogue, extended action set pieces with shouting and loud sounds and music, and other adverse qualities. So until you reach an advanced level, you may have to venture outside of your normal zone of interest to find appropriate content.
+Unfortunately, the TV and movies that fit these criteria may not be your favorites or even in your preferred genres. Particularly in anime, there's almost an inverse relationship between quality and appropriateness for learners: the better the anime, often the harder it is to understand due to diverse, complex dialogue, extended action set pieces with shouting and loud sounds and music, and other learner-hostile qualities. So until you reach an advanced level, you may have to venture outside of your normal zone of interest to find appropriate content.
 
 Because TV and movies are "native" content rather than "comprehensible input" designed explicitly for learners, they do not fit exactly in the listening and reading practice dichotomy. Even the easiest TV and movie content will generally have many new words and phrases for a beginner or intermediate learner, so you probably will need to fully analyze the transcript a few times to fully understand it. However, the whole point of using this content is for listening, so you should also watch each excerpted story multiple times without subtitles.
 
-Full understanding may require more repetitions than normal listening practice, but feel free to drop a story once it bores you, even if you never fully "master" the content. For example, if you only understand 30% of a story on your first listen, maybe you'll understand 70-80% after several repetitions, but reaching 100% may require dozens of additional repetitions. Rather than bang your head against this wall, you're probably better off moving on to other content. Don't worry: the exercise still has great value even when you fall short of full understanding.
+Like for listening practice, an excerpt should be repeated no more than three or four times, and the repetitions should be spread out over a few days or weeks. Even if you don't fully understand the excerpt by the last repetition, don't worry: the exercise still has great value even when you fall short of full understanding.
+
+
+## Vocabulary tracking and drilling
+
+The key feature of this program is to track the words you encounter in your listening and reading content. When a word becomes reasonably well-known to you (but not necessarily mastered), you can "archive" the word such that it is no longer highlighted in the subtitles and will be filtered from vocab drills by default. This tracking provides two key benefits:
+
+1. You can track your progress in the language by the number of words you have encountered and archived.
+2. You can assess the difficulty of a piece of content based on the number and proportion of unarchived words it contains.
+
+For drilling, follow four rules:
+
+1. **Drill only the words that you have encountered recently in listening or reading.**
+2. **For words and kanji with multiple meanings and pronunciations, focus only on the meanings and pronunciations used in the stories.**
+3. **Do not test yourself on the words**: drilling is an opportunity to get systematic repeated exposure, so just seeing and hearing the word with its definition is sufficient.
+4. **Drill an individual word no more than 10-20 times total in your lifetime.** You most likely won't master a word after just 10 to 20 drills, but the goal of vocab drilling should not be to master words but rather to make the words more familiar.
+
+Real mastery of words only comes through encounters in meaningful context, but by drilling words to a certain level of familiarity, each subsequent individual contextual encounter becomes much more impactful. In other words, drilling a word can 'prime' you for when you later encounter it in your listening or reading practice or in the wild.
+
+## Kana and Kanji
+
+For how to approach the writing system, see [the writing system](writing.md).
 
 ## Grammar study
 
@@ -267,6 +264,16 @@ This listening-only approach would have at least a few key advantages over conve
 - Both participants get practice throughout the whole session, not just when the conversation switches to their target language. Even when my partner reads my story in Japanese, they are getting English input from me when I give my translation and ask them questions. Hopefully then they're less liable to feel impatient while waiting for me to read their story in English.
 
 ## Summary of listening and reading practice advice
+
+- Prioritize listening practice over reading practice and especially speaking practice.
+- Track the vocabulary you encounter in listening and reading.
+- Limit vocabulary drills to words you have recently encountered in listening and reading, and limit lifetime drills of any individual word to 10-20 repetitions.
+- If you repeat a piece of content, do so no more than a handful of times, even if you don't fully "master" it by the last repetition.
+- For a long time, you wont understand most of what you encounter, and that which you do understand will often require conscious effort. “Natural”, automatic understanding comes only with massive consumption of the language, and still only then slowly and in pieces.
+- As long as the language itself distracts you from focusing on the content of what you read and hear, your input consumption will be [*intensive* rather than *extensive*](https://en.wikipedia.org/wiki/Extensive_reading). This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and consciously pondering how the words fit together, a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day.
+- Comfort with a particular topic and style of content doesn’t necessarily translate to comfort with other topics or styles.
+- Accept that it will typically require many exposures before a word or kanji is fully memorized. Instead of consciously trying to force memorization, you should lean heavily on tools that make it quick and easy to look up words and kanji. **Depend upon reminders, not memorization.**
+- A single aspect of a language cannot be truly mastered in isolation, and attempting to do so is generally inefficient. **Don’t try to master one aspect or “level” of the language before moving on.**
 
 
 ## Sources of comprehensible input

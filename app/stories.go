@@ -534,10 +534,9 @@ func LogStory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	unixtime := time.Now().Unix()
-	const TWO_MONTHS_IN_SECONDS = 60 * 60 * 24 * 7 * 8
 
-	// if tracking date is not within last two months, set new tracking date
-	if unixtime > trackingDate+TWO_MONTHS_IN_SECONDS {
+	// if tracking date is not within the story tracking period, set new tracking date
+	if unixtime > trackingDate+STORY_TRACKING_PERIOD {
 		trackingDate = unixtime
 	}
 

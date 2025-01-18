@@ -78,9 +78,9 @@ func getStoryTokens(sqldb *sql.DB, storyId int64) ([]*JpToken, error) {
 	return tokens, nil
 }
 
-func getStoriesRecentlyLogged(sqldb *sql.DB) ([]Story, error) {
+func getTrackedStories(sqldb *sql.DB) ([]Story, error) {
 	rows, err := sqldb.Query(`SELECT id, title, source, link, video, 
-			date, log FROM stories;`)
+			date, log, tracking_date FROM stories;`)
 	if err != nil {
 		return nil, err
 	}
@@ -93,21 +93,11 @@ func getStoriesRecentlyLogged(sqldb *sql.DB) ([]Story, error) {
 	for rows.Next() {
 		var story Story
 		if err := rows.Scan(&story.ID, &story.Title, &story.Source, &story.Link,
-			&story.Video, &story.Date, &log); err != nil {
+			&story.Video, &story.Date, &log, &story.TrackingDate); err != nil {
 			return nil, err
-		}
-		err = json.Unmarshal([]byte(log), &story.Log)
-		if err != nil {
-			return nil, err
-		}
-		var dateLastLogged int64
-		for _, logItem := range story.Log {
-			if logItem.Date > int64(dateLastLogged) {
-				dateLastLogged = logItem.Date
-			}
 		}
 
-		if (unixtime - dateLastLogged) < STORY_RECENTLY_LOGGED_PERIOD {
+		if (unixtime - story.TrackingDate) < STORY_TRACKING_PERIOD {
 			stories = append(stories, story)
 		}
 	}
@@ -120,7 +110,7 @@ func getWordsFromStory(sqldb *sql.DB, storyId int64) ([]DrillWord, error) {
 	var err error
 	if storyId == 0 {
 		tokens = make([]*JpToken, 0)
-		stories, err := getStoriesRecentlyLogged(sqldb)
+		stories, err := getTrackedStories(sqldb)
 		if err != nil {
 			return nil, err
 		}

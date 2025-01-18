@@ -47,7 +47,7 @@ function displayTrackedStories(stories) {
         return elapsedSeconds < TWO_MONTHS_IN_SECONDS;
     });
 
-    let html = `<h2>Tracked stories <span class="story_recency">(last 2 months)</span></h2>
+    let html = `<h2>Tracked stories <span class="story_recency" title="Logging a story that is not already tracked will track the story for 2 months.">ⓘ</span></h2>
         <a href="/words.html?storyId=0">drill vocab of all tracked stories</a><br><br>`;
 
     if (stories.length == 0) {
@@ -57,7 +57,7 @@ function displayTrackedStories(stories) {
     }
 
     stories.sort((a, b) => {
-        return (a.date_last_rep < b.date_last_rep);
+        return (a.tracking_date < b.tracking_date);
     });
 
     html += `<table class="story_table">
@@ -66,8 +66,9 @@ function displayTrackedStories(stories) {
         <th>Title</th>
         <th>Words<br>Archived</th>
         <th>Word<br>Count</th>
-        <th>Time since<br>last logged</th>
+        <th>Time since<br>tracked</th>
         <th>Number of<br>times logged</th>
+        <th>Time since<br>last logged</th>        
     </tr>`
 
     for (const s of stories) {
@@ -76,8 +77,9 @@ function displayTrackedStories(stories) {
             <td><a class="story_title" story_id="${s.id}" href="/story.html?storyId=${s.id}">${s.title}</a></td>
             <td>${archivedWordPercentage(s)}</td>
             <td>${s.word_count}</td>
+            <td>${timeSince(s.tracking_date)}</td>
+            <td class="times_logged">${s.log.length}</td>
             <td>${timeSince(s.date_last_rep)}</td>
-            <td>${s.log.length}</td>
         </tr>`;
     }
 
