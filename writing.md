@@ -20,10 +20,11 @@ Fifth, certain details of pronunciations are not indicated in the text, includin
 
 ## Do I really need to read Japanese?
 
-If your primary interest in Japanese is *speaking*, you might question, first, whether learning to read Japanese is strictly essential at all, or second, whether learning to read can't wait until after acquiring the spoken language:
+If your primary interest in Japanese is *speaking*, you might question, first, whether learning to read Japanese is strictly essential at all, or second, whether learning to read can't wait until after acquiring the spoken language.
 
-1. Even if you don't care about reading for its own sake, never learning to read is a bad idea because reading is a key vector for acquiring many, many vocabulary words that otherwise don't come up in most day-to-day speech. In a modern literate society, a large chunk of vocabulary is only acquired and maintainted through reading. Although listening and speaking practice can make you conversationally *functional* in the language, without reading, you'll probably lack the vocabulary for many conversations and situations.
-1. As for waiting to learn to read until after learning the spoken language, this too is usually a bad idea because reading is an extremely useful tool while learning a language. Unlike spoken language, written language allows you to go at your own pace and scan back and forth through the words. Most importantly, you can much more easily and conveniently look up unknown written words than you can look up unknown spoken words.
+Even if you don't care about reading for its own sake, never learning to read is a bad idea because reading is a key vector for acquiring many, many vocabulary words that otherwise don't come up in most day-to-day speech. In a modern literate society, a large chunk of vocabulary is only acquired and maintainted through reading. Although listening and speaking practice can make you conversationally *functional* in the language, without reading, you'll probably lack the vocabulary for many conversations and situations.
+
+As for waiting to learn to read until after learning the spoken language, this too is usually a bad idea because reading is an extremely useful tool while learning a language. Unlike spoken language, written language allows you to go at your own pace and scan back and forth through the words. Most importantly, you can much more easily and conveniently look up unknown written words than you can look up unknown spoken words.
 
 ## Downsides and limitations of reading
 
@@ -50,19 +51,19 @@ Likewise, reading vertical text can induce mental overhead, so it's best avoided
 ## How should I learn kana?
 
 Rather than rely upon the crutch of romaji, you're best off learning kana from the start. In just a few weeks, you should be able to have the kana mostly memorized through drilling (see [here](https://kana-quiz.tofugu.com/) and [here](
-https://laits.utexas.edu/japanese/joshu/kana/katakana.php)). However, it's normal to confuse certain less-commonly used and similar looking characters with each other for a long time after, even for multiple years. For example, learners may take years before they can fluently read the katakana characters フ, ブ,　プ,　ラ,　ワ, and　ウ　without sometimes having to consciously remind themselves which is which.
+https://laits.utexas.edu/japanese/joshu/kana/katakana.php)). However, it's normal to confuse certain less-commonly used and similar looking characters with each other for a long time after, even for multiple years. For example, learners may take years before they can fluently read the katakana characters フ, ブ, プ, ラ, ワ, and ウ without sometimes having to consciously remind themselves which is which.
 
 Once you have the kana reasonably well memorized, you should practice reading whole words, starting first with very short words and working your way up to longer ones.
 
 Note that katakana often gives learners considerable more trouble than hiragana, for a few reasons:
 
-- Katakana is used considerably less frequently than hiragana, so you naturally get much less practice.
+- Katakana is used considerably less frequently than hiragana, so you naturally get less practice.
 - Several pairs and groups of katakana characters are hard to distinguish because they look very similar.
 - The Western-derived words spelt in katakana on average have more syllables (and therefore more characters) than the native Japanese or Chinese-derived words spelt in hiragana.
 - The Western-derived words spelt in katakana often contain sequences of sounds that occur infrequently or not at all in native Japanese or Chinese-derived words.
 - The sounds of English-derived words are often distorted in surprising, inconsistent ways, making them strangely difficult for English speakers to say and read. For example "McDonald's" is three syllables in English, but adapted into Japanese, it has six syllables and extra vowels: マクドナルド (MA-KU-DO-NA-RU-DO)
 
-So you may find that your katakana reading lags behind your hiragana reading for a long time. To address this, you might want to put special effort into katakana word drills. On the other hand, once you reach the tipping point where you can read native content, you'll get plenty more practice with katakana anyway, so maybe special practice isn't really needed.
+So you'll likely find that your katakana reading lags behind your hiragana reading for a long time. To address this, you might want to put special effort into katakana word drills. On the other hand, once you reach the tipping point where you can read native content, you'll get plenty more practice with katakana anyway, so maybe special practice isn't really needed.
 
 ## How should I learn kanji?
 
@@ -74,7 +75,7 @@ There are tens of thousands of kanji that have been used throughout Japanese his
 
 From personal experience, I can say that attempting to memorize all of the kanji up front through drills is a terrible idea. At most, you should learn your first 200 or 300 kanji through drills, but thereafter you should simply focus on the kanji that come up in your reading and listening material.
 
-Understand that **reading a word does not require fully “knowing” its kanji!** In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. So instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn. When looking up a word, note the relevant meanings and pronunciations of the individual kanji, but otherwise don't study or drill the kanji on their own.
+Understand that **reading a word does not require fully 'knowing' its kanji!** In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. So instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn. When looking up a word, note the relevant meanings and pronunciations of the individual kanji, but otherwise don't study or drill the kanji on their own.
 
 ---
 
@@ -85,11 +86,11 @@ Kanji in Japanese names are particularly troublesome:
 - Many Japanese names have multiple different kanji spellings.
 - Even native Japanese speakers don't know all kanji spellings of Japanese names, and they often don't know how to spell a name from the pronunciation or how to pronounce a name from the kanji spelling.
 
-So attempting to brute force memorize the kanji spellings of Japanese names is particularly foolish. Instead, you should simply deal with individual names as they come up in your reading. Eventually, through extensive reading, you will learn many of the most common names and spellings.
+So attempting to brute force memorize the kanji spellings of Japanese names is particularly foolish. Instead, you should simply deal with individual names as they come up in your reading. Eventually, through extensive reading, you will learn many of the more common names and spellings.
 
 ## Summarized advice
 
-- Drill hiragana and katakana to learn the characters, but understand that fluid reading of kana will only develop through reading lots of real words and sentences.
+- Drill hiragana and katakana to learn the characters, but keep in mind that fluid reading of kana will only develop through reading lots of real words and sentences.
 - Don’t drill kanji: instead, absorb kanji from words.
 - Don't worry much about memorizing kanji spellings of Japanese names. Note them when they come up, but don't feel bad about instantly forgetting them.
 - Stick to plain, horizontal, non-caligraphy text. The ability to read fancy text can be much more easily acquired once you can already fluidly read plain text.
