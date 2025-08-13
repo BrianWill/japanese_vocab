@@ -1,6 +1,8 @@
 # Japanese Input trainer
 
-A program for [learning Japanese through input](input.md) by listening to stories and drilling their vocabulary.
+A program for learning Japanese through input by listening to stories and drilling their vocabulary.
+
+See the learning [guide](/learning.md).
 
 ![](./images/story.jpg)
 
