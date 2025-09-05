@@ -33,6 +33,13 @@ You not only get all the concrete information conveyed, you understand the nuanc
 
 > *Jack is a disrepectful trickster comic hero who speaks in kansai dialect. The giant talks like a tough yakuza guy. The story is narrated from an authoritative, impartial, 3rd-person perspective,*
 
+## Modes of input practice
+
+1. Scanning
+2. Intensive reading
+3. Intensive listening: can mostly understand but following along with transcript to check understanding and occasionally stop to check words / translation.
+4. 
+
 ## Selecting content
 
 1. Consume content of varying difficulties. Use content within your level to reinforce what you've learned and develop fluidity. Use content above your level to acquire new words and language patterns. Content counts as "within your level" if you can understand it enough to stay engaged. You don't necessarily understand every word or sentence, but you can follow most of the core information being conveyed.

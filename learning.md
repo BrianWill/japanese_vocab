@@ -2,41 +2,38 @@
 
 There are two key milestones on the path to acquiring a second language:
 
-- First is the comprehension milestone, the point at which you are able to consume interesting content (text, audio, video, etc.) in the target language with a sufficient degree of understanding and fluidity to stay engaged with it.
+- First is the comprehension milestone, the point at which you are able to consume interesting content (text, audio, video, etc.) in the target language with a sufficient degree of understanding and fluidity to stay engaged with what you attempt to listen to or read.
 - Second is the speaking milestone, the point at which you have sufficient listening skills and vocabulary to attempt non-trivial spoken communication.
-
-The speaking milestone follows comprehension because speaking rests upon a foundation of listening comprehension.
 
 How long it takes to reach these milestones depends upon the distance between your own language and the target language. For a Spanish speaker learning Italian or *vice versa*, these milestones can be reached in perhaps just a few months. For an English speaker learning Japanese or *vice versa*, this usually takes multiple years.
 
-Once you reach these two milestones, the path forward is clear: consume tons of content and do lots of speaking practice. The hard question, though, is how to reach these milestones in the first place, especially for languages like Japanese that take a long time to acquire.
+Once you reach these two milestones, the path forward is clear: consume tons of content and do lots of speaking practice. The hard question, though, is how to reach these milestones in the first place, especially for a language like Japanese that takes a long time to acquire.
 
 ## General points
 
 To reach these goals, you of course must practice, but how exactly? We'll discuss that in [the next part](/practice.md), but first, here are some premises to keep in mind:
 
-➣ Speaking proficiency rests on a foundation of listening comprehension. In terms of vocabulary, the direct connection in our brains between the sound and meaning of a word is formed by experiencing that connection many, many times when spoken by others. Without this direct connection, words will not come to us quickly and naturally enough when we need to use them. In terms of grammar, fluent speaking entails imitation of patterns we have absorbed from many, many instances spoken by others. Effectively then, we can't say things which we can't understand. 
+➣ Speaking proficiency rests on a foundation of listening comprehension. In terms of vocabulary, the direct connection in our brains between the sound and meaning of a word is formed by experiencing that connection many, many times when spoken by others. Without this direct connection, words will not come to us quickly and naturally enough when we need to use them. Likewise, in terms of grammar, fluent speaking entails imitation of patterns we have absorbed from many, many instances spoken by others. In short, we can't say things which we can't understand.
 
 ➣ Fully fluent reading requires both listening proficiency and speaking proficiency. Natural, fluent reading is partly a simulation of speech&mdash;the reader activates a speaking voice in their head&mdash;and as we just established, speaking rests on a foundation of listening.
 
 ➣ For a long time, you wont understand most of what you encounter, and that which you do understand will often require conscious effort. “Natural”, automatic understanding comes only with massive consumption of the language, and still only then slowly and in pieces.
 
-➣ As long as the language itself distracts you from focusing on the content of what you read and hear, your input consumption will be [*intensive* rather than *extensive*](https://en.wikipedia.org/wiki/Extensive_reading). This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and consciously pondering how the words fit together. Consuming input intensively is a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day, but this intensive phase of learning cannot be fully skipped.
+➣ As long as the language itself distracts you from focusing on the content of what you read and hear, your input consumption will be [*intensive* rather than *extensive*](https://en.wikipedia.org/wiki/Extensive_reading). This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and consciously pondering how the words fit together. Consuming input intensively is a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day, but this intensive part of learning cannot be fully skipped.
 
-➣ Comfort in a language with a particular topic and style of content doesn’t necessarily translate to comfort with other topics or styles. If you wander outside of your comfort zone, you may feel like your comprehension level has suddenly regressed, even when that is most likely not the case.
+➣ Comfort in a language with a particular topic and style of content doesn’t necessarily translate to comfort with other topics or styles. If you wander outside of your comfort zone, you may feel like your comprehension level has suddenly regressed, but in truth you are simply encountering new or unfamiliar parts of the language.
 
-➣ Full memorization of a word or kanji will typically require many exposures. Instead of consciously trying to force memorization, you should lean heavily on tools that allow you to quickly and easily look up words and kanji. In other words, the best strategy is to **depend upon reminders, not memorization.**
+➣ Full memorization of a word or kanji will typically require many exposures. Instead of consciously trying to force memorization, you should lean heavily on tools that allow you to quickly and easily look them up when encountered. In other words, the best approach is to **depend upon reminders, not memorization.**
 
-➣ A single aspect of a language cannot be truly mastered in isolation. For example, learners commonly have difficulty with multi-digit numbers, so they often practice numbers as an isolated skill. While this kind of focused practice can have some benefits, it's a mistake to expect that it will imbue mastery. The full development and maintenance of language skills requires an enormous amount of repetitive and contextual reinforcement that can only be delivered by real, practical use of the language. If you get stuck practicing isolated features of a language, that effort will largely end up wasted.
+➣ A single aspect of a language cannot be truly mastered in isolation. For example, learners commonly have difficulty with multi-digit numbers, so they often practice numbers as an isolated skill. While this kind of focused practice can have some benefits, it's a mistake to expect that it will imbue mastery. The full development and maintenance of language skills requires an enormous amount of repetitive and contextual reinforcement that can only be delivered by real, practical use of the language. If you put too much effort into practicing isolated features of a language, the effort will largely end up wasted.
 
-➣ Similarly, you should not expect to master a 'level' of the language before moving on. For example, when learners reach a point where they feel quite familiar with the vocabulary and grammar of the N5 and N4 levels of JLPT, understanding and using Japanese of this level still typically require conscious effort. Because the portion of Japanese they've so far acquired does not yet feel 'natural', learners often get stuck fixated on refining their mastery of this subset of the language rather than moving on. This is a mistake. Again, the full development and maintenance of language skills requires an enormous amount of repetitive and contextual reinforcement that can only be delivered by real, practical use of the language. The challenge for learners, then, is that they must reach a point of critical mass where they have enough vocabulary and grammar for the language to be useful for them. Only then can they engage enough with the language to develop any real mastery.
-
+➣ Similarly, you should not expect to master a 'level' of the language before moving on to higher levels. For example, when learners reach a point where they feel quite familiar with the vocabulary and grammar of the N5 and N4 levels of JLPT, understanding and using Japanese of this level still typically requires conscious effort. Because the portion of Japanese the learner has so far acquired does not yet feel 'natural', they often get stuck fixated on refining their mastery of this subset of the language rather than broadening their exposure. This is a mistake. Again, the full development and maintenance of language skills requires an enormous amount of repetitive and contextual reinforcement that can only be delivered by real, practical use of the language. The challenge for learners, then, is that they must reach a point of critical mass where they have enough vocabulary and grammar for the language to be useful. This base level of utility unlocks both the means and motivation for the learner to engage with the language at a sufficient scale that will develop actual mastery.
 
 ## Word acquisition
 
 Acquisition of a new word broadly follows this sequence:
 
-### 1. Acquire a phonetic memory of a word
+### 1. Acquire the phonetic memory of a word
 
 Human brains are remarkably good at absorbing the unique sound signatures of words. Often it takes hearing a word just a handful of times before you can fairly reliably recognize the sound of a word when you hear it, even mixed into sentences that otherwise consist of totally unknown words. 
 

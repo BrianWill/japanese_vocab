@@ -33,8 +33,8 @@ As valuable as reading can be, understand that reading alone is not sufficient f
 - Text lacks the inflectional and emotive cues of speech. Such cues are not only important parts of communication, they can serve as training wheels that greatly assist in comprehension. 
 - Proper pronunciation is only fully conveyed through speech. Too much reading without listening might instil bad pronunciation habits.
 - The human language faculty is wired for listening, not reading. Unlike listening, reading is in a sense an "unnatural" mental activity that requires special practice and incurs significant mental overhead. 
-- The natural language processing that occurs when listening is sequential and keeps moving, unlike reading, which can be processed out of order and at your own pace. On the upside, even slow and hesitant reading is a good way to engage with vocabulary, but such kind of reading doesn't necessarily properly engage and exercise your natural language faculty. So until you can read with reasonable fluency, you'll need to focus on listening practice to develop your core comprehension skills.
-- According to the best research, fluent reading is mapped in the brain through phonemes, meaning it relies upon triggering phonetic memories of words. Surprisingly, this applies even in Japanese even though its writing is not fully phonetic. The implication is that you will not be able to fluently read until you already have advanced listening skills. Until then, your reading will remain halting and labored no matter how well you know the characters.
+- The natural language processing that occurs when listening is sequential and keeps moving, unlike reading, which can be processed out of order and at your own pace. On the upside, even slow and hesitant reading is a good way to engage with vocabulary, but this sort of reading doesn't necessarily properly engage and exercise your natural language faculty. So until you can read with reasonable fluency, you'll need to focus on listening practice to develop your core comprehension skills.
+- According to the best research, fluent reading is mapped in the brain through phonemes, meaning it relies upon triggering phonetic memories of words. Surprisingly, this applies even in Japanese even though its writing is not fully phonetic. The implication of this is that you will not be able to fluently read until you already have advanced listening skills. Until then, your reading will remain halting and labored no matter how well you know the characters.
 
 ## Do I really need to write Japanese by hand?
 
@@ -67,7 +67,7 @@ So you'll likely find that your katakana reading lags behind your hiragana readi
 
 ## How should I learn kanji?
 
-There are tens of thousands of kanji that have been used throughout Japanese history, but only ~6000 kanji are used in modern Japanese with any frequency, and most native Japanese do not know all of these 6000. A typical educated native speaker can reliably read perhaps 3000-4000 kanji *in the context of words and names*, but the number of kanji they can recognize and define as *isolated characters* is somewhat smaller, and the number of kanji they can *write by hand from memory* is even smaller (say, perhaps, 2500 on the high end).
+There are tens of thousands of Chinese characters that have been used throughout history, but only ~6000 kanji are used in modern Japanese with any frequency, and most native Japanese do not know all of these 6000. A typical educated native speaker can reliably read perhaps 3000-4000 kanji *in the context of words and names*, but the number of kanji they can recognize and define as *isolated characters* is somewhat smaller, and the number of kanji they can *write by hand from memory* is even smaller (say, perhaps, 2500 on the high end).
 
 **The most frequently used 1500-2000 kanji account for 99%+ of the kanji characters in typical modern Japanese writing. An additional 1000-1500 kanji cover most of the remaining 1%.**
 
@@ -75,7 +75,7 @@ There are tens of thousands of kanji that have been used throughout Japanese his
 
 From personal experience, I can say that attempting to memorize all of the kanji up front through drills is a terrible idea. At most, you should learn your first 200 or 300 kanji through drills, but thereafter you should simply focus on the kanji that come up in your reading and listening material.
 
-Understand that **reading a word does not require fully 'knowing' its kanji!** In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. So instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn. When looking up a word, note the relevant meanings and pronunciations of the individual kanji, but otherwise don't study or drill the kanji on their own.
+Understand that **reading a word does not require fully 'knowing' its kanji!** In practice, most words spelt with kanji are recognized as a whole, not by their individual kanji. So instead of trying to memorize individual kanji on their own, you should focus on learning kanji in the context of the words you learn. When looking up a word, note the relevant meanings and pronunciations of the individual kanji, but otherwise you shouldn't study or drill the kanji on their own.
 
 ---
 
@@ -93,6 +93,6 @@ So attempting to brute force memorize the kanji spellings of Japanese names is p
 - Drill hiragana and katakana to learn the characters, but keep in mind that fluid reading of kana will only develop through reading lots of real words and sentences.
 - Don’t drill kanji: instead, absorb kanji from words.
 - Don't worry much about memorizing kanji spellings of Japanese names. Note them when they come up, but don't feel bad about instantly forgetting them.
-- Stick to plain, horizontal, non-caligraphy text. The ability to read fancy text can be much more easily acquired once you can already fluidly read plain text.
-- Don’t expect to be able to read Japanese fluidly until you have a quite lage vocabulary and advanced listening comprehension skills.
+- Stick to plain, horizontal, non-calligraphy text. The ability to read fancy text can be much more easily acquired once you can already fluidly read plain text.
+- Don’t expect to be able to read Japanese fluidly until you have a quite large vocabulary and advanced listening comprehension skills.
 

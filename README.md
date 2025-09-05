@@ -2,7 +2,12 @@
 
 A program for learning Japanese through input by listening to stories and drilling their vocabulary.
 
-See the learning [guide](/learning.md).
+See the learning guide pages:
+
+- [Learning Japanese](/learning.md)
+- [Practicing Japanese](/practice.md)
+- [Japanese input](/input.md)
+- [Japanese writing](/writing.md)
 
 ![](./images/story.jpg)
 
