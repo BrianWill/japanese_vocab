@@ -10,11 +10,11 @@ We'll evaluate five kinds of language practice:
 
 ## Immersion
 
-A shipwreck survivor washes ashore in an unfamiliar land, taken in by a remote village that exclusively speaks another language. Cut off entirely from outside contact, the stranger's every conversation, every request for food, every shared task must happen in the villagers’ tongue. There are no translation apps, no bilingual dictionaries&mdash;only gestures, trial and error, and the pressing need to understand and be understood. The stranger must communication to survive, but this motivation drives them to acquire conversational proficiency in months, rather than years, enabled by the omni-presence and omni-necessity of the new language. This is the ideal scenario for second language acquisition: rare, extreme, and almost impossible to replicate in modern life.
+A shipwreck survivor washes ashore in an unfamiliar land, taken in by a remote village that exclusively speaks another language. There are no translation apps, no bilingual dictionaries&mdash;only gestures, trial and error, and the pressing need to understand and be understood. The stranger must communication to survive, but this motivation drives them to acquire conversational proficiency in months, rather than years, enabled by the omni-presence and omni-necessity of the new language. This is the ideal scenario for second language acquisition: rare, extreme, and almost impossible to replicate in modern life.
 
-Of course, children acquiring their first language naturally experience an immersion scenario like that of the shipwrecked stranger, which is why almost all children reliably acquire their first language with seemingly no deliberate effort. However, an adult or teenager learning a second language cannot simply recreate comparable conditions. A child grows up surrounded by native speakers who constantly address them, simplify their speech, and give the child daily opportunities for social interaction within the target language community. The child is dependent on the language to get their needs met, and they have years to absorb it without any expectation from others of high comprehension or sophisticated production. In contrast, a person past childhood will rarely receive the same kind of constant, patient, simplified input, nor will they commonly be given social permission to insert themselves into a peer group of native speakers and learn by osmosis.
+Of course, children acquiring their first language naturally experience an immersion scenario like that of the shipwrecked stranger, which is why almost all children reliably acquire their first language with seemingly no deliberate effort. However, an adult or teenager learning a second language cannot simply recreate comparable conditions. A child grows up surrounded by native speakers who constantly address them, simplify their speech, and give the child daily opportunities for social interaction in the target language. The child is dependent on the language to get their needs met, and they have years to absorb it without any expectation from others of high comprehension or sophisticated production. But as a person enter adolescence, they stop receiving the same kind of constant, patient, simplified input, and less and less often will they be granted social permission to insert themselves into a peer group of native speakers and learn by osmosis.
 
-Not only is it impossible to replicate the conditions of childhood, modern life rarely strips away access to your native language, and most people cannot completely sever ties with their existing social and professional networks. Although access to Japanese media is more plentiful than ever online, there are still very few opportunities outside Japan for true immersion, such as natural face-to-face conversation or incidental communication.  Even living in Japan does not fully solve this problem, as it’s common for a foreigner to spend much of their day in English-speaking workplaces, socializing with other expatriates, or retreating to native-language media after hours. So even in the best circumstances, the inescapable necessity that drives rapid language acquisition isn't practical in the life circumstances of most people.
+Although access to Japanese media is more plentiful than ever online, there are still very few opportunities outside Japan for true immersion, such as natural face-to-face conversation or incidental communication. Even living in Japan does not fully solve this problem, as it’s common for a foreigner to spend much of their day in English-speaking workplaces, socializing with other expatriates, or retreating to their own native language media at home. So not only is it practically impossible to replicate the language learning conditions of childhood, modern life rarely strips away your access to your native language, and most people cannot afford to completely sever their existing native-language social ties.  
 
 To the extent it can be approximated in your life, immersion is extremely valuable, but outside of very special living situations, a typical language learner will not get very far without other forms of practice.
 
@@ -22,7 +22,7 @@ To the extent it can be approximated in your life, immersion is extremely valuab
 
 The value of explicit grammar knowledge in acquiring a language is highly debated. The obvious demerits are:
 
-- Conscious thinking about grammar while speaking or listening requires too much mental overhead and in fact steals your focus while you're trying to speak or understand.
+- Conscious thinking about grammar while speaking or listening requires too much mental overhead and steals your focus while you're trying to speak or understand.
 - The grammar of all natural human languages have parts that are messy and murky.
 - Accurate, complete grammar information is hard to find.
 
@@ -77,3 +77,6 @@ This listening-only approach would have a few advantages:
 # Input
 
 [Input is covered on its own page.](/input.md)
+
+
+

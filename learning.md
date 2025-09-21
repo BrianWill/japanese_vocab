@@ -13,11 +13,15 @@ Once you reach these two milestones, the path forward is clear: consume tons of 
 
 To reach these goals, you of course must practice, but how exactly? We'll discuss that in [the next part](/practice.md), but first, here are some premises to keep in mind:
 
-➣ Speaking proficiency rests on a foundation of listening comprehension. In terms of vocabulary, the direct connection in our brains between the sound and meaning of a word is formed by experiencing that connection many, many times when spoken by others. Without this direct connection, words will not come to us quickly and naturally enough when we need to use them. Likewise, in terms of grammar, fluent speaking entails imitation of patterns we have absorbed from many, many instances spoken by others. In short, we can't say things which we can't understand.
-
-➣ Fully fluent reading requires both listening proficiency and speaking proficiency. Natural, fluent reading is partly a simulation of speech&mdash;the reader activates a speaking voice in their head&mdash;and as we just established, speaking rests on a foundation of listening.
-
 ➣ For a long time, you wont understand most of what you encounter, and that which you do understand will often require conscious effort. “Natural”, automatic understanding comes only with massive consumption of the language, and still only then slowly and in pieces.
+
+➣ Speaking proficiency rests on a foundation of listening comprehension. In terms of vocabulary, the direct connection in our brains between the sound and meaning of a word is formed by *experiencing* that connection many, many times when we hear the word spoken by others. Without this direct connection, words will not come to us quickly and naturally enough when we need to use them. Likewise for grammar, fluent speaking entails imitation of patterns we have absorbed from many, many instances spoken by others. In sum, **we can't say things which we can't understand**.
+
+➣ Fully fluent reading requires both listening proficiency and speaking proficiency. Natural, fluent reading is partly a simulation of speech&mdash;the reader activates a speaking voice in their head&mdash;and as we just established, speaking rests on a foundation of listening. This implies:
+
+1. Your reading fluency cannot exceed your listening comprehension.
+2. When listening to something that you struggle to understand, reading along with a transcript is an *unnatural* act.
+3. Therefore, it's critical to practice pure listening without text because the mental overhead of reading will distract your focus from the spoken language. Without listening-only practice, your listening comprehension will not properly develop.
 
 ➣ As long as the language itself distracts you from focusing on the content of what you read and hear, your input consumption will be [*intensive* rather than *extensive*](https://en.wikipedia.org/wiki/Extensive_reading). This is not a matter of learning style or choice: the beginner simply cannot understand what they read or hear without looking up many words and consciously pondering how the words fit together. Consuming input intensively is a slow process which consumes much mental energy and greatly limits how much language content can be encountered per day, but this intensive part of learning cannot be fully skipped.
 
@@ -89,7 +93,7 @@ Finally, once a word is fully in your passive vocabulary, the meaning will regis
 
 > おんがく
 
-It's common to have a large set of words that seem stuck in the earlier stages, but understand that this is normal. Don't get frustrated when you catch yourself consciously thinking about a word when you hear it even if it's a word you've heard a thousand times already. Some words will just take longer than others.
+It's common to have a large set of words that seem stuck in the early stages, but understand that this is normal. Don't get frustrated when you catch yourself consciously thinking about a word even if it's a word you've heard a thousand times already. Some words will just take longer than others.
 
 In fact, until you can listen to interesting content with a high degree of comprehension, many words will probably hover at the border of this final threshold. Only once the language is really useful to you such that you can actually consume content for the content's own sake rather than language practice will the vocabulary and language patterns become truly ingrained.
 
