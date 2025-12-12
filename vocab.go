@@ -194,12 +194,21 @@ func (v *VocabDB) Delete(id int) error {
 }
 
 // LIST ALL
-func (v *VocabDB) ListAll() ([]Vocab, error) {
-	rows, err := v.DB.Query(`
+func (v *VocabDB) ListAll(excludeArchived bool) ([]Vocab, error) {
+	queryStr := `
         SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, archived
         FROM vocab
         ORDER BY id
-    `)
+    `
+	if excludeArchived {
+		queryStr = `
+			SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, archived
+			FROM vocab
+			ORDER BY id
+			WHERE archived = 0
+		`
+	}
+	rows, err := v.DB.Query(queryStr)
 	if err != nil {
 		return nil, err
 	}

@@ -110,3 +110,9 @@ func WeightedSample(entries []Entry, n int) []Entry {
 
 	return result
 }
+
+func assert(cond bool, msg string) {
+	if !cond {
+		panic(msg)
+	}
+}

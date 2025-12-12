@@ -16,7 +16,7 @@ main menu:
 After each drill, show list of words suggested to archive based on their lifetime drill count
 
 
- 
+
 video playback:
     control vlc or another video player from the app
         open / play video, seek to timestamp
@@ -24,8 +24,6 @@ video playback:
             launch VLC with option: `--extraintf rc` or `--extraintf http`
         try mpv player
 
-display timer indicating length of the drill session
-    clock that counts up since start of the program
     
 
 add/arcive csv files from directories instead of from a single file

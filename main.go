@@ -21,7 +21,16 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+var startTime time.Time
+
 func main() {
+	// hide terminal cursor
+	out := colorable.NewColorableStdout()
+	fmt.Fprintln(out, "\033[?25l")       // hide cursor
+	defer fmt.Fprintln(out, "\033[?25h") // show cursor
+
+	startTime = time.Now()
+
 	vocabList, err := LoadVocabCSVFile("add_words.csv")
 	if err != nil {
 		log.Fatal(err)
@@ -53,11 +62,6 @@ func main() {
 	//tcellDemo()
 
 	return
-
-	rand.Seed(time.Now().UnixNano())
-
-	fmt.Println("Starting drill session. Press ENTER with no input to quit.")
-	// drillLoop(db)
 }
 
 func mainMenu(db VocabDB) error {
@@ -100,25 +104,32 @@ loop:
 	return nil
 }
 
+// return false when user gets through all items, return true when user wants to quit early
 func drillRound(vocab []*Vocab) (bool, error) {
 
 	out := colorable.NewColorableStdout()
-
-	vocabPrintOrder := make([]*Vocab, len(vocab))
-	copy(vocabPrintOrder, vocab)
 
 	rand.Shuffle(len(vocab), func(i, j int) {
 		vocab[i], vocab[j] = vocab[j], vocab[i]
 	})
 
-	for len(vocab) > 0 {
+	numCorrect := 0
+	currentIdx := 0
+
+	for {
 		screen.Clear()
 		screen.MoveTopLeft()
-		fmt.Println(" DRILL WORDS:\n")
 
-		currentVocab := vocab[0]
+		elapsedTime := time.Since(startTime)
+		minutes := int(elapsedTime / time.Minute)
+		seconds := int((elapsedTime % time.Minute) / time.Second)
 
-		for _, v := range vocabPrintOrder {
+		fmt.Printf(" DRILL WORDS (elpased time %d min %02d sec):\n\n", minutes, seconds)
+
+		currentVocab := vocab[currentIdx]
+
+		// print unanswered and wrong
+		for _, v := range vocab {
 			def := "\t\t" + v.Kana + ": " + v.Definition
 
 			if v.DrillInfo.Correct {
@@ -132,7 +143,11 @@ func drillRound(vocab []*Vocab) (bool, error) {
 			} else {
 				if v.DrillInfo.Wrong {
 					if v == currentVocab {
-						fmt.Fprintln(out, Yellow, "  🗙  ", v.Word)
+						if len(vocab)-numCorrect == 1 { // case of one remaining
+							fmt.Fprintln(out, Yellow, "  🗙  ", v.Word, def)
+						} else {
+							fmt.Fprintln(out, Yellow, "  🗙  ", v.Word)
+						}
 					} else {
 						fmt.Fprintln(out, Red, "  🗙  ", v.Word, def)
 					}
@@ -148,8 +163,8 @@ func drillRound(vocab []*Vocab) (bool, error) {
 		}
 
 		fmt.Fprintln(out)
-		fmt.Fprintln(out, Cyan, "  a.  Mark yellow word as correct", ColorReset)
-		fmt.Fprintln(out, Cyan, "  d.  Mark yellow word as wrong", ColorReset)
+		fmt.Fprintln(out, Cyan, "  a.  Mark yellow word as wrong", ColorReset)
+		fmt.Fprintln(out, Cyan, "  d.  Mark yellow word as correct", ColorReset)
 		fmt.Fprintln(out, Cyan, "  q.  Back to main menu", ColorReset)
 
 		// Get current terminal state so we can restore it
@@ -169,23 +184,31 @@ func drillRound(vocab []*Vocab) (bool, error) {
 
 		switch ch {
 		case "a":
-			currentVocab.DrillInfo.Correct = true
-			vocab = vocab[1:]
-		case "d":
 			currentVocab.DrillInfo.Wrong = true
-			if len(vocab) > 1 {
-				vocab[0], vocab[1] = vocab[1], vocab[0]
-			}
+		case "d":
+			currentVocab.DrillInfo.Correct = true
+			numCorrect++
 		case "q":
 			return true, nil
 		}
-	}
 
-	return false, nil
+		// pick the first item that is not correct and isn't at currentIdx
+		// (for case of one remaining, stays at currentIdx)
+		for i, v := range vocab {
+			if i != currentIdx && !v.DrillInfo.Correct {
+				currentIdx = i
+				break
+			}
+		}
+
+		if numCorrect == len(vocab) {
+			return false, nil
+		}
+	}
 }
 
 func drillLoop(db VocabDB) error {
-	allVocab, err := db.ListAll()
+	allVocab, err := db.ListAll(true)
 	if err != nil {
 		return err
 	}
@@ -196,12 +219,12 @@ func drillLoop(db VocabDB) error {
 	}
 
 	for len(vocab) > 0 {
-		done, err := drillRound(vocab)
+		quit, err := drillRound(vocab)
 		if err != nil {
 			return err
 		}
 
-		if done {
+		if quit {
 			break
 		}
 
