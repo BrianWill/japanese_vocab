@@ -1,0 +1,462 @@
+body {
+    background-color: rgb(35, 35, 35);
+    color: #dfdfdf;
+    font-size: 100%;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    overflow-y: scroll;
+}
+
+h3 {
+    margin-left: 1em;
+}
+
+#drill_title a {
+    color: white;
+}
+
+.kanji_spelling {
+    font-size: 240%;
+    white-space: nowrap;
+    color: #daa506;
+    margin-right: 1em;
+}
+
+.reading {
+    font-size: 180%;
+    color: #dd3939;
+    margin-bottom: 0.4em;
+    margin-right: 1em;
+}
+
+.entry {
+    margin-top: 3em;
+    margin-bottom: 2em;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: min-content min-content;
+    gap: 0px 0px;
+}
+
+.word {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: min-content min-content;
+    gap: 0px 0px;
+}
+
+.sense {
+    padding: 10px;
+    font-size: 120%;
+    margin-top: 6px;
+}
+
+.pos {
+    background-color: #13110f;
+    color: #909090;
+    margin-right: 3px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 50%;
+}
+
+.glosses {
+    color: #c3c3c3;
+    font-size: 80%;
+    line-height: 180%;
+    margin-top: 9px;
+}
+
+.high_pitch {
+    border-top: #63ab59 3px dotted;
+    /* font-weight: bold; */
+    /* color: #ff6a6a;;  */
+}
+
+#word_results {
+    margin-left: 2em;
+    margin-top: 3em;
+}
+
+#word_results hr {
+    border: 1px solid #d2d2d2;
+}
+
+#interior_link {
+    text-decoration: none;
+}
+
+#interior_results {
+    margin-top: 3em;
+}
+
+#results {
+    background-color: rgb(36, 41, 55);
+    border-top-right-radius: 90px;
+    height: 100%;
+}
+
+#answer {
+    font-size: 130%;
+    gap: 0px 0px;
+}
+
+#answer .literal {
+    margin-right: 1em;
+    font-size: 300%;
+}
+
+#answer .kanji_meanings {
+    color: #575757;
+    margin-top: 0.5em;
+}
+
+.drill_word {
+    cursor: default;
+    padding: 2px 0px 13px 30px;
+    margin: 22px;
+    font-size: 270%;
+    color: #b2b2b2;
+    background-color: black;
+    border-radius: 8px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+
+#words div.drill_word:first-of-type .base_form {
+    font-size: 105%;
+    color: #ececec;
+}
+
+.rank {
+    margin-left: auto;
+    margin-right: 20px;
+    font-size: 30%;
+    color: #828282;
+}
+
+#drill_info {
+    font-size: 80%;
+}
+
+#drill_info .rank_number {
+    color: #767676;
+}
+
+#drill_info .cooldown {
+    color: #767676;
+}
+
+.drill_word:not(.answered):nth-child(1) {
+    border: #dfdfdf solid 3px;
+}
+
+.drill_word.wrong {
+    background-color: rgb(120, 0, 0);
+}
+
+
+.drill_word.answered {
+    margin-left: 80px;
+    font-size: 170%;
+    opacity: 0.5;
+}
+
+#card_separator {
+    border: 10px solid #6a6a6a;
+}
+
+#drill_complete {
+    background-color: #33752a;
+    text-align: center;
+    padding: 0.4em;
+}
+
+#definitions {
+    padding: 0em 2em;
+    /* margin-right: 1em; */
+    font-size: 70%;
+}
+
+.onyomi_readings {
+    font-size: 145%;
+    color: #008188;
+}
+
+.kunyomi_readings {
+    font-size: 145%;
+    color: #dd3939;
+}
+
+.kanji_misc {
+    font-size: 70%;
+    margin-top: 0.6em;
+    color: #8a746a;
+}
+
+.kanji_reading {
+    margin-right: 1em;
+    white-space: nowrap;
+}
+
+.frequency {
+    margin-left: 2em;
+}
+
+.kanji {
+    margin-bottom: 1em;
+    margin-right: 1em;
+    width: 30%;
+    flex: 1 1 auto;
+}
+
+#kanji_results {
+    padding: 1em 2em;
+    font-size: 80%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: start;
+    align-items: start;
+}
+
+#kanji_results .literal {
+    color: #daa506;
+}
+
+#kanji_results .kanji_meanings {
+    color: #c3c3c3;
+    margin-top: 0.5em;
+}
+
+#repetitions {
+    font-size: 120%;
+    margin: 5px;
+    width: 9em;
+}
+
+#drill_recency {
+    font-size: 100%;
+    margin: 5px;
+    width: 12em;
+}
+
+#right_sidebar select {
+    font-size: 100%;
+    margin: 5px;
+    width: 12em;
+    overflow: hidden;
+}
+
+#right_sidebar select option:checked {
+    background-color: rgb(122, 129, 150);
+}
+
+#current_repetitions {
+    margin-right: 30px;
+}
+
+#top_link a {
+    color: rgb(117, 117, 117);
+    padding: 1em;
+}
+
+#top_link .header_link {
+    font-size: 70%;
+}
+
+#rank_slider {
+    display: inline-block;
+    width: 120px;
+}
+
+/* copied from https://www.w3schools.com/howto/howto_js_snackbar.asp
+  The snackbar - position it at the bottom and in the middle of the screen */
+#snackbar {
+    visibility: hidden;
+    /* Hidden by default. Visible on click */
+    min-width: 250px;
+    /* Set a default minimum width */
+    margin-left: -125px;
+    /* Divide value of min-width by 2 */
+    background-color: #333;
+    /* Black background color */
+    color: #adadad;
+    /* White text color */
+    text-align: center;
+    /* Centered text */
+    border-radius: 2px;
+    /* Rounded borders */
+    padding: 16px;
+    /* Padding */
+    position: fixed;
+    /* Sit on top of the screen */
+    z-index: 1;
+    /* Add a z-index if needed */
+    left: 50%;
+    /* Center the snackbar */
+    bottom: 30px;
+    /* 30px from the bottom */
+}
+
+.snackbar_word {
+    color: #ffffff;
+    font-size: 120%;
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+    visibility: visible;
+    /* Show the snackbar */
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+    However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.5s;
+    animation: fadein 0.5s;
+}
+
+#snackbar.hide {
+    visibility: visible;
+    /* Show the snackbar */
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+    However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.0s, fadeout 0.5s;
+    animation: fadein 0.0s, fadeout 0.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+
+@keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+
+.drill_word .rank1 {
+    color: #c44949;
+}
+
+.drill_word .rank2 {
+    color: #b2b23b;
+}
+
+.drill_word .rank3 {
+    color: #429642;
+}
+
+.drill_word .rank>span {
+    font-size: 40%;
+}
+
+#words_container {
+    height: 98vh;
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+
+    grid-auto-columns: 1fr;
+    grid-template-areas:
+        "definition words sidebar";
+}
+
+#right_sidebar {
+    grid-area: sidebar;
+    user-select: none;
+}
+
+#definition {
+    grid-area: definition;
+}
+
+#words {
+    grid-area: words;
+}
+
+#home_link {
+
+    text-align: right;
+}
+
+#home_link a {
+    color: #838383;
+    margin-right: 1em;
+}
+
+#drill_controls {
+    color: white;
+    padding: 1em;
+}
+
+#drill_controls a {
+    color: white;
+}
+
+
+.info_symbol {
+    padding-right: 1em;
+    font-size: 100%;
+    cursor: help;
+    color: white;
+}
+
+minidenticon-svg svg {
+    height: 28px;
+    width: 28px;
+    bottom: -5px;
+    position: relative;
+}
+
+.word_count_archived {
+    font-size: 80%;
+    color: grey;
+}
+
+#drill_count_span {
+    padding-right: 1em;
+}
+
+#drill_count_range {
+    width: 60%;
+}

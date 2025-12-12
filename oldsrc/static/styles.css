@@ -1,0 +1,583 @@
+body {
+    background-color: rgb(35, 35, 35);
+    color: #aabdcf;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+}
+
+h3 {
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+#story {
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    letter-spacing: 0.02em;
+    font-size: 130%;
+}
+
+#home_link {
+    text-align: right;
+    padding: 0.5em;
+}
+
+#word_list_container {
+    margin-top: 5em;
+}
+
+#word_list {
+    font-size: 160%;
+    border-spacing: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#word_list td {
+    padding: 10px 50px 10px 10px;
+    border-left: solid rgb(138, 32, 32) 1px;
+    white-space: nowrap;
+}
+
+/* span.pad_left:not(:first-child) {
+    padding-left: 0.0em;
+} */
+
+/* pos highlighting */
+
+.highlight_pos span.noun,
+.highlight_pos tr.noun {
+    color: #bac4cd;
+}
+
+.highlight_pos span.counter,
+.highlight_pos tr.counter {
+    color: #5798d0;
+}
+
+.highlight_pos span.particle,
+.highlight_pos span.conjunction,
+.highlight_pos tr.particle,
+.highlight_pos tr.conjunction {
+    color: rgb(192, 191, 33);
+}
+
+.highlight_pos span.connecting_particle,
+.highlight_pos tr.connecting_particle {
+    color: rgb(127, 124, 4);
+}
+
+.highlight_pos span.verb_auxiliary,
+.highlight_pos tr.verb_auxiliary {
+    color: #9a6565;
+    ;
+}
+
+.highlight_pos span.adverb,
+.highlight_pos tr.adverb {
+    color: #458159;
+    ;
+}
+
+.highlight_pos span.verb,
+.highlight_pos tr.verb {
+
+    color: #b64747;
+}
+
+.highlight_pos span.i_adjective,
+.highlight_pos tr.i_adjective {
+    color: #b170be;
+}
+
+.highlight_pos span.pronoun,
+.highlight_pos span.admoninal_adjective,
+.highlight_pos tr.pronoun,
+.highlight_pos tr.admoninal_adjective {
+    color: #5782a9;
+}
+
+a {
+    color: #838383;
+}
+
+#story_list li {
+    margin-bottom: 0.4em;
+
+}
+
+.header_link {
+    color: #838383;
+    font-size: 70%;
+    margin-bottom: 1em;
+    font-weight: normal;
+}
+
+#log_events a {
+    color: #838383;
+}
+
+#log_events td {
+    padding-right: 1em;
+    padding-top: 0.4em;
+}
+
+#log_events table {
+    margin-left: 2em;
+}
+
+#queued_stories a {
+    color: #838383;
+}
+
+#queued_stories td {
+    padding-right: 1em;
+    padding-top: 0.4em;
+}
+
+#queued_stories table {
+    margin-left: 2em;
+}
+
+.story_table th {
+    padding-right: 2em;
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+.story_table td {
+    padding: 0.3em 0em;
+}
+
+#story_list input[type=number] {
+    background-color: #232323;
+    color: white;
+    font-size: 90%;
+    margin: auto;
+    width: 3em;
+}
+
+#story_list table,
+.story_table {
+    margin-left: 2em;
+}
+
+
+#story_list td,
+.story_table td {
+    padding-right: 1em;
+    padding-bottom: 0.5em;
+}
+
+
+.story_table {
+    border-spacing: 0px 0.5em;
+    /* Removes the cell spacing via CSS */
+    border-collapse: separate;
+    /* Optional - if you don't want to have double border where cells touch */
+}
+
+.day_row {
+    background-color: #405745;
+}
+
+.day_row td {
+    margin-top: 1em;
+}
+
+.day_row td:first-child {
+    padding: 0.5em;
+}
+
+.high_pitch {
+    font-weight: bold;
+}
+
+#story_title a {
+    text-decoration: none;
+    color: #aabdcf;
+}
+
+#top_link {
+    display: inline-block;
+    padding: 1em;
+}
+
+#top_link a {
+    color: rgb(117, 117, 117);
+    text-decoration: none;
+}
+
+
+#create_story_div {
+    padding: 0em 2em;
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    width: 50%
+}
+
+#create_story_div input {
+    width: 100%;
+    height: 1.5em;
+}
+
+#new_story_text {
+    width: 100%;
+    height: 8em;
+    resize: vertical;
+}
+
+#new_story_button {
+    background: #aabdcf;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+    display: block;
+    margin: auto;
+}
+
+#create_story_div input,
+#new_story_text {
+    display: block;
+    padding: 0.25rem;
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
+}
+
+#new_story_title:focus,
+#new_story_link:focus,
+#new_story_text:focus {
+    box-shadow: 0 0 0 3px #aabdcf, 0 0 0 1px black;
+    outline: none;
+}
+
+#player_controls {
+    font-size: 80%;
+    display: none;
+}
+
+input[type=number] {
+    margin-top: 1em;
+    width: 4em;
+}
+
+#lines_table td {
+    padding-bottom: 0.6em;
+}
+
+.line_timestamp {
+    font-size: 60%;
+    margin-right: 1em;
+}
+
+.line_timestamp_container {
+    width: 3em;
+    vertical-align: top;
+}
+
+#story_lines .line_timestamp:hover {
+    color: white;
+    cursor: pointer;
+    text-decoration: white solid underline;
+    text-underline-offset: 0.2em;
+}
+
+.rank1,
+.rank2,
+.rank3 {
+    border-radius: 14px;
+    padding-right: 0.2em;
+    padding-left: 0.2em;
+}
+
+.offcooldown.rank1,
+#story_lines.highlight_all_words span.rank1 {
+    background-color: #040404;
+    border: dashed #a1a0a0 1px;
+
+}
+
+.offcooldown.rank2,
+#story_lines.highlight_all_words span.rank2 {
+    background-color: #0d0d0d;
+}
+
+.offcooldown.rank3,
+#story_lines.highlight_all_words span.rank3 {
+    background-color: #393838;
+}
+
+
+span.pad_left:hover,
+span.particle:hover,
+span.verb_auxiliary:hover,
+span.verb:hover {
+    text-decoration-style: underline;
+}
+
+#highlight_message {
+    font-size: 80%;
+}
+
+/* copied from https://www.w3schools.com/howto/howto_js_snackbar.asp
+  The snackbar - position it at the bottom and in the middle of the screen */
+#snackbar {
+    visibility: hidden;
+    /* Hidden by default. Visible on click */
+    min-width: 250px;
+    /* Set a default minimum width */
+    margin-left: -125px;
+    /* Divide value of min-width by 2 */
+    background-color: #333;
+    /* Black background color */
+    color: #adadad;
+    /* White text color */
+    text-align: center;
+    /* Centered text */
+    border-radius: 2px;
+    /* Rounded borders */
+    padding: 16px;
+    /* Padding */
+    position: fixed;
+    /* Sit on top of the screen */
+    z-index: 1;
+    /* Add a z-index if needed */
+    left: 50%;
+    /* Center the snackbar */
+    bottom: 30px;
+    /* 30px from the bottom */
+}
+
+.snackbar_word {
+    color: #ffffff;
+    font-size: 120%;
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+    visibility: visible;
+    /* Show the snackbar */
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+    However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.5s;
+    animation: fadein 0.5s;
+}
+
+#snackbar.hide {
+    visibility: visible;
+    /* Show the snackbar */
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+    However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.0s, fadeout 0.5s;
+    animation: fadein 0.0s, fadeout 0.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+
+@keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+
+#story_actions {
+    margin-left: 2em;
+    margin-bottom: 1em;
+}
+
+#story_actions a {
+    line-height: 2em;
+    font-size: 80%;
+    padding: 0 0.3em;
+}
+
+#stories td {
+    padding-right: 3em;
+}
+
+#stories {
+    margin-left: 2.5em;
+}
+
+
+#stories th {
+    text-align: left;
+}
+
+.marked_line {
+    color: rgb(255, 251, 0);
+}
+
+
+.drill_link {
+    font-size: 60%;
+    margin-left: 1em;
+}
+
+#source_select {
+    font-size: 120%;
+}
+
+#ip {
+    padding: 1em;
+    color: rgb(114, 114, 114);
+    font-size: 80%;
+}
+
+.schedule_down_link,
+.schedule_up_link {
+    text-decoration: none;
+}
+
+.logged_row {
+    color: #525252;
+}
+
+.day_row.logged_row {
+    background-color: #5b615d;
+    color: rgb(183, 183, 183);
+}
+
+.schedule_remove_link {
+    text-decoration: none;
+}
+
+.schedule_add_link {
+    text-decoration: none;
+}
+
+.rep_type {
+    cursor: pointer;
+}
+
+.rep_type:hover {
+    text-decoration: underline;
+}
+
+.add_multiple_reps:not(:hover),
+.add_listening_rep:not(:hover),
+.add_drill_rep:not(:hover) {
+    text-decoration: none;
+}
+
+.listening {
+    color: #FF6978;
+}
+
+.drill {
+    color: #DFCF9D;
+}
+
+.rep_sequence>span {
+    margin-right: 0.5em;
+}
+
+.story_title {
+    color: #cabe7d;
+}
+
+#story_actions .info_symbol {
+    padding-right: 0;
+    font-size: 100%;
+    cursor: help;
+    color: white;
+}
+
+.info_symbol {
+    padding-right: 1em;
+    font-size: 100%;
+    cursor: help;
+    color: white;
+}
+
+#catalog_container {
+    display: flex;
+}
+
+#catalog_container #main_sidebar li {
+    font-size: 125%;
+    margin-bottom: 0.4em;
+ 
+}
+
+#main_sidebar {
+    padding-right: 3em;
+}
+
+.import_instructions {
+    max-width: 50em;
+    padding-bottom: 1em;
+    color: rgb(159, 159, 159);
+}
+
+.story_table .archived_percentage {
+    font-size:70%;
+}
+
+.story_table .green {
+    color: #5cce5c;
+}
+
+.story_table .yellow {
+    color: #e5e53d;
+}
+
+.story_table .red {
+    color: #df3838;
+}
+
+.story_table .times_logged {
+    text-align: center;
+}
+
+#word_stats span {
+    color: grey;
+}
+
+#word_stats label {
+    padding-right: 1em;
+}
+
+.story_recency {
+    color: grey;
+    font-size: 60%;
+}

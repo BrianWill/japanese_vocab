@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
+
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../import.css">
+    <title>Japan Vocab</title>
+</head>
+
+<body style="padding-left: 2em;">
+    <a href="/">home</a>
+
+    <h2>Importing</h2>
+
+    <div class="import_instructions">
+        Stories are imported in sets called "sources", which are represented as directories directly under the
+        "sources" directory. For example, the directory "sources/example" represents a source named
+        "example".
+    </div>
+
+    <div class="import_instructions">
+        In a source directory, each mp3 and mp4 file represents an individual story. For a story named `thing.mp3` or
+        `thing.mp4`, the English and Japanese VTT subtitle files in the same directory should be named, respectively,
+        `thing.en.vtt` and `thing.ja.vtt`.
+    </div>
+
+    <div class="import_instructions">
+        This import page lists all detected source directories. Clicking the `import` button of a source imports or
+        re-imports all the stories in that source. (Re-importing a story reprocesses its subtitle files.)
+    </div>
+
+    <div class="import_instructions">
+        WARNING: Importing longer stories may take a second or more, so
+        sources with many long stories may take a while.
+    </div>
+
+    <div id="sources">
+    </div>
+
+    <br>
+
+    <h3 style="margin-left: 0;">Invalid import files</h3>
+
+    <div class="import_instructions">
+        The following file paths were found under the "sources" directory but are not importable. They will be ignored
+        when
+        importing sources.
+    </div>
+
+    <div id="malformed_paths">
+    </div>
+
+    <div id="snackbar"></div>
+</body>
+<script src="../util.js"></script>
+<script src="../import.js"></script>
+
+</html>

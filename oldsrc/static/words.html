@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
+    <link rel="stylesheet" href="words.css">
+    <title>Japan Vocab</title>
+</head>
+
+<body>
+    <h2 id="drill_complete" style="display:none;">DRILL COMPLETE</h2>
+    <div id="words_container">
+        <div id="definition">
+            <div id="results">
+                <div id="answer">
+                    <div id="kanji_results"></div>
+                    <div id="definitions"></div>
+                </div>
+            </div>
+        </div>
+        <div id="words">
+            <h3 id="word_count_bar">
+                <span id="drill_count_span"></span>
+                <input title="drill set limit" id="drill_count_range" type="range" min="10" max="50" value="20" step="10"/>
+            </h3>
+            <div id="cards"></div>
+        </div>
+        <div id="right_sidebar">
+            <div id="home_link">
+                <span class="info_symbol" title="s = mark top word incorrect; d = mark top word correct; 1 = toggle top word archived">controls ⓘ</span>
+                <a href="/">home</a>
+            </div>
+            <h3 id="drill_title"></h3>
+            <h3 id="drill_info"></h3>
+            <div>
+                <select id="category" name="category" size="5" multiple>
+                    <option selected value="kanji">kanji characters</option>
+                    <option selected value="katakana">katakana words</option>
+                    <option selected value="ichidan">ichidan verbs</option>
+                    <option selected value="godan">godan verbs</option>
+                    <option selected value="other">other</option>
+                </select>
+            </div>
+            <div>
+                <select size="2" multiple id="archived_select">
+                    <option selected value='unarchived'>unarchived</option>
+                    <option value='archived'>archived</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div id="snackbar"></div>
+</body>
+<script src="words.js"></script>
+<script src="util.js"></script>
+
+</html>

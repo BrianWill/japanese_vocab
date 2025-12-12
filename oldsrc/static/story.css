@@ -1,0 +1,196 @@
+body {
+    overflow-y: hidden;
+}
+
+#caption_container {
+    display: flex;
+    transform: translateY(-12em);
+    width: 100%;
+    gap: 10%;
+}
+
+#story_container span.subtitle_word:hover {
+    color : rgb(197, 13, 13);
+}
+
+#story_container span.subtitle_word.archived:hover {
+    color : rgb(62, 164, 254);
+}
+
+#story_container .highlighted {
+    color : #ff6060;
+}
+
+#story_container .highlighted.capped {
+    color : rgb(255, 255, 73);
+}
+
+#story_container span.highlighted.verb {
+    color : rgb(255, 255, 73);
+}
+
+#story_container.hide_unhighlighted :not(.highlighted) {
+    color: rgba(0, 0, 0, 0);
+}
+
+#story_lines .scroll_subtitle_into_view_msg.active {
+    padding: 0.6em;
+    text-align:center;
+    width: 100%;
+    font-size: 70%;
+    border-radius: 10px;
+    background-color: rgba(183, 72, 18, 0.81);
+}
+
+#story_container {
+    display: flex;
+    height: 85vh;
+}
+
+#media {
+    width: 70%;
+}
+
+#story_text {
+    width: 30%;    
+}
+
+#video_player {
+    width: 100%;
+}
+
+#captions_en {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+    visibility: hidden;
+    justify-content: center;
+    color: white;
+    font-size: 140%;
+    /* transform: translateY(-10em); */
+    /*transform: translateY(calc(var(--plyr-control-spacing, 10px)*-4));*/
+}
+
+#captions_ja>div {
+    background-color: black;
+    padding: 0.2em;
+}
+
+#captions_en>div {
+    background-color: black;
+    padding: 0.2em;
+}
+
+#captions_ja {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    visibility: hidden;
+    justify-content: center;
+    color: white;
+    font-size: 200%;
+    /* transform: translateY(-6em); */
+    /*transform: translateY(calc(var(--plyr-control-spacing, 10px)*-4));*/
+}
+
+::cue {
+    opacity: 0%;
+    /* we want to hide the default subtitles */
+}
+
+.story_info {
+    font-size: 80%;
+}
+
+
+#story_lines {
+    font-family: "Noto Sans JP", TakaoPGothic, sans-serif;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+    font-size: 120%;
+    padding-left: 1.5em;
+    overflow-y: scroll;
+    margin-top: 0.5em;
+    padding-right: 1em;
+    height: 100%;
+    cursor: default;
+}
+
+#story_lines .marked_line.line_timestamp:hover {
+    color: rgb(255, 251, 0);
+    text-decoration: rgb(255, 251, 0) solid underline;
+}
+
+.remove_rep_link, .add_rep_link  {
+    text-decoration: none;
+}
+
+#story_actions .add_rep_link {
+    padding-right: 1em;
+}
+
+
+minidenticon-svg svg {
+    height: 28px;
+    width: 28px;
+    bottom: -5px;
+    position: relative;
+}
+
+#captions_meter {
+    background-color: rgb(191, 65, 65);
+    color: rgb(191, 65, 65);
+    font-size: 80%;
+    height:4px;
+    transform: translateY(-4em);
+    width: 100%;
+    margin: 0 auto;
+    visibility: hidden;
+}
+
+#captions_meter_indicator
+{
+    transform: translateX(-0.5em);
+}
+
+.subtitle {
+    display: flex;
+    flex-direction: row;
+}
+
+.subtitle.highlight .subtitle_start_time {
+    color: white;
+    font-size: 130%; 
+    font-weight: bold;
+}
+
+.subtitle_start {
+    font-size: 50%;
+    color: #a7a4a4;;
+    padding-right: 2em;
+    padding-top: 0.5em;
+    flex: 0 0 4em;
+    user-select: none;
+}
+
+.subtitle_lines {
+    display: inline-block;
+}
+
+#story_actions .action_item {
+    padding-right: 1.3em;
+}
+
+#subtitle_actions {
+    font-size: 70%;
+}
+
+#subtitle_actions label {
+    padding-right: 1em;
+}
+
+#subtitle_actions .action_item {
+    padding-right: 1em;
+}

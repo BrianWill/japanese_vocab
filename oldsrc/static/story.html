@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto%20Sans%20JP:400">
+    <link rel="stylesheet" href="../words.css">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../story.css">
+    <title>Japan Vocab</title>
+</head>
+
+<body>
+    <div id="story_container">
+        <div id="media">
+            <h3 id="story_title">Story
+            </h3>
+            <div id="story_actions">
+                <span id="player_controls" class="action_item">
+                    <label>Playback speed:</label>&nbsp;
+                    <input type="number" id="player_speed_number" value="1" min="0.4" max="1.6" step="0.05"
+                        class="playerspeed" name="playerspeed">
+                    <span class="info_symbol" title="- to decrease speed; + to increase speed">ⓘ</span>
+                </span>
+                <span class="action_item">
+                    <input type="checkbox" id="subtitles_en_checkbox" name="subtitles_en">
+                    <label class="story_info" for="subtitles_en">English subtitles</label>
+                    <a class="open_transcript en" href="#">edit</a>
+                </span>
+                <span class="action_item">
+                    <input type="checkbox" checked id="subtitles_ja_checkbox" name="subtitles_ja">
+                    <label class="story_info" for="subtitles_ja">Japanese subtitles</label>
+                    <a class="open_transcript ja" href="#">edit</a>
+                </span>
+                <span class="action_item">
+                    <input type="checkbox" id="subtitle_hide_unhighlighted" name="subtitle_hide_unhighlighted">
+                    <label class="story_info" for="subtitles_en">Hide unhighlighted words</label>
+                </span>
+                <span class="action_item">
+                    <a class="translate_story" href="#">translation</a>
+                </span>
+                <span class="action_item">
+                    <a class="drill_vocab" href="#">drill vocab</a>
+                </span>
+                <span class="action_item">
+                    <a class="reimport" href="#">reimport story</a>
+                </span>
+                <span class="action_item">
+                    <a class="log_story" href="#">log story</a>
+                </span>
+                <br>
+            </div>
+            <div id="player">
+                <video id="video_player" controls></video>
+                <div id="captions_meter">
+                    <div id="captions_meter_indicator">▲</div>
+                </div>
+                <div id="caption_container">
+                    <div id="captions_en"></div>
+                    <div id="captions_ja"></div>
+                </div>
+            </div>
+        </div>
+        <div id="story_text">
+            <div id="home_link">
+                <span class="info_symbol"
+                    title="s = toggle play/pause; a = jump back a fraction of a second; d = jump forward a fraction of a second; q = jump back a few seconds; e = jump forward a few seconds; n = jump forward to next subtitle; b = jump back to previous subtitle">player
+                    controls ⓘ</span>
+                <a href="/">home</a>
+            </div>
+            <div id="subtitle_actions">
+                <div>
+                    <label class="">Shift subtitles (in seconds)</label>
+                    <span class="action_item">
+                        <a class="shift_neg_1" href="#">-1</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="shift_neg_fraction" href="#">-0.1</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="shift_pos_fraction" href="#">+0.1</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="shift_pos_1" href="#">+1</a>
+                    </span>
+                </div>
+                <div style="padding-top: 0.5em;">
+                    <label class="">Shift all subtitles after timemark</label>
+                    <span class="action_item">
+                        <a class="shift_forward"
+                            title="shift all subtitles after the current timemark forward such that the next subtitle begins at the current timemark"
+                            href="#">forward</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="shift_back" title="shift all subtitles after the current timemark back by 10 seconds"
+                            href="#">back</a>
+                    </span>
+                </div>
+                <div style="padding-top: 0.5em;">
+                    <label class="">Adjust current subtitle length</label>
+                    <span class="action_item">
+                        <a class="extend" title="extend the length of the current timestamp by 5 seconds"
+                            href="#">extend</a>
+                    </span>
+                    <span class="action_item">
+                        <a class="truncate" title="truncate length of the current subtitle to the current timemark"
+                            href="#">truncate</a>
+                    </span>
+                </div>
+            </div>
+            <div id="story_lines"></div>
+        </div>
+    </div>
+
+    <div id="snackbar"></div>
+</body>
+<script src="../util.js"></script>
+<script src="../story.js"></script>
+<script type="module">
+    import { minidenticonSvg } from 'https://cdn.jsdelivr.net/npm/minidenticons@4.2.1/minidenticons.min.js'
+</script>
+
+</html>
