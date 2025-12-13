@@ -3,11 +3,22 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
+	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v3"
 )
 
-func drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
+var magentaStyle tcell.Style = tcell.StyleDefault.Foreground(tcell.ColorDarkMagenta).Background(tcell.ColorBlack)
+var whiteStyle = tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorBlack)
+var cyanStyle = tcell.StyleDefault.Foreground(tcell.ColorDarkCyan).Background(tcell.ColorBlack)
+var greenStyle = tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tcell.ColorBlack)
+var yellowStyle = tcell.StyleDefault.Foreground(tcell.ColorYellow).Background(tcell.ColorBlack)
+var greyStyle = tcell.StyleDefault.Foreground(tcell.ColorDarkGrey).Background(tcell.ColorBlack)
+var redStyle = tcell.StyleDefault.Foreground(tcell.ColorRed).Background(tcell.ColorBlack)
+
+func drawTextWrap(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
 	row := y1
 	col := x1
 	var width int
@@ -61,96 +72,242 @@ func drawBox(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string)
 		s.Put(x2, y2, string(tcell.RuneLRCorner), style)
 	}
 
-	drawText(s, x1+1, y1+1, x2-1, y2-1, style, text)
+	drawTextWrap(s, x1+1, y1+1, x2-1, y2-1, style, text)
 }
 
-func tcellDemo() {
-	defStyle := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorReset)
-	boxStyle := tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorPurple)
+func printTextAtCell(s tcell.Screen, x, y int, text string, style tcell.Style) {
+	for _, rune := range text {
+		s.SetContent(x, y, rune, nil, style)
+		x++
+	}
+}
 
-	// Initialize screen
-	s, err := tcell.NewScreen()
+func printMainMenu(screen tcell.Screen) {
+	screen.Clear()
+
+	printTextAtCell(screen, 2, 1, "JAPANESE VOCAB TRAINER", magentaStyle)
+	printTextAtCell(screen, 2, 3, "d.  Drill random words", whiteStyle)
+	printTextAtCell(screen, 2, 4, "l.  List all words", whiteStyle)
+	printTextAtCell(screen, 2, 6, "(ESC to exit)", cyanStyle)
+
+	screen.Show()
+}
+
+func printDrillScreen(screen tcell.Screen, vocab []*Vocab, currentIdx int) {
+	screen.Clear()
+
+	elapsedTime := time.Since(startTime)
+	minutes := int(elapsedTime / time.Minute)
+	seconds := int((elapsedTime % time.Minute) / time.Second)
+
+	const (
+		firstCol  = 2
+		secondCol = 6
+		thirdCol  = 22
+		fourthCol = 40
+	)
+
+	header := fmt.Sprintf("DRILL WORDS (elpased time %d min %02d sec):", minutes, seconds)
+	printTextAtCell(screen, firstCol, 1, header, magentaStyle)
+
+	currentVocab := vocab[currentIdx]
+
+	line := 2
+
+	// print unanswered and wrong
+	for _, v := range vocab {
+		line++
+
+		prefix := ""
+		color := greyStyle
+		def := v.Definition
+
+		if v.DrillInfo.Correct {
+			prefix = "◯"
+			if v.DrillInfo.Wrong {
+				// correct but not on first try
+				color = cyanStyle
+			} else {
+				// correct on first try
+				color = greenStyle
+			}
+		} else {
+			if v.DrillInfo.Wrong {
+				prefix = "🗙"
+				if v == currentVocab {
+					color = yellowStyle
+				} else {
+					color = redStyle
+				}
+			} else {
+				// not yet answered
+				def = ""
+				if v == currentVocab {
+					prefix = "-"
+					color = yellowStyle
+				}
+			}
+		}
+
+		printTextAtCell(screen, firstCol, line, prefix, color)
+		printTextAtCell(screen, secondCol, line, v.Word, color)
+		printTextAtCell(screen, thirdCol, line, v.Kana, color)
+		printTextAtCell(screen, fourthCol, line, def, color)
+	}
+
+	line++
+	printTextAtCell(screen, firstCol, line, "a.  Mark yellow word as wrong", whiteStyle)
+	line++
+	printTextAtCell(screen, firstCol, line, "d.  Mark yellow word as correct", whiteStyle)
+	line++
+	printTextAtCell(screen, firstCol, line, "q.  Back to main menu", whiteStyle)
+
+	screen.Show()
+}
+
+func tuiLoop(db VocabDB) {
+	defStyle := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorReset)
+
+	screen, err := tcell.NewScreen()
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
-	if err := s.Init(); err != nil {
+	if err := screen.Init(); err != nil {
 		log.Fatalf("%+v", err)
 	}
-	s.SetStyle(defStyle)
-	s.EnableMouse()
-	s.EnablePaste()
-	s.Clear()
-
-	// Draw initial boxes
-	drawBox(s, 3, 3, 42, 7, boxStyle, "Click and drag to draw a box")
-	drawBox(s, 5, 9, 32, 14, boxStyle, "Press C to reset")
-
-	style := tcell.StyleDefault.Foreground(tcell.ColorLightCyan).Background(tcell.ColorBlack)
-	s.SetContent(0, 0, 'こ', nil, style) // japanese characters require two cells
-	s.SetContent(2, 0, 'に', nil, style)
-	s.SetContent(4, 0, 'ち', nil, style)
-	s.SetContent(6, 0, 'は', nil, style)
+	screen.SetStyle(defStyle)
+	screen.EnablePaste()
 
 	quit := func() {
-		// You have to catch panics in a defer, clean up, and
-		// re-raise them - otherwise your application can
-		// die without leaving any diagnostic trace.
 		maybePanic := recover()
-		s.Fini()
+		screen.Fini()
 		if maybePanic != nil {
 			panic(maybePanic)
 		}
 	}
 	defer quit()
 
-	// Here's how to get the screen size when you need it.
-	// xmax, ymax := s.Size()
+	appState := AppState{CurrentScreen: SCREEN_MAIN}
 
-	// Here's an example of how to inject a keystroke where it will
-	// be picked up by a future read of the event queue.  Note that
-	// care should be used to avoid blocking writes to the queue if
-	// this is done from the same thread that is responsible for reading
-	// the queue, or else a single-party deadlock might occur.
-	// s.EventQ() <- tcell.NewEventKey(tcell.KeyRune, rune('a'), 0)
-
-	// Event loop
-	ox, oy := -1, -1
 	for {
-		// Update screen
-		s.Show()
+		switch appState.CurrentScreen {
+		case SCREEN_MAIN:
 
-		// Poll event (this can be in a select statement as well)
-		ev := <-s.EventQ()
+			printMainMenu(screen)
 
-		// Process event
-		switch ev := ev.(type) {
-		case *tcell.EventResize:
-			s.Sync()
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
-				return
-			} else if ev.Key() == tcell.KeyCtrlL {
-				s.Sync()
+			ev := <-screen.EventQ()
 
-			} else if ev.Str() == "C" || ev.Str() == "c" {
-				s.Clear()
-			}
-		case *tcell.EventMouse:
-			x, y := ev.Position()
+			switch ev := ev.(type) {
+			case *tcell.EventResize:
+				screen.Sync()
+			case *tcell.EventKey:
 
-			switch ev.Buttons() {
-			case tcell.Button1, tcell.Button2:
-				if ox < 0 {
-					ox, oy = x, y // record location when click started
+				key := strings.ToLower(ev.Str())
+
+				if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
+					return
+				} else if ev.Key() == tcell.KeyCtrlL {
+					screen.Sync()
+				} else if key == "d" { // start drill
+					allVocab, err := db.ListAll(true)
+					if err != nil {
+						log.Fatalln(err)
+					}
+
+					vocab, err := PickRandomN(allVocab, 12)
+					if err != nil {
+						log.Fatal(err)
+					}
+					rand.Shuffle(len(vocab), func(i, j int) {
+						vocab[i], vocab[j] = vocab[j], vocab[i]
+					})
+
+					appState.CurrentScreen = SCREEN_DRILL
+					appState.Drill = DrillState{Vocab: vocab}
 				}
+			}
+		case SCREEN_DRILL:
 
-			case tcell.ButtonNone:
-				if ox >= 0 {
-					label := fmt.Sprintf("%d,%d to %d,%d", ox, oy, x, y)
-					drawBox(s, ox, oy, x, y, boxStyle, label)
-					ox, oy = -1, -1
+			printDrillScreen(screen, appState.Drill.Vocab, appState.Drill.CurrentIdx)
+
+			ev := <-screen.EventQ()
+
+			switch ev := ev.(type) {
+			case *tcell.EventResize:
+				screen.Sync()
+			case *tcell.EventKey:
+				key := strings.ToLower(ev.Str())
+
+				drill := &appState.Drill
+
+				if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
+					return
+				} else if ev.Key() == tcell.KeyCtrlL {
+					screen.Sync()
+				} else if key == "q" {
+					appState.CurrentScreen = SCREEN_MAIN
+				} else if key == "a" {
+					processAnswer(drill, false, db)
+				} else if key == "d" {
+					processAnswer(drill, true, db)
+				}
+				if drill.Done {
+					appState.CurrentScreen = SCREEN_MAIN
 				}
 			}
+		}
+	}
+}
+
+func processAnswer(drill *DrillState, markCorrect bool, db VocabDB) {
+	currentVocab := drill.Vocab[drill.CurrentIdx]
+
+	if markCorrect {
+		currentVocab.DrillInfo.Correct = true
+		drill.NumCorrect++
+	} else {
+		currentVocab.DrillInfo.Wrong = true
+	}
+
+	// if next round or drill is done
+	if drill.NumCorrect == len(drill.Vocab) {
+		newVocab := make([]*Vocab, 0)
+
+		for _, v := range drill.Vocab {
+			if v.DrillInfo.Wrong {
+				v.DrillInfo.Wrong = false
+				v.DrillInfo.Correct = false
+				newVocab = append(newVocab, v)
+			} else {
+				// update drill counts in db
+				v.DrillCount++
+				db.Update(v)
+			}
+		}
+
+		if len(newVocab) == 0 { // drill is done
+			drill.Done = true
+			return
+		}
+
+		// another round
+		rand.Shuffle(len(newVocab), func(i, j int) {
+			newVocab[i], newVocab[j] = newVocab[j], newVocab[i]
+		})
+		drill.Vocab = newVocab
+		drill.CurrentIdx = 0
+		drill.NumCorrect = 0
+		return
+	}
+
+	// round continues, so we set CurrentIdx...
+
+	// pick the first item that is not correct and isn't at currentIdx
+	// (for case of one remaining, currentIdx remains unchanged)
+	for i, v := range drill.Vocab {
+		if i != drill.CurrentIdx && !v.DrillInfo.Correct {
+			drill.CurrentIdx = i
+			break
 		}
 	}
 }

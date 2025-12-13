@@ -3,9 +3,8 @@ drill menu:
     option to toggle display of kanji defs and pronunciations
 
 tcell (ncurses like ui)
-
-flashcard drill
-- pick random words from unarchived vocab
+    should help with column alignment
+    hopefully will remove the clear flash
 
 main menu:
     - drill that picks with bias towards recently added words
