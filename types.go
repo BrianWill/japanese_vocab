@@ -19,9 +19,22 @@ const (
 	WordsToArchivePath = "words_archive.csv" // words that we're done drilling for good
 )
 
-type AppState struct {
-	CurrentScreen int
-	Drill         DrillState
+type IOErrorMsg struct {
+	err error
+}
+
+type MenuState int
+
+const (
+	MAIN_MENU MenuState = iota
+	DRILL_MENU
+)
+
+type MainModel struct {
+	width      int
+	height     int
+	menuState  MenuState
+	drillModel DrillModel
 }
 
 type DrillState struct {
@@ -29,6 +42,17 @@ type DrillState struct {
 	CurrentIdx int
 	NumCorrect int
 	Done       bool
+}
+
+type DrillModel struct {
+	DB                 VocabDB
+	Vocab              []*Vocab
+	CurrentIdx         int
+	NumCorrect         int
+	NumToRepeat        int
+	AnsweredMarkersStr string
+	PriorVocab         *Vocab
+	Done               bool
 }
 
 type Vocab struct {
@@ -41,9 +65,9 @@ type Vocab struct {
 	DrillCount    int         `json:"drill_count"`
 	Archived      bool        `json:"archived"`
 	DrillInfo     struct {    // used in drills
-		Weight  float32 // used in random selection
-		Wrong   bool    // has been answered wrong at least once this round
-		Correct bool    // has been answered correctly this round (but not necessarily the first time)
+		Weight    float32 // used in random selection
+		IsWrong   bool    // has been answered wrong at least once this round
+		IsCorrect bool    // has been answered correctly this round (but not necessarily the first time)
 	}
 }
 

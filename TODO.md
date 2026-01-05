@@ -1,10 +1,5 @@
+update db when answering word correct
 
-drill menu:
-    option to toggle display of kanji defs and pronunciations
-
-tcell (ncurses like ui)
-    should help with column alignment
-    hopefully will remove the clear flash
 
 main menu:
     - drill that picks with bias towards recently added words
