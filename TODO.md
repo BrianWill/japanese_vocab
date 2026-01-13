@@ -1,4 +1,10 @@
-update db when answering word correct
+
+parse text from file to find new words
+    user picks words
+    the chosen words are shown in a list and copied to clipboard for easy pasting to chatbot
+
+make call to model API
+
 
 
 main menu:
