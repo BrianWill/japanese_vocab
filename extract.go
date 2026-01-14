@@ -28,19 +28,31 @@ func extractVocab() (ExtractedVocabMsg, error) {
 
 func tokenize(content string) ([]*JpToken, error) {
 	analyzerTokens := tok.Analyze(content, tokenizer.Normal)
-	tokens := make([]*JpToken, len(analyzerTokens))
+	tokens := make([]*JpToken, 0, len(analyzerTokens))
 
-	for i, t := range analyzerTokens {
+	tokenMap := make(map[string]struct{})
+
+	for _, t := range analyzerTokens {
 		features := t.Features()
-		if len(features) < 9 {
 
-			tokens[i] = &JpToken{
+		if !ContainsJapanese(t.Surface) {
+			continue
+		}
+
+		if _, ok := tokenMap[t.Surface]; ok {
+			continue
+		}
+		tokenMap[t.Surface] = struct{}{}
+
+		var token *JpToken
+		if len(features) < 9 {
+			token = &JpToken{
 				Surface: t.Surface,
 				POS:     features[0],
 				POS_1:   features[1],
 			}
 		} else {
-			tokens[i] = &JpToken{
+			token = &JpToken{
 				Surface:          t.Surface,
 				POS:              features[0],
 				POS_1:            features[1],
@@ -53,9 +65,11 @@ func tokenize(content string) ([]*JpToken, error) {
 				Pronunciation:    features[8],
 			}
 		}
-		if tokens[i].BaseForm == "" {
-			tokens[i].BaseForm = tokens[i].Surface
+
+		if token.BaseForm == "" {
+			token.BaseForm = token.Surface
 		}
+		tokens = append(tokens, token)
 	}
 
 	return tokens, nil

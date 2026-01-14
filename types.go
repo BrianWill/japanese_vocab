@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/table"
 )
 
@@ -67,10 +69,48 @@ type MainModel struct {
 }
 
 type ExtractModel struct {
-	IsLoading bool
-	Text      string
-	Vocab     []*Vocab
-	Words     []*JpToken
+	IsLoaded bool
+	Text     string
+	WordList list.Model
+	Vocab    []*Vocab
+	Words    []*JpToken
+}
+
+type ExtractedWordItem struct {
+	Base string
+	Kana string
+}
+
+func (i ExtractedWordItem) FilterValue() string { return i.Base }
+func (i ExtractedWordItem) Title() string       { return i.Base }
+func (i ExtractedWordItem) Description() string { return i.Kana }
+
+type ExtractKeysMap struct {
+	addDrills    key.Binding
+	removeDrills key.Binding
+	discardWord  key.Binding
+	archiveWord  key.Binding
+}
+
+func newExtractKeysMap() *ExtractKeysMap {
+	return &ExtractKeysMap{
+		addDrills: key.NewBinding(
+			key.WithKeys("e"),
+			key.WithHelp("e", "add drills"),
+		),
+		removeDrills: key.NewBinding(
+			key.WithKeys("q"),
+			key.WithHelp("q", "remove drills"),
+		),
+		discardWord: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "not a word"),
+		),
+		archiveWord: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "archive word"),
+		),
+	}
 }
 
 type DrillState struct {

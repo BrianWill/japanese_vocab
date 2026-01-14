@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"time"
+	"unicode"
 )
 
 func PickRandomN[T any](items []T, n int) ([]*T, error) {
@@ -115,4 +116,17 @@ func assert(cond bool, msg string) {
 	if !cond {
 		panic(msg)
 	}
+}
+
+func ContainsJapanese(s string) bool {
+	for _, r := range s {
+		if unicode.In(r,
+			unicode.Hiragana,
+			unicode.Katakana,
+			unicode.Han,
+		) {
+			return true
+		}
+	}
+	return false
 }

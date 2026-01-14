@@ -23,8 +23,10 @@ CREATE TABLE IF NOT EXISTS vocab (
     part_of_speech TEXT,
     definition TEXT,
     kanji_meanings TEXT,
+	drill_todo INTEGER NOT NULL DEFAULT 0,
     drill_count INTEGER NOT NULL DEFAULT 0,
-    archived BOOLEAN NOT NULL DEFAULT 0
+    archived BOOLEAN NOT NULL DEFAULT 0,
+	not_a_word BOOLEAN NOT NULL DEFAULT 0
 );`
 
 	db, err := sql.Open("sqlite", "vocab.db")

@@ -16,6 +16,7 @@ import (
 	"github.com/ikawaha/kagome-dict/ipa"
 	"github.com/ikawaha/kagome/v2/tokenizer"
 
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -26,6 +27,7 @@ import (
 var startTime time.Time = time.Now()
 
 var (
+	boldStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("#000")).Bold(true)
 	redStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Width(20)
 	greenStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Width(20)
 	cyanStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("6")).Width(20)
@@ -64,7 +66,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	vocabTable := table.New(
 		table.WithColumns([]table.Column{
 			{Title: "Word", Width: 20},
@@ -90,12 +91,18 @@ func main() {
 	vocabTable.SetStyles(s)
 	vocabTable.Blur()
 
+	wordList := list.New(nil, list.NewDefaultDelegate(), 0, 0)
+	wordList.Title = "Words in text:"
+
 	p := tea.NewProgram(
 		MainModel{
 			drillModel: DrillModel{
 				DB:         db,
 				CurrentIdx: 0,
 				VocabTable: vocabTable,
+			},
+			extractModel: ExtractModel{
+				WordList: wordList,
 			},
 		},
 		tea.WithAltScreen(),
@@ -116,6 +123,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		h, v := docStyle.GetFrameSize()
+		m.extractModel.WordList.SetSize(msg.Width-h, msg.Height-v)
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -147,7 +156,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			case "2":
 				m.menuState = EXTRACT_MENU
-				m.extractModel.IsLoading = true
+				m.extractModel.IsLoaded = false
 				return m, func() tea.Msg {
 					vocab, err := extractVocab()
 					if err != nil {
@@ -289,31 +298,48 @@ func (m DrillModel) View() string {
 
 	shownWords := m.VocabTable.View()
 
+	currentWord := ""
+	if !m.Done {
+		currentWord = m.Vocab[m.CurrentIdx].Word
+	}
+
+	currentWasShown := false
 	wordList := ""
 	for _, v := range m.Vocab {
+		var marker = "\t  "
+		if currentWord == v.Word {
+			marker = "\t➤ "
+		}
 		if v.DrillInfo.IsWrong && v.DrillInfo.IsCorrect {
-			wordList += "\t" + greyStyle.Render(v.Word) + greyStyle.Render(v.Kana) + greyStyle.Width(40).Render(v.Definition) + "\n"
+			wordList += marker + greyStyle.Render(v.Word) + greyStyle.Render(v.Kana) + greyStyle.Width(40).Render(v.Definition) + "\n"
 		} else if v.DrillInfo.IsWrong {
-			wordList += "\t" + redStyle.Render(v.Word) + redStyle.Render(v.Kana) + redStyle.Width(40).Render(v.Definition) + "\n"
+			wordList += marker + redStyle.Render(v.Word) + redStyle.Render(v.Kana) + redStyle.Width(40).Render(v.Definition) + "\n"
 		} else if v.DrillInfo.IsCorrect {
-			wordList += "\t" + greenStyle.Render(v.Word) + greenStyle.Render(v.Kana) + greenStyle.Width(40).Render(v.Definition) + "\n"
+			wordList += marker + greenStyle.Render(v.Word) + greenStyle.Render(v.Kana) + greenStyle.Width(40).Render(v.Definition) + "\n"
 		} else {
-			wordList += "\t___\n"
+			if currentWasShown {
+				wordList += "\t  ___\n"
+			} else {
+				wordList += "\t➤ " + yellowBoldStyle.Render(currentWord) + "\n"
+			}
+		}
+
+		if currentWord == v.Word {
+			currentWasShown = true
 		}
 	}
 
 	if m.Done {
 		return fmt.Sprintf(
-			"\n\n  %s\n\n%s \n\n \tDRILL COMPLETE! \n\n\n \tPress q = quit",
+			"\n\n  %s\n\n%s \n\t"+boldStyle.Render("DRILL COMPLETE!")+"\n\n\tPress q = quit",
 			shownWords,
 			wordList,
 		)
 	} else {
 		return fmt.Sprintf(
-			"\n\n  %s\n\n %s \n\n \t%s \n\n\n \tPress c = correct, z = incorrect, q = quit",
+			"\n\n  %s\n\n %s \n\n\n\tPress c = correct, z = incorrect, q = quit",
 			shownWords,
 			wordList,
-			yellowBoldStyle.Render(m.Vocab[m.CurrentIdx].Word),
 		)
 	}
 }
@@ -332,24 +358,36 @@ func (m ExtractModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case ExtractedVocabMsg:
-		m.IsLoading = false
+		m.IsLoaded = true
 		m.Text = msg.Text
 		m.Words = msg.Words
+		items := make([]list.Item, 0)
+		for _, v := range m.Words {
+			items = append(items, ExtractedWordItem{Base: v.BaseForm, Kana: v.Reading})
+		}
+		m.WordList.SetItems(items)
 	}
-	return m, nil
+
+	var cmd tea.Cmd
+	m.WordList, cmd = m.WordList.Update(msg)
+	return m, cmd
 }
 
+var docStyle = lipgloss.NewStyle().Margin(1, 2)
+
 func (m ExtractModel) View() string {
-	if m.IsLoading {
-		return "Extracting in progress..."
-	}
+	// if !m.IsLoaded {
+	// 	return "Extracting in progress..."
+	// }
 
-	words := ""
-	for _, word := range m.Words[:10] {
-		words += word.BaseForm + "\n"
-	}
+	return docStyle.Render(m.WordList.View())
 
-	return fmt.Sprintf("done extracting:\n\n %v \n\n %v", len(m.Words), words)
+	// words := ""
+	// for _, word := range m.Words[:10] {
+	// 	words += word.BaseForm + "\n"
+	// }
+
+	// return fmt.Sprintf("done extracting:\n\n %v \n\n %v", len(m.Words), words)
 }
 
 func loadVocab(db VocabDB) []*Vocab {
