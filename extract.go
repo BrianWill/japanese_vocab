@@ -1,16 +1,211 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"io"
+	"log"
+	"math/rand"
 	"os"
 	"regexp"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/ikawaha/kagome/v2/tokenizer"
 )
 
-func extractVocab() (ExtractedVocabMsg, error) {
+type ExtractModel struct {
+	IsLoaded bool
+	Text     string
+	WordList list.Model
+	Vocab    []*Vocab
+	VocabDB  DB
+	Keys     ExtractKeysMap
+}
+
+type ExtractedVocabMsg struct {
+	Text string
+	// Vocab []*Vocab
+	Vocab []*Vocab
+}
+
+type ExtractedWordItem struct {
+	Vocab *Vocab
+}
+
+func (i ExtractedWordItem) FilterValue() string { return i.Vocab.Word }
+func (i ExtractedWordItem) Title() string       { return i.Vocab.Word }
+func (i ExtractedWordItem) Description() string { return i.Vocab.Kana }
+
+type ExtractKeysMap struct {
+	Enabled  key.Binding
+	Disabled key.Binding
+	Invalid  key.Binding
+	Archived key.Binding
+}
+
+func newExtractKeysMap() ExtractKeysMap {
+	return ExtractKeysMap{
+		Enabled: key.NewBinding(
+			key.WithKeys("e"),
+			key.WithHelp("e", "enable"),
+		),
+		Disabled: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "disable"),
+		),
+		Invalid: key.NewBinding(
+			key.WithKeys("i"),
+			key.WithHelp("i", "invalidate"),
+		),
+		Archived: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "archive"),
+		),
+	}
+}
+
+func (k ExtractKeysMap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		k.Enabled,
+		k.Disabled,
+		k.Invalid,
+		k.Archived,
+	}
+}
+
+func (k ExtractKeysMap) FullHelp() []key.Binding {
+	return []key.Binding{
+		k.Enabled,
+		k.Disabled,
+		k.Invalid,
+		k.Archived,
+	}
+}
+
+func (m ExtractModel) Init() tea.Cmd {
+	return nil
+}
+
+type ExtractedVocabUpdated struct {
+	Vocab Vocab
+	Index int
+}
+
+func (m ExtractModel) markWord(status VocabStatus) func() tea.Msg {
+	selected := m.WordList.SelectedItem().(ExtractedWordItem)
+	index := m.WordList.GlobalIndex()
+	vocab := *selected.Vocab // to be proper, our command should read a copy, not the original
+	vocab.Status = status
+	return func() tea.Msg {
+		err := m.VocabDB.Update(&vocab)
+		if err != nil {
+			return IOErrorMsg{err}
+		}
+		return ExtractedVocabUpdated{Vocab: vocab, Index: index} // dummy msg to trigger a refresh
+	}
+}
+
+func (m ExtractModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, m.Keys.Enabled):
+			return m, m.markWord(VOCAB_STATUS_ENABLED)
+		case key.Matches(msg, m.Keys.Disabled):
+			return m, m.markWord(VOCAB_STATUS_DISABLED)
+		case key.Matches(msg, m.Keys.Invalid):
+			return m, m.markWord(VOCAB_STATUS_INVALID)
+		case key.Matches(msg, m.Keys.Archived):
+			return m, m.markWord(VOCAB_STATUS_ARCHIVED)
+		case key.Matches(msg, m.WordList.KeyMap.Quit):
+			return m, func() tea.Msg {
+				return ReturnToMainMsg{}
+			}
+		}
+	case ExtractedVocabUpdated:
+		item := m.WordList.Items()[msg.Index].(ExtractedWordItem)
+		item.Vocab = &msg.Vocab
+		m.WordList.SetItem(msg.Index, item)
+	case ExtractedVocabMsg:
+		m.IsLoaded = true
+		m.Text = msg.Text
+		m.Vocab = msg.Vocab
+		items := make([]list.Item, 0)
+		for _, v := range m.Vocab {
+			items = append(items, ExtractedWordItem{Vocab: v})
+		}
+		m.WordList.SetItems(items)
+	}
+
+	var cmd tea.Cmd
+	m.WordList, cmd = m.WordList.Update(msg)
+	return m, cmd
+}
+
+var docStyle = lipgloss.NewStyle().Margin(1, 2)
+
+func (m ExtractModel) View() string {
+	if !m.IsLoaded {
+		return "Extracting in progress..."
+	}
+
+	return docStyle.Render(m.WordList.View())
+}
+
+func loadVocab(db DB) []*Vocab {
+	allVocab, err := db.ListAll(true)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	vocab, err := PickRandomN(allVocab, 10)
+	if err != nil {
+		log.Fatal(err)
+	}
+	rand.Shuffle(len(vocab), func(i, j int) {
+		vocab[i], vocab[j] = vocab[j], vocab[i]
+	})
+
+	return vocab
+}
+
+type ExtractWordItemDelegate struct{}
+
+func (ExtractWordItemDelegate) Height() int  { return 1 } // number of lines per item
+func (ExtractWordItemDelegate) Spacing() int { return 1 } // space between items
+func (ExtractWordItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+	return nil // no special updates
+}
+func (ExtractWordItemDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
+	v := item.(ExtractedWordItem)
+
+	selected := "  " // marker for selection
+	if index == m.Index() {
+		selected = "> "
+	}
+
+	status := "enabled"
+	switch v.Vocab.Status {
+	case VOCAB_STATUS_ARCHIVED:
+		status = "archived"
+	case VOCAB_STATUS_INVALID:
+		status = "invalid"
+	case VOCAB_STATUS_DISABLED:
+		status = "disabled"
+	}
+
+	fmt.Fprintf(w, "%s%s%s%s", selected,
+		columnWidthStyle.Render(v.Title()),
+		columnWidthStyle.Render(v.Description()),
+		columnWidthStyle.Render(status))
+}
+
+func extractVocab(db DB) (ExtractedVocabMsg, error) {
 	// read file
 	data, err := os.ReadFile("words.txt")
 	if err != nil {
@@ -23,7 +218,28 @@ func extractVocab() (ExtractedVocabMsg, error) {
 		return ExtractedVocabMsg{}, err
 	}
 
-	return ExtractedVocabMsg{Text: text, Words: tokens}, nil
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	vocab, err := db.InsertOrGetVocabBatch(ctx, tokens)
+	if err != nil {
+		return ExtractedVocabMsg{}, err
+	}
+
+	filteredVocab := make([]*Vocab, 0, len(vocab))
+	for _, v := range vocab {
+		// filter out words that are VOCAB_STATUS_INVALID or VOCAB_STATUS_ARCHIVED
+		if v.Status == VOCAB_STATUS_INVALID || v.Status == VOCAB_STATUS_ARCHIVED {
+			continue
+		}
+		// filter out words that are VOCAB_STATUS_ENABLED if their DrillTodo is > 0
+		if v.Status == VOCAB_STATUS_ENABLED && v.DrillTodo > 0 {
+			continue
+		}
+		filteredVocab = append(filteredVocab, v)
+	}
+
+	return ExtractedVocabMsg{Text: text, Vocab: filteredVocab}, nil
 }
 
 func tokenize(content string) ([]*JpToken, error) {

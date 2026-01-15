@@ -1,62 +1,57 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/csv"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 )
 
-type VocabDB struct {
+type DB struct {
 	DB *sql.DB
+	context.Context
 }
 
-func InitVocabDB() (VocabDB, error) {
+func InitVocabDB() (DB, error) {
 	query := `
 CREATE TABLE IF NOT EXISTS vocab (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     word TEXT NOT NULL UNIQUE,
-    kana TEXT,
-    part_of_speech TEXT,
-    definition TEXT,
-    kanji_meanings TEXT,
+    kana TEXT NOT NULL DEFAULT '',
+    part_of_speech TEXT NOT NULL DEFAULT '',
+    definition TEXT NOT NULL DEFAULT '',
 	drill_todo INTEGER NOT NULL DEFAULT 0,
     drill_count INTEGER NOT NULL DEFAULT 0,
-    status INTEGER NOT NULL DEFAULT 0,
+    status INTEGER NOT NULL DEFAULT 0
 );`
 
 	db, err := sql.Open("sqlite", "vocab.db")
 	if err != nil {
-		return VocabDB{}, err
+		return DB{}, err
 	}
 
 	_, err = db.Exec(query)
-	return VocabDB{DB: db}, nil
+	return DB{DB: db}, err
 }
 
-func (v *VocabDB) Close() error {
+func (v *DB) Close() error {
 	return v.DB.Close()
 }
 
-func (v *VocabDB) Insert(vocab *Vocab) (int, error) {
-	kmJSON, err := json.Marshal(vocab.KanjiMeanings)
-	if err != nil {
-		return 0, err
-	}
-
+func (v *DB) Insert(vocab *Vocab) (int, error) {
 	res, err := v.DB.Exec(`
-        INSERT INTO vocab (word, kana, part_of_speech, definition, kanji_meanings, drill_count, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO vocab (word, kana, part_of_speech, definition, drill_count, status)
+        VALUES (?, ?, ?, ?, ?, ?)
     `,
 		vocab.Word,
 		vocab.Kana,
 		vocab.PartOfSpeech,
 		vocab.Definition,
-		string(kmJSON),
 		vocab.DrillCount,
 		vocab.Status,
 	)
@@ -69,7 +64,103 @@ func (v *VocabDB) Insert(vocab *Vocab) (int, error) {
 	return int(id64), err
 }
 
-func (v *VocabDB) UpsertAll(list []Vocab) error {
+func (db *DB) InsertOrGetVocabBatch(ctx context.Context, tokens []*JpToken) ([]*Vocab, error) {
+
+	if len(tokens) == 0 {
+		return nil, nil
+	}
+
+	tx, err := db.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT OR IGNORE INTO vocab (
+			word,
+			status
+		) VALUES (?, ?)
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	words := make([]string, 0, len(tokens))
+
+	for _, t := range tokens {
+		_, err := stmt.ExecContext(
+			ctx,
+			t.BaseForm,
+			VOCAB_STATUS_DISABLED,
+		)
+		if err != nil {
+			return nil, err
+		}
+		words = append(words, t.BaseForm)
+	}
+
+	// Build: WHERE word IN (?, ?, ...)
+	placeholders := strings.Repeat("?,", len(words))
+	placeholders = placeholders[:len(placeholders)-1] // get rid of trailing comma
+
+	query := fmt.Sprintf(`
+		SELECT
+			id,
+			word,
+			kana,
+			part_of_speech,
+			definition,
+			drill_todo,
+			drill_count,
+			status
+		FROM vocab
+		WHERE word IN (%s)
+	`, placeholders)
+
+	args := make([]any, len(words))
+	for i, w := range words {
+		args[i] = w
+	}
+
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []*Vocab
+	for rows.Next() {
+		var v Vocab
+		if err := rows.Scan(
+			&v.ID,
+			&v.Word,
+			&v.Kana,
+			&v.PartOfSpeech,
+			&v.Definition,
+			&v.DrillTodo,
+			&v.DrillCount,
+			&v.Status,
+		); err != nil {
+			return nil, err
+		}
+
+		results = append(results, &v)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (v *DB) UpsertAll(list []Vocab) error {
 	tx, err := v.DB.Begin()
 	if err != nil {
 		return err
@@ -78,13 +169,12 @@ func (v *VocabDB) UpsertAll(list []Vocab) error {
 	stmt, err := tx.Prepare(`
         INSERT INTO vocab (
             id, word, kana, part_of_speech, definition,
-            kanji_meanings, drill_count, drill_todo, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            drill_count, drill_todo, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(word) DO UPDATE SET
             kana = excluded.kana,
             part_of_speech = excluded.part_of_speech,
-            definition = excluded.definition,
-            kanji_meanings = excluded.kanji_meanings            
+            definition = excluded.definition
     `)
 	if err != nil {
 		tx.Rollback()
@@ -93,12 +183,6 @@ func (v *VocabDB) UpsertAll(list []Vocab) error {
 	defer stmt.Close()
 
 	for _, vocab := range list {
-		kmJSON, err := json.Marshal(vocab.KanjiMeanings)
-		if err != nil {
-			tx.Rollback()
-			return err
-		}
-
 		// If ID = 0, insert a NULL so SQLite will auto-assign
 		var id interface{}
 		if vocab.ID == 0 {
@@ -113,7 +197,6 @@ func (v *VocabDB) UpsertAll(list []Vocab) error {
 			vocab.Kana,
 			vocab.PartOfSpeech,
 			vocab.Definition,
-			string(kmJSON),
 			vocab.DrillCount,
 			vocab.DrillTodo,
 			vocab.Status,
@@ -127,14 +210,13 @@ func (v *VocabDB) UpsertAll(list []Vocab) error {
 	return tx.Commit()
 }
 
-func (v *VocabDB) Get(id int) (*Vocab, error) {
+func (v *DB) Get(id int) (*Vocab, error) {
 	row := v.DB.QueryRow(`
-        SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, status
+        SELECT id, word, kana, part_of_speech, definition, drill_count, status
         FROM vocab
         WHERE id = ?
     `, id)
 
-	var kmJSON string
 	var vc Vocab
 
 	err := row.Scan(
@@ -143,7 +225,6 @@ func (v *VocabDB) Get(id int) (*Vocab, error) {
 		&vc.Kana,
 		&vc.PartOfSpeech,
 		&vc.Definition,
-		&kmJSON,
 		&vc.DrillCount,
 		&vc.Status,
 	)
@@ -155,33 +236,20 @@ func (v *VocabDB) Get(id int) (*Vocab, error) {
 		return nil, err
 	}
 
-	if kmJSON != "" {
-		err = json.Unmarshal([]byte(kmJSON), &vc.KanjiMeanings)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &vc, nil
 }
 
-func (v *VocabDB) Update(vocab *Vocab) error {
-	kmJSON, err := json.Marshal(vocab.KanjiMeanings)
-	if err != nil {
-		return err
-	}
-
-	_, err = v.DB.Exec(`
+func (v *DB) Update(vocab *Vocab) error {
+	_, err := v.DB.Exec(`
         UPDATE vocab
         SET word = ?, kana = ?, part_of_speech = ?, definition = ?,
-            kanji_meanings = ?, drill_count = ?, status = ?
+            drill_count = ?, status = ?
         WHERE id = ?
     `,
 		vocab.Word,
 		vocab.Kana,
 		vocab.PartOfSpeech,
 		vocab.Definition,
-		string(kmJSON),
 		vocab.DrillCount,
 		vocab.Status,
 		vocab.ID,
@@ -190,22 +258,22 @@ func (v *VocabDB) Update(vocab *Vocab) error {
 	return err
 }
 
-func (v *VocabDB) Delete(id int) error {
+func (v *DB) Delete(id int) error {
 	_, err := v.DB.Exec("DELETE FROM vocab WHERE id = ?", id)
 	return err
 }
 
-func (v *VocabDB) ListAll(activeOnly bool) ([]Vocab, error) {
+func (v *DB) ListAll(activeOnly bool) ([]Vocab, error) {
 	queryStr := `
-        SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, drill_todo, status
+        SELECT id, word, kana, part_of_speech, definition, drill_count, drill_todo, status
         FROM vocab
         ORDER BY id
     `
 	if activeOnly {
 		queryStr = `
-			SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, drill_todo, status
+			SELECT id, word, kana, part_of_speech, definition, drill_count, drill_todo, status
 			FROM vocab
-			WHERE status = ` + strconv.Itoa(int(ACTIVE)) + `
+			WHERE status = ` + strconv.Itoa(int(VOCAB_STATUS_ENABLED)) + `
 			ORDER BY id
 		`
 	}
@@ -219,7 +287,6 @@ func (v *VocabDB) ListAll(activeOnly bool) ([]Vocab, error) {
 
 	for rows.Next() {
 		var vc Vocab
-		var kmJSON string
 
 		err := rows.Scan(
 			&vc.ID,
@@ -227,7 +294,6 @@ func (v *VocabDB) ListAll(activeOnly bool) ([]Vocab, error) {
 			&vc.Kana,
 			&vc.PartOfSpeech,
 			&vc.Definition,
-			&kmJSON,
 			&vc.DrillCount,
 			&vc.DrillTodo,
 			&vc.Status,
@@ -236,24 +302,18 @@ func (v *VocabDB) ListAll(activeOnly bool) ([]Vocab, error) {
 			return nil, err
 		}
 
-		if kmJSON != "" {
-			if err := json.Unmarshal([]byte(kmJSON), &vc.KanjiMeanings); err != nil {
-				return nil, err
-			}
-		}
-
 		list = append(list, vc)
 	}
 
 	return list, nil
 }
 
-func (v *VocabDB) FindByWord(term string) ([]Vocab, error) {
+func (v *DB) FindByWord(term string) ([]Vocab, error) {
 	pattern := "%" + term + "%"
 
 	rows, err := v.DB.Query(`
         SELECT id, word, kana, part_of_speech, definition,
-               kanji_meanings, drill_count, drill_todo, status
+               drill_count, drill_todo, status
         FROM vocab
         WHERE word LIKE ?
         ORDER BY word ASC
@@ -267,7 +327,6 @@ func (v *VocabDB) FindByWord(term string) ([]Vocab, error) {
 
 	for rows.Next() {
 		var vc Vocab
-		var kmJSON string
 
 		err := rows.Scan(
 			&vc.ID,
@@ -275,19 +334,12 @@ func (v *VocabDB) FindByWord(term string) ([]Vocab, error) {
 			&vc.Kana,
 			&vc.PartOfSpeech,
 			&vc.Definition,
-			&kmJSON,
 			&vc.DrillCount,
 			&vc.DrillTodo,
 			&vc.Status,
 		)
 		if err != nil {
 			return nil, err
-		}
-
-		if kmJSON != "" {
-			if err := json.Unmarshal([]byte(kmJSON), &vc.KanjiMeanings); err != nil {
-				return nil, err
-			}
 		}
 
 		results = append(results, vc)
@@ -308,54 +360,12 @@ func ParseVocabCSVLine(line string) (Vocab, error) {
 		return Vocab{}, errors.New("invalid line: expected 5 fields")
 	}
 
-	kanjiInfos := parseKanjiMeanings(fields[4])
-
 	return Vocab{
-		Word:          fields[0],
-		Kana:          fields[1],
-		PartOfSpeech:  fields[2],
-		Definition:    fields[3],
-		KanjiMeanings: kanjiInfos,
+		Word:         fields[0],
+		Kana:         fields[1],
+		PartOfSpeech: fields[2],
+		Definition:   fields[3],
 	}, nil
-}
-
-func parseKanjiMeanings(s string) []KanjiInfo {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return nil
-	}
-
-	parts := strings.Split(s, "/")
-
-	var result []KanjiInfo
-	for _, part := range parts {
-		p := strings.TrimSpace(part)
-		if p == "" {
-			continue
-		}
-
-		// Expect something like: "躊: meaning here"
-		kv := strings.SplitN(p, ":", 2)
-		if len(kv) != 2 {
-			continue // skip malformed segments
-		}
-
-		meaning := strings.TrimSpace(kv[1])
-		kv = strings.SplitN(kv[0], "(", 2)
-		kanji := strings.TrimSpace(kv[0])
-		pronunciation := strings.TrimSpace(kv[1])
-		pronunciation = strings.TrimSuffix(pronunciation, ")")
-
-		if kanji != "" && meaning != "" {
-			result = append(result, KanjiInfo{
-				Kanji:         kanji,
-				Pronunciation: pronunciation,
-				Meaning:       meaning,
-			})
-		}
-	}
-
-	return result
 }
 
 func LoadVocabCSVFile(path string) ([]Vocab, error) {
@@ -382,63 +392,13 @@ func LoadVocabCSVFile(path string) ([]Vocab, error) {
 		}
 
 		v := Vocab{
-			Word:          fields[0],
-			Kana:          fields[1],
-			PartOfSpeech:  fields[2],
-			Definition:    fields[3],
-			KanjiMeanings: parseKanjiMeanings(fields[4]),
+			Word:         fields[0],
+			Kana:         fields[1],
+			PartOfSpeech: fields[2],
+			Definition:   fields[3],
 		}
 		vocabList = append(vocabList, v)
 	}
 
 	return vocabList, nil
-}
-
-func VocabToCSVLine(v Vocab) string {
-	// Serialize kanji meanings
-	var kmParts []string
-	for _, k := range v.KanjiMeanings {
-		kmParts = append(kmParts, k.Kanji+"("+k.Pronunciation+"): "+k.Meaning)
-	}
-	kmField := strings.Join(kmParts, " / ")
-
-	// Escape fields with quotes if necessary
-	escape := func(s string) string {
-		if strings.ContainsAny(s, `",`) {
-			s = strings.ReplaceAll(s, `"`, `""`)
-			return `"` + s + `"`
-		}
-		return s
-	}
-
-	return strings.Join([]string{
-		escape(v.Word),
-		escape(v.Kana),
-		escape(v.PartOfSpeech),
-		escape(v.Definition),
-		escape(kmField),
-	}, ",")
-}
-
-func SaveVocabCSVFile(path string, vocabList []Vocab) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	writer := csv.NewWriter(f)
-	defer writer.Flush()
-
-	// Write header
-	writer.Write([]string{"word", "romaji", "part_of_speech", "definition", "kanji_meanings"})
-
-	for _, v := range vocabList {
-		line := VocabToCSVLine(v)
-		// csv.Writer handles proper escaping again
-		if err := writer.Write(strings.Split(line, ",")); err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/table"
 )
 
@@ -41,12 +39,6 @@ type IOErrorMsg struct {
 
 type ReturnToMainMsg struct{}
 
-type ExtractedVocabMsg struct {
-	Text string
-	// Words []*Vocab
-	Words []*JpToken
-}
-
 type MenuState int
 
 const (
@@ -63,51 +55,6 @@ type MainModel struct {
 	extractModel ExtractModel
 }
 
-type ExtractModel struct {
-	IsLoaded bool
-	Text     string
-	WordList list.Model
-	Vocab    []*Vocab
-	Words    []*JpToken
-}
-
-type ExtractedWordItem struct {
-	Base string
-	Kana string
-}
-
-func (i ExtractedWordItem) FilterValue() string { return i.Base }
-func (i ExtractedWordItem) Title() string       { return i.Base }
-func (i ExtractedWordItem) Description() string { return i.Kana }
-
-type ExtractKeysMap struct {
-	addDrills    key.Binding
-	removeDrills key.Binding
-	discardWord  key.Binding
-	archiveWord  key.Binding
-}
-
-func newExtractKeysMap() *ExtractKeysMap {
-	return &ExtractKeysMap{
-		addDrills: key.NewBinding(
-			key.WithKeys("e"),
-			key.WithHelp("e", "add drills"),
-		),
-		removeDrills: key.NewBinding(
-			key.WithKeys("q"),
-			key.WithHelp("q", "remove drills"),
-		),
-		discardWord: key.NewBinding(
-			key.WithKeys("d"),
-			key.WithHelp("d", "not a word"),
-		),
-		archiveWord: key.NewBinding(
-			key.WithKeys("a"),
-			key.WithHelp("a", "archive word"),
-		),
-	}
-}
-
 type DrillState struct {
 	Vocab      []*Vocab
 	CurrentIdx int
@@ -116,7 +63,7 @@ type DrillState struct {
 }
 
 type DrillModel struct {
-	DB          VocabDB
+	DB          DB
 	Vocab       []*Vocab
 	CurrentIdx  int
 	NumCorrect  int
@@ -128,23 +75,22 @@ type DrillModel struct {
 type VocabStatus int
 
 const (
-	ACTIVE VocabStatus = iota
-	ARCHIVED
-	NOT_A_WORD
+	VOCAB_STATUS_ENABLED  VocabStatus = iota // candidate for drilling
+	VOCAB_STATUS_ARCHIVED                    // put aside by user because they don't want to drill it anymore
+	VOCAB_STATUS_INVALID                     // put aside by user because it's not a word
+	VOCAB_STATUS_DISABLED                    // exists in DB but has not yet been active
 )
 
 type Vocab struct {
-	ID            int
-	Word          string      `json:"word"`
-	Kana          string      `json:"kana"` // for pronunciation (not necessarily a common spelling of the word)
-	PartOfSpeech  string      `json:"part_of_speech"`
-	Definition    string      `json:"definition"`
-	KanjiMeanings []KanjiInfo `json:"kanji_meanings"`
-	DrillTodo     int         `json:"drill_todo"`  // how many drills left to do
-	DrillCount    int         `json:"drill_count"` // lifetime number of drills
-	Status        bool        `json:"status"`
-	IsNotWord     bool        `json:"not_word"`
-	DrillInfo     struct {    // used in drills
+	ID           int
+	Word         string      `json:"word"`
+	Kana         string      `json:"kana"` // for pronunciation (not necessarily a common spelling of the word)
+	PartOfSpeech string      `json:"part_of_speech"`
+	Definition   string      `json:"definition"`
+	DrillTodo    int         `json:"drill_todo"`  // how many drills left to do
+	DrillCount   int         `json:"drill_count"` // lifetime number of drills
+	Status       VocabStatus `json:"status"`
+	DrillInfo    struct {    // used in drills
 		Weight    float32 // used in random selection
 		IsWrong   bool    // has been answered wrong at least once this round
 		IsCorrect bool    // has been answered correctly this round (but not necessarily the first time)

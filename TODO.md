@@ -1,10 +1,13 @@
 
 parse text from file to find new words
     user picks words
-    the chosen words are shown in a list and copied to clipboard for easy pasting to chatbot
+    
 
-make call to model API
+when enabling a word, if it doesn't already have a definition or kana, use chat API to get definition and kana
 
+create table for kanji
+for every kanji in every word, add the kanji to the kanji table
+    (use chat to get definitions of the kanji)
 
 
 main menu:
@@ -29,9 +32,7 @@ video playback:
 add/arcive csv files from directories instead of from a single file
 - (easier to maintain separate vocab list files)
 
-injest japanese words from text file
-- interactive mode that lets me pick the words to add
-- generate vocab list csv file from the text
+
 
 track word part of speech, esp for verbs (godan ichidan)
 
