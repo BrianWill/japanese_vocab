@@ -132,7 +132,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case ReturnToMainMsg:
-		m.menuState = MAIN_MENU
+		m.menuState = MAIN_SCREEN
 		return m, nil
 	case IOErrorMsg:
 		// todo
@@ -140,14 +140,14 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// then process messages for the current menu
 	switch m.menuState {
-	case MAIN_MENU:
+	case MAIN_SCREEN:
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.String() {
 			case "q":
 				return m, tea.Quit
 			case "1":
-				m.menuState = DRILL_MENU
+				m.menuState = DRILL_SCREEN
 				m.drillModel = DrillModel{
 					DB:         m.drillModel.DB,
 					Vocab:      loadVocab(m.drillModel.DB),
@@ -155,7 +155,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			case "2":
-				m.menuState = EXTRACT_MENU
+				m.menuState = EXTRACT_SCREEN
 				m.extractModel.IsLoaded = false
 				return m, func() tea.Msg {
 					vocab, err := extractVocab()
@@ -167,11 +167,11 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
-	case DRILL_MENU:
+	case DRILL_SCREEN:
 		model, cmd := m.drillModel.Update(msg)
 		m.drillModel = model.(DrillModel)
 		return m, cmd
-	case EXTRACT_MENU:
+	case EXTRACT_SCREEN:
 		model, cmd := m.extractModel.Update(msg)
 		m.extractModel = model.(ExtractModel)
 		return m, cmd
@@ -181,9 +181,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m MainModel) View() string {
 	switch m.menuState {
-	case DRILL_MENU:
+	case DRILL_SCREEN:
 		return m.drillModel.View()
-	case EXTRACT_MENU:
+	case EXTRACT_SCREEN:
 		return m.extractModel.View()
 	}
 

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -25,8 +26,7 @@ CREATE TABLE IF NOT EXISTS vocab (
     kanji_meanings TEXT,
 	drill_todo INTEGER NOT NULL DEFAULT 0,
     drill_count INTEGER NOT NULL DEFAULT 0,
-    archived BOOLEAN NOT NULL DEFAULT 0,
-	not_a_word BOOLEAN NOT NULL DEFAULT 0
+    status INTEGER NOT NULL DEFAULT 0,
 );`
 
 	db, err := sql.Open("sqlite", "vocab.db")
@@ -49,7 +49,7 @@ func (v *VocabDB) Insert(vocab *Vocab) (int, error) {
 	}
 
 	res, err := v.DB.Exec(`
-        INSERT INTO vocab (word, kana, part_of_speech, definition, kanji_meanings, drill_count, archived)
+        INSERT INTO vocab (word, kana, part_of_speech, definition, kanji_meanings, drill_count, status)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
 		vocab.Word,
@@ -58,7 +58,7 @@ func (v *VocabDB) Insert(vocab *Vocab) (int, error) {
 		vocab.Definition,
 		string(kmJSON),
 		vocab.DrillCount,
-		vocab.Archived,
+		vocab.Status,
 	)
 
 	if err != nil {
@@ -78,8 +78,8 @@ func (v *VocabDB) UpsertAll(list []Vocab) error {
 	stmt, err := tx.Prepare(`
         INSERT INTO vocab (
             id, word, kana, part_of_speech, definition,
-            kanji_meanings, drill_count, archived
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            kanji_meanings, drill_count, drill_todo, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(word) DO UPDATE SET
             kana = excluded.kana,
             part_of_speech = excluded.part_of_speech,
@@ -115,7 +115,8 @@ func (v *VocabDB) UpsertAll(list []Vocab) error {
 			vocab.Definition,
 			string(kmJSON),
 			vocab.DrillCount,
-			vocab.Archived,
+			vocab.DrillTodo,
+			vocab.Status,
 		)
 		if err != nil {
 			tx.Rollback()
@@ -128,7 +129,7 @@ func (v *VocabDB) UpsertAll(list []Vocab) error {
 
 func (v *VocabDB) Get(id int) (*Vocab, error) {
 	row := v.DB.QueryRow(`
-        SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, archived
+        SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, status
         FROM vocab
         WHERE id = ?
     `, id)
@@ -144,7 +145,7 @@ func (v *VocabDB) Get(id int) (*Vocab, error) {
 		&vc.Definition,
 		&kmJSON,
 		&vc.DrillCount,
-		&vc.Archived,
+		&vc.Status,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -173,7 +174,7 @@ func (v *VocabDB) Update(vocab *Vocab) error {
 	_, err = v.DB.Exec(`
         UPDATE vocab
         SET word = ?, kana = ?, part_of_speech = ?, definition = ?,
-            kanji_meanings = ?, drill_count = ?, archived = ?
+            kanji_meanings = ?, drill_count = ?, status = ?
         WHERE id = ?
     `,
 		vocab.Word,
@@ -182,7 +183,7 @@ func (v *VocabDB) Update(vocab *Vocab) error {
 		vocab.Definition,
 		string(kmJSON),
 		vocab.DrillCount,
-		vocab.Archived,
+		vocab.Status,
 		vocab.ID,
 	)
 
@@ -194,17 +195,17 @@ func (v *VocabDB) Delete(id int) error {
 	return err
 }
 
-func (v *VocabDB) ListAll(excludeArchived bool) ([]Vocab, error) {
+func (v *VocabDB) ListAll(activeOnly bool) ([]Vocab, error) {
 	queryStr := `
-        SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, archived
+        SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, drill_todo, status
         FROM vocab
         ORDER BY id
     `
-	if excludeArchived {
+	if activeOnly {
 		queryStr = `
-			SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, archived
+			SELECT id, word, kana, part_of_speech, definition, kanji_meanings, drill_count, drill_todo, status
 			FROM vocab
-			WHERE archived = 0
+			WHERE status = ` + strconv.Itoa(int(ACTIVE)) + `
 			ORDER BY id
 		`
 	}
@@ -228,7 +229,8 @@ func (v *VocabDB) ListAll(excludeArchived bool) ([]Vocab, error) {
 			&vc.Definition,
 			&kmJSON,
 			&vc.DrillCount,
-			&vc.Archived,
+			&vc.DrillTodo,
+			&vc.Status,
 		)
 		if err != nil {
 			return nil, err
@@ -251,7 +253,7 @@ func (v *VocabDB) FindByWord(term string) ([]Vocab, error) {
 
 	rows, err := v.DB.Query(`
         SELECT id, word, kana, part_of_speech, definition,
-               kanji_meanings, drill_count, archived
+               kanji_meanings, drill_count, drill_todo, status
         FROM vocab
         WHERE word LIKE ?
         ORDER BY word ASC
@@ -275,7 +277,8 @@ func (v *VocabDB) FindByWord(term string) ([]Vocab, error) {
 			&vc.Definition,
 			&kmJSON,
 			&vc.DrillCount,
-			&vc.Archived,
+			&vc.DrillTodo,
+			&vc.Status,
 		)
 		if err != nil {
 			return nil, err

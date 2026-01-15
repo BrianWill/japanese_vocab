@@ -7,11 +7,6 @@ import (
 )
 
 const (
-	SCREEN_MAIN = iota
-	SCREEN_DRILL
-)
-
-const (
 	ColorReset         = "\033[0m"
 	Red                = "\033[31m"
 	Green              = "\033[32m"
@@ -55,9 +50,9 @@ type ExtractedVocabMsg struct {
 type MenuState int
 
 const (
-	MAIN_MENU MenuState = iota
-	DRILL_MENU
-	EXTRACT_MENU
+	MAIN_SCREEN MenuState = iota
+	DRILL_SCREEN
+	EXTRACT_SCREEN
 )
 
 type MainModel struct {
@@ -130,6 +125,14 @@ type DrillModel struct {
 	VocabTable  table.Model
 }
 
+type VocabStatus int
+
+const (
+	ACTIVE VocabStatus = iota
+	ARCHIVED
+	NOT_A_WORD
+)
+
 type Vocab struct {
 	ID            int
 	Word          string      `json:"word"`
@@ -137,8 +140,10 @@ type Vocab struct {
 	PartOfSpeech  string      `json:"part_of_speech"`
 	Definition    string      `json:"definition"`
 	KanjiMeanings []KanjiInfo `json:"kanji_meanings"`
-	DrillCount    int         `json:"drill_count"`
-	Archived      bool        `json:"archived"`
+	DrillTodo     int         `json:"drill_todo"`  // how many drills left to do
+	DrillCount    int         `json:"drill_count"` // lifetime number of drills
+	Status        bool        `json:"status"`
+	IsNotWord     bool        `json:"not_word"`
 	DrillInfo     struct {    // used in drills
 		Weight    float32 // used in random selection
 		IsWrong   bool    // has been answered wrong at least once this round
