@@ -123,7 +123,7 @@ func (m DrillModel) View() string {
 			marker = "\t➤ "
 		}
 		if v.DrillInfo.IsWrong && v.DrillInfo.IsCorrect {
-			wordList += marker + greyStyle.Render(v.Word) + greyStyle.Render(v.Kana) + greyStyle.Width(40).Render(v.Definition) + "\n"
+			wordList += marker + cyanStyle.Render(v.Word) + cyanStyle.Render(v.Kana) + cyanStyle.Width(40).Render(v.Definition) + "\n"
 		} else if v.DrillInfo.IsWrong {
 			wordList += marker + redStyle.Render(v.Word) + redStyle.Render(v.Kana) + redStyle.Width(40).Render(v.Definition) + "\n"
 		} else if v.DrillInfo.IsCorrect {

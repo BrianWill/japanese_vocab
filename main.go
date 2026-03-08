@@ -29,10 +29,10 @@ var (
 	columnWidthStyle = lipgloss.NewStyle().Width(20)
 	boldStyle        = lipgloss.NewStyle().Bold(true)
 	redStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Width(20)
-	greenStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Width(20)
+	greenStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Width(20)
 	cyanStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("6")).Width(20)
-	greyStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Width(20)
-	yellowBoldStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Bold(true)
+	blueStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Width(20)
+	yellowBoldStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0")).Bold(true)
 )
 
 var tok *tokenizer.Tokenizer

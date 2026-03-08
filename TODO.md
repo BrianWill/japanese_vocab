@@ -1,9 +1,15 @@
+use turso to sync db
+make a mobile app (sync through turso)
 
-parse text from file to find new words
-    user picks words
-    
+extraction:
+    display the todo count and lifetime drill count
+    + - keys to increment / decrement todo count by +/-5
+    hotkey to get definintion from chatgpt for individual word
+    hotkey to get definitions from chat for all enabled words that don't yet have a definition
 
 when enabling a word, if it doesn't already have a definition or kana, use chat API to get definition and kana
+
+maybe AI could create / find images relevant for each word
 
 create table for kanji
 for every kanji in every word, add the kanji to the kanji table
